@@ -16,7 +16,7 @@ const vt323 = VT323({
 export const metadata: Metadata = {
     title: 'Bead Pattern Maker - Free Pixel Art & Perler Beads Generator',
     description:
-        'Convert your images into bead patterns (Perler, Hama, Artkal) instantly. Free, SEO-friendly, and open-source pixel art generator with PDF export.',
+        'Convert your images into bead patterns (Perler, Hama, Artkal) instantly. A free, easy-to-use pixel art generator with PDF, SVG, and Excel export options.',
     keywords: [
         'bead pattern maker',
         'perler beads generator',
