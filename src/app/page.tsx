@@ -16,7 +16,6 @@ export default function Home() {
                 <nav className="font-bold text-lg hidden md:flex gap-6 uppercase">
                     <Link href="#" className="hover:underline underline-offset-4 decoration-4">Home</Link>
                     <Link href="#" className="hover:underline underline-offset-4 decoration-4">About</Link>
-                    <Link href="https://github.com/maxcleme/beadifier" target="_blank" className="hover:underline underline-offset-4 decoration-4">GitHub</Link>
                 </nav>
             </header>
 
