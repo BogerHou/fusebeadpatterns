@@ -14,8 +14,8 @@ export default function Home() {
                     </h1>
                 </div>
                 <nav className="font-bold text-lg hidden md:flex gap-6 uppercase">
-                    <Link href="#" className="hover:underline underline-offset-4 decoration-4">Home</Link>
-                    <Link href="#" className="hover:underline underline-offset-4 decoration-4">About</Link>
+                    <Link href="/" className="hover:underline underline-offset-4 decoration-4">Home</Link>
+                    <Link href="/about" className="hover:underline underline-offset-4 decoration-4">About</Link>
                 </nav>
             </header>
 
@@ -183,8 +183,8 @@ export default function Home() {
                         <p className="font-medium text-gray-600 max-w-md">The ultimate free tool for turning photos into printable Perler, Hama, and Artkal bead patterns. Discover endless <strong>bead perler ideas</strong>.</p>
                     </div>
                     <div className="flex gap-6 font-bold uppercase text-sm">
-                        <Link href="#" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Privacy Policy</Link>
-                        <Link href="#" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Terms of Service</Link>
+                        <Link href="/privacy-policy" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Privacy Policy</Link>
+                        <Link href="/terms-of-service" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Terms of Service</Link>
                         <Link href="mailto:hello@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
                     </div>
                 </div>
