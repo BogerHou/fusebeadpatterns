@@ -52,7 +52,7 @@ export default function TermsOfServicePage() {
                         <p>We reserve the right to modify these Terms of Service at any time. We will indicate the date of the last update at the top of this page. Your continued use of the website constitutes your acceptance of the updated terms.</p>
 
                         <h3 className="text-2xl font-black uppercase mt-8 mb-4">6. Contact</h3>
-                        <p>If you have any questions about these Terms, please contact us at: <a href="mailto:hello@fusebeadpatterns.art" className="text-brand-purple hover:underline">hello@fusebeadpatterns.art</a>.</p>
+                        <p>If you have any questions about these Terms, please contact us at: <a href="mailto:contact@fusebeadpatterns.art" className="text-brand-purple hover:underline">contact@fusebeadpatterns.art</a>.</p>
                     </div>
                 </div>
             </main>
@@ -67,7 +67,7 @@ export default function TermsOfServicePage() {
                     <div className="flex gap-6 font-bold uppercase text-sm">
                         <Link href="/privacy-policy" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Privacy Policy</Link>
                         <Link href="/terms-of-service" className="underline decoration-2 underline-offset-4">Terms of Service</Link>
-                        <Link href="mailto:hello@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
+                        <Link href="mailto:contact@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
                     </div>
                 </div>
             </footer>

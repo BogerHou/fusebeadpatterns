@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
                         <p>Our website may contain links to third-party websites (e.g., places to buy Perler bead kits). We are not responsible for the privacy practices or the content of those third-party sites.</p>
 
                         <h3 className="text-2xl font-black uppercase mt-8 mb-4">5. Contact Us</h3>
-                        <p>If you have any questions or concerns about this Privacy Policy, please contact us at: <a href="mailto:hello@fusebeadpatterns.art" className="text-brand-purple hover:underline">hello@fusebeadpatterns.art</a>.</p>
+                        <p>If you have any questions or concerns about this Privacy Policy, please contact us at: <a href="mailto:contact@fusebeadpatterns.art" className="text-brand-purple hover:underline">contact@fusebeadpatterns.art</a>.</p>
                     </div>
                 </div>
             </main>
@@ -64,7 +64,7 @@ export default function PrivacyPolicyPage() {
                     <div className="flex gap-6 font-bold uppercase text-sm">
                         <Link href="/privacy-policy" className="underline decoration-2 underline-offset-4">Privacy Policy</Link>
                         <Link href="/terms-of-service" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Terms of Service</Link>
-                        <Link href="mailto:hello@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
+                        <Link href="mailto:contact@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
                     </div>
                 </div>
             </footer>
