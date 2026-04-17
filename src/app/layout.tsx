@@ -16,7 +16,7 @@ const vt323 = VT323({
 export const metadata: Metadata = {
     metadataBase: new URL('https://fusebeadpatterns.art'),
     title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
-    description: 'Convert photos to Perler bead patterns easily with our free fuse bead generator. Create Minecraft & Pokemon designs locally in your browser. Try it now!',
+    description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
     keywords: [
         'bead pattern maker',
         'perler beads generator',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     },
     openGraph: {
         title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
-        description: 'Convert photos to Perler bead patterns easily with our free fuse bead generator. Create Minecraft & Pokemon designs locally in your browser. Try it now!',
+        description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
         url: 'https://fusebeadpatterns.art',
         siteName: 'Bead Pattern Maker',
         type: 'website',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     twitter: {
         card: 'summary_large_image',
         title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
-        description: 'Convert photos to Perler bead patterns easily with our free fuse bead generator. Create Minecraft & Pokemon designs locally in your browser. Try it now!',
+        description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
     },
 };
 
