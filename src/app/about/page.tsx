@@ -4,6 +4,9 @@ import Link from 'next/link';
 export const metadata = {
     title: 'About Bead Pattern Maker | The Ultimate Free Perler Bead Generator',
     description: 'Learn more about Bead Pattern Maker, the best free tool for converting your images into Perler, Hama, and Artkal bead patterns with a focus on privacy and ease of use.',
+    alternates: {
+        canonical: '/about',
+    },
 };
 
 export default function AboutPage() {

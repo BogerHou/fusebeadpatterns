@@ -4,6 +4,9 @@ import Link from 'next/link';
 export const metadata = {
     title: 'Terms of Service | Bead Pattern Maker',
     description: 'Terms of Service and terms of use for Bead Pattern Maker.',
+    alternates: {
+        canonical: '/terms-of-service',
+    },
 };
 
 export default function TermsOfServicePage() {

@@ -4,6 +4,9 @@ import Link from 'next/link';
 export const metadata = {
     title: 'Privacy Policy | Bead Pattern Maker',
     description: 'Privacy Policy for Bead Pattern Maker. Learn how we protect your data—all image processing is done locally in your browser.',
+    alternates: {
+        canonical: '/privacy-policy',
+    },
 };
 
 export default function PrivacyPolicyPage() {

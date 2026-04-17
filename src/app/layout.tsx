@@ -14,9 +14,9 @@ const vt323 = VT323({
 });
 
 export const metadata: Metadata = {
-    title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns & Designs',
-    description:
-        'The best online tool to convert your photos into Perler bead patterns. Easy-to-use fuse bead pattern maker with Minecraft and Pokemon designs. 100% privacy-focused, works locally in your browser.',
+    metadataBase: new URL('https://fusebeadpatterns.art'),
+    title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
+    description: 'Convert photos to Perler bead patterns easily with our free fuse bead generator. Create Minecraft & Pokemon designs locally in your browser. Try it now!',
     keywords: [
         'bead pattern maker',
         'perler beads generator',
@@ -29,17 +29,20 @@ export const metadata: Metadata = {
         'bead pattern generator free'
     ],
     authors: [{ name: 'Bead Pattern Maker' }],
+    alternates: {
+        canonical: '/',
+    },
     openGraph: {
-        title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns & Designs',
-        description: 'The best online tool to convert your photos into Perler bead patterns. Easy-to-use fuse bead pattern maker with Minecraft and Pokemon designs. 100% privacy-focused, works locally in your browser.',
+        title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
+        description: 'Convert photos to Perler bead patterns easily with our free fuse bead generator. Create Minecraft & Pokemon designs locally in your browser. Try it now!',
         url: 'https://fusebeadpatterns.art',
         siteName: 'Bead Pattern Maker',
         type: 'website',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns & Designs',
-        description: 'The best online tool to convert your photos into Perler bead patterns. Easy-to-use fuse bead pattern maker with Minecraft and Pokemon designs. 100% privacy-focused, works locally in your browser.',
+        title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
+        description: 'Convert photos to Perler bead patterns easily with our free fuse bead generator. Create Minecraft & Pokemon designs locally in your browser. Try it now!',
     },
 };
 
