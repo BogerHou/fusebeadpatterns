@@ -113,8 +113,8 @@ export default function Editor() {
     const [fileName, setFileName] = useState('bead-pattern');
     const [paletteId, setPaletteId] = useState(DEFAULT_PALETTE_ID);
     const [boardId, setBoardId] = useState(DEFAULT_BOARD_ID);
-    const [boardWidth, setBoardWidth] = useState(2);
-    const [boardHeight, setBoardHeight] = useState(2);
+    const [boardWidth, setBoardWidth] = useState(1);
+    const [boardHeight, setBoardHeight] = useState(1);
     const [matchingId, setMatchingId] = useState(DEFAULT_MATCHING_ID);
     const [ditheringId, setDitheringId] = useState(DEFAULT_DITHERING_ID);
     const [useSymbols, setUseSymbols] = useState(false);
@@ -574,6 +574,25 @@ export default function Editor() {
                 <Card title="2. Settings" className="bg-brand-purple">
                     <div className="space-y-4">
                         <div>
+                            <label className="mb-1 block font-bold">
+                                Bead Type / Board
+                            </label>
+                            <select
+                                value={boardId}
+                                onChange={(event) =>
+                                    setBoardId(event.target.value as typeof boardId)
+                                }
+                                className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl focus:outline-none"
+                            >
+                                {BOARD_OPTIONS.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
                             <label className="mb-1 block font-bold">Palette</label>
                             <select
                                 value={paletteId}
@@ -589,25 +608,6 @@ export default function Editor() {
                                 className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl focus:outline-none"
                             >
                                 {PALETTE_OPTIONS.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block font-bold">
-                                Bead Type / Board
-                            </label>
-                            <select
-                                value={boardId}
-                                onChange={(event) =>
-                                    setBoardId(event.target.value as typeof boardId)
-                                }
-                                className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl focus:outline-none"
-                            >
-                                {BOARD_OPTIONS.map((option) => (
                                     <option key={option.id} value={option.id}>
                                         {option.label}
                                     </option>
