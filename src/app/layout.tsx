@@ -18,15 +18,11 @@ export const metadata: Metadata = {
     title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
     description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
     keywords: [
+        'perler bead patterns',
+        'fuse bead generator',
         'bead pattern maker',
-        'perler beads generator',
         'hama beads',
-        'artkal beads',
-        'fuse beads',
-        'ironing beads',
-        'pixel art maker',
-        'photo to beads',
-        'bead pattern generator free'
+        'pixel art'
     ],
     authors: [{ name: 'Bead Pattern Maker' }],
     alternates: {
