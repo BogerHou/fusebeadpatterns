@@ -14,9 +14,33 @@ const vt323 = VT323({
 });
 
 export const metadata: Metadata = {
-    title: 'Bead Pattern Maker - Pixel Art & Perler Beads Generator',
+    title: 'Bead Pattern Maker - Free Pixel Art & Perler Beads Generator',
     description:
-        'Convert your images into bead patterns (Perler, Hama, Artkal) instantly. Free, SEO-friendly, and open-source pixel art generator.',
+        'Convert your images into bead patterns (Perler, Hama, Artkal) instantly. Free, SEO-friendly, and open-source pixel art generator with PDF export.',
+    keywords: [
+        'bead pattern maker',
+        'perler beads generator',
+        'hama beads',
+        'artkal beads',
+        'fuse beads',
+        'ironing beads',
+        'pixel art maker',
+        'photo to beads',
+        'bead pattern generator free'
+    ],
+    authors: [{ name: 'Bead Pattern Maker' }],
+    openGraph: {
+        title: 'Bead Pattern Maker - Free Pixel Art & Perler Beads Generator',
+        description: 'Convert your images into bead patterns (Perler, Hama, Artkal) instantly. Download as PDF, SVG, or Excel.',
+        url: 'https://beadpattern.net', // Adjust this if the domain is different
+        siteName: 'Bead Pattern Maker',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Bead Pattern Maker - Free Pixel Art Generator',
+        description: 'Convert images into bead patterns instantly.',
+    },
 };
 
 export default function RootLayout({
