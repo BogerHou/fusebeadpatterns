@@ -186,7 +186,7 @@ export default function Home() {
                     <div className="flex gap-6 font-bold uppercase text-sm">
                         <Link href="#" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Privacy Policy</Link>
                         <Link href="#" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Terms of Service</Link>
-                        <Link href="mailto:hello@beadpattern.net" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
+                        <Link href="mailto:hello@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
                     </div>
                 </div>
                 <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-300 text-center font-vt323 text-lg text-gray-500">

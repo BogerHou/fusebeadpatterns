@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns & Designs',
         description: 'The best online tool to convert your photos into Perler bead patterns. Easy-to-use fuse bead pattern maker with Minecraft and Pokemon designs. 100% privacy-focused, works locally in your browser.',
-        url: 'https://beadpattern.net', // Adjust this if the domain is different
+        url: 'https://fusebeadpatterns.art',
         siteName: 'Bead Pattern Maker',
         type: 'website',
     },
