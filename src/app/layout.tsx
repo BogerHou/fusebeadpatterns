@@ -43,6 +43,8 @@ export const metadata: Metadata = {
     },
 };
 
+import Script from 'next/script';
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -53,6 +55,21 @@ export default function RootLayout({
             lang="en"
             className={`${inter.variable} ${vt323.variable} h-full antialiased`}
         >
+            <head>
+                <Script
+                    async
+                    src="https://www.googletagmanager.com/gtag/js?id=G-K3EC5BK93E"
+                ></Script>
+                <Script id="google-analytics">
+                    {`
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('js', new Date());
+
+                        gtag('config', 'G-K3EC5BK93E');
+                    `}
+                </Script>
+            </head>
             <body className="min-h-full flex flex-col bg-[#F4F4F0] text-gray-900 font-sans">
                 {children}
             </body>
