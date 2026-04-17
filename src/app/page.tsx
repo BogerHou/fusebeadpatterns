@@ -8,10 +8,10 @@ export default function Home() {
             {/* Header */}
             <header className="border-b-4 border-brutal-black bg-brand-cyan p-4 flex items-center justify-between shadow-brutal mx-4 mt-4 mb-8">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-brutal-black bg-black rounded shrink-0" />
-                    <h1 className="text-4xl font-vt323 uppercase tracking-wide leading-none pt-1">
+                    <img src="/logo.png" alt="Bead Pattern Maker Logo" className="w-10 h-10 border-4 border-brutal-black bg-white rounded shrink-0 object-cover" />
+                    <div className="text-4xl font-vt323 uppercase tracking-wide leading-none pt-1">
                         Bead Pattern Maker
-                    </h1>
+                    </div>
                 </div>
                 <nav className="font-bold text-lg hidden md:flex gap-6 uppercase">
                     <Link href="/" className="hover:underline underline-offset-4 decoration-4">Home</Link>
