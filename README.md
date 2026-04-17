@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bead Pattern Maker
 
-## Getting Started
+Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到选定色板，生成可打印的珠子图案、颜色统计和多种导出文件。
 
-First, run the development server:
+## 当前功能
+
+- 上传图片并生成 bead pattern 预览
+- 支持多套色板预设
+  - Perler
+  - Hama
+  - Artkal
+  - Nabbi
+  - Mard
+  - Diamond Dotz
+  - Yant
+- 支持不同 bead / board 类型
+  - Midi 29 x 29
+  - Mini 57 x 57
+  - Artkal Mini 50 x 50
+- 支持颜色匹配算法选择
+  - Euclidean
+  - DeltaE CIE94
+  - DeltaE CIE2000
+- 支持 dithering 开关
+  - None
+  - Floyd-Steinberg
+  - Atkinson
+- 导出格式
+  - PDF
+  - SVG
+  - Printable PNG
+  - Printable JPG
+  - XLSX
+  - Grid PNG
+
+## 开发
+
+安装依赖：
+
+```bash
+npm install
+```
+
+启动开发服务器：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 质量检查
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+运行单元测试：
 
-## Learn More
+```bash
+npm run test:run
+```
 
-To learn more about Next.js, take a look at the following resources:
+运行 lint：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+运行生产构建：
 
-## Deploy on Vercel
+```bash
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 目录说明
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/components/editor/Editor.tsx`: 主编辑器页面
+- `src/lib/editor/config.ts`: 编辑器预设与 CSV 解析
+- `src/lib/core/`: 颜色量化、模型与导出器
+- `public/palettes/`: 色板 CSV 文件
+
+## 当前边界
+
+- 目前以单色板工作流为主，没有做多色板混合选择
+- 旧 Angular 版本的全部 UI 还没有 1:1 迁移
+- 大字体内嵌文件体积较大，lint 输出里会看到 Babel deopt 提示，但不影响构建

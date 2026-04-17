@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "fix_monofont.js",
+    "scripts/**/*.js",
+    "test-convert.js",
   ]),
 ]);
 

@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-brand-cyan: #4deeea;
+  --color-brand-yellow: #fde047;
+  --color-brand-magenta: #ff3366;
+  --color-brand-purple: #c381fd;
+  --color-brand-green: #3cdc9a;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-brutal-bg: #F4F4F0;
+  --color-brutal-black: #1A1A1A;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-vt323: var(--font-vt323), monospace;
+  
+  --shadow-brutal: 4px 4px 0px 0px rgba(26, 26, 26, 1);
+  --shadow-brutal-hover: 2px 2px 0px 0px rgba(26, 26, 26, 1);
+  --shadow-brutal-sm: 2px 2px 0px 0px rgba(26, 26, 26, 1);
+  --shadow-brutal-lg: 8px 8px 0px 0px rgba(26, 26, 26, 1);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-brutal-bg);
+  background-image: radial-gradient(circle, #ddd 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
 }
