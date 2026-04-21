@@ -328,7 +328,10 @@ export default function Home() {
                 </div>
             </main>
 
-            <SiteFooter description="A free tool for turning photos into printable Perler, Hama, and Artkal bead patterns, with an editor for manual cleanup." />
+            <SiteFooter
+                active="generator"
+                description="A free tool for turning photos into printable Perler, Hama, and Artkal bead patterns, with an editor for manual cleanup."
+            />
         </div>
     );
 }

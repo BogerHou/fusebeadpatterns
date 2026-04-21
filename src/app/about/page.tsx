@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 
@@ -18,12 +19,20 @@ export default function AboutPage() {
 
             {/* Main Content */}
             <main className="flex-1 px-4 pb-12 flex flex-col items-center">
+                <div className="w-full max-w-4xl">
+                    <Breadcrumbs
+                        items={[
+                            { label: 'Home', href: '/' },
+                            { label: 'About', href: '/about' },
+                        ]}
+                    />
+                </div>
                 <div className="w-full max-w-4xl border-4 border-brutal-black bg-white p-8 md:p-12 shadow-brutal relative">
                     {/* Decorative element */}
                     <div className="absolute -top-4 -left-4 w-8 h-8 bg-brand-magenta border-4 border-brutal-black rounded-full" />
                     <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-brand-cyan border-4 border-brutal-black rounded-sm" />
 
-                    <h2 className="text-5xl font-black uppercase mb-8 tracking-tight">About Us</h2>
+                    <h1 className="text-5xl font-black uppercase mb-8 tracking-tight">About Us</h1>
 
                     <div className="space-y-6 text-lg font-medium text-gray-800">
                         <p>

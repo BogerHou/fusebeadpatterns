@@ -1,4 +1,5 @@
 import React from 'react';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 
@@ -17,8 +18,19 @@ export default function TermsOfServicePage() {
 
             {/* Main Content */}
             <main className="flex-1 px-4 pb-12 flex flex-col items-center">
+                <div className="w-full max-w-4xl">
+                    <Breadcrumbs
+                        items={[
+                            { label: 'Home', href: '/' },
+                            {
+                                label: 'Terms of Service',
+                                href: '/terms-of-service',
+                            },
+                        ]}
+                    />
+                </div>
                 <div className="w-full max-w-4xl border-4 border-brutal-black bg-white p-8 md:p-12 shadow-brutal">
-                    <h2 className="text-5xl font-black uppercase mb-8 tracking-tight">Terms of Service</h2>
+                    <h1 className="text-5xl font-black uppercase mb-8 tracking-tight">Terms of Service</h1>
                     
                     <div className="space-y-6 text-lg font-medium text-gray-800 prose prose-lg max-w-none">
                         <p><strong>Last Updated:</strong> April 17, 2026</p>
