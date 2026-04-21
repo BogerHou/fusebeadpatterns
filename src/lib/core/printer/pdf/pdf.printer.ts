@@ -6,8 +6,13 @@ import './MonoFont';
 
 import { Printer } from './../printer';
 import { Project } from '../../model/project/project.model';
-import { PaletteEntry } from '../../model/palette/palette.model';
-import { foreground, getPaletteEntryByColorRef } from '../../utils/utils';
+import {
+    createPaletteEntryColorMap,
+    createPaletteEntryRefMap,
+    foreground,
+    getPaletteEntryColorKey,
+    getPaletteEntryFromRefMap,
+} from '../../utils/utils';
 
 class Rect {
     x: number;
@@ -118,6 +123,9 @@ export class PdfPrinter implements Printer {
 
         const maxUsage = '' + _.max(Array.from(usage.values()));
         const longestRef = _.maxBy(Array.from(usage.keys()), (s) => s.length);
+        const paletteEntriesByRef = createPaletteEntryRefMap(
+            project.paletteConfiguration.palettes
+        );
 
         const longestWord =
             maxUsage.length > longestRef.length ? maxUsage : longestRef;
@@ -140,8 +148,8 @@ export class PdfPrinter implements Printer {
 
             // ref column
             Array.from(entries).forEach(([k], idx) => {
-                const entry = getPaletteEntryByColorRef(
-                    project.paletteConfiguration.palettes,
+                const entry = getPaletteEntryFromRefMap(
+                    paletteEntriesByRef,
                     '' + k
                 );
                 const bg = entry.color;
@@ -183,8 +191,8 @@ export class PdfPrinter implements Printer {
             if (project.exportConfiguration.useSymbols) {
                 // symbol column
                 Array.from(entries).forEach(([k], idx) => {
-                    const entry = getPaletteEntryByColorRef(
-                        project.paletteConfiguration.palettes,
+                    const entry = getPaletteEntryFromRefMap(
+                        paletteEntriesByRef,
                         '' + k
                     );
                     const bg = entry.color;
@@ -229,8 +237,8 @@ export class PdfPrinter implements Printer {
 
             // usage column
             Array.from(entries).forEach(([k, v], idx) => {
-                const entry = getPaletteEntryByColorRef(
-                    project.paletteConfiguration.palettes,
+                const entry = getPaletteEntryFromRefMap(
+                    paletteEntriesByRef,
                     '' + k
                 );
                 const bg = entry.color;
@@ -286,6 +294,11 @@ export class PdfPrinter implements Printer {
             (height -
                 beadSize * project.boardConfiguration.board.nbBeadPerRow) /
             2;
+        const paletteEntriesByColor = createPaletteEntryColorMap(
+            project.paletteConfiguration.palettes
+        );
+        const beadsPerRow = project.boardConfiguration.board.nbBeadPerRow;
+        const patternWidth = beadsPerRow * project.boardConfiguration.nbBoardWidth;
 
         for (let i = 0; i < project.boardConfiguration.nbBoardHeight; i++) {
             for (let j = 0; j < project.boardConfiguration.nbBoardWidth; j++) {
@@ -318,98 +331,18 @@ export class PdfPrinter implements Printer {
                             beadSize
                         );
 
-                        const paletteEntry: PaletteEntry = _.find(
-                            _.flatten(
-                                project.paletteConfiguration.palettes.map(
-                                    (p) => p.entries
-                                )
-                            ),
-                            (entry) => {
-                                return (
-                                    entry.color.r ===
-                                        reducedColor[
-                                            4 *
-                                                ((y +
-                                                    i *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) *
-                                                    project.boardConfiguration
-                                                        .board.nbBeadPerRow *
-                                                    project.boardConfiguration
-                                                        .nbBoardWidth +
-                                                    x +
-                                                    j *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board.nbBeadPerRow)
-                                        ] &&
-                                    entry.color.g ===
-                                        reducedColor[
-                                            4 *
-                                                ((y +
-                                                    i *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) *
-                                                    project.boardConfiguration
-                                                        .board.nbBeadPerRow *
-                                                    project.boardConfiguration
-                                                        .nbBoardWidth +
-                                                    x +
-                                                    j *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) +
-                                                1
-                                        ] &&
-                                    entry.color.b ===
-                                        reducedColor[
-                                            4 *
-                                                ((y +
-                                                    i *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) *
-                                                    project.boardConfiguration
-                                                        .board.nbBeadPerRow *
-                                                    project.boardConfiguration
-                                                        .nbBoardWidth +
-                                                    x +
-                                                    j *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) +
-                                                2
-                                        ] &&
-                                    entry.color.a ===
-                                        reducedColor[
-                                            4 *
-                                                ((y +
-                                                    i *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) *
-                                                    project.boardConfiguration
-                                                        .board.nbBeadPerRow *
-                                                    project.boardConfiguration
-                                                        .nbBoardWidth +
-                                                    x +
-                                                    j *
-                                                        project
-                                                            .boardConfiguration
-                                                            .board
-                                                            .nbBeadPerRow) +
-                                                3
-                                        ]
-                                );
-                            }
+                        const colorIndex =
+                            ((y + i * beadsPerRow) * patternWidth +
+                                x +
+                                j * beadsPerRow) *
+                            4;
+                        const paletteEntry = paletteEntriesByColor.get(
+                            getPaletteEntryColorKey(
+                                reducedColor[colorIndex],
+                                reducedColor[colorIndex + 1],
+                                reducedColor[colorIndex + 2],
+                                reducedColor[colorIndex + 3]
+                            )
                         );
                         if (paletteEntry) {
                             doc.setFillColor(

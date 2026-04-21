@@ -5,6 +5,10 @@ type CardProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 
 export const Card: React.FC<CardProps> = ({ children, title, className = '', ...props }) => {
+    const contentClassName = className.includes('flex')
+        ? 'min-h-0 flex flex-1 flex-col'
+        : undefined;
+
     return (
         <div
             className={`border-4 border-brutal-black shadow-brutal p-6 ${className.includes('bg-') ? className : `bg-white ${className}`}`}
@@ -15,7 +19,7 @@ export const Card: React.FC<CardProps> = ({ children, title, className = '', ...
                     <h2 className="text-3xl font-vt323 tracking-wide uppercase">{title}</h2>
                 </div>
             )}
-            <div>{children}</div>
+            <div className={contentClassName}>{children}</div>
         </div>
     );
 };

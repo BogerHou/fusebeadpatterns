@@ -1,11 +1,12 @@
 # Bead Pattern Maker
 
-Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到选定色板，生成可打印的珠子图案、颜色统计和多种导出文件。
+Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到选定色板，生成可打印的珠子图案、颜色统计、多面板预览和多种导出文件。
 
 ## 当前功能
 
 - 上传图片并生成 bead pattern 预览
-- 支持多套色板预设
+- 支持源图 / 图案对照预览
+- 支持多套色板预设与混合选择
   - Perler
   - Hama
   - Artkal
@@ -25,6 +26,19 @@ Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到
   - None
   - Floyd-Steinberg
   - Atkinson
+- 支持图片高级调整
+  - Brightness
+  - Contrast
+  - Saturation
+  - Grayscale
+- 支持渲染设置
+  - Center
+  - Fit to boards
+  - Show board grid
+- 支持颜色统计交互
+  - 点击用量颜色快速禁用
+  - Remove colors under 1%
+  - Undo palette change
 - 导出格式
   - PDF
   - SVG
@@ -69,6 +83,8 @@ npm run lint
 npm run build
 ```
 
+说明：当前 `build` 脚本使用 `next build --webpack`，因为此项目在 Next 16 下使用默认 Turbopack 构建时会触发上游内部 panic，而 webpack 路径已验证可稳定通过。
+
 ## 目录说明
 
 - `src/components/editor/Editor.tsx`: 主编辑器页面
@@ -78,6 +94,5 @@ npm run build
 
 ## 当前边界
 
-- 目前以单色板工作流为主，没有做多色板混合选择
-- 旧 Angular 版本的全部 UI 还没有 1:1 迁移
-- 大字体内嵌文件体积较大，lint 输出里会看到 Babel deopt 提示，但不影响构建
+- PDF / SVG 内嵌 monospace 字体体积较大，lint 时会看到 Babel deopt 提示，但不影响导出与构建
+- 多色板混合时仍沿用旧版核心模型；如果后续发现跨品牌色号冲突，需要继续细化 usage key 设计

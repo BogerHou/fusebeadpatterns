@@ -66,10 +66,38 @@ describe('editor preview helpers', () => {
                 1.5
             )
         ).toEqual({
-            width: 852,
-            height: 780,
+            width: 853,
+            height: 779,
             scale: 0.17615176151761516,
             zoom: 1.5,
+        });
+    });
+
+    it('upscales small bead patterns to fit the preview board area', () => {
+        expect(
+            getPreviewRenderSize(
+                { width: 29, height: 29 },
+                { maxWidth: 760, maxHeight: 520 },
+                1
+            )
+        ).toEqual({
+            width: 520,
+            height: 520,
+            scale: 17.93103448275862,
+            zoom: 1,
+        });
+
+        expect(
+            getPreviewRenderSize(
+                { width: 29, height: 29 },
+                { maxWidth: 760, maxHeight: 520 },
+                0.9
+            )
+        ).toEqual({
+            width: 468,
+            height: 468,
+            scale: 16.137931034482758,
+            zoom: 0.9,
         });
     });
 });

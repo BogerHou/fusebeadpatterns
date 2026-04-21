@@ -34,11 +34,20 @@ export const metadata: Metadata = {
         url: 'https://fusebeadpatterns.art',
         siteName: 'Bead Pattern Maker',
         type: 'website',
+        images: [
+            {
+                url: '/opengraph-image.png',
+                width: 1200,
+                height: 630,
+                alt: 'Free Perler Bead Pattern Generator',
+            },
+        ],
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
         description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
+        images: ['/opengraph-image.png'],
     },
 };
 
@@ -56,10 +65,11 @@ export default function RootLayout({
         >
             <head>
                 <Script
+                    strategy="afterInteractive"
                     async
                     src="https://www.googletagmanager.com/gtag/js?id=G-K3EC5BK93E"
                 ></Script>
-                <Script id="google-analytics">
+                <Script id="google-analytics" strategy="afterInteractive">
                     {`
                         window.dataLayer = window.dataLayer || [];
                         function gtag(){dataLayer.push(arguments);}

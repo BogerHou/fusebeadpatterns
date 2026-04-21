@@ -1,10 +1,11 @@
 import { Palette, PaletteEntry } from '../model/palette/palette.model';
 import { Color } from '../model/color/color.model';
 
-import _ from 'lodash';
 import { Matching } from '../model/matching/matching.model';
 import { Project } from '../model/project/project.model';
 import { RendererConfiguration } from '../model/configuration/renderer-configuration.model';
+
+export type PaletteEntryColorKeyMode = 'rgb' | 'rgba';
 
 export class ImagePosition {
     xStart: number;
@@ -101,15 +102,20 @@ export function reduceColor(
     project: Project,
     drawingPosition: ImagePosition
 ): ImageData {
-    const context = canvas.getContext('2d')!;
+    const context = canvas.getContext('2d', {
+        willReadFrequently: true,
+    })!;
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const enabledPaletteEntries = getEnabledPaletteEntries(
+        project.paletteConfiguration.palettes
+    );
 
     for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
             const color = get(imageData, canvas, x, y);
             if (color.a !== 0) {
-                const closestPaletteEntry = getClosestPaletteEntry(
-                    project.paletteConfiguration.palettes,
+                const closestPaletteEntry = getClosestPaletteEntryFromEntries(
+                    enabledPaletteEntries,
                     color,
                     project.matchingConfiguration.matching
                 );
@@ -222,12 +228,11 @@ export function getClosestPaletteEntry(
     color: Color,
     matching: Matching
 ): PaletteEntry {
-    return _.minBy(
-        _.flatten(palettes.map((p) => p.entries)).filter(
-            (paletteEntry) => paletteEntry.enabled
-        ),
-        (paletteEntry) => matching.delta(paletteEntry.color, color)
-    )!;
+    return getClosestPaletteEntryFromEntries(
+        getEnabledPaletteEntries(palettes),
+        color,
+        matching
+    );
 }
 
 export function clearNode(node: Element) {
@@ -250,34 +255,28 @@ export function computeUsage(
     palettes: Palette[]
 ): Map<string, number> {
     const usage = new Map<string, number>();
-    _.chunk(colors, 4)
-        .map(
-            (component) =>
-                new Color(
-                    component[0],
-                    component[1],
-                    component[2],
-                    component[3]
-                )
-        )
-        .forEach((color) => {
-            const entry: PaletteEntry | undefined = _.find(
-                _.flatten(palettes.map((p) => p.entries)),
-                (e) =>
-                    e.color.r === color.r &&
-                    e.color.g === color.g &&
-                    e.color.b === color.b &&
-                    e.color.a === color.a
-            );
-            if (entry) {
-                usage.set(entry.ref, (usage.get(entry.ref) || 0) + 1);
-            }
-        });
+    const entriesByColor = createPaletteEntryColorMap(palettes);
+
+    for (let index = 0; index < colors.length; index += 4) {
+        const entry = entriesByColor.get(
+            getPaletteEntryColorKey(
+                colors[index],
+                colors[index + 1],
+                colors[index + 2],
+                colors[index + 3]
+            )
+        );
+
+        if (entry) {
+            usage.set(entry.ref, (usage.get(entry.ref) || 0) + 1);
+        }
+    }
+
     return usage;
 }
 
 export function countBeads(usage: Map<string, number>): number {
-    return Array.from(usage.values()).reduce(_.add, 0);
+    return Array.from(usage.values()).reduce((total, value) => total + value, 0);
 }
 
 export function hasUsageUnderPercent(
@@ -286,7 +285,7 @@ export function hasUsageUnderPercent(
 ) {
     const total = countBeads(usage);
     const lowerBound = total * (percent / 100);
-    return _.find(Array.from(usage.values()), (v) => v < lowerBound);
+    return Array.from(usage.values()).find((value) => value < lowerBound);
 }
 
 export function removeColorUnderPercent(
@@ -296,16 +295,16 @@ export function removeColorUnderPercent(
 ) {
     const total = countBeads(usage);
     const lowerBound = total * (percent / 100);
-    Array.from(usage.entries())
-        .filter(([, v]) => v < lowerBound)
-        .forEach(([k]) => {
-            _(palettes)
-                .map((p) => p.entries)
-                .flatten()
-                .filter((e) => e.ref === k)
-                .forEach((e) => {
-                    e.enabled = false;
-                });
+    const refsToDisable = new Set(
+        Array.from(usage.entries())
+            .filter(([, value]) => value < lowerBound)
+            .map(([ref]) => ref)
+    );
+
+    getPaletteEntries(palettes)
+        .filter((entry) => refsToDisable.has(entry.ref))
+        .forEach((entry) => {
+            entry.enabled = false;
         });
 }
 
@@ -313,12 +312,34 @@ export function getPaletteEntryByColorRef(
     palettes: Palette[],
     ref: string
 ): PaletteEntry {
-    const paletteList = _.flatten(palettes.map((p) => p.entries));
-    return _.minBy(
-        _.filter(paletteList, (paletteEntry) => {
-            return paletteEntry.enabled && paletteEntry.ref === ref;
-        })
-    )!;
+    return getPaletteEntryFromRefMap(createPaletteEntryRefMap(palettes), ref);
+}
+
+export function createPaletteEntryRefMap(
+    palettes: Palette[]
+): Map<string, PaletteEntry> {
+    const entriesByRef = new Map<string, PaletteEntry>();
+
+    getPaletteEntries(palettes).forEach((entry) => {
+        if (entry.enabled && !entriesByRef.has(entry.ref)) {
+            entriesByRef.set(entry.ref, entry);
+        }
+    });
+
+    return entriesByRef;
+}
+
+export function getPaletteEntryFromRefMap(
+    entriesByRef: Map<string, PaletteEntry>,
+    ref: string
+): PaletteEntry {
+    const entry = entriesByRef.get(ref);
+
+    if (!entry) {
+        throw new Error(`No enabled palette entry found for color ref "${ref}".`);
+    }
+
+    return entry;
 }
 
 export function foreground(color: Color): Color {
@@ -326,4 +347,83 @@ export function foreground(color: Color): Color {
         return new Color(0, 0, 0, 255);
     }
     return new Color(255, 255, 255, 255);
+}
+
+export function createPaletteEntryColorMap(
+    palettes: Palette[],
+    keyMode: PaletteEntryColorKeyMode = 'rgba'
+): Map<number, PaletteEntry> {
+    const entriesByColor = new Map<number, PaletteEntry>();
+
+    getPaletteEntries(palettes).forEach((entry) => {
+        const key = getPaletteEntryColorKey(
+            entry.color.r,
+            entry.color.g,
+            entry.color.b,
+            entry.color.a,
+            keyMode
+        );
+
+        if (!entriesByColor.has(key)) {
+            entriesByColor.set(key, entry);
+        }
+    });
+
+    return entriesByColor;
+}
+
+export function getPaletteEntryColorKey(
+    r: number,
+    g: number,
+    b: number,
+    a = 255,
+    keyMode: PaletteEntryColorKeyMode = 'rgba'
+): number {
+    return keyMode === 'rgb'
+        ? getPackedColorKey(r, g, b, 255)
+        : getPackedColorKey(r, g, b, a);
+}
+
+function getPaletteEntries(palettes: Palette[]): PaletteEntry[] {
+    return palettes.flatMap((palette) => palette.entries);
+}
+
+function getEnabledPaletteEntries(palettes: Palette[]): PaletteEntry[] {
+    return getPaletteEntries(palettes).filter((entry) => entry.enabled);
+}
+
+function getClosestPaletteEntryFromEntries(
+    entries: PaletteEntry[],
+    color: Color,
+    matching: Matching
+): PaletteEntry {
+    const [firstEntry, ...remainingEntries] = entries;
+
+    if (!firstEntry) {
+        throw new Error('No enabled palette entries are available.');
+    }
+
+    let closestEntry = firstEntry;
+    let closestDelta = matching.delta(firstEntry.color, color);
+
+    remainingEntries.forEach((entry) => {
+        const delta = matching.delta(entry.color, color);
+
+        if (delta < closestDelta) {
+            closestEntry = entry;
+            closestDelta = delta;
+        }
+    });
+
+    return closestEntry;
+}
+
+function getPackedColorKey(r: number, g: number, b: number, a: number): number {
+    return (
+        (((r & 0xff) << 24) |
+            ((g & 0xff) << 16) |
+            ((b & 0xff) << 8) |
+            (a & 0xff)) >>>
+        0
+    );
 }

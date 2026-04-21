@@ -1,5 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
+import SiteFooter from '@/components/layout/SiteFooter';
+import SiteHeader from '@/components/layout/SiteHeader';
 
 export const metadata = {
     title: 'Terms of Service | Bead Pattern Maker',
@@ -11,22 +12,8 @@ export const metadata = {
 
 export default function TermsOfServicePage() {
     return (
-        <div className="min-h-screen flex flex-col bg-brand-yellow">
-            {/* Header */}
-            <header className="border-b-4 border-brutal-black bg-brand-cyan p-4 flex items-center justify-between shadow-brutal mx-4 mt-4 mb-8">
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="w-10 h-10 border-4 border-brutal-black bg-black rounded shrink-0 block hover:scale-105 transition-transform" />
-                    <Link href="/">
-                        <h1 className="text-4xl font-vt323 uppercase tracking-wide leading-none pt-1 hover:underline underline-offset-4 decoration-4">
-                            Bead Pattern Maker
-                        </h1>
-                    </Link>
-                </div>
-                <nav className="font-bold text-lg hidden md:flex gap-6 uppercase">
-                    <Link href="/" className="hover:underline underline-offset-4 decoration-4">Home</Link>
-                    <Link href="/about" className="hover:underline underline-offset-4 decoration-4">About</Link>
-                </nav>
-            </header>
+        <div className="min-h-screen flex flex-col">
+            <SiteHeader />
 
             {/* Main Content */}
             <main className="flex-1 px-4 pb-12 flex flex-col items-center">
@@ -46,7 +33,7 @@ export default function TermsOfServicePage() {
                         <p><strong>Respecting Copyright:</strong> You agree not to use our tool to generate patterns from copyrighted images or intellectual property that you do not have the right to use, reproduce, or distribute. We are not liable for any copyright infringement resulting from your use of the generated patterns.</p>
 
                         <h3 className="text-2xl font-black uppercase mt-8 mb-4">3. Disclaimer of Warranties</h3>
-                        <p>The service is provided "AS IS" and "AS AVAILABLE" without any warranties of any kind, either express or implied. We do not guarantee that the generated patterns will perfectly match your expectations, nor do we guarantee uninterrupted or error-free access to the website.</p>
+                        <p>The service is provided &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; without any warranties of any kind, either express or implied. We do not guarantee that the generated patterns will perfectly match your expectations, nor do we guarantee uninterrupted or error-free access to the website.</p>
 
                         <h3 className="text-2xl font-black uppercase mt-8 mb-4">4. Limitation of Liability</h3>
                         <p>In no event shall Bead Pattern Maker or its creators be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in any way connected with your use of the service or the patterns generated.</p>
@@ -60,20 +47,7 @@ export default function TermsOfServicePage() {
                 </div>
             </main>
 
-            {/* Footer */}
-            <footer className="border-t-4 border-brutal-black bg-white p-8 mt-auto">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h2 className="font-vt323 text-3xl uppercase tracking-wider mb-2">Bead Pattern Maker</h2>
-                        <p className="font-medium text-gray-600 max-w-md">The ultimate free tool for turning photos into printable Perler, Hama, and Artkal bead patterns.</p>
-                    </div>
-                    <div className="flex gap-6 font-bold uppercase text-sm">
-                        <Link href="/privacy-policy" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Privacy Policy</Link>
-                        <Link href="/terms-of-service" className="underline decoration-2 underline-offset-4">Terms of Service</Link>
-                        <Link href="mailto:contact@fusebeadpatterns.art" className="hover:text-brand-purple hover:underline decoration-2 underline-offset-4">Contact</Link>
-                    </div>
-                </div>
-            </footer>
+            <SiteFooter active="terms" />
         </div>
     );
 }

@@ -1,28 +1,43 @@
 import { MetadataRoute } from 'next';
+import { guidePages } from './guides/guide-data';
+
+const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
         {
             url: 'https://fusebeadpatterns.art',
-            lastModified: new Date(),
+            lastModified: lastContentUpdate,
             changeFrequency: 'weekly',
             priority: 1,
         },
         {
             url: 'https://fusebeadpatterns.art/about',
-            lastModified: new Date(),
+            lastModified: lastContentUpdate,
             changeFrequency: 'monthly',
             priority: 0.8,
         },
         {
+            url: 'https://fusebeadpatterns.art/guides',
+            lastModified: lastContentUpdate,
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
+        ...guidePages.map((guide) => ({
+            url: `https://fusebeadpatterns.art/guides/${guide.slug}`,
+            lastModified: lastContentUpdate,
+            changeFrequency: 'monthly' as const,
+            priority: 0.7,
+        })),
+        {
             url: 'https://fusebeadpatterns.art/privacy-policy',
-            lastModified: new Date(),
+            lastModified: lastContentUpdate,
             changeFrequency: 'yearly',
             priority: 0.5,
         },
         {
             url: 'https://fusebeadpatterns.art/terms-of-service',
-            lastModified: new Date(),
+            lastModified: lastContentUpdate,
             changeFrequency: 'yearly',
             priority: 0.5,
         },

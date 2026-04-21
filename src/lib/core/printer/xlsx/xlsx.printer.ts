@@ -1,28 +1,31 @@
-import * as _ from 'lodash';
 import * as Excel from 'exceljs/dist/exceljs';
 
 import { Printer } from '../printer';
 import { Project } from '../../model/project/project.model';
-import { PaletteEntry } from '../../model/palette/palette.model';
 import { ColorToHex } from '../../model/color/hex.model';
-import { Color } from '../../model/color/color.model';
-import { foreground, getPaletteEntryByColorRef } from '../../utils/utils';
+import {
+    createPaletteEntryColorMap,
+    createPaletteEntryRefMap,
+    foreground,
+    getPaletteEntryColorKey,
+    getPaletteEntryFromRefMap,
+} from '../../utils/utils';
 
-const cellBorderStyle = { style: 'thin', color: { argb: 'FFFFFFFF' } };
+const cellBorderStyle = { style: 'thin', color: { argb: 'FFFFFFFF' } } as const;
 const emptyCellBorderStyle = {
     style: 'thin',
     color: { argb: 'FF000000' },
-};
+} as const;
 const boardBorderStyle = {
     style: 'thick',
     color: { argb: '00000000' },
-};
+} as const;
 const border = {
     top: cellBorderStyle,
     left: cellBorderStyle,
     bottom: cellBorderStyle,
     right: cellBorderStyle,
-};
+} as const;
 const emptyBorder = {
     diagonal: {
         up: true,
@@ -34,11 +37,11 @@ const emptyBorder = {
     left: emptyCellBorderStyle,
     bottom: emptyCellBorderStyle,
     right: emptyCellBorderStyle,
-};
+} as const;
 const alignment = {
     vertical: 'middle',
     horizontal: 'center',
-};
+} as const;
 
 export class XlsxPrinter implements Printer {
     name(): string {
@@ -55,31 +58,24 @@ export class XlsxPrinter implements Printer {
         const width =
             project.boardConfiguration.nbBoardWidth *
             project.boardConfiguration.board.nbBeadPerRow;
+        const paletteEntriesByColor = createPaletteEntryColorMap(
+            project.paletteConfiguration.palettes,
+            'rgb'
+        );
 
         for (let y = 0; y < height; y++) {
             const row = worksheet.getRow(y + 1);
             for (let x = 0; x < width; x++) {
                 const cell = row.getCell(x + 1);
-                const color = new Color(
-                    reducedColor[y * width * 4 + x * 4],
-                    reducedColor[y * width * 4 + x * 4 + 1],
-                    reducedColor[y * width * 4 + x * 4 + 2],
-                    reducedColor[y * width * 4 + x * 4 + 3]
-                );
-
-                const paletteEntry: PaletteEntry = _.find(
-                    _.flatten(
-                        project.paletteConfiguration.palettes.map(
-                            (p) => p.entries
-                        )
-                    ),
-                    (entry) => {
-                        return (
-                            entry.color.r === color.r &&
-                            entry.color.g === color.g &&
-                            entry.color.b === color.b
-                        );
-                    }
+                const colorIndex = (y * width + x) * 4;
+                const paletteEntry = paletteEntriesByColor.get(
+                    getPaletteEntryColorKey(
+                        reducedColor[colorIndex],
+                        reducedColor[colorIndex + 1],
+                        reducedColor[colorIndex + 2],
+                        reducedColor[colorIndex + 3],
+                        'rgb'
+                    )
                 );
                 if (paletteEntry) {
                     const fg = `FF${ColorToHex(
@@ -155,6 +151,9 @@ export class XlsxPrinter implements Printer {
 
     usage(workbook: Excel.Workbook, usage: Map<string, number>, project: Project) {
         const worksheet = workbook.addWorksheet('Inventory');
+        const paletteEntriesByRef = createPaletteEntryRefMap(
+            project.paletteConfiguration.palettes
+        );
 
         let y = 0;
         const refIdx = 1;
@@ -165,8 +164,8 @@ export class XlsxPrinter implements Printer {
             .sort(([, v1], [, v2]) => v2 - v1)
             .forEach(([k, v]) => {
                 const row = worksheet.getRow(y + 1);
-                const entry = getPaletteEntryByColorRef(
-                    project.paletteConfiguration.palettes,
+                const entry = getPaletteEntryFromRefMap(
+                    paletteEntriesByRef,
                     k
                 );
                 const fg = `FF${ColorToHex(foreground(entry.color)).substring(
@@ -184,7 +183,7 @@ export class XlsxPrinter implements Printer {
                     fgColor: {
                         argb: bg,
                     },
-                };
+                } as const;
 
                 row.getCell(refIdx).value = entry.ref;
                 row.getCell(refIdx).font = font;

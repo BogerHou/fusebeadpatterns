@@ -3,9 +3,14 @@ import * as _ from 'lodash';
 
 import { Printer } from '../printer';
 import { Project } from '../../model/project/project.model';
-import { PaletteEntry } from '../../model/palette/palette.model';
 import { Color } from '../../model/color/color.model';
-import { foreground, getPaletteEntryByColorRef } from '../../utils/utils';
+import {
+    createPaletteEntryColorMap,
+    createPaletteEntryRefMap,
+    foreground,
+    getPaletteEntryColorKey,
+    getPaletteEntryFromRefMap,
+} from '../../utils/utils';
 
 import { defsStyle } from './MonoFont';
 
@@ -90,6 +95,13 @@ export class SvgPrinter implements Printer {
         const inventoryHeight =
             usage.size * (inventoryTabHeight + inventoryTabMargin) +
             inventoryTabMargin;
+        const paletteEntriesByColor = createPaletteEntryColorMap(
+            project.paletteConfiguration.palettes,
+            'rgb'
+        );
+        const paletteEntriesByRef = createPaletteEntryRefMap(
+            project.paletteConfiguration.palettes
+        );
 
         // @ts-expect-error canvas2svg exposes C2S globally at runtime.
         const ctx = new C2S(
@@ -124,8 +136,8 @@ export class SvgPrinter implements Printer {
         Array.from(usage.entries())
             .sort(([, v1], [, v2]) => v2 - v1)
             .forEach(([k, v]) => {
-                const entry = getPaletteEntryByColorRef(
-                    project.paletteConfiguration.palettes,
+                const entry = getPaletteEntryFromRefMap(
+                    paletteEntriesByRef,
                     k
                 );
                 const bg = entry.color;
@@ -316,19 +328,14 @@ export class SvgPrinter implements Printer {
                         container.height
                     );
 
-                    const paletteEntry: PaletteEntry = _.find(
-                        _.flatten(
-                            project.paletteConfiguration.palettes.map(
-                                (p) => p.entries
-                            )
-                        ),
-                        (entry) => {
-                            return (
-                                entry.color.r === color.r &&
-                                entry.color.g === color.g &&
-                                entry.color.b === color.b
-                            );
-                        }
+                    const paletteEntry = paletteEntriesByColor.get(
+                        getPaletteEntryColorKey(
+                            color.r,
+                            color.g,
+                            color.b,
+                            color.a,
+                            'rgb'
+                        )
                     );
                     if (paletteEntry) {
                         const bg = paletteEntry.color;
