@@ -33,9 +33,13 @@ import {
     createEditorDraft,
     decodeEditorPatternDraft,
     encodeEditorPatternDraft,
+    EDITOR_PROJECT_FILE_EXTENSION,
+    EditorDraft,
     EditorPatternDraft,
     loadEditorDraft,
+    parseEditorProject,
     saveEditorDraft,
+    serializeEditorProject,
 } from '@/lib/editor/draft';
 import {
     clampNumber,
@@ -89,8 +93,13 @@ const DEFAULT_MATCHING_ID = 'delta_e_cie2000';
 const DEFAULT_DITHERING_ID = 'none';
 const DEFAULT_EXPORT_ID = 'pdf';
 const MAX_BOARD_COUNT = 20;
+const LARGE_PATTERN_WARNING_BEAD_COUNT = 50_000;
+const LARGE_PATTERN_CONFIRM_BEAD_COUNT = 120_000;
+const EXPORT_ERROR_RECOVERY_ADVICE =
+    ' Try a smaller board count, choose another export format, or disable symbols for printable exports.';
 const IMAGE_UPLOAD_INPUT_ID = 'image-upload-input';
 const EDITOR_EMPTY_UPLOAD_INPUT_ID = 'editor-empty-upload-input';
+const PROJECT_UPLOAD_INPUT_ID = 'project-upload-input';
 const EDITOR_PRIMARY_PALETTE_ID = 'editor-primary-palette';
 const EDITOR_BOARD_ID = 'editor-board-id';
 const EDITOR_BOARD_WIDTH_ID = 'editor-board-width';
@@ -219,8 +228,70 @@ function parseBoardCount(value: string): number {
     return clampNumber(Number.parseInt(value, 10) || 1, 1, MAX_BOARD_COUNT);
 }
 
+function getPatternBeadCount(
+    boardOption: ReturnType<typeof getBoardOption> | null | undefined,
+    boardWidth: number,
+    boardHeight: number
+): number {
+    if (!boardOption) {
+        return 0;
+    }
+
+    return (
+        boardWidth *
+        boardOption.beadsPerRow *
+        boardHeight *
+        boardOption.beadsPerRow
+    );
+}
+
+function formatBeadCount(beadCount: number): string {
+    return new Intl.NumberFormat('en-US').format(beadCount);
+}
+
+function getLargePatternWarning(beadCount: number): string | null {
+    if (beadCount < LARGE_PATTERN_WARNING_BEAD_COUNT) {
+        return null;
+    }
+
+    return `${formatBeadCount(beadCount)} bead positions. Large patterns can process slowly; reduce boards or turn off dithering if it feels stuck.`;
+}
+
+function confirmLargePatternAction(beadCount: number): boolean {
+    if (beadCount < LARGE_PATTERN_CONFIRM_BEAD_COUNT) {
+        return true;
+    }
+
+    return window.confirm(
+        `This setup creates ${formatBeadCount(beadCount)} bead positions and may make the browser slow or temporarily unresponsive.\n\nContinue? For faster results, reduce boards or turn off dithering.`
+    );
+}
+
+function getLargePatternGenerationKey(
+    fileName: string,
+    imageSrc: string,
+    boardId: string,
+    boardWidth: number,
+    boardHeight: number,
+    ditheringId: string
+): string {
+    return `${fileName}:${imageSrc.length}:${boardId}:${boardWidth}:${boardHeight}:${ditheringId}`;
+}
+
 function getControlToken(value: string): string {
     return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function getProjectDownloadFileName(fileName: string): string {
+    const safeBaseName =
+        fileName
+            .trim()
+            .replace(/[<>:"/\\|?*\u0000-\u001F]+/g, '-')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'bead-pattern';
+
+    return `${safeBaseName}${EDITOR_PROJECT_FILE_EXTENSION}`;
 }
 
 export default function Editor({ mode = 'home' }: EditorProps) {
@@ -267,6 +338,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [isPaletteManagerOpen, setIsPaletteManagerOpen] = useState(false);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+    const [isEditorMobileSetupOpen, setIsEditorMobileSetupOpen] =
+        useState(false);
     const [isEditorDraftReady, setIsEditorDraftReady] = useState(
         !isEditorPage
     );
@@ -277,6 +350,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     >(null);
     const [colorPickerPaletteId, setColorPickerPaletteId] =
         useState(DEFAULT_PALETTE_ID);
+    const [colorPickerQuery, setColorPickerQuery] = useState('');
     const [allBrandPalettes, setAllBrandPalettes] = useState<
         Record<string, Palette>
     >({});
@@ -292,6 +366,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const editorPreviewCanvasRef = useRef<HTMLCanvasElement>(null);
     const previewViewportRef = useRef<HTMLDivElement>(null);
+    const projectFileInputRef = useRef<HTMLInputElement>(null);
     const currentProjectRef = useRef<Project | null>(null);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
     const paletteHistoryRef = useRef<Palette[][]>([]);
@@ -303,6 +378,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const editorColorSelectionModeRef = useRef<'auto' | 'manual'>('auto');
     const builtBlankPatternRevisionRef = useRef(-1);
     const skipNextPaletteRebuildRef = useRef(false);
+    const confirmedLargeGenerationKeyRef = useRef<string | null>(null);
     const panStateRef = useRef<{
         pointerId: number;
         x: number;
@@ -322,6 +398,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const colorsUsed = beadsUsage.size;
     const primaryPaletteId = selectedPaletteIds[0] ?? DEFAULT_PALETTE_ID;
     const hasEditablePattern = Boolean(previewDataUrl);
+    const canSaveProject = hasEditablePattern && !processing;
     const canExportPattern =
         hasEditablePattern &&
         totalBeads > 0 &&
@@ -394,6 +471,26 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const pendingPatternSize = pendingSelectedBoard
         ? `${pendingBoardWidth * pendingSelectedBoard.beadsPerRow} x ${pendingBoardHeight * pendingSelectedBoard.beadsPerRow}`
         : 'Unknown';
+    const currentPatternBeadCount = getPatternBeadCount(
+        selectedBoard,
+        boardWidth,
+        boardHeight
+    );
+    const pendingPatternBeadCount = getPatternBeadCount(
+        pendingSelectedBoard,
+        pendingBoardWidth,
+        pendingBoardHeight
+    );
+    const currentLargePatternWarning = getLargePatternWarning(
+        currentPatternBeadCount
+    );
+    const pendingLargePatternWarning = getLargePatternWarning(
+        pendingPatternBeadCount
+    );
+    const processingHint =
+        currentPatternBeadCount >= LARGE_PATTERN_WARNING_BEAD_COUNT
+            ? 'Large pattern in progress. Reducing boards or turning off dithering can help.'
+            : 'Building preview and bead counts.';
     const pendingBoardCountStatus = `${pendingBoardWidth} x ${pendingBoardHeight} board${
         pendingBoardWidth * pendingBoardHeight > 1 ? 's' : ''
     }`;
@@ -452,6 +549,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const loadedAllBrandPaletteCount = Object.keys(allBrandPalettes).length;
     const currentColorPickerPalette =
         allBrandPalettes[colorPickerPaletteId] ?? null;
+    const normalizedColorPickerQuery = colorPickerQuery.trim().toLowerCase();
+    const currentColorPickerEntries = currentColorPickerPalette
+        ? currentColorPickerPalette.entries.filter((entry) => {
+              if (!normalizedColorPickerQuery) {
+                  return true;
+              }
+
+              return `${entry.name} ${entry.ref}`
+                  .toLowerCase()
+                  .includes(normalizedColorPickerQuery);
+          })
+        : [];
     const showPreviewRulers = isEditorPage && hasEditablePattern;
     const activeRulerSize = showPreviewRulers
         ? PREVIEW_RULER_SIZE
@@ -588,41 +697,65 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         });
     }, [syncProjectPalettes]);
 
+    const createCurrentEditorDraft = useCallback(() => {
+        return createEditorDraft({
+            sourceMode,
+            imageSrc,
+            fileName,
+            selectedPaletteIds,
+            activePalettes,
+            boardId,
+            boardWidth,
+            boardHeight,
+            matchingId,
+            ditheringId,
+            useSymbols,
+            exportFormatId,
+            imageAdjustments,
+            rendererSettings,
+            showReference,
+            referenceOpacity,
+            previewZoom,
+            editedPattern: getCurrentEditedPatternDraft(),
+        });
+    }, [
+        activePalettes,
+        boardHeight,
+        boardId,
+        boardWidth,
+        ditheringId,
+        exportFormatId,
+        fileName,
+        getCurrentEditedPatternDraft,
+        imageAdjustments,
+        imageSrc,
+        matchingId,
+        previewZoom,
+        referenceOpacity,
+        rendererSettings,
+        selectedPaletteIds,
+        showReference,
+        sourceMode,
+        useSymbols,
+    ]);
+
     const persistEditorDraft = () => {
-        saveEditorDraft(
-            createEditorDraft({
-                sourceMode,
-                imageSrc,
-                fileName,
-                selectedPaletteIds,
-                activePalettes,
-                boardId,
-                boardWidth,
-                boardHeight,
-                matchingId,
-                ditheringId,
-                useSymbols,
-                exportFormatId,
-                imageAdjustments,
-                rendererSettings,
-                showReference,
-                referenceOpacity,
-                previewZoom,
-                editedPattern: getCurrentEditedPatternDraft(),
-            })
-        );
+        saveEditorDraft(createCurrentEditorDraft());
     };
 
-    useEffect(() => {
-        if (!isEditorPage) {
-            return;
-        }
-
-        const draft = loadEditorDraft();
-
-        if (draft) {
+    const restoreEditorDraft = useCallback(
+        (draft: EditorDraft) => {
             const nextSourceMode =
                 draft.sourceMode ?? (draft.imageSrc ? 'image' : 'image');
+
+            editorColorSelectionModeRef.current = 'auto';
+            activeEditorColorValueRef.current = null;
+            builtBlankPatternRevisionRef.current = -1;
+            currentProjectRef.current = null;
+            reducedColorRef.current = null;
+            paletteHistoryRef.current = [];
+            patternUndoStackRef.current = [];
+            patternRedoStackRef.current = [];
 
             setSourceMode(nextSourceMode);
             setImageSrc(draft.imageSrc);
@@ -656,15 +789,41 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             setColorPickerPaletteId(
                 draft.selectedPaletteIds[0] ?? DEFAULT_PALETTE_ID
             );
+            setErrorMessage(null);
+            setBeadsUsage(new Map());
+            setPreviewDataUrl(null);
+            setPreviewSize({ width: 1, height: 1 });
+            setAutomaticEditorColorRef(null);
+            setActiveEditorTool('bead');
+            setIsAdvancedOpen(false);
+            setIsPaletteManagerOpen(false);
+            setIsColorPickerOpen(false);
+            setIsExportDialogOpen(false);
+            setIsEditorMobileSetupOpen(false);
             pendingEditedPatternRef.current = draft.editedPattern ?? null;
+            setManualPatternRevision(0);
+            setHistoryRevision((previous) => previous + 1);
 
             if (nextSourceMode === 'blank') {
                 setBlankPatternRevision((previous) => previous + 1);
             }
+        },
+        [setAutomaticEditorColorRef]
+    );
+
+    useEffect(() => {
+        if (!isEditorPage) {
+            return;
+        }
+
+        const draft = loadEditorDraft();
+
+        if (draft) {
+            restoreEditorDraft(draft);
         }
 
         setIsEditorDraftReady(true);
-    }, [isEditorPage]);
+    }, [isEditorPage, restoreEditorDraft]);
 
     useEffect(() => {
         activeEditorColorValueRef.current = activeEditorColorRef;
@@ -736,52 +895,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
-        saveEditorDraft(
-            createEditorDraft({
-                sourceMode,
-                imageSrc,
-                fileName,
-                selectedPaletteIds,
-                activePalettes,
-                boardId,
-                boardWidth,
-                boardHeight,
-                matchingId,
-                ditheringId,
-                useSymbols,
-                exportFormatId,
-                imageAdjustments,
-                rendererSettings,
-                showReference,
-                referenceOpacity,
-                previewZoom,
-                editedPattern: getCurrentEditedPatternDraft(),
-            })
-        );
+        saveEditorDraft(createCurrentEditorDraft());
     }, [
-        activePalettes,
-        boardHeight,
-        boardId,
-        boardWidth,
-        ditheringId,
-        exportFormatId,
-        fileName,
-        getCurrentEditedPatternDraft,
+        createCurrentEditorDraft,
         historyRevision,
-        imageAdjustments,
-        imageSrc,
         isEditorDraftReady,
-        matchingId,
         manualPatternRevision,
-        previewSize.height,
-        previewSize.width,
-        referenceOpacity,
-        rendererSettings,
-        selectedPaletteIds,
-        showReference,
-        sourceMode,
-        useSymbols,
-        previewZoom,
     ]);
 
     useEffect(() => {
@@ -948,6 +1067,41 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         let isCancelled = false;
 
         async function processImage(): Promise<void> {
+            const plannedBeadCount = getPatternBeadCount(
+                selectedBoard,
+                boardWidth,
+                boardHeight
+            );
+            const largeGenerationKey = getLargePatternGenerationKey(
+                fileName,
+                imageSrc,
+                boardId,
+                boardWidth,
+                boardHeight,
+                ditheringId
+            );
+
+            if (
+                plannedBeadCount >= LARGE_PATTERN_CONFIRM_BEAD_COUNT &&
+                confirmedLargeGenerationKeyRef.current !== largeGenerationKey
+            ) {
+                if (!confirmLargePatternAction(plannedBeadCount)) {
+                    setErrorMessage(
+                        'Large pattern generation cancelled. Reduce boards or turn off dithering for a faster build.'
+                    );
+                    setBeadsUsage(new Map());
+                    setPreviewDataUrl(null);
+                    setPreviewSize({ width: 1, height: 1 });
+                    currentProjectRef.current = null;
+                    reducedColorRef.current = null;
+                    patternUndoStackRef.current = [];
+                    patternRedoStackRef.current = [];
+                    return;
+                }
+
+                confirmedLargeGenerationKeyRef.current = largeGenerationKey;
+            }
+
             setProcessing(true);
             setErrorMessage(null);
 
@@ -1337,6 +1491,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleCreateBlankPattern = () => {
+        if (!confirmLargePatternAction(currentPatternBeadCount)) {
+            setErrorMessage(
+                'Large blank pattern creation cancelled. Reduce boards for a faster setup.'
+            );
+            return;
+        }
+
         editorColorSelectionModeRef.current = 'auto';
         setSourceMode('blank');
         setImageSrc(null);
@@ -1363,6 +1524,19 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        const nextPatternBeadCount = getPatternBeadCount(
+            boardOption,
+            pendingBoardWidth,
+            pendingBoardHeight
+        );
+
+        if (!confirmLargePatternAction(nextPatternBeadCount)) {
+            setErrorMessage(
+                'Large pattern update cancelled. Reduce boards or turn off dithering for a faster build.'
+            );
+            return;
+        }
+
         if (
             hasManualPatternChanges &&
             !window.confirm(
@@ -1370,6 +1544,20 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             )
         ) {
             return;
+        }
+
+        if (
+            imageSrc &&
+            nextPatternBeadCount >= LARGE_PATTERN_CONFIRM_BEAD_COUNT
+        ) {
+            confirmedLargeGenerationKeyRef.current = getLargePatternGenerationKey(
+                fileName,
+                imageSrc,
+                pendingBoardId,
+                pendingBoardWidth,
+                pendingBoardHeight,
+                ditheringId
+            );
         }
 
         setProcessing(true);
@@ -1441,6 +1629,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
     const openColorPicker = () => {
         setColorPickerPaletteId(activeEditorColorPaletteId);
+        setColorPickerQuery('');
         setIsColorPickerOpen(true);
     };
 
@@ -1455,6 +1644,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
 
         setIsColorPickerOpen(false);
+        setColorPickerQuery('');
         setErrorMessage(null);
 
         if (selectedPaletteIds.includes(paletteId)) {
@@ -1851,6 +2041,57 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         router.push('/editor');
     };
 
+    const handleSaveProject = () => {
+        const draft = createCurrentEditorDraft();
+        const projectJson = serializeEditorProject(draft);
+        const projectBlob = new Blob([projectJson], {
+            type: 'application/json',
+        });
+        const projectUrl = URL.createObjectURL(projectBlob);
+        const link = document.createElement('a');
+
+        link.href = projectUrl;
+        link.download = getProjectDownloadFileName(fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(projectUrl);
+
+        saveEditorDraft(draft);
+        setErrorMessage(null);
+    };
+
+    const handleOpenProjectPicker = () => {
+        projectFileInputRef.current?.click();
+    };
+
+    const handleProjectFileUpload = async (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = event.currentTarget.files?.[0] ?? null;
+        event.currentTarget.value = '';
+
+        if (!file) {
+            return;
+        }
+
+        try {
+            const draft = parseEditorProject(await file.text());
+
+            if (!draft) {
+                setErrorMessage(
+                    'Could not open project file. Choose a bead-pattern project JSON file.'
+                );
+                return;
+            }
+
+            restoreEditorDraft(draft);
+            saveEditorDraft(draft);
+        } catch {
+            setErrorMessage('Could not read project file.');
+        }
+    };
+
     const handleGridExport = () => {
         if (!canvasRef.current) {
             return;
@@ -1925,7 +2166,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 error instanceof Error
                     ? error.message
                     : 'Unexpected export error.';
-            setErrorMessage(nextMessage);
+            setErrorMessage(`${nextMessage}${EXPORT_ERROR_RECOVERY_ADVICE}`);
         } finally {
             setExportingId(null);
         }
@@ -2016,33 +2257,25 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isEditorPage ? (
                 isEditorDraftReady ? (
-                <div className="grid h-full min-h-0 grid-cols-1 grid-rows-[52px_minmax(0,1fr)] overflow-hidden border-4 border-brutal-black bg-brutal-bg text-brutal-black xl:grid-cols-[232px_minmax(0,1fr)_312px]">
-                    <div className="col-span-full flex min-w-0 items-stretch justify-between border-b-4 border-brutal-black bg-brand-cyan">
-                        <div className="flex min-w-0 flex-1 items-center gap-2 px-3 sm:gap-3">
+                <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[48px_minmax(0,1fr)] overflow-hidden border-4 border-brutal-black bg-brutal-bg text-brutal-black xl:grid-cols-[232px_minmax(0,1fr)_312px]">
+                    <div className="col-span-full flex min-w-0 items-center justify-between border-b-4 border-brutal-black bg-white">
+                        <div className="flex min-w-0 flex-1 items-center gap-3 px-3">
                             <Link
                                 href="/"
                                 aria-label="Back to generator"
-                                className="flex h-8 w-8 shrink-0 items-center justify-center border-4 border-brutal-black bg-white font-vt323 text-3xl leading-none text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow"
+                                className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-brutal-black bg-brand-cyan font-vt323 text-3xl leading-none text-brutal-black hover:bg-brand-yellow"
                                 title="Back to generator"
                             >
                                 &lt;
                             </Link>
-                            <div className="pointer-events-none flex min-w-0 items-center gap-3 truncate">
-                                <span className="max-w-[130px] truncate border-4 border-brutal-black bg-brand-yellow px-3 py-1 font-vt323 text-2xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a] sm:max-w-none sm:text-3xl">
-                                    Bead Pattern Editor
-                                </span>
-                                <span className="hidden text-[10px] font-black uppercase tracking-[0.16em] text-brutal-black/70 2xl:inline">
-                                    Manual cleanup workspace
-                                </span>
-                            </div>
+                            <h1 className="truncate font-vt323 text-3xl uppercase leading-none">
+                                Editor
+                            </h1>
                         </div>
                         <div className="flex h-full shrink-0 items-center">
                             {hasEditablePattern ? (
                                 <>
-                                    <div className="hidden h-full items-center gap-1 border-l-4 border-brutal-black bg-white px-3 sm:flex">
-                                        <span className="mr-1 hidden text-[10px] font-black uppercase tracking-[0.12em] text-brutal-black/65 2xl:inline">
-                                            Zoom
-                                        </span>
+                                    <div className="hidden h-full items-center gap-1 border-l-2 border-brutal-black/20 px-2 md:flex">
                                         <button
                                             type="button"
                                             onClick={() =>
@@ -2051,7 +2284,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
-                                            className="flex h-7 min-w-7 items-center justify-center border-2 border-brutal-black bg-white px-2 text-sm font-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300 disabled:shadow-none"
+                                            className="flex h-7 min-w-7 items-center justify-center border-2 border-brutal-black bg-white px-2 text-sm font-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
                                             aria-label="Zoom out"
                                         >
                                             -
@@ -2059,7 +2292,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         <button
                                             type="button"
                                             onClick={() => setClampedPreviewZoom(1)}
-                                            className="h-7 min-w-12 border-2 border-brutal-black bg-white px-2 text-[11px] font-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow"
+                                            className="h-7 min-w-12 border-2 border-brutal-black bg-white px-2 text-[11px] font-black hover:bg-brand-yellow"
                                             aria-label="Reset zoom"
                                         >
                                             {Math.round(previewZoom * 100)}%
@@ -2072,7 +2305,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
-                                            className="flex h-7 min-w-7 items-center justify-center border-2 border-brutal-black bg-white px-2 text-sm font-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300 disabled:shadow-none"
+                                            className="flex h-7 min-w-7 items-center justify-center border-2 border-brutal-black bg-white px-2 text-sm font-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
                                             aria-label="Zoom in"
                                         >
                                             +
@@ -2082,7 +2315,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         type="button"
                                         onClick={handleUndoPatternEdit}
                                         disabled={!canUndoPattern}
-                                        className="h-full border-l-4 border-brutal-black bg-white px-3 text-xs font-black uppercase tracking-[0.12em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:px-4"
+                                        className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                                     >
                                         Undo
                                     </button>
@@ -2090,12 +2323,32 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         type="button"
                                         onClick={handleRedoPatternEdit}
                                         disabled={!canRedoPattern}
-                                        className="h-full border-l-4 border-brutal-black bg-white px-3 text-xs font-black uppercase tracking-[0.12em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:px-4"
+                                        className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                                     >
                                         Redo
                                     </button>
                                 </>
                             ) : null}
+                            <button
+                                type="button"
+                                onClick={handleOpenProjectPicker}
+                                className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-cyan sm:block"
+                            >
+                                Open
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveProject}
+                                disabled={!canSaveProject}
+                                title={
+                                    canSaveProject
+                                        ? 'Save project JSON'
+                                        : 'Create or open a pattern before saving'
+                                }
+                                className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
+                            >
+                                Save
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => setIsExportDialogOpen(true)}
@@ -2105,12 +2358,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         ? 'Export pattern'
                                         : 'Create or import a pattern before exporting'
                                 }
-                                className="h-full border-l-4 border-brutal-black bg-brand-purple px-4 text-xs font-black uppercase tracking-[0.12em] text-brutal-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+                                className="h-full border-l-4 border-brutal-black bg-brand-purple px-4 text-xs font-black uppercase tracking-[0.1em] text-brutal-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
                             >
-                                <span className="hidden sm:inline">
-                                    Export Pattern
-                                </span>
-                                <span className="sm:hidden">Export</span>
+                                Export
                             </button>
                         </div>
                     </div>
@@ -2238,8 +2488,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     <main className="relative min-h-0 overflow-hidden bg-brutal-bg xl:col-start-2">
                         {processing && (
                             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-                                <span className="animate-pulse border-4 border-brutal-black bg-brand-yellow p-4 font-vt323 text-3xl text-black shadow-brutal">
-                                    PROCESSING...
+                                <span className="max-w-[280px] animate-pulse border-4 border-brutal-black bg-brand-yellow p-4 text-center font-vt323 text-3xl leading-none text-black shadow-brutal">
+                                    <span className="block">PROCESSING...</span>
+                                    <span className="mt-2 block font-sans text-[11px] font-black uppercase leading-4 tracking-[0.08em]">
+                                        {processingHint}
+                                    </span>
                                 </span>
                             </div>
                         )}
@@ -2250,7 +2503,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             onPointerMove={handlePreviewPanPointerMove}
                             onPointerUp={handlePreviewPanPointerUp}
                             onPointerCancel={handlePreviewPanPointerUp}
-                            className={`absolute inset-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                            className={`absolute inset-x-0 top-0 bottom-[108px] overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] xl:bottom-0 [&::-webkit-scrollbar]:hidden ${
                                 activeEditorTool === 'pan'
                                     ? 'cursor-grab active:cursor-grabbing'
                                     : ''
@@ -2290,6 +2543,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 className="border-4 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-cyan"
                                             >
                                                 Blank Pattern
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleOpenProjectPicker}
+                                                className="border-4 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-purple"
+                                            >
+                                                Open Project
                                             </button>
                                         </div>
                                     </div>
@@ -2420,6 +2680,234 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </div>
                         </div>
                     </main>
+
+                    {isEditorMobileSetupOpen && (
+                        <div className="absolute inset-x-2 bottom-[112px] z-30 max-h-[68vh] overflow-y-auto border-4 border-brutal-black bg-white p-3 shadow-brutal xl:hidden">
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                                <div className="font-vt323 text-3xl uppercase leading-none">
+                                    Setup
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setIsEditorMobileSetupOpen(false)
+                                    }
+                                    className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none hover:bg-brand-yellow"
+                                    aria-label="Close setup"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <label className="block">
+                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                        Color Brand
+                                    </span>
+                                    <select
+                                        value={pendingPrimaryPaletteId}
+                                        onChange={(event) =>
+                                            setPendingPrimaryPaletteId(
+                                                event.target.value
+                                            )
+                                        }
+                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                    >
+                                        {PALETTE_OPTIONS.map((option) => (
+                                            <option
+                                                key={option.id}
+                                                value={option.id}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                        Pegboard
+                                    </span>
+                                    <select
+                                        value={pendingBoardId}
+                                        onChange={(event) =>
+                                            setPendingBoardId(
+                                                event.target
+                                                    .value as BoardOptionId
+                                            )
+                                        }
+                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                    >
+                                        {BOARD_OPTIONS.map((option) => (
+                                            <option
+                                                key={option.id}
+                                                value={option.id}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                        Boards Wide
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={MAX_BOARD_COUNT}
+                                        value={pendingBoardWidth}
+                                        onChange={(event) =>
+                                            setPendingBoardWidth(
+                                                parseBoardCount(
+                                                    event.target.value
+                                                )
+                                            )
+                                        }
+                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                        Boards Tall
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={MAX_BOARD_COUNT}
+                                        value={pendingBoardHeight}
+                                        onChange={(event) =>
+                                            setPendingBoardHeight(
+                                                parseBoardCount(
+                                                    event.target.value
+                                                )
+                                            )
+                                        }
+                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                    />
+                                </label>
+                            </div>
+                            {hasPendingPatternSettings ? (
+                                <div className="mt-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                    {pendingPaletteLabel} · {pendingPatternSize}{' '}
+                                    · {pendingBoardCountStatus}
+                                </div>
+                            ) : null}
+                            {pendingLargePatternWarning ? (
+                                <div className="mt-3 border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                    {pendingLargePatternWarning}
+                                </div>
+                            ) : null}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    void handleApplyPatternSettings()
+                                }
+                                disabled={!hasPendingPatternSettings || processing}
+                                className="mt-3 w-full border-4 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+                            >
+                                Apply Changes
+                            </button>
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleOpenProjectPicker}
+                                    className="border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-cyan"
+                                >
+                                    Open Project
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveProject}
+                                    disabled={!canSaveProject}
+                                    className="border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                >
+                                    Save Project
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="absolute inset-x-0 bottom-0 z-30 border-t-4 border-brutal-black bg-white p-2 shadow-[0_-3px_0_0_#1a1a1a] xl:hidden">
+                        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            {EDITOR_TOOLS.map((tool) => (
+                                <button
+                                    key={tool.id}
+                                    type="button"
+                                    aria-label={tool.label}
+                                    aria-pressed={activeEditorTool === tool.id}
+                                    title={`${tool.label} (${tool.shortcut}) • ${tool.description}`}
+                                    onClick={() =>
+                                        setActiveEditorTool(tool.id)
+                                    }
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 transition-colors ${
+                                        activeEditorTool === tool.id
+                                            ? 'border-brutal-black bg-brand-yellow text-brutal-black shadow-[2px_2px_0_0_#1a1a1a]'
+                                            : 'border-brutal-black/25 bg-white text-gray-600 hover:border-brutal-black hover:bg-brand-cyan hover:text-brutal-black'
+                                    }`}
+                                >
+                                    <tool.icon
+                                        className="h-[18px] w-[18px]"
+                                        strokeWidth={2.1}
+                                    />
+                                </button>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={openColorPicker}
+                                disabled={enabledColorCount === 0}
+                                className="flex h-10 min-w-[84px] shrink-0 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                            >
+                                <span
+                                    className="h-4 w-4 shrink-0 rounded-full border-2 border-brutal-black"
+                                    style={{
+                                        backgroundColor: activeEditorColorEntry
+                                            ? `rgb(${activeEditorColorEntry.color.r} ${activeEditorColorEntry.color.g} ${activeEditorColorEntry.color.b})`
+                                            : '#ffffff',
+                                    }}
+                                />
+                                Color
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5 pt-1">
+                            <button
+                                type="button"
+                                onClick={handleUndoPatternEdit}
+                                disabled={!canUndoPattern}
+                                className="h-8 border-2 border-brutal-black bg-white text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                            >
+                                Undo
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleRedoPatternEdit}
+                                disabled={!canRedoPattern}
+                                className="h-8 border-2 border-brutal-black bg-white text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                            >
+                                Redo
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setIsEditorMobileSetupOpen((open) => !open)
+                                }
+                                aria-expanded={isEditorMobileSetupOpen}
+                                className={`h-8 border-2 border-brutal-black text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow ${
+                                    isEditorMobileSetupOpen
+                                        ? 'bg-brand-cyan'
+                                        : 'bg-white'
+                                }`}
+                            >
+                                Setup
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsExportDialogOpen(true)}
+                                disabled={!canExportPattern}
+                                className="h-8 border-2 border-brutal-black bg-brand-purple text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500"
+                            >
+                                Export
+                            </button>
+                        </div>
+                    </div>
 
                     <aside className="hidden min-h-0 overflow-y-auto border-l-4 border-brutal-black bg-white xl:col-start-3 xl:block">
                         <div className="border-b-4 border-brutal-black p-4">
@@ -2654,6 +3142,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     · {pendingBoardCountStatus}
                                 </div>
                             ) : null}
+                            {pendingLargePatternWarning ? (
+                                <div className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                    {pendingLargePatternWarning}
+                                </div>
+                            ) : null}
                             <button
                                 type="button"
                                 onClick={() => void handleApplyPatternSettings()}
@@ -2826,6 +3319,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-brutal-black/70">
                                     {compactPatternStatus}
                                 </div>
+                                {currentLargePatternWarning ? (
+                                    <div className="border-2 border-brutal-black bg-brand-yellow px-2 py-1 text-[10px] font-bold uppercase leading-4 tracking-[0.12em] text-brutal-black">
+                                        {currentLargePatternWarning}
+                                    </div>
+                                ) : null}
                             </EditorSection>
 
                             <div className="grid grid-cols-3 gap-2 border-t-4 border-brutal-black/15 pt-2">
@@ -2853,6 +3351,25 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     disabled={!canExportPattern}
                                 >
                                     Export
+                                </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="w-full px-2 py-1 text-base"
+                                    onClick={handleOpenProjectPicker}
+                                >
+                                    Open Project
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="w-full px-2 py-1 text-base disabled:cursor-not-allowed disabled:opacity-50"
+                                    onClick={handleSaveProject}
+                                    disabled={!canSaveProject}
+                                >
+                                    Save Project
                                 </Button>
                             </div>
                         </div>
@@ -3248,8 +3765,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         <div className="relative min-h-[280px] flex-1 overflow-hidden bg-white">
                             {processing && (
                                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-                                    <span className="animate-pulse border-4 border-brutal-black bg-brand-yellow p-4 font-vt323 text-3xl text-black shadow-brutal">
-                                        PROCESSING...
+                                    <span className="max-w-[280px] animate-pulse border-4 border-brutal-black bg-brand-yellow p-4 text-center font-vt323 text-3xl leading-none text-black shadow-brutal">
+                                        <span className="block">
+                                            PROCESSING...
+                                        </span>
+                                        <span className="mt-2 block font-sans text-[11px] font-black uppercase leading-4 tracking-[0.08em]">
+                                            {processingHint}
+                                        </span>
                                     </span>
                                 </div>
                             )}
@@ -3309,7 +3831,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     bottom: `${PREVIEW_INFO_BAR_HEIGHT}px`,
                                 }}
                             >
-                                {!imageSrc && (
+                                {!previewDataUrl && (
                                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center text-gray-400">
                                         <div
                                             className="grid h-24 w-24 grid-cols-3 grid-rows-3 gap-1 opacity-45"
@@ -3335,7 +3857,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         minHeight: `${previewStageHeight}px`,
                                     }}
                                 >
-                                    {previewDataUrl && imageSrc && (
+                                    {previewDataUrl && (
                                         <div
                                             className="relative"
                                             style={{
@@ -3449,34 +3971,37 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isColorPickerOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Select Color"
                 >
-                    <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden border-4 border-brutal-black bg-white shadow-brutal">
-                        <div className="flex items-center justify-between gap-4 border-b-4 border-brutal-black bg-brand-yellow px-5 py-4">
+                    <div className="flex max-h-[86vh] w-full max-w-4xl flex-col overflow-hidden border-2 border-brutal-black bg-white shadow-[3px_3px_0_0_#1a1a1a]">
+                        <div className="flex items-center justify-between gap-4 border-b-2 border-brutal-black bg-white px-4 py-3">
                             <div>
-                                <div className="font-vt323 text-4xl uppercase leading-none text-brutal-black">
+                                <div className="font-vt323 text-3xl uppercase leading-none text-brutal-black">
                                     Select Color
                                 </div>
-                                <div className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-brutal-black/70">
+                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-brutal-black/60">
                                     Pick a bead color from the loaded palettes
                                 </div>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setIsColorPickerOpen(false)}
-                                className="border-4 border-brutal-black bg-white px-3 py-1 font-vt323 text-3xl leading-none text-brutal-black shadow-brutal hover:bg-brand-cyan"
+                                onClick={() => {
+                                    setColorPickerQuery('');
+                                    setIsColorPickerOpen(false);
+                                }}
+                                className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none text-brutal-black hover:bg-brand-cyan"
                                 aria-label="Close color picker"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <div className="grid min-h-0 flex-1 md:grid-cols-[260px_minmax(0,1fr)]">
-                            <aside className="overflow-auto border-r-4 border-brutal-black bg-brutal-bg p-4">
-                                <div className="space-y-2.5">
+                        <div className="grid min-h-0 flex-1 md:grid-cols-[220px_minmax(0,1fr)]">
+                            <aside className="max-h-40 overflow-auto border-b-2 border-brutal-black bg-brutal-bg p-3 md:max-h-none md:border-b-0 md:border-r-2">
+                                <div className="space-y-2">
                                     {PALETTE_OPTIONS.map((option) => {
                                         const palette =
                                             allBrandPalettes[option.id];
@@ -3493,16 +4018,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         option.id
                                                     )
                                                 }
-                                                className={`flex w-full items-center justify-between border-2 px-3 py-2 text-left transition-colors ${
+                                                className={`flex w-full items-center justify-between border-2 px-2.5 py-1.5 text-left transition-colors ${
                                                     isActive
-                                                        ? 'border-brutal-black bg-brand-yellow text-brutal-black shadow-[2px_2px_0_0_#1a1a1a]'
+                                                        ? 'border-brutal-black bg-brand-yellow text-brutal-black'
                                                         : 'border-brutal-black/20 bg-white text-brutal-black hover:border-brutal-black hover:bg-brand-cyan'
                                                 }`}
                                             >
-                                                <span className="font-bold">
+                                                <span className="text-sm font-bold">
                                                     {option.label}
                                                 </span>
-                                                <span className="text-sm font-bold text-brutal-black/55">
+                                                <span className="text-xs font-bold text-brutal-black/55">
                                                     {palette?.entries.length ??
                                                         '...'}
                                                 </span>
@@ -3512,14 +4037,39 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                             </aside>
 
-                            <div className="overflow-auto p-6">
+                            <div className="min-h-0 overflow-auto p-4">
                                 {!currentColorPickerPalette ? (
-                                    <div className="flex h-full min-h-[320px] items-center justify-center font-vt323 text-3xl uppercase text-brutal-black/45">
+                                    <div className="flex h-full min-h-[260px] items-center justify-center font-vt323 text-3xl uppercase text-brutal-black/45">
                                         Loading colors...
                                     </div>
                                 ) : (
-                                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                                        {currentColorPickerPalette.entries.map(
+                                    <>
+                                        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                            <input
+                                                type="search"
+                                                value={colorPickerQuery}
+                                                onChange={(event) =>
+                                                    setColorPickerQuery(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                aria-label="Search bead colors"
+                                                placeholder="Search color or code"
+                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 text-sm font-bold focus:bg-brand-yellow focus:outline-none sm:max-w-xs"
+                                            />
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-brutal-black/55">
+                                                {currentColorPickerEntries.length}{' '}
+                                                colors
+                                            </div>
+                                        </div>
+                                        {currentColorPickerEntries.length ===
+                                        0 ? (
+                                            <div className="border-2 border-dashed border-brutal-black/25 bg-brutal-bg p-4 text-sm font-bold uppercase tracking-[0.1em] text-brutal-black/45">
+                                                No matching colors
+                                            </div>
+                                        ) : (
+                                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                                {currentColorPickerEntries.map(
                                             (entry) => {
                                                 const isActive =
                                                     activeEditorColorRef ===
@@ -3536,31 +4086,33 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 entry
                                                             )
                                                         }
-                                                        className={`flex items-center gap-4 border-2 px-4 py-3 text-left transition-colors ${
+                                                        className={`flex items-center gap-3 border-2 px-3 py-2 text-left transition-colors ${
                                                             isActive
-                                                                ? 'border-brutal-black bg-brand-cyan shadow-[2px_2px_0_0_#1a1a1a]'
+                                                                ? 'border-brutal-black bg-brand-cyan'
                                                                 : 'border-brutal-black/15 bg-white hover:border-brutal-black hover:bg-brand-yellow'
                                                         }`}
                                                     >
                                                         <span
-                                                            className="h-10 w-10 shrink-0 rounded-full border-2 border-brutal-black"
+                                                            className="h-8 w-8 shrink-0 rounded-full border-2 border-brutal-black"
                                                             style={{
                                                                 backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
                                                             }}
                                                         />
                                                         <span className="min-w-0">
-                                                            <span className="block truncate text-lg font-bold text-brutal-black">
+                                                            <span className="block truncate text-sm font-bold text-brutal-black">
                                                                 {entry.name}
                                                             </span>
-                                                            <span className="block text-sm font-semibold uppercase text-brutal-black/55">
+                                                            <span className="block text-xs font-semibold uppercase text-brutal-black/55">
                                                                 {entry.ref}
                                                             </span>
                                                         </span>
                                                     </button>
                                                 );
                                             }
+                                                )}
+                                            </div>
                                         )}
-                                    </div>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -3570,36 +4122,36 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isExportDialogOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Export"
                 >
-                    <div className="w-full max-w-xl border-4 border-brutal-black bg-brand-yellow shadow-brutal">
-                        <div className="flex items-center justify-between gap-4 border-b-4 border-brutal-black bg-white px-5 py-4">
+                    <div className="w-full max-w-lg border-2 border-brutal-black bg-white shadow-[3px_3px_0_0_#1a1a1a]">
+                        <div className="flex items-center justify-between gap-4 border-b-2 border-brutal-black bg-white px-4 py-3">
                             <div>
-                                <div className="font-vt323 text-4xl uppercase leading-none">
+                                <div className="font-vt323 text-3xl uppercase leading-none">
                                     Export
                                 </div>
-                                <div className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-gray-600">
+                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-600">
                                     Choose file name, format and printable options
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setIsExportDialogOpen(false)}
-                                className="border-4 border-brutal-black bg-white px-3 py-1 font-vt323 text-3xl leading-none shadow-brutal"
+                                className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none hover:bg-brand-yellow"
                                 aria-label="Close export dialog"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <div className="space-y-4 p-5">
+                        <div className="space-y-3 p-4">
                             <div>
                                 <label
                                     htmlFor={EXPORT_FILE_NAME_ID}
-                                    className="mb-1 block font-bold"
+                                    className="mb-1 block text-sm font-bold"
                                 >
                                     Export File Name
                                 </label>
@@ -3611,14 +4163,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setFileName(event.target.value)
                                     }
-                                    className="w-full rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl font-bold focus:outline-none"
+                                    className="w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-lg font-bold focus:bg-brand-yellow focus:outline-none"
                                 />
                             </div>
 
                             <div>
                                 <label
                                     htmlFor={EXPORT_FORMAT_ID}
-                                    className="mb-1 block font-bold"
+                                    className="mb-1 block text-sm font-bold"
                                 >
                                     Export Format
                                 </label>
@@ -3629,7 +4181,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setExportFormatId(event.target.value)
                                     }
-                                    className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl focus:outline-none"
+                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-lg focus:bg-brand-yellow focus:outline-none"
                                 >
                                     {EXPORT_OPTIONS.map((option) => (
                                         <option
@@ -3644,7 +4196,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <label
                                 htmlFor={EXPORT_SYMBOLS_ID}
-                                className="flex items-center gap-3 border-4 border-brutal-black bg-white px-3 py-2 font-bold uppercase"
+                                className="flex items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-sm font-bold uppercase"
                             >
                                 <input
                                     id={EXPORT_SYMBOLS_ID}
@@ -3654,32 +4206,32 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setUseSymbols(event.target.checked)
                                     }
-                                    className="h-5 w-5 accent-black"
+                                    className="h-4 w-4 accent-black"
                                 />
                                 Use Symbols In Printable Exports
                             </label>
 
-                            <Button
-                                variant="primary"
-                                className="w-full disabled:cursor-not-allowed disabled:opacity-50"
+                            <button
+                                type="button"
+                                className="w-full border-2 border-brutal-black bg-brand-purple px-4 py-2 font-vt323 text-xl font-bold uppercase tracking-[0.08em] text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
                                 onClick={() => void handleExport(exportFormatId)}
                                 disabled={!canExportPattern}
                             >
                                 {exportingId === exportFormatId
                                     ? 'Exporting...'
                                     : `Export ${EXPORT_OPTIONS.find((option) => option.id === exportFormatId)?.label ?? ''}`}
-                            </Button>
+                            </button>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {EXPORT_OPTIONS.map((option) => (
-                                    <Button
+                                    <button
                                         key={option.id}
-                                        variant={
+                                        type="button"
+                                        className={`min-h-9 border-2 border-brutal-black px-2 py-1 font-vt323 text-base font-bold uppercase leading-none tracking-[0.06em] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 ${
                                             option.id === exportFormatId
-                                                ? 'warning'
-                                                : 'secondary'
-                                        }
-                                        className="w-full disabled:cursor-not-allowed disabled:opacity-50"
+                                                ? 'bg-brand-yellow'
+                                                : 'bg-white hover:bg-brand-cyan'
+                                        }`}
                                         onClick={() => {
                                             setExportFormatId(option.id);
                                             void handleExport(option.id);
@@ -3689,13 +4241,24 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         {exportingId === option.id
                                             ? 'Exporting...'
                                             : option.label}
-                                    </Button>
+                                    </button>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+
+            <input
+                id={PROJECT_UPLOAD_INPUT_ID}
+                ref={projectFileInputRef}
+                name="projectUpload"
+                aria-label="Open bead pattern project"
+                type="file"
+                accept=".json,application/json"
+                className="sr-only"
+                onChange={(event) => void handleProjectFileUpload(event)}
+            />
 
             <canvas
                 ref={canvasRef}

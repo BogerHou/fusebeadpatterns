@@ -20,26 +20,26 @@ export function EditorDialog({
             aria-modal="true"
             aria-label={title}
         >
-            <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden border-4 border-brutal-black bg-white shadow-brutal">
-                <div className="flex items-center justify-between gap-4 border-b-4 border-brutal-black bg-brand-yellow px-5 py-4">
+            <div className="max-h-[88vh] w-full max-w-3xl overflow-hidden border-2 border-brutal-black bg-white shadow-[3px_3px_0_0_#1a1a1a]">
+                <div className="flex items-center justify-between gap-4 border-b-2 border-brutal-black bg-white px-4 py-3">
                     <div>
-                        <div className="font-vt323 text-4xl uppercase leading-none">
+                        <div className="font-vt323 text-3xl uppercase leading-none">
                             {title}
                         </div>
-                        <div className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-gray-700">
+                        <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-600">
                             {summary}
                         </div>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="border-4 border-brutal-black bg-white px-3 py-1 font-vt323 text-3xl leading-none shadow-brutal"
+                        className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none hover:bg-brand-yellow"
                         aria-label={`Close ${title}`}
                     >
                         &times;
                     </button>
                 </div>
-                <div className="max-h-[calc(90vh-92px)] overflow-auto p-5">
+                <div className="max-h-[calc(88vh-72px)] overflow-auto p-4">
                     {children}
                 </div>
             </div>

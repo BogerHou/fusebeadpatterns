@@ -39,6 +39,11 @@ Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到
   - 点击用量颜色快速禁用
   - Remove colors under 1%
   - Undo palette change
+- 支持独立编辑器工作流
+  - 手动绘制、填充、擦除、取色、平移
+  - 平板 / 移动端基础工具栏
+  - 保存 / 打开 `.bead-pattern.json` 项目文件
+  - 大项目 bead count 警告与生成确认
 - 导出格式
   - PDF
   - SVG
@@ -83,11 +88,24 @@ npm run lint
 npm run build
 ```
 
+部署后 smoke check：
+
+```bash
+npm run smoke:prod
+```
+
+可用 `SMOKE_BASE_URL` 检查其它环境：
+
+```bash
+SMOKE_BASE_URL=http://localhost:3000 npm run smoke:prod
+```
+
 说明：当前 `build` 脚本使用 `next build --webpack`，因为此项目在 Next 16 下使用默认 Turbopack 构建时会触发上游内部 panic，而 webpack 路径已验证可稳定通过。
 
 ## 目录说明
 
 - `src/components/editor/Editor.tsx`: 主编辑器页面
+- `src/lib/editor/draft.ts`: editor 草稿与项目文件序列化
 - `src/lib/editor/config.ts`: 编辑器预设与 CSV 解析
 - `src/lib/core/`: 颜色量化、模型与导出器
 - `public/palettes/`: 色板 CSV 文件

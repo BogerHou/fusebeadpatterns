@@ -57,8 +57,6 @@ export default async function GuidePage({ params }: GuideRouteProps) {
         notFound();
     }
 
-    const relatedGuides = guidePages.filter((item) => item.slug !== guide.slug);
-
     return (
         <>
             <GuideHeader />
@@ -73,102 +71,66 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                         },
                     ]}
                 />
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-                    <article className="border-4 border-brutal-black bg-white p-5 shadow-brutal sm:p-8">
-                        <div className="mb-4 inline-block border-2 border-brutal-black bg-brand-cyan px-2 py-1 text-xs font-bold uppercase tracking-[0.14em]">
-                            {guide.eyebrow}
-                        </div>
-                        <h1 className="max-w-4xl font-vt323 text-5xl uppercase leading-none sm:text-6xl">
-                            {guide.title}
-                        </h1>
-                        <p className="mt-5 max-w-3xl text-xl font-medium text-gray-700">
-                            {guide.intro}
-                        </p>
+                <article className="border-4 border-brutal-black bg-white p-5 shadow-brutal sm:p-8">
+                    <div className="mb-4 inline-block border-2 border-brutal-black bg-brand-cyan px-2 py-1 text-xs font-bold uppercase tracking-[0.14em]">
+                        {guide.eyebrow}
+                    </div>
+                    <h1 className="max-w-4xl font-vt323 text-5xl uppercase leading-none sm:text-6xl">
+                        {guide.title}
+                    </h1>
+                    <p className="mt-5 max-w-3xl text-xl font-medium text-gray-700">
+                        {guide.intro}
+                    </p>
 
-                        <div className="mt-10 space-y-10">
-                            {guide.sections.map((section) => (
-                                <section key={section.heading}>
-                                    <h2 className="mb-3 font-vt323 text-4xl uppercase leading-none">
-                                        {section.heading}
-                                    </h2>
-                                    <div className="space-y-3 text-lg leading-8 text-gray-800">
-                                        {section.body.map((paragraph) => (
-                                            <p key={paragraph}>{paragraph}</p>
+                    <div className="mt-10 space-y-10">
+                        {guide.sections.map((section) => (
+                            <section key={section.heading}>
+                                <h2 className="mb-3 font-vt323 text-4xl uppercase leading-none">
+                                    {section.heading}
+                                </h2>
+                                <div className="space-y-3 text-lg leading-8 text-gray-800">
+                                    {section.body.map((paragraph) => (
+                                        <p key={paragraph}>{paragraph}</p>
+                                    ))}
+                                </div>
+                                {section.bullets ? (
+                                    <ul className="mt-4 grid gap-2">
+                                        {section.bullets.map((bullet) => (
+                                            <li
+                                                key={bullet}
+                                                className="border-2 border-brutal-black bg-[#f7f7f4] px-3 py-2 font-bold"
+                                            >
+                                                {bullet}
+                                            </li>
                                         ))}
-                                    </div>
-                                    {section.bullets ? (
-                                        <ul className="mt-4 grid gap-2">
-                                            {section.bullets.map((bullet) => (
-                                                <li
-                                                    key={bullet}
-                                                    className="border-2 border-brutal-black bg-[#f7f7f4] px-3 py-2 font-bold"
-                                                >
-                                                    {bullet}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : null}
-                                </section>
+                                    </ul>
+                                ) : null}
+                            </section>
+                        ))}
+                    </div>
+
+                    <div className="mt-10 border-t-4 border-brutal-black pt-6">
+                        <h2 className="font-vt323 text-3xl uppercase leading-none">
+                            Next Step
+                        </h2>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                            {guide.relatedLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    prefetch={
+                                        link.href === '/editor'
+                                            ? false
+                                            : undefined
+                                    }
+                                    className="inline-flex border-4 border-brutal-black bg-brand-yellow px-4 py-2 font-bold uppercase shadow-[3px_3px_0_0_#1a1a1a] hover:bg-white"
+                                >
+                                    {link.label}
+                                </Link>
                             ))}
                         </div>
-
-                        <div className="mt-10 border-t-4 border-brutal-black pt-6">
-                            <h2 className="font-vt323 text-3xl uppercase leading-none">
-                                Next Step
-                            </h2>
-                            <div className="mt-4 flex flex-wrap gap-3">
-                                {guide.relatedLinks.map((link) => (
-                                    <Link
-                                        key={link.href}
-                                        href={link.href}
-                                        prefetch={
-                                            link.href === '/editor'
-                                                ? false
-                                                : undefined
-                                        }
-                                        className="inline-flex border-4 border-brutal-black bg-brand-yellow px-4 py-2 font-bold uppercase shadow-[3px_3px_0_0_#1a1a1a] hover:bg-white"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </article>
-
-                    <aside
-                        aria-label="Guide navigation"
-                        className="border-4 border-brutal-black bg-white p-4 shadow-brutal lg:sticky lg:top-4"
-                    >
-                        <h2 className="font-vt323 text-3xl uppercase leading-none">
-                            Guide Tree
-                        </h2>
-                        <nav className="mt-4" aria-label="Guide pages">
-                            <Link
-                                href="/guides"
-                                className="mb-3 block border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-sm font-black uppercase tracking-[0.1em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-white"
-                            >
-                                All Guides
-                            </Link>
-                            <ul className="space-y-2">
-                                <li>
-                                    <span className="block border-2 border-brutal-black bg-brand-cyan px-3 py-2 text-sm font-black uppercase tracking-[0.08em]">
-                                        {guide.eyebrow}
-                                    </span>
-                                </li>
-                                {relatedGuides.map((item) => (
-                                    <li key={item.slug}>
-                                        <Link
-                                            href={`/guides/${item.slug}`}
-                                            className="block border-2 border-brutal-black bg-[#f7f7f4] px-3 py-2 text-sm font-bold hover:bg-brand-cyan"
-                                        >
-                                            {item.title}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
-                    </aside>
-                </div>
+                    </div>
+                </article>
             </main>
             <SiteFooter active="guides" />
         </>

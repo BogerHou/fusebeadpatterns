@@ -45,23 +45,6 @@ export default function GuidesPage() {
                     </p>
                 </div>
 
-                <div className="mb-6 border-4 border-brutal-black bg-white p-4 shadow-brutal">
-                    <h2 className="font-vt323 text-3xl uppercase leading-none">
-                        Guide Tree
-                    </h2>
-                    <div className="mt-3 grid gap-2 text-sm font-bold uppercase tracking-[0.08em] sm:grid-cols-2 lg:grid-cols-4">
-                        {guidePages.map((guide) => (
-                            <Link
-                                key={guide.slug}
-                                href={`/guides/${guide.slug}`}
-                                className="border-2 border-brutal-black bg-[#f7f7f4] px-3 py-2 hover:bg-brand-cyan"
-                            >
-                                {guide.eyebrow}
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-
                 <div className="grid gap-5 md:grid-cols-2">
                     {guidePages.map((guide) => (
                         <Link
