@@ -64,8 +64,8 @@ export default function SiteFooter({
     description = 'A free tool for turning photos into printable Perler, Hama, and Artkal bead patterns.',
 }: SiteFooterProps) {
     return (
-        <footer className="mt-auto border-t-4 border-brutal-black bg-white p-8 shadow-[0_-4px_0_0_rgba(26,26,26,1)]">
-            <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,1fr)_2fr]">
+        <footer className="mt-auto border-t-2 border-brutal-black bg-white p-5 shadow-[0_-2px_0_0_rgba(26,26,26,1)] sm:border-t-4 sm:p-8 sm:shadow-[0_-4px_0_0_rgba(26,26,26,1)]">
+            <div className="mx-auto grid max-w-6xl gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_2fr]">
                 <div>
                     <h2 className="mb-2 font-vt323 text-2xl font-bold uppercase">
                         Bead Pattern Maker
@@ -74,7 +74,7 @@ export default function SiteFooter({
                         {description}
                     </p>
                 </div>
-                <div className="grid gap-6 text-sm sm:grid-cols-3">
+                <div className="grid gap-5 text-sm sm:grid-cols-3 sm:gap-6">
                     {footerGroups.map((group) => (
                         <nav key={group.title} aria-label={group.title}>
                             <h3 className="mb-3 font-bold uppercase tracking-[0.12em] text-brutal-black">
@@ -101,7 +101,7 @@ export default function SiteFooter({
                     ))}
                 </div>
             </div>
-            <div className="mt-8 border-t-2 border-dashed border-gray-300 pt-6 text-center font-vt323 text-lg text-gray-500">
+            <div className="mt-6 border-t-2 border-dashed border-gray-300 pt-5 text-center font-vt323 text-base leading-none text-gray-500 sm:mt-8 sm:pt-6 sm:text-lg">
                 &copy; {new Date().getFullYear()} Bead Pattern Maker. All
                 rights reserved. Not affiliated with Perler, Hama, or Artkal.
             </div>

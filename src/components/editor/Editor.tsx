@@ -5,11 +5,17 @@ import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+    ChevronDown,
     Eraser,
+    FileText,
     Hand,
+    Image as ImageIcon,
     PaintBucket,
+    Palette as PaletteIcon,
     Pencil,
     Pipette,
+    Save,
+    Settings2,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -155,6 +161,7 @@ const DEFAULT_REFERENCE_OPACITY = 100;
 type ImageAdjustments = typeof DEFAULT_IMAGE_ADJUSTMENTS;
 type RendererSettings = typeof DEFAULT_RENDERER_SETTINGS;
 type EditorSourceMode = 'image' | 'blank';
+type EditorMobilePanel = 'file' | 'edit' | 'colors' | 'setup' | null;
 type ColorPickerSelection = {
     paletteId: string;
     entryRef: string;
@@ -338,8 +345,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [isPaletteManagerOpen, setIsPaletteManagerOpen] = useState(false);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-    const [isEditorMobileSetupOpen, setIsEditorMobileSetupOpen] =
-        useState(false);
+    const [editorMobilePanel, setEditorMobilePanel] =
+        useState<EditorMobilePanel>(null);
     const [isEditorDraftReady, setIsEditorDraftReady] = useState(
         !isEditorPage
     );
@@ -366,6 +373,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const editorPreviewCanvasRef = useRef<HTMLCanvasElement>(null);
     const previewViewportRef = useRef<HTMLDivElement>(null);
+    const editorImageFileInputRef = useRef<HTMLInputElement>(null);
     const projectFileInputRef = useRef<HTMLInputElement>(null);
     const currentProjectRef = useRef<Project | null>(null);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
@@ -799,7 +807,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             setIsPaletteManagerOpen(false);
             setIsColorPickerOpen(false);
             setIsExportDialogOpen(false);
-            setIsEditorMobileSetupOpen(false);
+            setEditorMobilePanel(null);
             pendingEditedPatternRef.current = draft.editedPattern ?? null;
             setManualPatternRevision(0);
             setHistoryRevision((previous) => previous + 1);
@@ -1628,6 +1636,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const openColorPicker = () => {
+        setEditorMobilePanel(null);
         setColorPickerPaletteId(activeEditorColorPaletteId);
         setColorPickerQuery('');
         setIsColorPickerOpen(true);
@@ -2041,6 +2050,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         router.push('/editor');
     };
 
+    const toggleEditorMobilePanel = (panel: Exclude<EditorMobilePanel, null>) => {
+        setEditorMobilePanel((currentPanel) =>
+            currentPanel === panel ? null : panel
+        );
+    };
+
+    const handleOpenEditorImagePicker = () => {
+        editorImageFileInputRef.current?.click();
+    };
+
     const handleSaveProject = () => {
         const draft = createCurrentEditorDraft();
         const projectJson = serializeEditorProject(draft);
@@ -2239,36 +2258,37 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             ref={editorRootRef}
             className={
                 isEditorPage
-                    ? 'h-screen w-full overflow-hidden bg-brutal-bg'
+                    ? 'h-[100svh] w-full overflow-hidden bg-brutal-bg'
                     : 'w-full space-y-6'
             }
         >
             {isEditorPage && !isEditorDraftReady ? (
-                <div className="flex h-full min-h-screen items-center justify-center border-4 border-brutal-black bg-brutal-bg font-vt323 text-3xl uppercase tracking-[0.08em] text-brutal-black">
+                <div className="flex h-full min-h-[100svh] items-center justify-center border-2 border-brutal-black bg-brutal-bg font-vt323 text-2xl uppercase tracking-[0.08em] text-brutal-black sm:border-4 sm:text-3xl">
                     Loading Editor...
                 </div>
             ) : null}
 
             {errorMessage && (
-                <div className="border-4 border-brutal-black bg-brand-magenta px-4 py-3 font-bold text-white shadow-brutal">
+                <div className="border-2 border-brutal-black bg-brand-magenta px-3 py-2 text-sm font-bold text-white shadow-[2px_2px_0_0_#1a1a1a] sm:border-4 sm:px-4 sm:py-3 sm:text-base sm:shadow-brutal">
                     {errorMessage}
                 </div>
             )}
 
             {isEditorPage ? (
                 isEditorDraftReady ? (
-                <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[48px_minmax(0,1fr)] overflow-hidden border-4 border-brutal-black bg-brutal-bg text-brutal-black xl:grid-cols-[232px_minmax(0,1fr)_312px]">
-                    <div className="col-span-full flex min-w-0 items-center justify-between border-b-4 border-brutal-black bg-white">
-                        <div className="flex min-w-0 flex-1 items-center gap-3 px-3">
+                <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[86px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[90px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
+                    <div className="col-span-full min-w-0 border-b-2 border-brutal-black bg-white sm:border-b-4">
+                        <div className="flex h-11 min-w-0 items-center justify-between sm:h-12">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3">
                             <Link
                                 href="/"
                                 aria-label="Back to generator"
-                                className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-brutal-black bg-brand-cyan font-vt323 text-3xl leading-none text-brutal-black hover:bg-brand-yellow"
+                                className="flex h-7 w-7 shrink-0 items-center justify-center border-2 border-brutal-black bg-brand-cyan font-vt323 text-2xl leading-none text-brutal-black hover:bg-brand-yellow sm:h-8 sm:w-8 sm:text-3xl"
                                 title="Back to generator"
                             >
                                 &lt;
                             </Link>
-                            <h1 className="truncate font-vt323 text-3xl uppercase leading-none">
+                            <h1 className="truncate font-vt323 text-2xl uppercase leading-none sm:text-3xl">
                                 Editor
                             </h1>
                         </div>
@@ -2358,10 +2378,68 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         ? 'Export pattern'
                                         : 'Create or import a pattern before exporting'
                                 }
-                                className="h-full border-l-4 border-brutal-black bg-brand-purple px-4 text-xs font-black uppercase tracking-[0.1em] text-brutal-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+                                className="h-full border-l-2 border-brutal-black bg-brand-purple px-3 text-[11px] font-black uppercase tracking-[0.1em] text-brutal-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:border-l-4 sm:px-4 sm:text-xs"
                             >
                                 Export
                             </button>
+                        </div>
+                        </div>
+                        <div className="grid h-[42px] grid-cols-4 border-t-2 border-brutal-black/15 text-[10px] font-black uppercase tracking-[0.08em] xl:hidden">
+                            {[
+                                {
+                                    id: 'file' as const,
+                                    label: 'File',
+                                    icon: FileText,
+                                },
+                                {
+                                    id: 'edit' as const,
+                                    label: 'Edit',
+                                    icon: Pencil,
+                                },
+                                {
+                                    id: 'colors' as const,
+                                    label: 'Colors',
+                                    icon: PaletteIcon,
+                                },
+                                {
+                                    id: 'setup' as const,
+                                    label: 'Setup',
+                                    icon: Settings2,
+                                },
+                            ].map((item) => {
+                                const Icon = item.icon;
+                                const isActive = editorMobilePanel === item.id;
+
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() =>
+                                            toggleEditorMobilePanel(item.id)
+                                        }
+                                        aria-expanded={isActive}
+                                        className={`flex min-w-0 items-center justify-center gap-1 border-l-2 border-brutal-black/15 first:border-l-0 ${
+                                            isActive
+                                                ? 'bg-brand-yellow text-brutal-black'
+                                                : 'bg-white text-brutal-black/75 hover:bg-brand-cyan'
+                                        }`}
+                                    >
+                                        <Icon
+                                            className="h-4 w-4 shrink-0"
+                                            strokeWidth={2.2}
+                                        />
+                                        <span className="truncate">
+                                            {item.label}
+                                        </span>
+                                        <ChevronDown
+                                            className={`h-3 w-3 shrink-0 transition-transform ${
+                                                isActive ? 'rotate-180' : ''
+                                            }`}
+                                            strokeWidth={2.4}
+                                        />
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -2503,7 +2581,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             onPointerMove={handlePreviewPanPointerMove}
                             onPointerUp={handlePreviewPanPointerUp}
                             onPointerCancel={handlePreviewPanPointerUp}
-                            className={`absolute inset-x-0 top-0 bottom-[108px] overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] xl:bottom-0 [&::-webkit-scrollbar]:hidden ${
+                            className={`absolute inset-x-0 top-0 bottom-[50px] overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] sm:bottom-[56px] xl:bottom-0 [&::-webkit-scrollbar]:hidden ${
                                 activeEditorTool === 'pan'
                                     ? 'cursor-grab active:cursor-grabbing'
                                     : ''
@@ -2533,21 +2611,21 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 htmlFor={
                                                     EDITOR_EMPTY_UPLOAD_INPUT_ID
                                                 }
-                                                className="cursor-pointer border-4 border-brutal-black bg-brand-yellow px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-white"
+                                                className="cursor-pointer border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-white sm:border-4 sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Convert Image
                                             </label>
                                             <button
                                                 type="button"
                                                 onClick={handleCreateBlankPattern}
-                                                className="border-4 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-cyan"
+                                                className="border-2 border-brutal-black bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan sm:border-4 sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Blank Pattern
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={handleOpenProjectPicker}
-                                                className="border-4 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-purple"
+                                                className="border-2 border-brutal-black bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-purple sm:border-4 sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Open Project
                                             </button>
@@ -2681,153 +2759,417 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
                     </main>
 
-                    {isEditorMobileSetupOpen && (
-                        <div className="absolute inset-x-2 bottom-[112px] z-30 max-h-[68vh] overflow-y-auto border-4 border-brutal-black bg-white p-3 shadow-brutal xl:hidden">
+                    {editorMobilePanel && (
+                        <div className="absolute inset-x-2 top-[94px] z-30 max-h-[calc(100svh-156px)] overflow-y-auto border-2 border-brutal-black bg-white p-3 shadow-[2px_2px_0_0_#1a1a1a] sm:top-[98px] sm:max-h-[calc(100svh-164px)] sm:border-4 sm:shadow-brutal xl:hidden">
                             <div className="mb-3 flex items-center justify-between gap-3">
-                                <div className="font-vt323 text-3xl uppercase leading-none">
-                                    Setup
+                                <div className="font-vt323 text-2xl uppercase leading-none">
+                                    {editorMobilePanel === 'file'
+                                        ? 'File'
+                                        : editorMobilePanel === 'edit'
+                                          ? 'Edit'
+                                          : editorMobilePanel === 'colors'
+                                            ? 'Colors'
+                                            : 'Setup'}
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() =>
-                                        setIsEditorMobileSetupOpen(false)
-                                    }
+                                    onClick={() => setEditorMobilePanel(null)}
                                     className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none hover:bg-brand-yellow"
-                                    aria-label="Close setup"
+                                    aria-label="Close mobile editor panel"
                                 >
                                     ×
                                 </button>
                             </div>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                                <label className="block">
-                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
-                                        Color Brand
-                                    </span>
-                                    <select
-                                        value={pendingPrimaryPaletteId}
-                                        onChange={(event) =>
-                                            setPendingPrimaryPaletteId(
-                                                event.target.value
-                                            )
-                                        }
-                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                            {editorMobilePanel === 'file' ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleOpenEditorImagePicker();
+                                            setEditorMobilePanel(null);
+                                        }}
+                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a]"
                                     >
-                                        {PALETTE_OPTIONS.map((option) => (
-                                            <option
-                                                key={option.id}
-                                                value={option.id}
-                                            >
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
-                                        Pegboard
-                                    </span>
-                                    <select
-                                        value={pendingBoardId}
-                                        onChange={(event) =>
-                                            setPendingBoardId(
-                                                event.target
-                                                    .value as BoardOptionId
-                                            )
-                                        }
-                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                        <ImageIcon className="h-4 w-4" />
+                                        Convert Image
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleCreateBlankPattern();
+                                            setEditorMobilePanel(null);
+                                        }}
+                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
                                     >
-                                        {BOARD_OPTIONS.map((option) => (
-                                            <option
-                                                key={option.id}
-                                                value={option.id}
-                                            >
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
-                                        Boards Wide
-                                    </span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max={MAX_BOARD_COUNT}
-                                        value={pendingBoardWidth}
-                                        onChange={(event) =>
-                                            setPendingBoardWidth(
-                                                parseBoardCount(
-                                                    event.target.value
-                                                )
-                                            )
-                                        }
-                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
-                                        Boards Tall
-                                    </span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max={MAX_BOARD_COUNT}
-                                        value={pendingBoardHeight}
-                                        onChange={(event) =>
-                                            setPendingBoardHeight(
-                                                parseBoardCount(
-                                                    event.target.value
-                                                )
-                                            )
-                                        }
-                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
-                                    />
-                                </label>
-                            </div>
-                            {hasPendingPatternSettings ? (
-                                <div className="mt-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
-                                    {pendingPaletteLabel} · {pendingPatternSize}{' '}
-                                    · {pendingBoardCountStatus}
+                                        Blank Pattern
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleOpenProjectPicker();
+                                            setEditorMobilePanel(null);
+                                        }}
+                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                    >
+                                        <FileText className="h-4 w-4" />
+                                        Open Project
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleSaveProject();
+                                            setEditorMobilePanel(null);
+                                        }}
+                                        disabled={!canSaveProject}
+                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                    >
+                                        <Save className="h-4 w-4" />
+                                        Save Project
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsExportDialogOpen(true);
+                                            setEditorMobilePanel(null);
+                                        }}
+                                        disabled={!canExportPattern}
+                                        className="col-span-2 flex min-h-12 items-center justify-center border-2 border-brutal-black bg-brand-purple px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
+                                    >
+                                        Export Pattern
+                                    </button>
                                 </div>
                             ) : null}
-                            {pendingLargePatternWarning ? (
-                                <div className="mt-3 border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
-                                    {pendingLargePatternWarning}
+
+                            {editorMobilePanel === 'edit' ? (
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-5 gap-1.5">
+                                        {EDITOR_TOOLS.map((tool) => (
+                                            <button
+                                                key={tool.id}
+                                                type="button"
+                                                aria-label={tool.label}
+                                                aria-pressed={
+                                                    activeEditorTool === tool.id
+                                                }
+                                                onClick={() => {
+                                                    setActiveEditorTool(tool.id);
+                                                    setEditorMobilePanel(null);
+                                                }}
+                                                className={`flex min-h-14 flex-col items-center justify-center gap-1 border-2 text-[10px] font-black uppercase tracking-[0.06em] ${
+                                                    activeEditorTool === tool.id
+                                                        ? 'border-brutal-black bg-brand-yellow shadow-[2px_2px_0_0_#1a1a1a]'
+                                                        : 'border-brutal-black/25 bg-white text-brutal-black/70 hover:border-brutal-black hover:bg-brand-cyan'
+                                                }`}
+                                            >
+                                                <tool.icon
+                                                    className="h-5 w-5"
+                                                    strokeWidth={2.1}
+                                                />
+                                                {tool.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleUndoPatternEdit}
+                                            disabled={!canUndoPattern}
+                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                        >
+                                            Undo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRedoPatternEdit}
+                                            disabled={!canRedoPattern}
+                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                        >
+                                            Redo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                adjustPreviewZoom(
+                                                    -PREVIEW_ZOOM_STEP
+                                                )
+                                            }
+                                            disabled={
+                                                !hasEditablePattern ||
+                                                previewZoom <= PREVIEW_MIN_ZOOM
+                                            }
+                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                        >
+                                            Zoom -
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                adjustPreviewZoom(
+                                                    PREVIEW_ZOOM_STEP
+                                                )
+                                            }
+                                            disabled={
+                                                !hasEditablePattern ||
+                                                previewZoom >= PREVIEW_MAX_ZOOM
+                                            }
+                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                        >
+                                            Zoom +
+                                        </button>
+                                    </div>
                                 </div>
                             ) : null}
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    void handleApplyPatternSettings()
-                                }
-                                disabled={!hasPendingPatternSettings || processing}
-                                className="mt-3 w-full border-4 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
-                            >
-                                Apply Changes
-                            </button>
-                            <div className="mt-3 grid grid-cols-2 gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleOpenProjectPicker}
-                                    className="border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-cyan"
-                                >
-                                    Open Project
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleSaveProject}
-                                    disabled={!canSaveProject}
-                                    className="border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
-                                >
-                                    Save Project
-                                </button>
-                            </div>
+
+                            {editorMobilePanel === 'colors' ? (
+                                <div className="space-y-3">
+                                    <button
+                                        type="button"
+                                        onClick={openColorPicker}
+                                        disabled={enabledColorCount === 0}
+                                        className="flex w-full items-center gap-3 border-2 border-brutal-black bg-brutal-bg p-3 text-left shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                    >
+                                        <span
+                                            className="h-8 w-8 shrink-0 rounded-full border-2 border-brutal-black"
+                                            style={{
+                                                backgroundColor:
+                                                    activeEditorColorEntry
+                                                        ? `rgb(${activeEditorColorEntry.color.r} ${activeEditorColorEntry.color.g} ${activeEditorColorEntry.color.b})`
+                                                        : '#ffffff',
+                                            }}
+                                        />
+                                        <span className="min-w-0">
+                                            <span className="block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/60">
+                                                Active Color
+                                            </span>
+                                            <span className="block truncate text-sm font-bold">
+                                                {activeEditorColorEntry?.name ??
+                                                    'Choose a color'}
+                                            </span>
+                                        </span>
+                                    </button>
+                                    {topUsageEntries.length > 0 ? (
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            {topUsageEntries
+                                                .slice(0, 6)
+                                                .map(({ ref, entry }) => (
+                                                    <button
+                                                        key={ref}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setManualEditorColorRef(
+                                                                ref
+                                                            );
+                                                            setActiveEditorTool(
+                                                                'bead'
+                                                            );
+                                                            setEditorMobilePanel(
+                                                                null
+                                                            );
+                                                        }}
+                                                        className={`flex min-h-10 items-center gap-2 border-2 px-2 py-1.5 text-left ${
+                                                            activeEditorColorRef ===
+                                                            ref
+                                                                ? 'border-brutal-black bg-brand-cyan shadow-[2px_2px_0_0_#1a1a1a]'
+                                                                : 'border-brutal-black/20 bg-white hover:border-brutal-black hover:bg-brand-yellow'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className="h-4 w-4 shrink-0 rounded-full border-2 border-brutal-black"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    entry
+                                                                        ? `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`
+                                                                        : '#d1d5db',
+                                                            }}
+                                                        />
+                                                        <span className="truncate text-[11px] font-bold">
+                                                            {entry?.ref ?? ref}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                        </div>
+                                    ) : null}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsPaletteManagerOpen(true);
+                                            setEditorMobilePanel(null);
+                                        }}
+                                        className="w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                    >
+                                        Manage Palettes
+                                    </button>
+                                </div>
+                            ) : null}
+
+                            {editorMobilePanel === 'setup' ? (
+                                <div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Color Brand
+                                            </span>
+                                            <select
+                                                value={pendingPrimaryPaletteId}
+                                                onChange={(event) =>
+                                                    setPendingPrimaryPaletteId(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            >
+                                                {PALETTE_OPTIONS.map(
+                                                    (option) => (
+                                                        <option
+                                                            key={option.id}
+                                                            value={option.id}
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        </label>
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Pegboard
+                                            </span>
+                                            <select
+                                                value={pendingBoardId}
+                                                onChange={(event) =>
+                                                    setPendingBoardId(
+                                                        event.target
+                                                            .value as BoardOptionId
+                                                    )
+                                                }
+                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            >
+                                                {BOARD_OPTIONS.map((option) => (
+                                                    <option
+                                                        key={option.id}
+                                                        value={option.id}
+                                                    >
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Boards Wide
+                                            </span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max={MAX_BOARD_COUNT}
+                                                value={pendingBoardWidth}
+                                                onChange={(event) =>
+                                                    setPendingBoardWidth(
+                                                        parseBoardCount(
+                                                            event.target.value
+                                                        )
+                                                    )
+                                                }
+                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            />
+                                        </label>
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Boards Tall
+                                            </span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max={MAX_BOARD_COUNT}
+                                                value={pendingBoardHeight}
+                                                onChange={(event) =>
+                                                    setPendingBoardHeight(
+                                                        parseBoardCount(
+                                                            event.target.value
+                                                        )
+                                                    )
+                                                }
+                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            />
+                                        </label>
+                                    </div>
+                                    {imageSrc ? (
+                                        <div className="mt-3 space-y-3 border-t-2 border-brutal-black/10 pt-3">
+                                            <label className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black">
+                                                <span>Show Reference</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showReference}
+                                                    onChange={(event) =>
+                                                        setShowReference(
+                                                            event.target.checked
+                                                        )
+                                                    }
+                                                    className="h-4 w-4 accent-black"
+                                                />
+                                            </label>
+                                            <label className="block">
+                                                <span className="mb-1 flex items-center justify-between text-xs font-bold uppercase tracking-[0.08em] text-brutal-black">
+                                                    <span>Source Opacity</span>
+                                                    <span>
+                                                        {referenceOpacity}%
+                                                    </span>
+                                                </span>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={referenceOpacity}
+                                                    disabled={!showReference}
+                                                    onChange={(event) =>
+                                                        setReferenceOpacity(
+                                                            clampNumber(
+                                                                Number(
+                                                                    event.target
+                                                                        .value
+                                                                ),
+                                                                0,
+                                                                100
+                                                            )
+                                                        )
+                                                    }
+                                                    className="w-full accent-black disabled:opacity-40"
+                                                />
+                                            </label>
+                                        </div>
+                                    ) : null}
+                                    {hasPendingPatternSettings ? (
+                                        <div className="mt-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                            {pendingPaletteLabel} ·{' '}
+                                            {pendingPatternSize} ·{' '}
+                                            {pendingBoardCountStatus}
+                                        </div>
+                                    ) : null}
+                                    {pendingLargePatternWarning ? (
+                                        <div className="mt-3 border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                            {pendingLargePatternWarning}
+                                        </div>
+                                    ) : null}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            void handleApplyPatternSettings()
+                                        }
+                                        disabled={
+                                            !hasPendingPatternSettings ||
+                                            processing
+                                        }
+                                        className="mt-3 w-full border-2 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+                                    >
+                                        Apply Changes
+                                    </button>
+                                </div>
+                            ) : null}
                         </div>
                     )}
 
-                    <div className="absolute inset-x-0 bottom-0 z-30 border-t-4 border-brutal-black bg-white p-2 shadow-[0_-3px_0_0_#1a1a1a] xl:hidden">
-                        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="absolute inset-x-0 bottom-0 z-30 border-t-2 border-brutal-black bg-white p-1.5 shadow-[0_-2px_0_0_#1a1a1a] sm:border-t-4 sm:p-2 sm:shadow-[0_-3px_0_0_#1a1a1a] xl:hidden">
+                        <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] sm:gap-1.5 [&::-webkit-scrollbar]:hidden">
                             {EDITOR_TOOLS.map((tool) => (
                                 <button
                                     key={tool.id}
@@ -2835,17 +3177,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     aria-label={tool.label}
                                     aria-pressed={activeEditorTool === tool.id}
                                     title={`${tool.label} (${tool.shortcut}) • ${tool.description}`}
-                                    onClick={() =>
-                                        setActiveEditorTool(tool.id)
-                                    }
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 transition-colors ${
+                                    onClick={() => {
+                                        setActiveEditorTool(tool.id);
+                                        setEditorMobilePanel(null);
+                                    }}
+                                    className={`flex h-9 w-9 shrink-0 items-center justify-center border-2 transition-colors sm:h-10 sm:w-10 ${
                                         activeEditorTool === tool.id
                                             ? 'border-brutal-black bg-brand-yellow text-brutal-black shadow-[2px_2px_0_0_#1a1a1a]'
                                             : 'border-brutal-black/25 bg-white text-gray-600 hover:border-brutal-black hover:bg-brand-cyan hover:text-brutal-black'
                                     }`}
                                 >
                                     <tool.icon
-                                        className="h-[18px] w-[18px]"
+                                        className="h-4 w-4 sm:h-[18px] sm:w-[18px]"
                                         strokeWidth={2.1}
                                     />
                                 </button>
@@ -2854,10 +3197,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 type="button"
                                 onClick={openColorPicker}
                                 disabled={enabledColorCount === 0}
-                                className="flex h-10 min-w-[84px] shrink-0 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                className="flex h-9 min-w-[76px] shrink-0 items-center justify-center gap-1.5 border-2 border-brutal-black bg-white px-2 text-[10px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 sm:h-10 sm:min-w-[84px] sm:gap-2 sm:text-[11px]"
                             >
                                 <span
-                                    className="h-4 w-4 shrink-0 rounded-full border-2 border-brutal-black"
+                                    className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-brutal-black sm:h-4 sm:w-4"
                                     style={{
                                         backgroundColor: activeEditorColorEntry
                                             ? `rgb(${activeEditorColorEntry.color.r} ${activeEditorColorEntry.color.g} ${activeEditorColorEntry.color.b})`
@@ -2865,46 +3208,6 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     }}
                                 />
                                 Color
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-4 gap-1.5 pt-1">
-                            <button
-                                type="button"
-                                onClick={handleUndoPatternEdit}
-                                disabled={!canUndoPattern}
-                                className="h-8 border-2 border-brutal-black bg-white text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
-                            >
-                                Undo
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleRedoPatternEdit}
-                                disabled={!canRedoPattern}
-                                className="h-8 border-2 border-brutal-black bg-white text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
-                            >
-                                Redo
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setIsEditorMobileSetupOpen((open) => !open)
-                                }
-                                aria-expanded={isEditorMobileSetupOpen}
-                                className={`h-8 border-2 border-brutal-black text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow ${
-                                    isEditorMobileSetupOpen
-                                        ? 'bg-brand-cyan'
-                                        : 'bg-white'
-                                }`}
-                            >
-                                Setup
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setIsExportDialogOpen(true)}
-                                disabled={!canExportPattern}
-                                className="h-8 border-2 border-brutal-black bg-brand-purple text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500"
-                            >
-                                Export
                             </button>
                         </div>
                     </div>
@@ -3163,9 +3466,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 </div>
                 ) : null
             ) : (
-            <div className="grid items-stretch gap-6 xl:h-[calc(100svh-330px)] xl:min-h-[560px] xl:max-h-[640px] xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+            <div className="grid items-stretch gap-4 sm:gap-6 xl:h-[calc(100svh-330px)] xl:min-h-[560px] xl:max-h-[640px] xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
                 <div className="min-h-0 xl:h-full">
-                    <Card className="h-full overflow-y-auto bg-brand-cyan p-2.5">
+                    <Card className="h-full overflow-y-auto bg-brand-cyan p-1.5 [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:p-2.5 sm:[border-width:4px] sm:shadow-brutal">
                         <div className="space-y-2">
                             <EditorSection title="Image">
                                 <label
@@ -3179,7 +3482,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     className={`group relative block w-full cursor-pointer text-center transition-colors ${
                                         imageSrc
                                             ? 'mx-auto max-w-[340px] overflow-hidden rounded-md border border-[#cfd6dc] bg-[#eef1f4] p-0 hover:border-[#9aa7b0]'
-                                            : `border-4 border-dashed border-brutal-black p-3 ${
+                                            : `border-2 border-dashed border-brutal-black p-2.5 sm:border-4 sm:p-3 ${
                                                   draggingUpload
                                                       ? 'bg-brand-yellow'
                                                       : 'bg-white hover:bg-gray-50'
@@ -3229,7 +3532,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             event.target.value
                                         )
                                     }
-                                    className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-1.5 font-vt323 text-xl focus:outline-none"
+                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base focus:outline-none sm:border-4 sm:text-xl"
                                 >
                                     {PALETTE_OPTIONS.map((option) => (
                                         <option
@@ -3257,7 +3560,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             event.target.value as BoardOptionId
                                         )
                                     }
-                                    className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-1.5 font-vt323 text-xl focus:outline-none"
+                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base focus:outline-none sm:border-4 sm:text-xl"
                                 >
                                     {BOARD_OPTIONS.map((option) => (
                                         <option
@@ -3289,7 +3592,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     )
                                                 )
                                             }
-                                            className="w-full rounded-none border-4 border-brutal-black bg-white p-1.5 font-vt323 text-xl font-bold focus:outline-none"
+                                            className="w-full rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base font-bold focus:outline-none sm:border-4 sm:text-xl"
                                         />
                                     </div>
                                     <div>
@@ -3311,7 +3614,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     )
                                                 )
                                             }
-                                            className="w-full rounded-none border-4 border-brutal-black bg-white p-1.5 font-vt323 text-xl font-bold focus:outline-none"
+                                            className="w-full rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base font-bold focus:outline-none sm:border-4 sm:text-xl"
                                         />
                                     </div>
                                 </div>
@@ -3326,11 +3629,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 ) : null}
                             </EditorSection>
 
-                            <div className="grid grid-cols-3 gap-2 border-t-4 border-brutal-black/15 pt-2">
+                            <div className="grid grid-cols-3 gap-1.5 border-t-2 border-brutal-black/15 pt-2 sm:gap-2 sm:border-t-4">
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-base"
+                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={() => setIsPaletteManagerOpen(true)}
                                 >
                                     Colors
@@ -3338,7 +3641,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-base"
+                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={() => setIsAdvancedOpen(true)}
                                 >
                                     Advanced
@@ -3346,18 +3649,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-base disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={() => setIsExportDialogOpen(true)}
                                     disabled={!canExportPattern}
                                 >
                                     Export
                                 </Button>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-base"
+                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={handleOpenProjectPicker}
                                 >
                                     Open Project
@@ -3365,7 +3668,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-base disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={handleSaveProject}
                                     disabled={!canSaveProject}
                                 >
@@ -3760,12 +4063,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                 <div className="min-h-0 xl:h-full">
                     <Card
-                        className="z-10 flex min-h-[560px] flex-1 flex-col border-brutal-black bg-white p-0 xl:h-full xl:min-h-0"
+                        className="z-10 flex min-h-[320px] flex-1 flex-col border-brutal-black bg-white p-0 [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:min-h-[480px] sm:[border-width:4px] sm:shadow-brutal xl:h-full xl:min-h-0"
                     >
-                        <div className="relative min-h-[280px] flex-1 overflow-hidden bg-white">
+                        <div className="relative min-h-[240px] flex-1 overflow-hidden bg-white sm:min-h-[280px]">
                             {processing && (
                                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-                                    <span className="max-w-[280px] animate-pulse border-4 border-brutal-black bg-brand-yellow p-4 text-center font-vt323 text-3xl leading-none text-black shadow-brutal">
+                                    <span className="max-w-[260px] animate-pulse border-2 border-brutal-black bg-brand-yellow p-3 text-center font-vt323 text-2xl leading-none text-black shadow-[2px_2px_0_0_#1a1a1a] sm:max-w-[280px] sm:border-4 sm:p-4 sm:text-3xl sm:shadow-brutal">
                                         <span className="block">
                                             PROCESSING...
                                         </span>
@@ -3776,7 +4079,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                             )}
 
-                            <div className="absolute right-[10px] top-[10px] z-30 flex items-center gap-1">
+                            <div className="absolute right-2 top-2 z-30 flex items-center gap-1 sm:right-[10px] sm:top-[10px]">
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -3817,7 +4120,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     type="button"
                                     onClick={handleOpenEditorPage}
                                     disabled={!previewDataUrl}
-                                    className="border-2 border-brutal-black bg-white px-1.5 py-0.5 font-vt323 text-xs font-bold uppercase leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
+                                    className="hidden border-2 border-brutal-black bg-white px-1.5 py-0.5 font-vt323 text-xs font-bold uppercase leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0 sm:block"
                                 >
                                     Edit Pattern
                                 </button>
@@ -3956,8 +4259,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                             </div>
 
-                            <div className="pointer-events-none absolute inset-x-3 bottom-1.5 z-30 flex justify-center">
-                                <div className="flex max-w-full items-center justify-center gap-4 overflow-hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] text-brutal-black/80">
+                            <div className="pointer-events-none absolute inset-x-2 bottom-1.5 z-30 flex justify-center sm:inset-x-3">
+                                <div className="flex max-w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em] text-brutal-black/80 sm:gap-4 sm:text-[10px] sm:tracking-[0.14em]">
                                     <span>Pattern Size: {patternSize}</span>
                                     <span>Total Beads: {totalBeads}</span>
                                     <span>Colors: {colorsUsed}</span>
@@ -3971,18 +4274,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isColorPickerOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-3"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-2 sm:p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Select Color"
                 >
-                    <div className="flex max-h-[86vh] w-full max-w-4xl flex-col overflow-hidden border-2 border-brutal-black bg-white shadow-[3px_3px_0_0_#1a1a1a]">
-                        <div className="flex items-center justify-between gap-4 border-b-2 border-brutal-black bg-white px-4 py-3">
+                    <div className="flex max-h-[90svh] w-full max-w-4xl flex-col overflow-hidden border-2 border-brutal-black bg-white shadow-[2px_2px_0_0_#1a1a1a] sm:max-h-[86vh] sm:shadow-[3px_3px_0_0_#1a1a1a]">
+                        <div className="flex items-center justify-between gap-3 border-b-2 border-brutal-black bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
-                                <div className="font-vt323 text-3xl uppercase leading-none text-brutal-black">
+                                <div className="font-vt323 text-2xl uppercase leading-none text-brutal-black sm:text-3xl">
                                     Select Color
                                 </div>
-                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-brutal-black/60">
+                                <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brutal-black/60 sm:text-[11px]">
                                     Pick a bead color from the loaded palettes
                                 </div>
                             </div>
@@ -4000,8 +4303,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
 
                         <div className="grid min-h-0 flex-1 md:grid-cols-[220px_minmax(0,1fr)]">
-                            <aside className="max-h-40 overflow-auto border-b-2 border-brutal-black bg-brutal-bg p-3 md:max-h-none md:border-b-0 md:border-r-2">
-                                <div className="space-y-2">
+                            <aside className="max-h-32 overflow-auto border-b-2 border-brutal-black bg-brutal-bg p-2.5 sm:max-h-40 sm:p-3 md:max-h-none md:border-b-0 md:border-r-2">
+                                <div className="space-y-1.5 sm:space-y-2">
                                     {PALETTE_OPTIONS.map((option) => {
                                         const palette =
                                             allBrandPalettes[option.id];
@@ -4037,7 +4340,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                             </aside>
 
-                            <div className="min-h-0 overflow-auto p-4">
+                            <div className="min-h-0 overflow-auto p-3 sm:p-4">
                                 {!currentColorPickerPalette ? (
                                     <div className="flex h-full min-h-[260px] items-center justify-center font-vt323 text-3xl uppercase text-brutal-black/45">
                                         Loading colors...
@@ -4068,7 +4371,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 No matching colors
                                             </div>
                                         ) : (
-                                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                            <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-2 lg:grid-cols-3">
                                                 {currentColorPickerEntries.map(
                                             (entry) => {
                                                 const isActive =
@@ -4086,14 +4389,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 entry
                                                             )
                                                         }
-                                                        className={`flex items-center gap-3 border-2 px-3 py-2 text-left transition-colors ${
+                                                        className={`flex items-center gap-2 border-2 px-2.5 py-2 text-left transition-colors sm:gap-3 sm:px-3 ${
                                                             isActive
                                                                 ? 'border-brutal-black bg-brand-cyan'
                                                                 : 'border-brutal-black/15 bg-white hover:border-brutal-black hover:bg-brand-yellow'
                                                         }`}
                                                     >
                                                         <span
-                                                            className="h-8 w-8 shrink-0 rounded-full border-2 border-brutal-black"
+                                                            className="h-7 w-7 shrink-0 rounded-full border-2 border-brutal-black sm:h-8 sm:w-8"
                                                             style={{
                                                                 backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
                                                             }}
@@ -4122,18 +4425,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isExportDialogOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-3"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-2 sm:p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Export"
                 >
-                    <div className="w-full max-w-lg border-2 border-brutal-black bg-white shadow-[3px_3px_0_0_#1a1a1a]">
-                        <div className="flex items-center justify-between gap-4 border-b-2 border-brutal-black bg-white px-4 py-3">
+                    <div className="max-h-[90svh] w-full max-w-lg overflow-auto border-2 border-brutal-black bg-white shadow-[2px_2px_0_0_#1a1a1a] sm:shadow-[3px_3px_0_0_#1a1a1a]">
+                        <div className="flex items-center justify-between gap-3 border-b-2 border-brutal-black bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
-                                <div className="font-vt323 text-3xl uppercase leading-none">
+                                <div className="font-vt323 text-2xl uppercase leading-none sm:text-3xl">
                                     Export
                                 </div>
-                                <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-600">
+                                <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-600 sm:text-[11px]">
                                     Choose file name, format and printable options
                                 </div>
                             </div>
@@ -4147,7 +4450,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </button>
                         </div>
 
-                        <div className="space-y-3 p-4">
+                        <div className="space-y-3 p-3 sm:p-4">
                             <div>
                                 <label
                                     htmlFor={EXPORT_FILE_NAME_ID}
@@ -4163,7 +4466,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setFileName(event.target.value)
                                     }
-                                    className="w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-lg font-bold focus:bg-brand-yellow focus:outline-none"
+                                    className="w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base font-bold focus:bg-brand-yellow focus:outline-none sm:text-lg"
                                 />
                             </div>
 
@@ -4181,7 +4484,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setExportFormatId(event.target.value)
                                     }
-                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-lg focus:bg-brand-yellow focus:outline-none"
+                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base focus:bg-brand-yellow focus:outline-none sm:text-lg"
                                 >
                                     {EXPORT_OPTIONS.map((option) => (
                                         <option
@@ -4196,7 +4499,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <label
                                 htmlFor={EXPORT_SYMBOLS_ID}
-                                className="flex items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-sm font-bold uppercase"
+                                className="flex items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-xs font-bold uppercase sm:text-sm"
                             >
                                 <input
                                     id={EXPORT_SYMBOLS_ID}
@@ -4213,7 +4516,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <button
                                 type="button"
-                                className="w-full border-2 border-brutal-black bg-brand-purple px-4 py-2 font-vt323 text-xl font-bold uppercase tracking-[0.08em] text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+                                className="w-full border-2 border-brutal-black bg-brand-purple px-4 py-2 font-vt323 text-lg font-bold uppercase tracking-[0.08em] text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:text-xl"
                                 onClick={() => void handleExport(exportFormatId)}
                                 disabled={!canExportPattern}
                             >
@@ -4227,7 +4530,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <button
                                         key={option.id}
                                         type="button"
-                                        className={`min-h-9 border-2 border-brutal-black px-2 py-1 font-vt323 text-base font-bold uppercase leading-none tracking-[0.06em] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 ${
+                                        className={`min-h-9 border-2 border-brutal-black px-2 py-1 font-vt323 text-sm font-bold uppercase leading-none tracking-[0.06em] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 sm:text-base ${
                                             option.id === exportFormatId
                                                 ? 'bg-brand-yellow'
                                                 : 'bg-white hover:bg-brand-cyan'
@@ -4248,6 +4551,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     </div>
                 </div>
             )}
+
+            {isEditorPage ? (
+                <input
+                    ref={editorImageFileInputRef}
+                    name="editorMobileImage"
+                    aria-label="Convert image in the editor"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleImageUpload}
+                />
+            ) : null}
 
             <input
                 id={PROJECT_UPLOAD_INPUT_ID}

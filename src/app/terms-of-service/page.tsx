@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
             <SiteHeader />
 
             {/* Main Content */}
-            <main className="flex-1 px-4 pb-12 flex flex-col items-center">
+            <main className="flex-1 px-3 pb-10 flex flex-col items-center sm:px-4 sm:pb-12">
                 <div className="w-full max-w-4xl">
                     <Breadcrumbs
                         items={[
@@ -29,10 +29,10 @@ export default function TermsOfServicePage() {
                         ]}
                     />
                 </div>
-                <div className="w-full max-w-4xl border-4 border-brutal-black bg-white p-8 md:p-12 shadow-brutal">
-                    <h1 className="text-5xl font-black uppercase mb-8 tracking-tight">Terms of Service</h1>
+                <div className="w-full max-w-4xl border-2 border-brutal-black bg-white p-5 shadow-[2px_2px_0_0_#1a1a1a] sm:border-4 sm:p-8 sm:shadow-brutal md:p-12">
+                    <h1 className="text-4xl font-black uppercase mb-5 tracking-tight sm:mb-8 sm:text-5xl">Terms of Service</h1>
                     
-                    <div className="space-y-6 text-lg font-medium text-gray-800 prose prose-lg max-w-none">
+                    <div className="space-y-5 text-base font-medium text-gray-800 prose max-w-none sm:space-y-6 sm:text-lg sm:prose-lg">
                         <p><strong>Last Updated:</strong> April 17, 2026</p>
 
                         <p>Welcome to Bead Pattern Maker. By accessing or using our website (fusebeadpatterns.art) and services, you agree to be bound by these Terms of Service.</p>

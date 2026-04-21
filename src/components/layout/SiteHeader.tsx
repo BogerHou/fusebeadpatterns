@@ -21,21 +21,21 @@ const navItems: Array<{
 
 export default function SiteHeader({ active }: SiteHeaderProps) {
     return (
-        <header className="mx-4 mb-6 mt-4 flex flex-col gap-4 border-b-4 border-brutal-black bg-brand-cyan p-4 shadow-brutal sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/" className="flex items-center gap-4">
+        <header className="mx-3 mb-4 mt-3 flex flex-col gap-2.5 border-b-2 border-brutal-black bg-brand-cyan p-2.5 shadow-[2px_2px_0_0_#1a1a1a] sm:mx-4 sm:mb-8 sm:mt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:border-b-4 sm:p-4 sm:shadow-brutal">
+            <Link href="/" className="flex min-w-0 items-center gap-3 sm:gap-4">
                 <Image
                     src="/logo.png"
                     alt="Bead Pattern Maker Logo"
                     width={40}
                     height={40}
-                    className="h-10 w-10 shrink-0 rounded border-4 border-brutal-black bg-white object-cover"
+                    className="h-8 w-8 shrink-0 rounded border-2 border-brutal-black bg-white object-cover sm:h-10 sm:w-10 sm:border-4"
                     priority
                 />
-                <div className="pt-1 font-vt323 text-3xl uppercase leading-none sm:text-4xl">
+                <div className="min-w-0 pt-0.5 font-vt323 text-xl uppercase leading-none sm:pt-1 sm:text-4xl">
                     Bead Pattern Maker
                 </div>
             </Link>
-            <nav className="grid w-full grid-cols-2 gap-2 text-center text-[13px] font-bold uppercase sm:flex sm:w-auto sm:items-center sm:gap-3 sm:text-sm">
+            <nav className="grid w-full grid-cols-4 gap-1.5 text-center text-[11px] font-bold uppercase sm:flex sm:w-auto sm:items-center sm:gap-3 sm:text-sm">
                 {navItems.map((item) => {
                     const isActive = item.id === active;
 
@@ -44,7 +44,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                             key={item.id}
                             href={item.href}
                             prefetch={item.prefetch}
-                            className={`whitespace-nowrap border-4 border-brutal-black px-3 py-2 shadow-[3px_3px_0_0_#1a1a1a] hover:bg-brand-yellow ${
+                            className={`whitespace-nowrap border-2 border-brutal-black px-1.5 py-1.5 shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow sm:border-4 sm:px-3 sm:py-2 sm:shadow-[3px_3px_0_0_#1a1a1a] ${
                                 isActive
                                     ? 'bg-brand-yellow hover:bg-white'
                                     : 'bg-white'

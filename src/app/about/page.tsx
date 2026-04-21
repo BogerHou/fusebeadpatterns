@@ -18,7 +18,7 @@ export default function AboutPage() {
             <SiteHeader active="about" />
 
             {/* Main Content */}
-            <main className="flex-1 px-4 pb-12 flex flex-col items-center">
+            <main className="flex-1 px-3 pb-10 flex flex-col items-center sm:px-4 sm:pb-12">
                 <div className="w-full max-w-4xl">
                     <Breadcrumbs
                         items={[
@@ -27,20 +27,20 @@ export default function AboutPage() {
                         ]}
                     />
                 </div>
-                <div className="w-full max-w-4xl border-4 border-brutal-black bg-white p-8 md:p-12 shadow-brutal relative">
+                <div className="w-full max-w-4xl border-2 border-brutal-black bg-white p-5 shadow-[2px_2px_0_0_#1a1a1a] relative sm:border-4 sm:p-8 sm:shadow-brutal md:p-12">
                     {/* Decorative element */}
-                    <div className="absolute -top-4 -left-4 w-8 h-8 bg-brand-magenta border-4 border-brutal-black rounded-full" />
-                    <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-brand-cyan border-4 border-brutal-black rounded-sm" />
+                    <div className="absolute -top-3 -left-3 hidden h-7 w-7 rounded-full border-2 border-brutal-black bg-brand-magenta sm:block sm:-left-4 sm:-top-4 sm:h-8 sm:w-8 sm:border-4" />
+                    <div className="absolute -bottom-3 -right-3 hidden h-7 w-7 rounded-sm border-2 border-brutal-black bg-brand-cyan sm:block sm:-bottom-4 sm:-right-4 sm:h-8 sm:w-8 sm:border-4" />
 
-                    <h1 className="text-5xl font-black uppercase mb-8 tracking-tight">About Us</h1>
+                    <h1 className="text-4xl font-black uppercase mb-5 tracking-tight sm:mb-8 sm:text-5xl">About Us</h1>
 
-                    <div className="space-y-6 text-lg font-medium text-gray-800">
+                    <div className="space-y-5 text-base font-medium text-gray-800 sm:space-y-6 sm:text-lg">
                         <p>
                             Welcome to <strong>Bead Pattern Maker</strong>, the ultimate playground for pixel art enthusiasts, crafters, and makers! Our mission is simple: to provide the easiest, fastest, and most privacy-focused tool for converting any image into a ready-to-use <strong>Perler bead pattern</strong>.
                         </p>
 
-                        <div className="bg-brand-magenta/20 p-6 border-l-4 border-brand-magenta">
-                            <h3 className="text-2xl font-black uppercase mb-3">Why We Built This</h3>
+                        <div className="bg-brand-magenta/20 p-4 border-l-4 border-brand-magenta sm:p-6">
+                            <h3 className="text-xl font-black uppercase mb-3 sm:text-2xl">Why We Built This</h3>
                             <p>
                                 We love creating <strong>fuse bead art</strong>, from Minecraft items and Pokemon sprites to custom portraits. But we found that existing pattern generators were often slow, bloated with ads, or required uploading personal photos to random servers. We wanted a tool that runs entirely in your browser—so your photos stay strictly on your device.
                             </p>
@@ -53,9 +53,9 @@ export default function AboutPage() {
                             <li><strong>Creative Freedom:</strong> Whether you prefer Perler, Hama, Artkal, or Nabbi beads, our tool helps you map your colors perfectly.</li>
                         </ul>
 
-                        <div className="mt-12 p-8 border-4 border-brutal-black bg-brand-cyan text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <h3 className="text-3xl font-black uppercase mb-4">Ready to start creating?</h3>
-                            <Link href="/" className="inline-block px-8 py-4 bg-brand-magenta text-white border-4 border-brutal-black font-black uppercase tracking-wider hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
+                        <div className="mt-8 p-5 border-2 border-brutal-black bg-brand-cyan text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:mt-12 sm:border-4 sm:p-8 sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                            <h3 className="text-2xl font-black uppercase mb-4 sm:text-3xl">Ready to start creating?</h3>
+                            <Link href="/" className="inline-block px-5 py-3 bg-brand-magenta text-white border-2 border-brutal-black font-black uppercase tracking-wider hover:translate-y-1 hover:shadow-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all sm:border-4 sm:px-8 sm:py-4 sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                                 Generate a Pattern Now
                             </Link>
                         </div>
