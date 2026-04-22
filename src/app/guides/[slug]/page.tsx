@@ -29,21 +29,21 @@ export async function generateMetadata({
     }
 
     return {
-        title: `${guide.title} | Bead Pattern Maker`,
+        title: `${guide.title} | Fuse Bead Patterns`,
         description: guide.description,
         alternates: {
             canonical: `/guides/${guide.slug}`,
         },
         openGraph: {
-            title: `${guide.title} | Bead Pattern Maker`,
+            title: `${guide.title} | Fuse Bead Patterns`,
             description: guide.description,
             url: `https://fusebeadpatterns.art/guides/${guide.slug}`,
-            siteName: 'Bead Pattern Maker',
+            siteName: 'Fuse Bead Patterns',
             type: 'article',
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${guide.title} | Bead Pattern Maker`,
+            title: `${guide.title} | Fuse Bead Patterns`,
             description: guide.description,
         },
     };

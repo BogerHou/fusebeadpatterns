@@ -45,14 +45,15 @@ export function getPreviewRulerTicks(
     return Array.from({ length: safeLength }, (_, index) => {
         const value = index + 1;
         const isPenultimateTick = value === safeLength - 1;
+        const shouldHideNearFinalLabel = labelStep > 1 && isPenultimateTick;
 
         return {
             value,
-            ratio: safeLength === 1 ? 0.5 : index / (safeLength - 1),
+            ratio: (index + 0.5) / safeLength,
             showLabel:
                 value === 1 ||
                 value === safeLength ||
-                (value % labelStep === 0 && !isPenultimateTick),
+                (value % labelStep === 0 && !shouldHideNearFinalLabel),
         };
     });
 }

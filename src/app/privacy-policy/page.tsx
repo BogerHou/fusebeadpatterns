@@ -3,8 +3,8 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 
 export const metadata = {
-    title: 'Privacy Policy | Bead Pattern Maker',
-    description: 'Privacy Policy for Bead Pattern Maker. Learn how we protect your data—all image processing is done locally in your browser.',
+    title: 'Privacy Policy | Fuse Bead Patterns',
+    description: 'Privacy Policy for Fuse Bead Patterns. Learn how we protect your data while image processing runs locally in your browser.',
     alternates: {
         canonical: '/privacy-policy',
     },
@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
                     <div className="max-w-none space-y-5 text-base font-medium leading-7 text-gray-800 sm:space-y-6 sm:text-lg sm:leading-8">
                         <p><strong>Last Updated:</strong> April 17, 2026</p>
 
-                        <p>At Bead Pattern Maker (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), your privacy is our top priority. We designed our perler bead pattern generator with privacy built-in from the ground up.</p>
+                        <p>At Fuse Bead Patterns (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), your privacy is a core part of the product. We designed our perler bead pattern generator so image processing runs locally in your browser.</p>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">1. Local Image Processing</h3>
                         <p><strong>We do not upload your images.</strong> When you select a photo to convert into a fuse bead pattern, the entire image processing operation happens <em>locally</em> within your web browser using JavaScript. Your images are never sent to our servers, and we have no access to them.</p>
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
                         <p>Our website may use standard functional cookies or local storage strictly necessary to remember editor preferences such as zoom levels, grid settings, selected palettes, or draft pattern data. Google Analytics may use cookies or similar technologies for measurement. We do not use third-party tracking cookies for targeted advertising.</p>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">4. Third-Party Links</h3>
-                        <p>Our website may contain links to third-party websites (e.g., places to buy Perler bead kits). We are not responsible for the privacy practices or the content of those third-party sites.</p>
+                        <p>Our website may contain links to third-party websites, such as craft supply resources or external references. We are not responsible for the privacy practices or the content of those third-party sites.</p>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">5. Contact Us</h3>
                         <p>If you have any questions or concerns about this Privacy Policy, please contact us at: <a href="mailto:contact@fusebeadpatterns.art" className="inline-flex min-h-10 items-center text-brand-purple hover:underline">contact@fusebeadpatterns.art</a>.</p>

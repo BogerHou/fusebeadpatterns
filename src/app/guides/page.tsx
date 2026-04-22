@@ -6,18 +6,18 @@ import { guidePages } from './guide-data';
 import GuideHeader from './GuideHeader';
 
 export const metadata: Metadata = {
-    title: 'Perler Bead Guides | Bead Pattern Maker',
+    title: 'Perler Bead Guides | Fuse Bead Patterns',
     description:
         'Practical guides for making Perler bead patterns, choosing pegboards, planning mini bead projects, and organizing fuse bead supplies.',
     alternates: {
         canonical: '/guides',
     },
     openGraph: {
-        title: 'Perler Bead Guides | Bead Pattern Maker',
+        title: 'Perler Bead Guides | Fuse Bead Patterns',
         description:
             'Practical guides for making Perler bead patterns, choosing pegboards, planning mini bead projects, and organizing fuse bead supplies.',
         url: 'https://fusebeadpatterns.art/guides',
-        siteName: 'Bead Pattern Maker',
+        siteName: 'Fuse Bead Patterns',
         type: 'website',
     },
 };

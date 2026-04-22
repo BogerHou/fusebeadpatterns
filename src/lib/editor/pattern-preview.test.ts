@@ -24,18 +24,31 @@ describe('pattern preview helpers', () => {
         expect(ticks).toHaveLength(29);
         expect(ticks[0]).toMatchObject({
             value: 1,
-            ratio: 0,
+            showLabel: true,
+        });
+        expect(ticks[0].ratio).toBeCloseTo(0.5 / 29);
+        expect(ticks[28]).toMatchObject({
+            value: 29,
+            showLabel: true,
+        });
+        expect(ticks[28].ratio).toBeCloseTo(28.5 / 29);
+    });
+
+    it('labels every tick when cells are large enough', () => {
+        const ticks = getPreviewRulerTicks(29, 522);
+
+        expect(ticks[27]).toMatchObject({
+            value: 28,
             showLabel: true,
         });
         expect(ticks[28]).toMatchObject({
             value: 29,
-            ratio: 1,
             showLabel: true,
         });
     });
 
-    it('does not label the penultimate tick next to the final label', () => {
-        const ticks = getPreviewRulerTicks(29, 522);
+    it('does not label the penultimate tick when sparse labels would collide', () => {
+        const ticks = getPreviewRulerTicks(29, 290);
 
         expect(ticks[27]).toMatchObject({
             value: 28,

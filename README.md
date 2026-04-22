@@ -1,4 +1,4 @@
-# Bead Pattern Maker
+# Fuse Bead Patterns
 
 Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到选定色板，生成可打印的珠子图案、颜色统计、多面板预览和多种导出文件。
 

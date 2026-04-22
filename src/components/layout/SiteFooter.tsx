@@ -63,14 +63,14 @@ const COPYRIGHT_YEAR = 2026;
 
 export default function SiteFooter({
     active,
-    description = 'A free tool for turning photos into printable Perler, Hama, and Artkal bead patterns.',
+    description = 'Turn photos into printable perler bead patterns, then adjust the size, clean up beads, and export the result from your browser.',
 }: SiteFooterProps) {
     return (
         <footer className="mt-auto border-t-2 border-brutal-black bg-white p-5 shadow-[0_-2px_0_0_rgba(26,26,26,1)] sm:border-t-4 sm:p-8 sm:shadow-[0_-4px_0_0_rgba(26,26,26,1)]">
             <div className="mx-auto grid max-w-6xl gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_2fr]">
                 <div>
                     <h2 className="mb-2 font-vt323 text-2xl font-bold uppercase">
-                        Bead Pattern Maker
+                        Fuse Bead Patterns
                     </h2>
                     <p className="max-w-md font-medium text-gray-600">
                         {description}
@@ -104,8 +104,8 @@ export default function SiteFooter({
                 </div>
             </div>
             <div className="mt-6 border-t-2 border-dashed border-gray-300 pt-5 text-center font-vt323 text-base leading-none text-gray-500 sm:mt-8 sm:pt-6 sm:text-lg">
-                &copy; {COPYRIGHT_YEAR} Bead Pattern Maker. All
-                rights reserved. Not affiliated with Perler, Hama, or Artkal.
+                &copy; {COPYRIGHT_YEAR} Fuse Bead Patterns. All
+                rights reserved. Not affiliated with any bead brand mentioned.
             </div>
         </footer>
     );

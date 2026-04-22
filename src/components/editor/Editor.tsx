@@ -2455,8 +2455,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 isEditorDraftReady ? (
                 <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
                     <div className="col-span-full min-w-0 border-b-2 border-brutal-black bg-white sm:border-b-4">
-                        <div className="flex h-12 min-w-0 items-center justify-between">
-                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3">
+                        <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[232px_minmax(0,1fr)_312px]">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3 xl:col-span-2">
                             <Link
                                 href="/"
                                 aria-label="Back to generator"
@@ -2469,7 +2469,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 Editor
                             </h1>
                         </div>
-                        <div className="flex h-full shrink-0 items-center">
+                        <div className="flex h-full shrink-0 items-center xl:col-start-3 xl:min-w-0 xl:justify-end xl:border-l-4 xl:border-brutal-black">
                             {hasEditablePattern ? (
                                 <>
                                     <div className="hidden h-full items-center gap-1 border-l-2 border-brutal-black/20 px-2 md:flex">

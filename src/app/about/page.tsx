@@ -4,8 +4,8 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 
 export const metadata = {
-    title: 'About Bead Pattern Maker | The Ultimate Free Perler Bead Generator',
-    description: 'Learn more about Bead Pattern Maker, the best free tool for converting your images into Perler, Hama, and Artkal bead patterns with a focus on privacy and ease of use.',
+    title: 'About Fuse Bead Patterns',
+    description: 'Learn about Fuse Bead Patterns, a free browser-based Perler bead pattern generator for turning photos into printable fuse bead patterns.',
     alternates: {
         canonical: '/about',
     },
@@ -32,21 +32,21 @@ export default function AboutPage() {
 
                     <div className="space-y-5 text-base font-medium leading-7 text-gray-800 sm:space-y-6 sm:text-lg sm:leading-8">
                         <p>
-                            Welcome to <strong>Bead Pattern Maker</strong>, the ultimate playground for pixel art enthusiasts, crafters, and makers! Our mission is simple: to provide the easiest, fastest, and most privacy-focused tool for converting any image into a ready-to-use <strong>Perler bead pattern</strong>.
+                            Welcome to <strong>Fuse Bead Patterns</strong>, a free browser-based tool for turning photos, sprites, and simple artwork into printable <strong>Perler bead patterns</strong>. The goal is simple: make it easy to preview, adjust, clean up, and export a pattern before you start building.
                         </p>
 
                         <div className="border-l-4 border-brand-magenta bg-brand-magenta/20 p-4 sm:p-6">
                             <h3 className="mb-3 font-vt323 text-3xl uppercase leading-none sm:text-4xl">Why We Built This</h3>
                             <p>
-                                We love creating <strong>fuse bead art</strong>, from Minecraft items and Pokemon sprites to custom portraits. But we found that existing pattern generators were often slow, bloated with ads, or required uploading personal photos to random servers. We wanted a tool that runs entirely in your browser—so your photos stay strictly on your device.
+                                We love creating <strong>fuse bead art</strong>, from small game-style sprites to custom portraits. Many pattern tools are slow, cluttered, or require uploading personal photos to a server. We wanted a generator that runs in your browser so your images stay on your device.
                             </p>
                         </div>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">Our Core Values</h3>
                         <ul className="list-disc pl-6 space-y-2">
-                            <li><strong>100% Free & Accessible:</strong> No hidden fees, no subscriptions. Just pure crafting joy.</li>
-                            <li><strong>Absolute Privacy:</strong> All image processing happens locally in your browser. We never see, store, or upload your photos.</li>
-                            <li><strong>Creative Freedom:</strong> Whether you prefer Perler, Hama, Artkal, or Nabbi beads, our tool helps you map your colors perfectly.</li>
+                            <li><strong>Free & Accessible:</strong> No hidden fees, no subscriptions. Open the generator and start a pattern.</li>
+                            <li><strong>Privacy First:</strong> Image processing happens locally in your browser. We do not see, store, or upload your photos.</li>
+                            <li><strong>Practical Control:</strong> Adjust board size, color choices, cleanup edits, and exports around the project you actually want to build.</li>
                         </ul>
 
                         <div className="mt-8 border-2 border-brutal-black bg-brand-cyan p-5 text-center shadow-[2px_2px_0_0_#1a1a1a] sm:mt-12 sm:border-4 sm:p-8 sm:shadow-brutal">

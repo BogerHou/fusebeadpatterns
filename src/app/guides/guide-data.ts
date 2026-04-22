@@ -174,7 +174,7 @@ export const guidePages: GuidePage[] = [
             },
         ],
         relatedLinks: [
-            { href: '/', label: 'Create a pattern' },
+            { href: '/', label: 'Open the generator' },
             { href: '/guides/photo-to-perler-bead-pattern', label: 'Photo-to-pattern guide' },
             { href: '/guides/mini-perler-beads', label: 'Mini bead guide' },
         ],

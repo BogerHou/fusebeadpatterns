@@ -3,8 +3,8 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 
 export const metadata = {
-    title: 'Terms of Service | Bead Pattern Maker',
-    description: 'Terms of Service and terms of use for Bead Pattern Maker.',
+    title: 'Terms of Service | Fuse Bead Patterns',
+    description: 'Terms of Service and terms of use for Fuse Bead Patterns.',
     alternates: {
         canonical: '/terms-of-service',
     },
@@ -35,10 +35,10 @@ export default function TermsOfServicePage() {
                     <div className="max-w-none space-y-5 text-base font-medium leading-7 text-gray-800 sm:space-y-6 sm:text-lg sm:leading-8">
                         <p><strong>Last Updated:</strong> April 17, 2026</p>
 
-                        <p>Welcome to Bead Pattern Maker. By accessing or using our website (fusebeadpatterns.art) and services, you agree to be bound by these Terms of Service.</p>
+                        <p>Welcome to Fuse Bead Patterns. By accessing or using our website (fusebeadpatterns.art) and services, you agree to be bound by these Terms of Service.</p>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">1. Use of the Service</h3>
-                        <p>Bead Pattern Maker provides a free, browser-based tool to convert images into bead patterns (such as Perler, Hama, or Artkal). You may use our service for personal, educational, or commercial crafting purposes.</p>
+                        <p>Fuse Bead Patterns provides a free, browser-based tool to convert images into printable fuse bead patterns. You may use our service for personal, educational, or commercial crafting purposes.</p>
                         
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">2. Intellectual Property & Copyright</h3>
                         <p><strong>Your Content:</strong> You retain all rights and ownership to the images you upload and process using our tool. Since processing happens locally in your browser, we do not store, claim ownership of, or distribute your images or generated patterns.</p>
@@ -48,7 +48,7 @@ export default function TermsOfServicePage() {
                         <p>The service is provided &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; without any warranties of any kind, either express or implied. We do not guarantee that the generated patterns will perfectly match your expectations, nor do we guarantee uninterrupted or error-free access to the website.</p>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">4. Limitation of Liability</h3>
-                        <p>In no event shall Bead Pattern Maker or its creators be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in any way connected with your use of the service or the patterns generated.</p>
+                        <p>In no event shall Fuse Bead Patterns or its creators be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in any way connected with your use of the service or the patterns generated.</p>
 
                         <h3 className="mb-3 mt-8 font-vt323 text-3xl uppercase leading-none sm:text-4xl">5. Changes to Terms</h3>
                         <p>We reserve the right to modify these Terms of Service at any time. We will indicate the date of the last update at the top of this page. Your continued use of the website constitutes your acceptance of the updated terms.</p>

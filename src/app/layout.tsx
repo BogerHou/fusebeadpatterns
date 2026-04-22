@@ -15,24 +15,27 @@ const vt323 = VT323({
 
 export const metadata: Metadata = {
     metadataBase: new URL('https://fusebeadpatterns.art'),
-    title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
-    description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
+    title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns',
+    description: 'Convert photos into printable Perler bead patterns with a free browser-based fuse bead generator. Preview the pattern, adjust the size, clean it up, and export when ready.',
     keywords: [
         'perler bead patterns',
+        'perler bead pattern generator',
+        'printable perler bead patterns',
+        'photo to perler beads',
         'fuse bead generator',
         'bead pattern maker',
         'hama beads',
         'pixel art'
     ],
-    authors: [{ name: 'Bead Pattern Maker' }],
+    authors: [{ name: 'Fuse Bead Patterns' }],
     alternates: {
         canonical: '/',
     },
     openGraph: {
-        title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
-        description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
+        title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns',
+        description: 'Convert photos into printable Perler bead patterns with a free browser-based fuse bead generator. Preview the pattern, adjust the size, clean it up, and export when ready.',
         url: 'https://fusebeadpatterns.art',
-        siteName: 'Bead Pattern Maker',
+        siteName: 'Fuse Bead Patterns',
         type: 'website',
         images: [
             {
@@ -45,8 +48,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Free Perler Bead Pattern Generator | Bead Pattern Maker',
-        description: 'Convert photos into Perler bead patterns with our free fuse bead generator. Create amazing custom pixel art designs locally in your browser. Try it now!',
+        title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns',
+        description: 'Convert photos into printable Perler bead patterns with a free browser-based fuse bead generator. Preview the pattern, adjust the size, clean it up, and export when ready.',
         images: ['/opengraph-image.png'],
     },
 };

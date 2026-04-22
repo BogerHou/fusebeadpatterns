@@ -10,11 +10,10 @@ type SiteHeaderProps = {
 const navItems: Array<{
     id: SiteHeaderSection;
     label: string;
-    mobileLabel?: string;
     href: string;
     prefetch?: false;
 }> = [
-    { id: 'generator', label: 'Generator', mobileLabel: 'Create', href: '/' },
+    { id: 'generator', label: 'Generator', href: '/' },
     { id: 'editor', label: 'Editor', href: '/editor', prefetch: false },
     { id: 'guides', label: 'Guides', href: '/guides' },
     { id: 'about', label: 'About', href: '/about' },
@@ -29,7 +28,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
             >
                 <Image
                     src="/logo.png"
-                    alt="Bead Pattern Maker Logo"
+                    alt="Fuse Bead Patterns Logo"
                     width={40}
                     height={40}
                     sizes="(max-width: 639px) 28px, 40px"
@@ -37,7 +36,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                     priority
                 />
                 <div className="min-w-0 pt-0.5 font-vt323 text-lg uppercase leading-none sm:pt-1 sm:text-4xl">
-                    Bead Pattern Maker
+                    Fuse Bead Patterns
                 </div>
             </Link>
             <nav className="grid w-full grid-cols-4 gap-1 text-center text-[10px] font-bold uppercase sm:flex sm:w-auto sm:items-center sm:gap-3 sm:text-sm">
@@ -57,7 +56,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                             }`}
                         >
                             <span className="truncate sm:hidden">
-                                {item.mobileLabel ?? item.label}
+                                {item.label}
                             </span>
                             <span className="hidden sm:inline">
                                 {item.label}
