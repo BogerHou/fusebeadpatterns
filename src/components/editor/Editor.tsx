@@ -124,6 +124,17 @@ const HOME_PRIMARY_PALETTE_ID = 'home-primary-palette';
 const HOME_BOARD_ID = 'home-board-id';
 const HOME_BOARD_WIDTH_ID = 'home-board-width';
 const HOME_BOARD_HEIGHT_ID = 'home-board-height';
+
+function waitForNextPaint(): Promise<void> {
+    if (typeof window === 'undefined' || !window.requestAnimationFrame) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+    });
+}
+
 const PREVIEW_FALLBACK_BOUNDS = {
     maxWidth: 1200,
     maxHeight: 900,
@@ -499,6 +510,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         currentPatternBeadCount >= LARGE_PATTERN_WARNING_BEAD_COUNT
             ? 'Large pattern in progress. Reducing boards or turning off dithering can help.'
             : 'Building preview and bead counts.';
+    const selectedExportLabel =
+        EXPORT_OPTIONS.find((option) => option.id === exportFormatId)?.label ??
+        'Pattern';
+    const activeExportLabel = exportingId
+        ? (EXPORT_OPTIONS.find((option) => option.id === exportingId)?.label ??
+          'export')
+        : null;
+    const exportStatusText = activeExportLabel
+        ? `Preparing ${activeExportLabel}. Loading export tools can take a moment the first time.`
+        : null;
     const pendingBoardCountStatus = `${pendingBoardWidth} x ${pendingBoardHeight} board${
         pendingBoardWidth * pendingBoardHeight > 1 ? 's' : ''
     }`;
@@ -603,6 +624,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         previewStageHeight -
         activeRulerSize.top -
         PREVIEW_STAGE_SAFE_AREA.bottom;
+    const previewVerticalSlack = Math.max(
+        0,
+        previewUsableHeight - displayPreviewSize.height
+    );
     const previewImageOffsetLeft =
         activeRulerSize.left +
         Math.max(
@@ -611,10 +636,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         );
     const previewImageOffsetTop =
         activeRulerSize.top +
-        Math.max(
-            0,
-            (previewUsableHeight - displayPreviewSize.height) / 2
-        );
+        (isEditorPage
+            ? Math.min(56, previewVerticalSlack / 4)
+            : previewVerticalSlack / 2);
 
     const setAutomaticEditorColorRef = useCallback((nextRef: string | null) => {
         editorColorSelectionModeRef.current = 'auto';
@@ -2166,12 +2190,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        if (exportingId !== null) {
+            return;
+        }
+
         currentProjectRef.current.exportConfiguration.useSymbols = useSymbols;
         currentProjectRef.current.image.name = fileName;
 
+        setErrorMessage(null);
         setExportingId(exportId);
 
         try {
+            await waitForNextPaint();
             await exportEditorPattern({
                 exportId,
                 reducedColor: reducedColorRef.current,
@@ -2276,14 +2306,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isEditorPage ? (
                 isEditorDraftReady ? (
-                <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[86px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[90px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
+                <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
                     <div className="col-span-full min-w-0 border-b-2 border-brutal-black bg-white sm:border-b-4">
-                        <div className="flex h-11 min-w-0 items-center justify-between sm:h-12">
+                        <div className="flex h-12 min-w-0 items-center justify-between">
                         <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3">
                             <Link
                                 href="/"
                                 aria-label="Back to generator"
-                                className="flex h-7 w-7 shrink-0 items-center justify-center border-2 border-brutal-black bg-brand-cyan font-vt323 text-2xl leading-none text-brutal-black hover:bg-brand-yellow sm:h-8 sm:w-8 sm:text-3xl"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-brutal-black bg-brand-cyan font-vt323 text-3xl leading-none text-brutal-black hover:bg-brand-yellow sm:h-9 sm:w-9"
                                 title="Back to generator"
                             >
                                 &lt;
@@ -2384,7 +2414,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </button>
                         </div>
                         </div>
-                        <div className="grid h-[42px] grid-cols-4 border-t-2 border-brutal-black/15 text-[10px] font-black uppercase tracking-[0.08em] xl:hidden">
+                        <div className="grid h-11 grid-cols-4 border-t-2 border-brutal-black/15 text-[10px] font-black uppercase tracking-[0.08em] xl:hidden">
                             {[
                                 {
                                     id: 'file' as const,
@@ -2581,7 +2611,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             onPointerMove={handlePreviewPanPointerMove}
                             onPointerUp={handlePreviewPanPointerUp}
                             onPointerCancel={handlePreviewPanPointerUp}
-                            className={`absolute inset-x-0 top-0 bottom-[50px] overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] sm:bottom-[56px] xl:bottom-0 [&::-webkit-scrollbar]:hidden ${
+                            className={`absolute inset-x-0 top-0 bottom-[54px] overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] sm:bottom-[58px] xl:bottom-0 [&::-webkit-scrollbar]:hidden ${
                                 activeEditorTool === 'pan'
                                     ? 'cursor-grab active:cursor-grabbing'
                                     : ''
@@ -2611,21 +2641,21 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 htmlFor={
                                                     EDITOR_EMPTY_UPLOAD_INPUT_ID
                                                 }
-                                                className="cursor-pointer border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-white sm:border-4 sm:px-4 sm:shadow-brutal-sm"
+                                                className="flex min-h-11 cursor-pointer items-center justify-center border-2 border-brutal-black bg-brand-yellow px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-white sm:border-4 sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Convert Image
                                             </label>
                                             <button
                                                 type="button"
                                                 onClick={handleCreateBlankPattern}
-                                                className="border-2 border-brutal-black bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan sm:border-4 sm:px-4 sm:shadow-brutal-sm"
+                                                className="min-h-11 border-2 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan sm:border-4 sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Blank Pattern
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={handleOpenProjectPicker}
-                                                className="border-2 border-brutal-black bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-purple sm:border-4 sm:px-4 sm:shadow-brutal-sm"
+                                                className="min-h-11 border-2 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-purple sm:border-4 sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Open Project
                                             </button>
@@ -2760,7 +2790,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     </main>
 
                     {editorMobilePanel && (
-                        <div className="absolute inset-x-2 top-[94px] z-30 max-h-[calc(100svh-156px)] overflow-y-auto border-2 border-brutal-black bg-white p-3 shadow-[2px_2px_0_0_#1a1a1a] sm:top-[98px] sm:max-h-[calc(100svh-164px)] sm:border-4 sm:shadow-brutal xl:hidden">
+                        <div className="absolute inset-x-2 top-[100px] z-30 max-h-[calc(100svh-174px)] overflow-y-auto border-2 border-brutal-black bg-white p-3 shadow-[2px_2px_0_0_#1a1a1a] sm:top-[102px] sm:max-h-[calc(100svh-184px)] sm:border-4 sm:shadow-brutal xl:hidden">
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <div className="font-vt323 text-2xl uppercase leading-none">
                                     {editorMobilePanel === 'file'
@@ -2774,7 +2804,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <button
                                     type="button"
                                     onClick={() => setEditorMobilePanel(null)}
-                                    className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none hover:bg-brand-yellow"
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none hover:bg-brand-yellow"
                                     aria-label="Close mobile editor panel"
                                 >
                                     ×
@@ -2874,7 +2904,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             type="button"
                                             onClick={handleUndoPatternEdit}
                                             disabled={!canUndoPattern}
-                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Undo
                                         </button>
@@ -2882,7 +2912,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             type="button"
                                             onClick={handleRedoPatternEdit}
                                             disabled={!canRedoPattern}
-                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Redo
                                         </button>
@@ -2897,7 +2927,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 !hasEditablePattern ||
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
-                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Zoom -
                                         </button>
@@ -2912,7 +2942,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 !hasEditablePattern ||
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
-                                            className="border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Zoom +
                                         </button>
@@ -2926,6 +2956,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         type="button"
                                         onClick={openColorPicker}
                                         disabled={enabledColorCount === 0}
+                                        aria-label="Select bead color"
+                                        title="Select bead color"
                                         className="flex w-full items-center gap-3 border-2 border-brutal-black bg-brutal-bg p-3 text-left shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         <span
@@ -2995,7 +3027,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             setIsPaletteManagerOpen(true);
                                             setEditorMobilePanel(null);
                                         }}
-                                        className="w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                        className="min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
                                     >
                                         Manage Palettes
                                     </button>
@@ -3016,7 +3048,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.value
                                                     )
                                                 }
-                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
                                             >
                                                 {PALETTE_OPTIONS.map(
                                                     (option) => (
@@ -3042,7 +3074,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             .value as BoardOptionId
                                                     )
                                                 }
-                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
                                             >
                                                 {BOARD_OPTIONS.map((option) => (
                                                     <option
@@ -3070,7 +3102,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         )
                                                     )
                                                 }
-                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
                                             />
                                         </label>
                                         <label className="block">
@@ -3089,7 +3121,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         )
                                                     )
                                                 }
-                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
                                             />
                                         </label>
                                     </div>
@@ -3159,7 +3191,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             !hasPendingPatternSettings ||
                                             processing
                                         }
-                                        className="mt-3 w-full border-2 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+                                        className="mt-3 min-h-11 w-full border-2 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         Apply Changes
                                     </button>
@@ -3181,14 +3213,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         setActiveEditorTool(tool.id);
                                         setEditorMobilePanel(null);
                                     }}
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center border-2 transition-colors sm:h-10 sm:w-10 ${
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 transition-colors ${
                                         activeEditorTool === tool.id
                                             ? 'border-brutal-black bg-brand-yellow text-brutal-black shadow-[2px_2px_0_0_#1a1a1a]'
                                             : 'border-brutal-black/25 bg-white text-gray-600 hover:border-brutal-black hover:bg-brand-cyan hover:text-brutal-black'
                                     }`}
                                 >
                                     <tool.icon
-                                        className="h-4 w-4 sm:h-[18px] sm:w-[18px]"
+                                        className="h-[18px] w-[18px]"
                                         strokeWidth={2.1}
                                     />
                                 </button>
@@ -3197,10 +3229,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 type="button"
                                 onClick={openColorPicker}
                                 disabled={enabledColorCount === 0}
-                                className="flex h-9 min-w-[76px] shrink-0 items-center justify-center gap-1.5 border-2 border-brutal-black bg-white px-2 text-[10px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 sm:h-10 sm:min-w-[84px] sm:gap-2 sm:text-[11px]"
+                                aria-label="Select bead color"
+                                title="Select bead color"
+                                className="flex h-10 min-w-[82px] shrink-0 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                             >
                                 <span
-                                    className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-brutal-black sm:h-4 sm:w-4"
+                                    className="h-4 w-4 shrink-0 rounded-full border-2 border-brutal-black"
                                     style={{
                                         backgroundColor: activeEditorColorEntry
                                             ? `rgb(${activeEditorColorEntry.color.r} ${activeEditorColorEntry.color.g} ${activeEditorColorEntry.color.b})`
@@ -3633,7 +3667,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={() => setIsPaletteManagerOpen(true)}
                                 >
                                     Colors
@@ -3641,7 +3675,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={() => setIsAdvancedOpen(true)}
                                 >
                                     Advanced
@@ -3649,7 +3683,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={() => setIsExportDialogOpen(true)}
                                     disabled={!canExportPattern}
                                 >
@@ -3660,7 +3694,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={handleOpenProjectPicker}
                                 >
                                     Open Project
@@ -3668,7 +3702,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
                                     onClick={handleSaveProject}
                                     disabled={!canSaveProject}
                                 >
@@ -4260,7 +4294,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </div>
 
                             <div className="pointer-events-none absolute inset-x-2 bottom-1.5 z-30 flex justify-center sm:inset-x-3">
-                                <div className="flex max-w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.08em] text-brutal-black/80 sm:gap-4 sm:text-[10px] sm:tracking-[0.14em]">
+                                <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-brutal-black/80 sm:gap-x-4 sm:text-[10px] sm:tracking-[0.14em]">
                                     <span>Pattern Size: {patternSize}</span>
                                     <span>Total Beads: {totalBeads}</span>
                                     <span>Colors: {colorsUsed}</span>
@@ -4274,12 +4308,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isColorPickerOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-2 sm:p-3"
+                    className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-black/35 p-0 sm:items-center sm:justify-center sm:p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Select Color"
                 >
-                    <div className="flex max-h-[90svh] w-full max-w-4xl flex-col overflow-hidden border-2 border-brutal-black bg-white shadow-[2px_2px_0_0_#1a1a1a] sm:max-h-[86vh] sm:shadow-[3px_3px_0_0_#1a1a1a]">
+                    <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[86vh] sm:max-w-4xl sm:border-2 sm:border-brutal-black sm:shadow-[3px_3px_0_0_#1a1a1a]">
                         <div className="flex items-center justify-between gap-3 border-b-2 border-brutal-black bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
                                 <div className="font-vt323 text-2xl uppercase leading-none text-brutal-black sm:text-3xl">
@@ -4295,7 +4329,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     setColorPickerQuery('');
                                     setIsColorPickerOpen(false);
                                 }}
-                                className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none text-brutal-black hover:bg-brand-cyan"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none text-brutal-black hover:bg-brand-cyan sm:h-9 sm:w-9 sm:text-2xl"
                                 aria-label="Close color picker"
                             >
                                 ×
@@ -4321,7 +4355,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         option.id
                                                     )
                                                 }
-                                                className={`flex w-full items-center justify-between border-2 px-2.5 py-1.5 text-left transition-colors ${
+                                                className={`flex min-h-11 w-full items-center justify-between border-2 px-2.5 py-1.5 text-left transition-colors ${
                                                     isActive
                                                         ? 'border-brutal-black bg-brand-yellow text-brutal-black'
                                                         : 'border-brutal-black/20 bg-white text-brutal-black hover:border-brutal-black hover:bg-brand-cyan'
@@ -4358,7 +4392,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }
                                                 aria-label="Search bead colors"
                                                 placeholder="Search color or code"
-                                                className="w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 text-sm font-bold focus:bg-brand-yellow focus:outline-none sm:max-w-xs"
+                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 text-sm font-bold focus:bg-brand-yellow focus:outline-none sm:max-w-xs"
                                             />
                                             <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-brutal-black/55">
                                                 {currentColorPickerEntries.length}{' '}
@@ -4389,7 +4423,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 entry
                                                             )
                                                         }
-                                                        className={`flex items-center gap-2 border-2 px-2.5 py-2 text-left transition-colors sm:gap-3 sm:px-3 ${
+                                                        className={`flex min-h-11 items-center gap-2 border-2 px-2.5 py-2 text-left transition-colors sm:gap-3 sm:px-3 ${
                                                             isActive
                                                                 ? 'border-brutal-black bg-brand-cyan'
                                                                 : 'border-brutal-black/15 bg-white hover:border-brutal-black hover:bg-brand-yellow'
@@ -4425,12 +4459,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isExportDialogOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-2 sm:p-3"
+                    className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-black/35 p-0 sm:items-center sm:justify-center sm:p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Export"
+                    aria-busy={exportingId !== null}
                 >
-                    <div className="max-h-[90svh] w-full max-w-lg overflow-auto border-2 border-brutal-black bg-white shadow-[2px_2px_0_0_#1a1a1a] sm:shadow-[3px_3px_0_0_#1a1a1a]">
+                    <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[90svh] sm:max-w-lg sm:border-2 sm:border-brutal-black sm:shadow-[3px_3px_0_0_#1a1a1a]">
                         <div className="flex items-center justify-between gap-3 border-b-2 border-brutal-black bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
                                 <div className="font-vt323 text-2xl uppercase leading-none sm:text-3xl">
@@ -4443,14 +4478,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <button
                                 type="button"
                                 onClick={() => setIsExportDialogOpen(false)}
-                                className="border-2 border-brutal-black bg-white px-2 py-0.5 font-vt323 text-2xl leading-none hover:bg-brand-yellow"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none hover:bg-brand-yellow sm:h-9 sm:w-9 sm:text-2xl"
                                 aria-label="Close export dialog"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <div className="space-y-3 p-3 sm:p-4">
+                        <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
                             <div>
                                 <label
                                     htmlFor={EXPORT_FILE_NAME_ID}
@@ -4466,7 +4501,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setFileName(event.target.value)
                                     }
-                                    className="w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base font-bold focus:bg-brand-yellow focus:outline-none sm:text-lg"
+                                    className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base font-bold focus:bg-brand-yellow focus:outline-none sm:text-lg"
                                 />
                             </div>
 
@@ -4484,7 +4519,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setExportFormatId(event.target.value)
                                     }
-                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base focus:bg-brand-yellow focus:outline-none sm:text-lg"
+                                    className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base focus:bg-brand-yellow focus:outline-none sm:text-lg"
                                 >
                                     {EXPORT_OPTIONS.map((option) => (
                                         <option
@@ -4499,7 +4534,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <label
                                 htmlFor={EXPORT_SYMBOLS_ID}
-                                className="flex items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-xs font-bold uppercase sm:text-sm"
+                                className="flex min-h-11 items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-xs font-bold uppercase sm:text-sm"
                             >
                                 <input
                                     id={EXPORT_SYMBOLS_ID}
@@ -4514,15 +4549,25 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 Use Symbols In Printable Exports
                             </label>
 
+                            {exportStatusText ? (
+                                <div
+                                    role="status"
+                                    aria-live="polite"
+                                    className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-xs font-black uppercase leading-5 tracking-[0.08em] text-brutal-black"
+                                >
+                                    {exportStatusText}
+                                </div>
+                            ) : null}
+
                             <button
                                 type="button"
-                                className="w-full border-2 border-brutal-black bg-brand-purple px-4 py-2 font-vt323 text-lg font-bold uppercase tracking-[0.08em] text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:text-xl"
+                                className="min-h-11 w-full border-2 border-brutal-black bg-brand-purple px-4 py-2 font-vt323 text-lg font-bold uppercase tracking-[0.08em] text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:text-xl"
                                 onClick={() => void handleExport(exportFormatId)}
                                 disabled={!canExportPattern}
                             >
                                 {exportingId === exportFormatId
                                     ? 'Exporting...'
-                                    : `Export ${EXPORT_OPTIONS.find((option) => option.id === exportFormatId)?.label ?? ''}`}
+                                    : `Export ${selectedExportLabel}`}
                             </button>
 
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -4530,7 +4575,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <button
                                         key={option.id}
                                         type="button"
-                                        className={`min-h-9 border-2 border-brutal-black px-2 py-1 font-vt323 text-sm font-bold uppercase leading-none tracking-[0.06em] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 sm:text-base ${
+                                        className={`min-h-11 border-2 border-brutal-black px-2 py-1 font-vt323 text-sm font-bold uppercase leading-none tracking-[0.06em] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 sm:text-base ${
                                             option.id === exportFormatId
                                                 ? 'bg-brand-yellow'
                                                 : 'bg-white hover:bg-brand-cyan'

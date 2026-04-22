@@ -34,6 +34,19 @@ describe('pattern preview helpers', () => {
         });
     });
 
+    it('does not label the penultimate tick next to the final label', () => {
+        const ticks = getPreviewRulerTicks(29, 522);
+
+        expect(ticks[27]).toMatchObject({
+            value: 28,
+            showLabel: false,
+        });
+        expect(ticks[28]).toMatchObject({
+            value: 29,
+            showLabel: true,
+        });
+    });
+
     it('centers a single-cell ruler tick', () => {
         expect(getPreviewRulerTicks(1, 20)).toEqual([
             {

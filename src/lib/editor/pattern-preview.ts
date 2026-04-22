@@ -44,6 +44,7 @@ export function getPreviewRulerTicks(
 
     return Array.from({ length: safeLength }, (_, index) => {
         const value = index + 1;
+        const isPenultimateTick = value === safeLength - 1;
 
         return {
             value,
@@ -51,7 +52,7 @@ export function getPreviewRulerTicks(
             showLabel:
                 value === 1 ||
                 value === safeLength ||
-                value % labelStep === 0,
+                (value % labelStep === 0 && !isPenultimateTick),
         };
     });
 }

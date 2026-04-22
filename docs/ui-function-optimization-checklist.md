@@ -4,7 +4,8 @@ This checklist tracks the remaining work after the April 2026 UI, content, and l
 
 ## Next
 
-- [ ] Add a focused browser smoke test for upload, generate, edit, and export.
+- [ ] Reduce export chunk weight by moving PDF/SVG font payloads out of JavaScript or loading them as static assets.
+- [ ] Add client-side error monitoring for editor failures.
 
 ## Content And SEO
 
@@ -15,7 +16,6 @@ This checklist tracks the remaining work after the April 2026 UI, content, and l
 ## Launch Operations
 
 - [ ] Confirm Google Search Console setup and sitemap submission.
-- [ ] Add client-side error monitoring for editor failures.
 - [ ] Review analytics and privacy copy after confirming the final tracking setup.
 
 ## Done
@@ -27,6 +27,9 @@ This checklist tracks the remaining work after the April 2026 UI, content, and l
 - [x] Simplify oversized editor dialogs, especially Color Picker and Export, so they feel lighter and less rigid.
 - [x] Fix CI branch coverage so pushes to `master` run the quality workflow.
 - [x] Add a repeatable production smoke check for `/`, `/editor`, `/guides`, `/sitemap.xml`, and `/robots.txt`.
+- [x] Add a focused mobile editor smoke test for blank pattern creation, color picker, canvas editing, and export dialog.
+- [x] Show an export loading state before loading large PDF/SVG/XLSX chunks.
+- [x] Clear the npm audit warning by updating the transitive `dompurify` lockfile entry.
 - [x] Create a project-level rule to keep content pages simple and avoid over-decorated internal navigation.
 - [x] Keep the simplified internal page structure: breadcrumb first, readable content, simple next-step links.
 - [x] Simplify local guide pages by removing the heavy `Guide Tree` panels.

@@ -10,10 +10,11 @@ type SiteHeaderProps = {
 const navItems: Array<{
     id: SiteHeaderSection;
     label: string;
+    mobileLabel?: string;
     href: string;
     prefetch?: false;
 }> = [
-    { id: 'generator', label: 'Generator', href: '/' },
+    { id: 'generator', label: 'Generator', mobileLabel: 'Create', href: '/' },
     { id: 'editor', label: 'Editor', href: '/editor', prefetch: false },
     { id: 'guides', label: 'Guides', href: '/guides' },
     { id: 'about', label: 'About', href: '/about' },
@@ -22,7 +23,10 @@ const navItems: Array<{
 export default function SiteHeader({ active }: SiteHeaderProps) {
     return (
         <header className="mx-3 mb-4 mt-3 flex flex-col gap-2.5 border-b-2 border-brutal-black bg-brand-cyan p-2.5 shadow-[2px_2px_0_0_#1a1a1a] sm:mx-4 sm:mb-8 sm:mt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:border-b-4 sm:p-4 sm:shadow-brutal">
-            <Link href="/" className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <Link
+                href="/"
+                className="flex min-h-10 min-w-0 items-center gap-3 sm:gap-4"
+            >
                 <Image
                     src="/logo.png"
                     alt="Bead Pattern Maker Logo"
@@ -44,13 +48,19 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                             key={item.id}
                             href={item.href}
                             prefetch={item.prefetch}
-                            className={`whitespace-nowrap border-2 border-brutal-black px-1.5 py-1.5 shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow sm:border-4 sm:px-3 sm:py-2 sm:shadow-[3px_3px_0_0_#1a1a1a] ${
+                            aria-label={item.label}
+                            className={`flex min-h-10 items-center justify-center whitespace-nowrap border-2 border-brutal-black px-1 py-1.5 shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow sm:min-h-0 sm:border-4 sm:px-3 sm:py-2 sm:shadow-[3px_3px_0_0_#1a1a1a] ${
                                 isActive
                                     ? 'bg-brand-yellow hover:bg-white'
                                     : 'bg-white'
                             }`}
                         >
-                            {item.label}
+                            <span className="sm:hidden">
+                                {item.mobileLabel ?? item.label}
+                            </span>
+                            <span className="hidden sm:inline">
+                                {item.label}
+                            </span>
                         </Link>
                     );
                 })}

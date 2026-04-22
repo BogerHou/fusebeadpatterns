@@ -63,7 +63,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
                                 ) : (
                                     <Link
                                         href={item.href}
-                                        className="text-brutal-black hover:text-brand-purple hover:underline decoration-2 underline-offset-4"
+                                        className="inline-flex min-h-10 items-center px-1.5 text-brutal-black hover:text-brand-purple hover:underline decoration-2 underline-offset-4"
                                     >
                                         {item.label}
                                     </Link>

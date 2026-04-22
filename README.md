@@ -100,6 +100,14 @@ npm run smoke:prod
 SMOKE_BASE_URL=http://localhost:3000 npm run smoke:prod
 ```
 
+本地移动端编辑器流程 smoke check：
+
+```bash
+npm run smoke:editor-mobile
+```
+
+该检查会启动本机 Chrome headless，验证 390px 移动视口下的 blank pattern、颜色弹窗、画布点击、导出按钮和导出弹窗。运行前需要本地服务可访问，默认检查 `http://localhost:3000`。
+
 说明：当前 `build` 脚本使用 `next build --webpack`，因为此项目在 Next 16 下使用默认 Turbopack 构建时会触发上游内部 panic，而 webpack 路径已验证可稳定通过。
 
 ## 目录说明
@@ -112,5 +120,5 @@ SMOKE_BASE_URL=http://localhost:3000 npm run smoke:prod
 
 ## 当前边界
 
-- PDF / SVG 内嵌 monospace 字体体积较大，lint 时会看到 Babel deopt 提示，但不影响导出与构建
+- PDF / SVG 内嵌 monospace 字体体积较大，lint 时会看到 Babel deopt 提示。当前已经通过动态 import 避免影响首页首屏，并在导出时显示 loading；后续仍应把字体 payload 移到静态资源或进一步拆分导出包。
 - 多色板混合时仍沿用旧版核心模型；如果后续发现跨品牌色号冲突，需要继续细化 usage key 设计

@@ -11,7 +11,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "verify": "npm run test:run && npm run typecheck && npm run lint && npm run build",
-    "smoke:prod": "node scripts/smoke-production.mjs"
+    "smoke:prod": "node scripts/smoke-production.mjs",
+    "smoke:editor-mobile": "node scripts/smoke-editor-mobile.mjs"
   },
   "dependencies": {
     "canvas2svg": "^1.0.16",
