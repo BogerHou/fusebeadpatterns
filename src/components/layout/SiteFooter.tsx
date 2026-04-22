@@ -59,6 +59,8 @@ const footerGroups: Array<{
     },
 ];
 
+const COPYRIGHT_YEAR = 2026;
+
 export default function SiteFooter({
     active,
     description = 'A free tool for turning photos into printable Perler, Hama, and Artkal bead patterns.',
@@ -102,7 +104,7 @@ export default function SiteFooter({
                 </div>
             </div>
             <div className="mt-6 border-t-2 border-dashed border-gray-300 pt-5 text-center font-vt323 text-base leading-none text-gray-500 sm:mt-8 sm:pt-6 sm:text-lg">
-                &copy; {new Date().getFullYear()} Bead Pattern Maker. All
+                &copy; {COPYRIGHT_YEAR} Bead Pattern Maker. All
                 rights reserved. Not affiliated with Perler, Hama, or Artkal.
             </div>
         </footer>

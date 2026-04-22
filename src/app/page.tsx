@@ -104,11 +104,14 @@ export default function Home() {
 
             {/* Main Content */}
             <main className="flex-1 px-3 pb-10 flex flex-col items-center sm:px-4 sm:pb-12">
-                <div className="text-center max-w-3xl mb-4 mt-1 space-y-2 sm:mb-12 sm:mt-4 sm:space-y-4">
-                    <h1 className="text-2xl font-vt323 uppercase leading-tight bg-brand-yellow inline-block px-3 py-2 border-2 border-brutal-black shadow-[2px_2px_0_0_#1a1a1a] transform -rotate-1 sm:border-4 sm:px-4 sm:text-5xl sm:shadow-brutal">
-                        Free Perler Bead Pattern Generator
+                <div className="w-full text-center max-w-3xl mb-3 mt-0 space-y-1 sm:mb-12 sm:mt-4 sm:space-y-4">
+                    <h1 className="block max-w-full text-2xl font-vt323 uppercase leading-tight bg-brand-yellow px-2 py-1.5 border-2 border-brutal-black shadow-[2px_2px_0_0_#1a1a1a] transform -rotate-1 sm:inline-block sm:border-4 sm:px-4 sm:py-2 sm:text-5xl sm:shadow-brutal">
+                        <span className="block sm:inline">
+                            Free Perler Bead Pattern
+                        </span>{' '}
+                        <span className="block sm:inline">Generator</span>
                     </h1>
-                    <p className="text-sm font-medium leading-6 mt-3 sm:text-xl sm:leading-normal sm:mt-6">
+                    <p className="sr-only text-sm font-medium leading-6 mt-3 sm:not-sr-only sm:block sm:text-xl sm:leading-normal sm:mt-6">
                         The easiest online tool to convert your photos into printable <strong>perler bead patterns</strong>. Whether you are using Perler, Hama, or Artkal fuse beads, instantly generate color-matched templates for your next <strong>perler bead pegboard</strong> project.
                     </p>
                 </div>

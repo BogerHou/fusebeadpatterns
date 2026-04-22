@@ -88,6 +88,14 @@ npm run lint
 npm run build
 ```
 
+上线前完整本地校验：
+
+```bash
+npm run predeploy
+```
+
+该命令会依次运行测试、类型检查、lint、生产构建、npm audit，并启动本地 production server 跑页面 smoke 和移动端编辑器 smoke。
+
 部署后 smoke check：
 
 ```bash
@@ -106,7 +114,7 @@ SMOKE_BASE_URL=http://localhost:3000 npm run smoke:prod
 npm run smoke:editor-mobile
 ```
 
-该检查会启动本机 Chrome headless，验证 390px 移动视口下的 blank pattern、颜色弹窗、画布点击、导出按钮和导出弹窗。运行前需要本地服务可访问，默认检查 `http://localhost:3000`。
+该检查会启动本机 Chrome headless，验证 390px 移动视口下的首页上传、按钮缩放、触屏缩放、换图重新生成、进入编辑器、blank pattern、颜色弹窗、画布点击、项目保存 / 打开、导出按钮和导出弹窗。运行前需要本地服务可访问，默认检查 `http://localhost:3000`。
 
 说明：当前 `build` 脚本使用 `next build --webpack`，因为此项目在 Next 16 下使用默认 Turbopack 构建时会触发上游内部 panic，而 webpack 路径已验证可稳定通过。
 

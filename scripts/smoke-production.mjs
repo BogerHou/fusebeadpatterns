@@ -5,6 +5,22 @@ const checks = [
         path: '/',
         label: 'home',
         expectedText: 'Free Perler Bead Pattern Generator',
+        requiredHeaders: [
+            'content-security-policy',
+            'referrer-policy',
+            'x-content-type-options',
+            'x-frame-options',
+            'permissions-policy',
+            'cross-origin-opener-policy',
+            'strict-transport-security',
+        ],
+        forbiddenHeaders: ['x-powered-by'],
+        forbiddenHeaderIncludes: [
+            {
+                header: 'content-security-policy',
+                value: "'unsafe-eval'",
+            },
+        ],
     },
     {
         path: '/editor',
@@ -71,6 +87,28 @@ async function runCheck(check) {
         throw new Error(
             `${check.label} did not include expected text: ${check.expectedText}`
         );
+    }
+
+    for (const header of check.requiredHeaders ?? []) {
+        if (!response.headers.get(header)) {
+            throw new Error(`${check.label} missing required header: ${header}`);
+        }
+    }
+
+    for (const header of check.forbiddenHeaders ?? []) {
+        if (response.headers.get(header)) {
+            throw new Error(`${check.label} included forbidden header: ${header}`);
+        }
+    }
+
+    for (const forbidden of check.forbiddenHeaderIncludes ?? []) {
+        const headerValue = response.headers.get(forbidden.header) ?? '';
+
+        if (headerValue.includes(forbidden.value)) {
+            throw new Error(
+                `${check.label} header ${forbidden.header} included forbidden value: ${forbidden.value}`
+            );
+        }
     }
 
     return {

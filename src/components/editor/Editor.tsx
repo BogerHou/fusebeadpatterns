@@ -16,6 +16,7 @@ import {
     Pipette,
     Save,
     Settings2,
+    SlidersHorizontal,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -173,9 +174,23 @@ type ImageAdjustments = typeof DEFAULT_IMAGE_ADJUSTMENTS;
 type RendererSettings = typeof DEFAULT_RENDERER_SETTINGS;
 type EditorSourceMode = 'image' | 'blank';
 type EditorMobilePanel = 'file' | 'edit' | 'colors' | 'setup' | null;
+type HomeMobilePanel =
+    | 'image'
+    | 'brand'
+    | 'pegboard'
+    | 'advanced'
+    | 'export'
+    | null;
 type ColorPickerSelection = {
     paletteId: string;
     entryRef: string;
+};
+type PinchZoomState = {
+    distance: number;
+    zoom: number;
+};
+type TouchListLike = {
+    item(index: number): { clientX: number; clientY: number } | null;
 };
 
 type EditorProps = {
@@ -223,6 +238,38 @@ const EDITOR_TOOLS: {
         description: 'Move around canvas',
         shortcut: 'P',
         icon: Hand,
+    },
+];
+
+const HOME_MOBILE_PANELS: {
+    id: Exclude<HomeMobilePanel, null>;
+    label: string;
+    icon: LucideIcon;
+}[] = [
+    {
+        id: 'image',
+        label: 'Image',
+        icon: ImageIcon,
+    },
+    {
+        id: 'brand',
+        label: 'Brand',
+        icon: PaletteIcon,
+    },
+    {
+        id: 'pegboard',
+        label: 'Pegboard',
+        icon: Settings2,
+    },
+    {
+        id: 'advanced',
+        label: 'Advanced',
+        icon: SlidersHorizontal,
+    },
+    {
+        id: 'export',
+        label: 'Export',
+        icon: Save,
     },
 ];
 
@@ -300,6 +347,20 @@ function getControlToken(value: string): string {
     return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+function getTouchDistance(touches: TouchListLike): number | null {
+    const firstTouch = touches.item(0);
+    const secondTouch = touches.item(1);
+
+    if (!firstTouch || !secondTouch) {
+        return null;
+    }
+
+    return Math.hypot(
+        secondTouch.clientX - firstTouch.clientX,
+        secondTouch.clientY - firstTouch.clientY
+    );
+}
+
 function getProjectDownloadFileName(fileName: string): string {
     const safeBaseName =
         fileName
@@ -358,6 +419,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
     const [editorMobilePanel, setEditorMobilePanel] =
         useState<EditorMobilePanel>(null);
+    const [homeMobilePanel, setHomeMobilePanel] =
+        useState<HomeMobilePanel>(null);
     const [isEditorDraftReady, setIsEditorDraftReady] = useState(
         !isEditorPage
     );
@@ -397,7 +460,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const editorColorSelectionModeRef = useRef<'auto' | 'manual'>('auto');
     const builtBlankPatternRevisionRef = useRef(-1);
     const skipNextPaletteRebuildRef = useRef(false);
+    const lastProcessedImageSrcRef = useRef<string | null>(null);
+    const lastProcessedImageSettingsKeyRef = useRef<string | null>(null);
     const confirmedLargeGenerationKeyRef = useRef<string | null>(null);
+    const pinchZoomStateRef = useRef<PinchZoomState | null>(null);
     const panStateRef = useRef<{
         pointerId: number;
         x: number;
@@ -788,6 +854,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             paletteHistoryRef.current = [];
             patternUndoStackRef.current = [];
             patternRedoStackRef.current = [];
+            skipNextPaletteRebuildRef.current = false;
+            lastProcessedImageSrcRef.current = null;
+            lastProcessedImageSettingsKeyRef.current = null;
 
             setSourceMode(nextSourceMode);
             setImageSrc(draft.imageSrc);
@@ -832,6 +901,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             setIsColorPickerOpen(false);
             setIsExportDialogOpen(false);
             setEditorMobilePanel(null);
+            setHomeMobilePanel(null);
             pendingEditedPatternRef.current = draft.editedPattern ?? null;
             setManualPatternRevision(0);
             setHistoryRevision((previous) => previous + 1);
@@ -1087,12 +1157,30 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
-        if (skipNextPaletteRebuildRef.current) {
-            skipNextPaletteRebuildRef.current = false;
+        if (!imageSrc || !selectedBoard || activePalettes.length === 0) {
             return;
         }
 
-        if (!imageSrc || !selectedBoard || activePalettes.length === 0) {
+        const imageProcessingSettingsKey = JSON.stringify({
+            boardId,
+            boardWidth,
+            boardHeight,
+            matchingId,
+            ditheringId,
+            imageAdjustments,
+            rendererSettings,
+        });
+        const shouldSkipPaletteOnlyRebuild =
+            skipNextPaletteRebuildRef.current &&
+            lastProcessedImageSrcRef.current === imageSrc &&
+            lastProcessedImageSettingsKeyRef.current ===
+                imageProcessingSettingsKey;
+
+        if (skipNextPaletteRebuildRef.current) {
+            skipNextPaletteRebuildRef.current = false;
+        }
+
+        if (shouldSkipPaletteOnlyRebuild) {
             return;
         }
 
@@ -1238,6 +1326,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         project.rendererConfiguration.showGrid
                     )
                 );
+                lastProcessedImageSrcRef.current = imageSrc;
+                lastProcessedImageSettingsKeyRef.current =
+                    imageProcessingSettingsKey;
             } catch (error) {
                 const nextMessage =
                     error instanceof Error
@@ -1492,6 +1583,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         currentProjectRef.current = null;
         reducedColorRef.current = null;
         pendingEditedPatternRef.current = null;
+        skipNextPaletteRebuildRef.current = false;
+        lastProcessedImageSrcRef.current = null;
+        lastProcessedImageSettingsKeyRef.current = null;
         patternUndoStackRef.current = [];
         patternRedoStackRef.current = [];
         setManualPatternRevision(0);
@@ -1503,6 +1597,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         setPreviewSize({ width: 1, height: 1 });
         setPreviewZoom(1);
         setAutomaticEditorColorRef(null);
+        setHomeMobilePanel(null);
 
         const reader = new FileReader();
         reader.onload = (loadEvent) => {
@@ -1541,6 +1636,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         setPreviewZoom(1);
         setAutomaticEditorColorRef(null);
         pendingEditedPatternRef.current = null;
+        skipNextPaletteRebuildRef.current = false;
+        lastProcessedImageSrcRef.current = null;
+        lastProcessedImageSettingsKeyRef.current = null;
         patternUndoStackRef.current = [];
         patternRedoStackRef.current = [];
         setManualPatternRevision(0);
@@ -1750,6 +1848,49 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 PREVIEW_MAX_ZOOM
             )
         );
+    };
+
+    const handlePreviewPinchStart = (
+        event: React.TouchEvent<HTMLDivElement>
+    ) => {
+        if (!previewDataUrl || event.touches.length !== 2) {
+            return;
+        }
+
+        const distance = getTouchDistance(event.touches);
+
+        if (!distance) {
+            return;
+        }
+
+        pinchZoomStateRef.current = {
+            distance,
+            zoom: previewZoom,
+        };
+        event.preventDefault();
+    };
+
+    const handlePreviewPinchMove = (
+        event: React.TouchEvent<HTMLDivElement>
+    ) => {
+        const pinchState = pinchZoomStateRef.current;
+
+        if (!previewDataUrl || !pinchState || event.touches.length !== 2) {
+            return;
+        }
+
+        const distance = getTouchDistance(event.touches);
+
+        if (!distance) {
+            return;
+        }
+
+        setClampedPreviewZoom(pinchState.zoom * (distance / pinchState.distance));
+        event.preventDefault();
+    };
+
+    const handlePreviewPinchEnd = () => {
+        pinchZoomStateRef.current = null;
     };
 
     const syncEditedPattern = (
@@ -2076,6 +2217,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
     const toggleEditorMobilePanel = (panel: Exclude<EditorMobilePanel, null>) => {
         setEditorMobilePanel((currentPanel) =>
+            currentPanel === panel ? null : panel
+        );
+    };
+
+    const toggleHomeMobilePanel = (panel: Exclude<HomeMobilePanel, null>) => {
+        setHomeMobilePanel((currentPanel) =>
             currentPanel === panel ? null : panel
         );
     };
@@ -2611,11 +2758,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             onPointerMove={handlePreviewPanPointerMove}
                             onPointerUp={handlePreviewPanPointerUp}
                             onPointerCancel={handlePreviewPanPointerUp}
+                            onTouchStart={handlePreviewPinchStart}
+                            onTouchMove={handlePreviewPinchMove}
+                            onTouchEnd={handlePreviewPinchEnd}
+                            onTouchCancel={handlePreviewPinchEnd}
                             className={`absolute inset-x-0 top-0 bottom-[54px] overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] sm:bottom-[58px] xl:bottom-0 [&::-webkit-scrollbar]:hidden ${
                                 activeEditorTool === 'pan'
                                     ? 'cursor-grab active:cursor-grabbing'
                                     : ''
                             }`}
+                            style={{ touchAction: 'none' }}
                         >
                             {!hasEditablePattern && (
                                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 px-6 text-center text-brutal-black/55">
@@ -3500,7 +3652,779 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 </div>
                 ) : null
             ) : (
-            <div className="grid items-stretch gap-4 sm:gap-6 xl:h-[calc(100svh-330px)] xl:min-h-[560px] xl:max-h-[640px] xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+                <>
+                    <div className="relative flex h-[calc(100svh-215px)] min-h-[430px] flex-col sm:hidden">
+                        <section className="flex min-h-0 flex-1 flex-col overflow-hidden border-2 border-brutal-black bg-white shadow-[2px_2px_0_0_#1a1a1a]">
+                            <div className="flex min-h-11 items-center justify-between gap-2 border-b-2 border-brutal-black bg-brand-cyan px-2.5 py-2">
+                                <div className="min-w-0">
+                                    <div className="font-vt323 text-2xl uppercase leading-none text-brutal-black">
+                                        Pattern Preview
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        toggleHomeMobilePanel('image')
+                                    }
+                                    className="min-h-9 shrink-0 border-2 border-brutal-black bg-brand-yellow px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-brutal-black"
+                                >
+                                    {imageSrc ? 'Change' : 'Upload'}
+                                </button>
+                            </div>
+
+                            <div
+                                className="relative min-h-0 flex-1 overflow-hidden bg-brutal-bg"
+                                onTouchStart={handlePreviewPinchStart}
+                                onTouchMove={handlePreviewPinchMove}
+                                onTouchEnd={handlePreviewPinchEnd}
+                                onTouchCancel={handlePreviewPinchEnd}
+                                style={{ touchAction: 'none' }}
+                            >
+                                {previewDataUrl ? (
+                                    <div
+                                        className="absolute inset-3 transition-transform duration-150 ease-out"
+                                        style={{
+                                            transform: `scale(${previewZoom})`,
+                                            transformOrigin: 'center',
+                                        }}
+                                    >
+                                        <NextImage
+                                            src={previewDataUrl}
+                                            alt="Bead pattern preview"
+                                            fill
+                                            unoptimized
+                                            sizes="100vw"
+                                            className="object-contain"
+                                            style={{
+                                                imageRendering: 'pixelated',
+                                            }}
+                                        />
+                                    </div>
+                                ) : imageSrc ? (
+                                    <NextImage
+                                        src={imageSrc}
+                                        alt="Uploaded source image"
+                                        fill
+                                        unoptimized
+                                        sizes="100vw"
+                                        className="object-contain p-4 opacity-80"
+                                    />
+                                ) : (
+                                    <label
+                                        onDragOver={(event) => {
+                                            event.preventDefault();
+                                            setDraggingUpload(true);
+                                        }}
+                                        onDragLeave={() =>
+                                            setDraggingUpload(false)
+                                        }
+                                        onDrop={(event) => {
+                                            handleImageDrop(event);
+                                            setHomeMobilePanel(null);
+                                        }}
+                                        className={`absolute inset-3 flex cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed border-brutal-black px-5 text-center ${
+                                            draggingUpload
+                                                ? 'bg-brand-yellow'
+                                                : 'bg-white'
+                                        }`}
+                                    >
+                                        <span className="grid h-20 w-20 grid-cols-3 grid-rows-3 gap-1 opacity-60">
+                                            {Array.from({ length: 9 }).map(
+                                                (_, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className="border-2 border-dashed border-brutal-black/30 bg-brutal-bg"
+                                                    />
+                                                )
+                                            )}
+                                        </span>
+                                        <span className="font-vt323 text-3xl uppercase leading-none text-brutal-black">
+                                            Upload Image
+                                        </span>
+                                        <span className="max-w-[260px] text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-brutal-black/55">
+                                            Choose a photo and preview the bead
+                                            pattern here.
+                                        </span>
+                                        <input
+                                            name="homeMobileSourceImage"
+                                            aria-label="Upload image"
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                            onChange={(event) => {
+                                                handleImageUpload(event);
+                                                setHomeMobilePanel(null);
+                                            }}
+                                        />
+                                    </label>
+                                )}
+
+                                {previewDataUrl ? (
+                                    <div className="absolute left-2 top-2 z-10 flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                adjustPreviewZoom(
+                                                    -PREVIEW_ZOOM_STEP
+                                                )
+                                            }
+                                            disabled={
+                                                previewZoom <= PREVIEW_MIN_ZOOM
+                                            }
+                                            className="flex h-8 min-w-8 items-center justify-center border-2 border-brutal-black bg-white px-2 font-vt323 text-xl leading-none text-brutal-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                            aria-label="Zoom out preview"
+                                        >
+                                            -
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setClampedPreviewZoom(1)
+                                            }
+                                            className="h-8 min-w-[52px] border-2 border-brutal-black bg-white px-2 font-vt323 text-base font-bold uppercase leading-none text-brutal-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow"
+                                            aria-label="Reset preview zoom"
+                                        >
+                                            {Math.round(previewZoom * 100)}%
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                adjustPreviewZoom(
+                                                    PREVIEW_ZOOM_STEP
+                                                )
+                                            }
+                                            disabled={
+                                                previewZoom >= PREVIEW_MAX_ZOOM
+                                            }
+                                            className="flex h-8 min-w-8 items-center justify-center border-2 border-brutal-black bg-white px-2 font-vt323 text-xl leading-none text-brutal-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                            aria-label="Zoom in preview"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                ) : null}
+
+                                {processing ? (
+                                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+                                        <span className="max-w-[260px] animate-pulse border-2 border-brutal-black bg-brand-yellow p-3 text-center font-vt323 text-2xl uppercase leading-none text-black shadow-[2px_2px_0_0_#1a1a1a]">
+                                            <span className="block">
+                                                Processing...
+                                            </span>
+                                            <span className="mt-2 block font-sans text-[10px] font-black uppercase leading-4 tracking-[0.08em]">
+                                                {processingHint}
+                                            </span>
+                                        </span>
+                                    </div>
+                                ) : null}
+                            </div>
+
+                            <div className="grid grid-cols-[1fr_1fr_1fr_1.2fr] border-t-2 border-brutal-black bg-white text-center">
+                                <div className="border-r-2 border-brutal-black px-2 py-2">
+                                    <div className="text-[9px] font-black uppercase tracking-[0.12em] text-brutal-black/50">
+                                        Size
+                                    </div>
+                                    <div className="truncate text-xs font-black text-brutal-black">
+                                        {patternSize}
+                                    </div>
+                                </div>
+                                <div className="border-r-2 border-brutal-black px-2 py-2">
+                                    <div className="text-[9px] font-black uppercase tracking-[0.12em] text-brutal-black/50">
+                                        Beads
+                                    </div>
+                                    <div className="truncate text-xs font-black text-brutal-black">
+                                        {totalBeads}
+                                    </div>
+                                </div>
+                                <div className="border-r-2 border-brutal-black px-2 py-2">
+                                    <div className="text-[9px] font-black uppercase tracking-[0.12em] text-brutal-black/50">
+                                        Colors
+                                    </div>
+                                    <div className="truncate text-xs font-black text-brutal-black">
+                                        {colorsUsed}
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleOpenEditorPage}
+                                    disabled={!previewDataUrl}
+                                    className="flex min-h-[50px] min-w-0 flex-col items-center justify-center bg-brand-purple px-1.5 py-1.5 text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                                    aria-label="Open editor"
+                                >
+                                    <span className="flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-[0.08em]">
+                                        <Pencil className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">
+                                            Editor
+                                        </span>
+                                    </span>
+                                    <span className="truncate text-xs font-black uppercase">
+                                        {previewDataUrl ? 'Open' : 'Upload'}
+                                    </span>
+                                </button>
+                            </div>
+                        </section>
+
+                        {homeMobilePanel ? (
+                            <div className="absolute inset-x-2 bottom-[74px] z-40 max-h-[64svh] overflow-y-auto border-2 border-brutal-black bg-white p-3 shadow-[2px_2px_0_0_#1a1a1a]">
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                    <div className="font-vt323 text-2xl uppercase leading-none">
+                                        {homeMobilePanel === 'image'
+                                            ? 'Image'
+                                            : homeMobilePanel === 'brand'
+                                              ? 'Color Brand'
+                                              : homeMobilePanel === 'pegboard'
+                                                ? 'Pegboard'
+                                                : homeMobilePanel === 'advanced'
+                                                  ? 'Advanced'
+                                                  : 'Export'}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setHomeMobilePanel(null)
+                                        }
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none hover:bg-brand-yellow"
+                                        aria-label="Close mobile generator panel"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                {homeMobilePanel === 'image' ? (
+                                    <div className="space-y-2">
+                                        <label
+                                            onDragOver={(event) => {
+                                                event.preventDefault();
+                                                setDraggingUpload(true);
+                                            }}
+                                            onDragLeave={() =>
+                                                setDraggingUpload(false)
+                                            }
+                                            onDrop={(event) => {
+                                                handleImageDrop(event);
+                                                setHomeMobilePanel(null);
+                                            }}
+                                            className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-2 border-2 border-brutal-black px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] ${
+                                                draggingUpload
+                                                    ? 'bg-brand-yellow'
+                                                    : 'bg-brand-yellow hover:bg-white'
+                                            }`}
+                                        >
+                                            <ImageIcon className="h-4 w-4" />
+                                            {imageSrc
+                                                ? 'Change Image'
+                                                : 'Upload Image'}
+                                            <input
+                                                name="homeMobileSheetImage"
+                                                aria-label="Upload or replace source image"
+                                                type="file"
+                                                accept="image/*"
+                                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                                onChange={(event) => {
+                                                    handleImageUpload(event);
+                                                    setHomeMobilePanel(null);
+                                                }}
+                                            />
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleOpenProjectPicker();
+                                                    setHomeMobilePanel(null);
+                                                }}
+                                                className="min-h-11 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                            >
+                                                Open Project
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleSaveProject();
+                                                    setHomeMobilePanel(null);
+                                                }}
+                                                disabled={!canSaveProject}
+                                                className="min-h-11 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                            >
+                                                Save Project
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {homeMobilePanel === 'pegboard' ? (
+                                    <div className="space-y-3">
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Pegboard
+                                            </span>
+                                            <select
+                                                name="homeMobileBoard"
+                                                aria-label="Pegboard"
+                                                value={boardId}
+                                                onChange={(event) =>
+                                                    setBoardId(
+                                                        event.target
+                                                            .value as BoardOptionId
+                                                    )
+                                                }
+                                                className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            >
+                                                {BOARD_OPTIONS.map(
+                                                    (option) => (
+                                                        <option
+                                                            key={option.id}
+                                                            value={option.id}
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <label className="block">
+                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                    Boards Wide
+                                                </span>
+                                                <input
+                                                    name="homeMobileBoardWidth"
+                                                    aria-label="Boards wide"
+                                                    type="number"
+                                                    min="1"
+                                                    max={MAX_BOARD_COUNT}
+                                                    value={boardWidth}
+                                                    onChange={(event) =>
+                                                        setBoardWidth(
+                                                            parseBoardCount(
+                                                                event.target
+                                                                    .value
+                                                            )
+                                                        )
+                                                    }
+                                                    className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                />
+                                            </label>
+                                            <label className="block">
+                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                    Boards Tall
+                                                </span>
+                                                <input
+                                                    name="homeMobileBoardHeight"
+                                                    aria-label="Boards tall"
+                                                    type="number"
+                                                    min="1"
+                                                    max={MAX_BOARD_COUNT}
+                                                    value={boardHeight}
+                                                    onChange={(event) =>
+                                                        setBoardHeight(
+                                                            parseBoardCount(
+                                                                event.target
+                                                                    .value
+                                                            )
+                                                        )
+                                                    }
+                                                    className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                />
+                                            </label>
+                                        </div>
+                                        <div className="border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                            {compactPatternStatus}
+                                        </div>
+                                        {currentLargePatternWarning ? (
+                                            <div className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                                {currentLargePatternWarning}
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                ) : null}
+
+                                {homeMobilePanel === 'brand' ? (
+                                    <div className="space-y-3">
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Color Brand
+                                            </span>
+                                            <select
+                                                name="homeMobilePrimaryPalette"
+                                                aria-label="Color brand"
+                                                value={primaryPaletteId}
+                                                onChange={(event) =>
+                                                    handlePrimaryPaletteChange(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            >
+                                                {PALETTE_OPTIONS.map(
+                                                    (option) => (
+                                                        <option
+                                                            key={option.id}
+                                                            value={option.id}
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {PALETTE_OPTIONS.map((option) => {
+                                                const selected =
+                                                    selectedPaletteIds.includes(
+                                                        option.id
+                                                    );
+                                                const isOnlySelected =
+                                                    selected &&
+                                                    selectedPaletteIds.length ===
+                                                        1;
+
+                                                return (
+                                                    <label
+                                                        key={option.id}
+                                                        className={`flex min-h-11 items-center gap-2 border-2 border-brutal-black px-2 py-2 text-[11px] font-black uppercase tracking-[0.06em] ${
+                                                            selected
+                                                                ? 'bg-brand-yellow'
+                                                                : 'bg-white'
+                                                        } ${
+                                                            isOnlySelected
+                                                                ? 'text-brutal-black/65'
+                                                                : 'hover:bg-brand-cyan'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            name={`homeMobilePalette-${option.id}`}
+                                                            type="checkbox"
+                                                            checked={selected}
+                                                            disabled={
+                                                                isOnlySelected
+                                                            }
+                                                            onChange={() =>
+                                                                handlePaletteSelection(
+                                                                    option.id
+                                                                )
+                                                            }
+                                                            className="h-4 w-4 shrink-0 accent-black"
+                                                        />
+                                                        <span className="truncate">
+                                                            {option.label}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                            {compactColorBrandStatus}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {homeMobilePanel === 'advanced' ? (
+                                    <div className="space-y-3">
+                                        <div className="grid gap-3">
+                                            <label className="block">
+                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                    Matching
+                                                </span>
+                                                <select
+                                                    name="homeMobileMatching"
+                                                    value={matchingId}
+                                                    onChange={(event) =>
+                                                        setMatchingId(
+                                                            event.target.value
+                                                        )
+                                                    }
+                                                    className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                >
+                                                    {MATCHING_OPTIONS.map(
+                                                        (option) => (
+                                                            <option
+                                                                key={option.id}
+                                                                value={
+                                                                    option.id
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
+                                            </label>
+                                            <label className="block">
+                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                    Dithering
+                                                </span>
+                                                <select
+                                                    name="homeMobileDithering"
+                                                    value={ditheringId}
+                                                    onChange={(event) =>
+                                                        setDitheringId(
+                                                            event.target.value
+                                                        )
+                                                    }
+                                                    className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                >
+                                                    {DITHERING_OPTIONS.map(
+                                                        (option) => (
+                                                            <option
+                                                                key={option.id}
+                                                                value={
+                                                                    option.id
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
+                                            </label>
+                                        </div>
+
+                                        {(
+                                            [
+                                                [
+                                                    'brightness',
+                                                    'Brightness',
+                                                    0,
+                                                    200,
+                                                ],
+                                                ['contrast', 'Contrast', 0, 200],
+                                                [
+                                                    'saturation',
+                                                    'Saturation',
+                                                    0,
+                                                    200,
+                                                ],
+                                                [
+                                                    'grayscale',
+                                                    'Grayscale',
+                                                    0,
+                                                    100,
+                                                ],
+                                            ] as const
+                                        ).map(([key, label, min, max]) => (
+                                            <label
+                                                key={key}
+                                                className="block border-2 border-brutal-black bg-white p-2"
+                                            >
+                                                <span className="mb-1 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                    <span>{label}</span>
+                                                    <span>
+                                                        {imageAdjustments[key]}
+                                                    </span>
+                                                </span>
+                                                <input
+                                                    name={`homeMobileImage-${key}`}
+                                                    aria-label={`${label} slider`}
+                                                    type="range"
+                                                    min={min}
+                                                    max={max}
+                                                    value={
+                                                        imageAdjustments[key]
+                                                    }
+                                                    onChange={(event) =>
+                                                        setImageAdjustments(
+                                                            (previous) => ({
+                                                                ...previous,
+                                                                [key]: Number.parseInt(
+                                                                    event.target
+                                                                        .value,
+                                                                    10
+                                                                ),
+                                                            })
+                                                        )
+                                                    }
+                                                    className="w-full accent-black"
+                                                />
+                                            </label>
+                                        ))}
+
+                                        <div className="grid gap-2">
+                                            {(
+                                                [
+                                                    ['center', 'Center'],
+                                                    ['fit', 'Fit To Boards'],
+                                                    [
+                                                        'showGrid',
+                                                        'Show Board Grid',
+                                                    ],
+                                                ] as const
+                                            ).map(([key, label]) => (
+                                                <label
+                                                    key={key}
+                                                    className="flex min-h-11 items-center gap-3 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em]"
+                                                >
+                                                    <input
+                                                        name={`homeMobileRenderer-${key}`}
+                                                        type="checkbox"
+                                                        checked={
+                                                            rendererSettings[
+                                                                key
+                                                            ]
+                                                        }
+                                                        onChange={(event) =>
+                                                            setRendererSettings(
+                                                                (previous) => ({
+                                                                    ...previous,
+                                                                    [key]:
+                                                                        event
+                                                                            .target
+                                                                            .checked,
+                                                                })
+                                                            )
+                                                        }
+                                                        className="h-4 w-4 accent-black"
+                                                    />
+                                                    {label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setImageAdjustments(
+                                                    DEFAULT_IMAGE_ADJUSTMENTS
+                                                );
+                                                setRendererSettings(
+                                                    DEFAULT_RENDERER_SETTINGS
+                                                );
+                                            }}
+                                            className="min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow"
+                                        >
+                                            Reset Adjustments
+                                        </button>
+                                    </div>
+                                ) : null}
+
+                                {homeMobilePanel === 'export' ? (
+                                    <div className="space-y-3">
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                File Name
+                                            </span>
+                                            <input
+                                                name="homeMobileExportFileName"
+                                                type="text"
+                                                value={fileName}
+                                                onChange={(event) =>
+                                                    setFileName(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            />
+                                        </label>
+                                        <label className="block">
+                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                Export Format
+                                            </span>
+                                            <select
+                                                name="homeMobileExportFormat"
+                                                value={exportFormatId}
+                                                onChange={(event) =>
+                                                    setExportFormatId(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                            >
+                                                {EXPORT_OPTIONS.map(
+                                                    (option) => (
+                                                        <option
+                                                            key={option.id}
+                                                            value={option.id}
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        </label>
+                                        <label className="flex min-h-11 items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em]">
+                                            <input
+                                                name="homeMobileExportSymbols"
+                                                type="checkbox"
+                                                checked={useSymbols}
+                                                onChange={(event) =>
+                                                    setUseSymbols(
+                                                        event.target.checked
+                                                    )
+                                                }
+                                                className="h-4 w-4 accent-black"
+                                            />
+                                            Use Symbols In Printable Exports
+                                        </label>
+                                        {exportStatusText ? (
+                                            <div
+                                                role="status"
+                                                aria-live="polite"
+                                                className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-black uppercase leading-4 tracking-[0.08em] text-brutal-black"
+                                            >
+                                                {exportStatusText}
+                                            </div>
+                                        ) : null}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                void handleExport(
+                                                    exportFormatId
+                                                )
+                                            }
+                                            disabled={!canExportPattern}
+                                            className="min-h-12 w-full border-2 border-brutal-black bg-brand-purple px-3 py-2 font-vt323 text-xl font-bold uppercase tracking-[0.08em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
+                                        >
+                                            {exportingId === exportFormatId
+                                                ? 'Exporting...'
+                                                : `Export ${selectedExportLabel}`}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveProject}
+                                            disabled={!canSaveProject}
+                                            className="min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                        >
+                                            Save Project
+                                        </button>
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : null}
+
+                        <div className="z-40 border-t-2 border-brutal-black bg-white px-1.5 pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_0_0_#1a1a1a]">
+                            <div className="grid h-16 grid-cols-5">
+                                {HOME_MOBILE_PANELS.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive =
+                                        homeMobilePanel === item.id;
+
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() =>
+                                                toggleHomeMobilePanel(item.id)
+                                            }
+                                            aria-expanded={isActive}
+                                            className={`flex min-w-0 flex-col items-center justify-center gap-1 border-l-2 border-brutal-black/15 px-1 text-[10px] font-black uppercase tracking-[0.06em] first:border-l-0 ${
+                                                isActive
+                                                    ? 'bg-brand-yellow text-brutal-black'
+                                                    : 'bg-white text-brutal-black/75 hover:bg-brand-cyan'
+                                            }`}
+                                        >
+                                            <Icon
+                                                className="h-5 w-5 shrink-0"
+                                                strokeWidth={2.2}
+                                            />
+                                            <span className="truncate">
+                                                {item.label}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+            <div className="hidden items-stretch gap-4 sm:grid sm:gap-6 xl:h-[calc(100svh-330px)] xl:min-h-[560px] xl:max-h-[640px] xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
                 <div className="min-h-0 xl:h-full">
                     <Card className="h-full overflow-y-auto bg-brand-cyan p-1.5 [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:p-2.5 sm:[border-width:4px] sm:shadow-brutal">
                         <div className="space-y-2">
@@ -4162,10 +5086,15 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <div
                                 ref={previewViewportRef}
+                                onTouchStart={handlePreviewPinchStart}
+                                onTouchMove={handlePreviewPinchMove}
+                                onTouchEnd={handlePreviewPinchEnd}
+                                onTouchCancel={handlePreviewPinchEnd}
                                 className="absolute inset-x-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                                 style={{
                                     top: `${PREVIEW_TOOLBAR_HEIGHT}px`,
                                     bottom: `${PREVIEW_INFO_BAR_HEIGHT}px`,
+                                    touchAction: 'none',
                                 }}
                             >
                                 {!previewDataUrl && (
@@ -4304,6 +5233,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     </Card>
                 </div>
             </div>
+                </>
             )}
 
             {isColorPickerOpen && (

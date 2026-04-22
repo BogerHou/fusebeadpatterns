@@ -11,6 +11,9 @@
     "test": "vitest",
     "test:run": "vitest run",
     "verify": "npm run test:run && npm run typecheck && npm run lint && npm run build",
+    "audit:prod": "npm audit --registry=https://registry.npmjs.org --omit=dev",
+    "audit:all": "npm audit --registry=https://registry.npmjs.org --include=dev",
+    "predeploy": "npm run verify && npm run audit:all && node scripts/predeploy-local.mjs",
     "smoke:prod": "node scripts/smoke-production.mjs",
     "smoke:editor-mobile": "node scripts/smoke-editor-mobile.mjs"
   },

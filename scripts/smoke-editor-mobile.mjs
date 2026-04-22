@@ -379,6 +379,289 @@ async function main() {
             maxTouchPoints: 5,
         });
 
+        const homeUrl = new URL('/', baseUrl).toString();
+        await cdp.send('Page.navigate', { url: homeUrl });
+
+        for (let attempt = 0; attempt < 80; attempt += 1) {
+            const ready = await cdp.evaluate(
+                "document.readyState === 'complete' && document.body.innerText.includes('Pattern Preview')"
+            );
+            if (ready) {
+                break;
+            }
+            await sleep(125);
+        }
+
+        const homeFlow = await cdp.evaluate(`
+            (async () => {
+                const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+                const visible = (element) => {
+                    if (!element) return false;
+                    const rect = element.getBoundingClientRect();
+                    const style = getComputedStyle(element);
+                    return style.display !== 'none' &&
+                        style.visibility !== 'hidden' &&
+                        rect.width > 1 &&
+                        rect.height > 1 &&
+                        rect.bottom > 0 &&
+                        rect.right > 0 &&
+                        rect.left < innerWidth &&
+                        rect.top < innerHeight;
+                };
+                const byText = (selector, text, exact = false) =>
+                    Array.from(document.querySelectorAll(selector)).find((element) => {
+                        if (!visible(element)) return false;
+                        const content = (element.textContent || '').trim().toLowerCase();
+                        return exact
+                            ? content === text.toLowerCase()
+                            : content.includes(text.toLowerCase());
+                    });
+                const makeImageFile = (name, colors) =>
+                    new Promise((resolve, reject) => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 4;
+                        canvas.height = 4;
+                        const context = canvas.getContext('2d');
+                        if (!context) {
+                            reject(new Error('canvas'));
+                            return;
+                        }
+                        colors.forEach((color, index) => {
+                            context.fillStyle = color;
+                            context.fillRect(
+                                (index % 2) * 2,
+                                Math.floor(index / 2) * 2,
+                                2,
+                                2
+                            );
+                        });
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                reject(new Error('blob'));
+                                return;
+                            }
+                            resolve(new File([blob], name, { type: 'image/png' }));
+                        }, 'image/png');
+                    });
+                const uploadFile = (input, file) => {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    input.files = dataTransfer.files;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                };
+                const visiblePreviewSrc = () => {
+                    const image = Array.from(
+                        document.querySelectorAll('img[alt="Bead pattern preview"]')
+                    ).find(visible);
+                    return image?.getAttribute('src') || '';
+                };
+                const debugState = () => ({
+                    previewSrc: visiblePreviewSrc().slice(0, 80),
+                    buttons: Array.from(document.querySelectorAll('button'))
+                        .filter(visible)
+                        .map((button) => ({
+                            text: (button.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 50),
+                            ariaLabel: button.getAttribute('aria-label') || '',
+                            disabled: button.disabled,
+                        })),
+                    images: Array.from(document.querySelectorAll('img'))
+                        .filter(visible)
+                        .map((image) => ({
+                            alt: image.getAttribute('alt') || '',
+                            src: (image.getAttribute('src') || '').slice(0, 80),
+                        })),
+                    bodyText: (document.body.innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 240),
+                });
+                const waitForPreview = async (previousSrc = '') => {
+                    for (let attempt = 0; attempt < 80; attempt += 1) {
+                        const src = visiblePreviewSrc();
+                        if (src && src !== previousSrc) {
+                            return src;
+                        }
+                        await sleep(250);
+                    }
+                    return '';
+                };
+                const dispatchPinch = (target) => {
+                    const rect = target.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const touch = (identifier, x, y) =>
+                        new Touch({
+                            identifier,
+                            target,
+                            clientX: x,
+                            clientY: y,
+                            screenX: x,
+                            screenY: y,
+                            pageX: x,
+                            pageY: y,
+                        });
+                    const dispatch = (type, points) => {
+                        target.dispatchEvent(
+                            new TouchEvent(type, {
+                                touches: type === 'touchend' ? [] : points,
+                                targetTouches: type === 'touchend' ? [] : points,
+                                changedTouches: points,
+                                bubbles: true,
+                                cancelable: true,
+                            })
+                        );
+                    };
+                    dispatch('touchstart', [
+                        touch(1, centerX - 28, centerY),
+                        touch(2, centerX + 28, centerY),
+                    ]);
+                    dispatch('touchmove', [
+                        touch(1, centerX - 64, centerY),
+                        touch(2, centerX + 64, centerY),
+                    ]);
+                    dispatch('touchend', []);
+                };
+                const input = document.querySelector('input[name="homeMobileSourceImage"]');
+                if (!input) return { ok: false, step: 'home upload input' };
+
+                uploadFile(
+                    input,
+                    await makeImageFile('mobile-smoke-a.png', [
+                        '#ff0000',
+                        '#0000ff',
+                        '#ffffff',
+                        '#000000',
+                    ])
+                );
+
+                let zoomIn = null;
+                let resetZoom = null;
+                let editorButton = null;
+
+                for (let attempt = 0; attempt < 60; attempt += 1) {
+                    zoomIn = Array.from(
+                        document.querySelectorAll('button[aria-label="Zoom in preview"]')
+                    ).find(visible);
+                    resetZoom = Array.from(
+                        document.querySelectorAll('button[aria-label="Reset preview zoom"]')
+                    ).find(visible);
+                    editorButton = Array.from(
+                        document.querySelectorAll('button[aria-label="Open editor"]')
+                    ).find(visible);
+
+                    if (zoomIn && resetZoom && editorButton && !editorButton.disabled) {
+                        break;
+                    }
+                    await sleep(250);
+                }
+
+                if (!zoomIn) return { ok: false, step: 'home zoom in control', debug: debugState() };
+                if (!resetZoom) return { ok: false, step: 'home zoom reset control', debug: debugState() };
+                if (!editorButton) return { ok: false, step: 'home editor button', debug: debugState() };
+                if (editorButton.disabled) {
+                    return { ok: false, step: 'home editor button enabled', debug: debugState() };
+                }
+
+                const visibleEditorButtons = Array.from(
+                    document.querySelectorAll('button[aria-label="Open editor"]')
+                ).filter(visible);
+                if (visibleEditorButtons.length !== 1) {
+                    return {
+                        ok: false,
+                        step: 'home editor button count',
+                        count: visibleEditorButtons.length,
+                    };
+                }
+
+                const firstPreviewSrc = await waitForPreview();
+                if (!firstPreviewSrc) {
+                    return { ok: false, step: 'home first preview generated' };
+                }
+
+                const beforeZoom = (resetZoom.textContent || '').trim();
+                zoomIn.click();
+                await sleep(250);
+                const afterZoom = (resetZoom.textContent || '').trim();
+                if (beforeZoom === afterZoom) {
+                    return { ok: false, step: 'home zoom changed', beforeZoom, afterZoom };
+                }
+
+                const previewSurface =
+                    Array.from(document.querySelectorAll('img[alt="Bead pattern preview"]'))
+                        .find(visible)
+                        ?.closest('.bg-brutal-bg') ||
+                    document.querySelector('img[alt="Bead pattern preview"]')
+                        ?.parentElement;
+                if (!previewSurface) {
+                    return { ok: false, step: 'home pinch surface' };
+                }
+                dispatchPinch(previewSurface);
+                await sleep(250);
+                const afterPinchZoom = (resetZoom.textContent || '').trim();
+                if (afterPinchZoom === afterZoom) {
+                    return {
+                        ok: false,
+                        step: 'home pinch zoom changed',
+                        afterZoom,
+                        afterPinchZoom,
+                    };
+                }
+
+                const change = byText('button', 'Change', true);
+                if (!change) return { ok: false, step: 'home change button' };
+                change.click();
+                await sleep(250);
+                const changeInput = document.querySelector('input[name="homeMobileSheetImage"]');
+                if (!changeInput) return { ok: false, step: 'home change input' };
+                uploadFile(
+                    changeInput,
+                    await makeImageFile('mobile-smoke-b.png', [
+                        '#00ff00',
+                        '#ffff00',
+                        '#00ffff',
+                        '#ff00ff',
+                    ])
+                );
+                const secondPreviewSrc = await waitForPreview(firstPreviewSrc);
+                if (!secondPreviewSrc) {
+                    return { ok: false, step: 'home changed preview generated' };
+                }
+
+                editorButton.click();
+                for (let attempt = 0; attempt < 30; attempt += 1) {
+                    if (location.pathname === '/editor') {
+                        break;
+                    }
+                    await sleep(100);
+                }
+
+                return {
+                    ok: location.pathname === '/editor',
+                    step: location.pathname === '/editor' ? 'done' : 'home editor navigation',
+                    beforeZoom,
+                    afterZoom,
+                    afterPinchZoom,
+                    previewChanged: firstPreviewSrc !== secondPreviewSrc,
+                    horizontalOverflow: Math.max(
+                        document.documentElement.scrollWidth,
+                        document.body.scrollWidth
+                    ) - innerWidth,
+                };
+            })()
+        `);
+
+        if (!homeFlow.ok) {
+            throw new Error(
+                `Home mobile setup failed at ${homeFlow.step}: ${JSON.stringify(
+                    homeFlow.debug ?? {},
+                    null,
+                    2
+                )}`
+            );
+        }
+        if (homeFlow.horizontalOverflow > 1) {
+            throw new Error(
+                `Mobile home has ${homeFlow.horizontalOverflow}px horizontal overflow.`
+            );
+        }
+
         const editorUrl = new URL('/editor', baseUrl).toString();
         await cdp.send('Page.navigate', { url: editorUrl });
 
@@ -467,6 +750,117 @@ async function main() {
         await clickPoint(cdp, flow.canvas.x, flow.canvas.y);
         await sleep(350);
 
+        const projectRoundTrip = await cdp.evaluate(`
+            (async () => {
+                const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+                const visible = (element) => {
+                    if (!element) return false;
+                    const rect = element.getBoundingClientRect();
+                    const style = getComputedStyle(element);
+                    return style.display !== 'none' &&
+                        style.visibility !== 'hidden' &&
+                        rect.width > 1 &&
+                        rect.height > 1 &&
+                        rect.bottom > 0 &&
+                        rect.right > 0 &&
+                        rect.left < innerWidth &&
+                        rect.top < innerHeight;
+                };
+                const byText = (selector, text, exact = false) =>
+                    Array.from(document.querySelectorAll(selector)).find((element) => {
+                        if (!visible(element)) return false;
+                        const content = (element.textContent || '').trim().toLowerCase();
+                        return exact ? content === text.toLowerCase() : content.includes(text.toLowerCase());
+                    });
+                const getWorkingCanvasDataUrl = () => {
+                    const canvas = Array.from(document.querySelectorAll('canvas'))
+                        .filter((element) => element.width > 1 && element.height > 1)
+                        .sort((a, b) => b.width * b.height - a.width * a.height)[0];
+
+                    return canvas ? canvas.toDataURL() : '';
+                };
+
+                let savedProjectText = '';
+                const originalCreateObjectUrl = URL.createObjectURL.bind(URL);
+
+                URL.createObjectURL = (blob) => {
+                    if (blob instanceof Blob && blob.type.includes('json')) {
+                        blob.text().then((text) => {
+                            savedProjectText = text;
+                        });
+                    }
+
+                    return originalCreateObjectUrl(blob);
+                };
+
+                try {
+                    const beforeRestore = getWorkingCanvasDataUrl();
+                    const file = byText('button', 'File', true);
+                    if (!file) return { ok: false, step: 'project file panel' };
+                    file.click();
+                    await sleep(250);
+
+                    const saveProject =
+                        byText('button', 'Save Project', true) ||
+                        byText('button', 'Save', true);
+                    if (!saveProject) return { ok: false, step: 'project save button' };
+                    if (saveProject.disabled) {
+                        return { ok: false, step: 'project save enabled' };
+                    }
+
+                    saveProject.click();
+                    for (let attempt = 0; attempt < 20; attempt += 1) {
+                        if (savedProjectText) {
+                            break;
+                        }
+                        await sleep(100);
+                    }
+
+                    if (!savedProjectText) {
+                        return { ok: false, step: 'project saved text' };
+                    }
+
+                    const input = document.querySelector('input[name="projectUpload"]');
+                    if (!input) return { ok: false, step: 'project upload input' };
+
+                    const projectFile = new File(
+                        [savedProjectText],
+                        'mobile-smoke.bead-pattern.json',
+                        { type: 'application/json' }
+                    );
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(projectFile);
+                    input.files = dataTransfer.files;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    await sleep(900);
+
+                    const afterRestore = getWorkingCanvasDataUrl();
+                    const bodyText = document.body.innerText || '';
+
+                    return {
+                        ok: Boolean(afterRestore) &&
+                            beforeRestore === afterRestore &&
+                            !bodyText.includes('Could not open project file') &&
+                            !bodyText.includes('Could not read project file'),
+                        step:
+                            beforeRestore === afterRestore
+                                ? 'done'
+                                : 'project restored canvas',
+                        savedProjectBytes: savedProjectText.length,
+                        restoredSameCanvas: beforeRestore === afterRestore,
+                    };
+                } finally {
+                    URL.createObjectURL = originalCreateObjectUrl;
+                }
+            })()
+        `);
+
+        if (!projectRoundTrip.ok) {
+            throw new Error(
+                `Project save/open round trip failed at ${projectRoundTrip.step}.`
+            );
+        }
+
         const exportButton = await cdp.evaluate(`
             (() => {
                 const visible = (element) => {
@@ -532,8 +926,16 @@ async function main() {
             JSON.stringify(
                 {
                     editorMobileSmoke: 'passed',
+                    homeMobileZoom: `${homeFlow.beforeZoom} -> ${homeFlow.afterZoom}`,
+                    homeMobilePinchZoom: `${homeFlow.afterZoom} -> ${homeFlow.afterPinchZoom}`,
+                    homeMobileChangeRegenerated: homeFlow.previewChanged,
+                    homeMobileEditorEntry: 'passed',
                     baseUrl,
                     viewport: '390x844',
+                    projectRoundTrip: {
+                        savedProjectBytes: projectRoundTrip.savedProjectBytes,
+                        restoredSameCanvas: projectRoundTrip.restoredSameCanvas,
+                    },
                     exportDialogOpened: true,
                     horizontalOverflow: result.horizontalOverflow,
                     errors: result.errors,
