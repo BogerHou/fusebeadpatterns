@@ -44,6 +44,13 @@ const checks = [
     },
 ];
 
+const canonicalUrl = 'https://fusebeadpatterns.art/';
+const canonicalRedirectChecks = [
+    'http://fusebeadpatterns.art/',
+    'http://www.fusebeadpatterns.art/',
+    'https://www.fusebeadpatterns.art/',
+];
+
 const maxAttempts = 3;
 const requestTimeoutMs = 15000;
 
@@ -55,6 +62,10 @@ function wait(ms) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
+}
+
+function normalizeUrl(url) {
+    return new URL(url).toString();
 }
 
 async function runCheck(check) {
@@ -137,7 +148,75 @@ async function runCheckWithRetry(check) {
     throw lastError;
 }
 
+async function runCanonicalRedirectCheck(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+        controller.abort();
+    }, requestTimeoutMs);
+
+    let response;
+
+    try {
+        response = await fetch(url, {
+            headers: {
+                'user-agent': 'bead-pattern-maker-smoke/1.0',
+            },
+            redirect: 'manual',
+            signal: controller.signal,
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+
+    const location = response.headers.get('location');
+
+    if (![301, 308].includes(response.status)) {
+        throw new Error(`${url} returned HTTP ${response.status}, expected 301 or 308`);
+    }
+
+    if (!location || normalizeUrl(location) !== normalizeUrl(canonicalUrl)) {
+        throw new Error(`${url} redirected to ${location ?? 'missing location'}`);
+    }
+
+    return {
+        url,
+        status: response.status,
+        location,
+    };
+}
+
+async function runCanonicalRedirectCheckWithRetry(url) {
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+            return await runCanonicalRedirectCheck(url);
+        } catch (error) {
+            lastError = error;
+
+            if (attempt < maxAttempts) {
+                await wait(500 * attempt);
+            }
+        }
+    }
+
+    throw lastError;
+}
+
 const failures = [];
+
+for (const url of canonicalRedirectChecks) {
+    try {
+        const result = await runCanonicalRedirectCheckWithRetry(url);
+        console.log(
+            `OK canonical-redirect ${result.status} ${result.url} -> ${result.location}`
+        );
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failures.push(`canonical-redirect ${url}: ${message}`);
+        console.error(`FAIL canonical-redirect ${url} ${message}`);
+    }
+}
 
 for (const check of checks) {
     try {

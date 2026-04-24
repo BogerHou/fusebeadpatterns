@@ -77,6 +77,21 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
     poweredByHeader: false,
+    async redirects() {
+        return [
+            {
+                source: '/:path*',
+                has: [
+                    {
+                        type: 'host',
+                        value: 'www.fusebeadpatterns.art',
+                    },
+                ],
+                destination: 'https://fusebeadpatterns.art/:path*',
+                permanent: true,
+            },
+        ];
+    },
     async headers() {
         return [
             {
