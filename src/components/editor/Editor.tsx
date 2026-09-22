@@ -40,6 +40,7 @@ import {
     createEditorDraft,
     decodeEditorPatternDraft,
     encodeEditorPatternDraft,
+    encodeEditorProjectPattern,
     EDITOR_PROJECT_FILE_EXTENSION,
     EditorDraft,
     EditorPatternDraft,
@@ -60,11 +61,19 @@ import {
     fillMatchingPatternRegion,
     getPatternDataIndex,
     paletteEntryMatchesPatternPixel,
-    setPatternPixelToEntry,
     type PatternPoint as EditorPoint,
 } from '@/lib/editor/pattern-edit';
+import {
+    createPatternPatch,
+    getPatternLinePoints,
+    PatternHistory,
+    PatternStroke,
+    updatePatternUsage,
+    type PatternPatch,
+} from '@/lib/editor/pattern-history';
 import { drawGridExportPattern } from '@/lib/editor/grid-export';
 import { exportEditorPattern } from '@/lib/editor/pattern-export';
+import { quantizePattern } from '@/lib/editor/pattern-quantization';
 import {
     getEditorShortcutAction,
     type EditorShortcutTool as EditorTool,
@@ -91,7 +100,6 @@ import {
     computeUsage,
     countBeads,
     drawImageInsideCanvas,
-    reduceColor,
 } from '@/lib/core/utils/utils';
 
 const DEFAULT_PALETTE_ID = 'perler';
@@ -405,6 +413,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [processing, setProcessing] = useState(false);
     const [exportingId, setExportingId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [draftWarning, setDraftWarning] = useState<string | null>(null);
     const [beadsUsage, setBeadsUsage] = useState<Map<string, number>>(new Map());
     const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
     const [previewSize, setPreviewSize] = useState({ width: 1, height: 1 });
@@ -451,11 +460,20 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const projectFileInputRef = useRef<HTMLInputElement>(null);
     const currentProjectRef = useRef<Project | null>(null);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
+    const imageGenerationRef = useRef<AbortController | null>(null);
     const paletteHistoryRef = useRef<Palette[][]>([]);
-    const patternUndoStackRef = useRef<Uint8ClampedArray[]>([]);
-    const patternRedoStackRef = useRef<Uint8ClampedArray[]>([]);
+    const patternHistoryRef = useRef(new PatternHistory());
+    const activeStrokeRef = useRef<{
+        pointerId: number;
+        data: Uint8ClampedArray;
+        stroke: PatternStroke;
+        lastPoint: EditorPoint;
+        color: [number, number, number, number];
+    } | null>(null);
+    const exportInProgressRef = useRef(false);
     const pendingColorSelectionRef = useRef<ColorPickerSelection | null>(null);
     const pendingEditedPatternRef = useRef<EditorPatternDraft | null>(null);
+    const restoredPaletteIdsRef = useRef<string[] | null>(null);
     const activeEditorColorValueRef = useRef<string | null>(null);
     const editorColorSelectionModeRef = useRef<'auto' | 'manual'>('auto');
     const builtBlankPatternRevisionRef = useRef(-1);
@@ -494,8 +512,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         pendingBoardId !== boardId ||
         pendingBoardWidth !== boardWidth ||
         pendingBoardHeight !== boardHeight;
-    const canUndoPattern = historyRevision >= 0 && patternUndoStackRef.current.length > 0;
-    const canRedoPattern = historyRevision >= 0 && patternRedoStackRef.current.length > 0;
+    const canUndoPattern = !processing && historyRevision >= 0 && patternHistoryRef.current.canUndo;
+    const canRedoPattern = !processing && historyRevision >= 0 && patternHistoryRef.current.canRedo;
     const hasManualPatternChanges =
         manualPatternRevision > 0 || canUndoPattern || canRedoPattern;
     const renderEditorCanvasPreview = useCallback(
@@ -741,7 +759,15 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         [setAutomaticEditorColorRef]
     );
 
-    const getCurrentEditedPatternDraft = useCallback(() => {
+    const getCurrentEditedPatternDraft = useCallback((forProject = false) => {
+        if (forProject) {
+            return encodeEditorProjectPattern(
+                reducedColorRef.current,
+                previewSize.width,
+                previewSize.height
+            );
+        }
+
         return encodeEditorPatternDraft(
             reducedColorRef.current,
             previewSize.width,
@@ -795,7 +821,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         });
     }, [syncProjectPalettes]);
 
-    const createCurrentEditorDraft = useCallback(() => {
+    const createCurrentEditorDraft = useCallback((forProject = false) => {
         return createEditorDraft({
             sourceMode,
             imageSrc,
@@ -814,7 +840,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             showReference,
             referenceOpacity,
             previewZoom,
-            editedPattern: getCurrentEditedPatternDraft(),
+            editedPattern: getCurrentEditedPatternDraft(forProject),
         });
     }, [
         activePalettes,
@@ -837,12 +863,24 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         useSymbols,
     ]);
 
-    const persistEditorDraft = () => {
-        saveEditorDraft(createCurrentEditorDraft());
-    };
+    const persistEditorDraft = useCallback((draft: EditorDraft) => {
+        if (reducedColorRef.current && !draft.editedPattern) {
+            setDraftWarning(
+                'This pattern is too large for automatic recovery. Save a project file to keep all bead edits.'
+            );
+            return false;
+        }
+
+        const saved = saveEditorDraft(draft);
+        setDraftWarning(saved ? null :
+            'Automatic recovery is unavailable. Save a project file before leaving this page.'
+        );
+        return saved;
+    }, []);
 
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft) => {
+            imageGenerationRef.current?.abort();
             const nextSourceMode =
                 draft.sourceMode ?? (draft.imageSrc ? 'image' : 'image');
 
@@ -852,8 +890,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             currentProjectRef.current = null;
             reducedColorRef.current = null;
             paletteHistoryRef.current = [];
-            patternUndoStackRef.current = [];
-            patternRedoStackRef.current = [];
+            patternHistoryRef.current.clear();
+            activeStrokeRef.current = null;
             skipNextPaletteRebuildRef.current = false;
             lastProcessedImageSrcRef.current = null;
             lastProcessedImageSettingsKeyRef.current = null;
@@ -861,6 +899,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             setSourceMode(nextSourceMode);
             setImageSrc(draft.imageSrc);
             setFileName(draft.fileName);
+            // The saved palettes are the project's color snapshot. Reloading
+            // them could regenerate the image after its edited pixels restore.
+            restoredPaletteIdsRef.current = draft.activePalettes.length > 0
+                ? draft.selectedPaletteIds
+                : null;
             setSelectedPaletteIds(draft.selectedPaletteIds);
             setActivePalettes(draft.activePalettes);
             setBoardId(draft.boardId);
@@ -997,19 +1040,6 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
-        saveEditorDraft(createCurrentEditorDraft());
-    }, [
-        createCurrentEditorDraft,
-        historyRevision,
-        isEditorDraftReady,
-        manualPatternRevision,
-    ]);
-
-    useEffect(() => {
-        if (!isEditorDraftReady) {
-            return;
-        }
-
         let isCancelled = false;
 
         async function syncSelectedPalettes() {
@@ -1036,6 +1066,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             }
         }
 
+        if (restoredPaletteIdsRef.current === selectedPaletteIds) {
+            return;
+        }
+
+        restoredPaletteIdsRef.current = null;
         void syncSelectedPalettes();
 
         return () => {
@@ -1152,12 +1187,52 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         setActiveEditorTool('bead');
     }, [activePalettes, setManualEditorColorRef, updatePalettes]);
 
+    // Read presentation settings without making them image-generation triggers.
+    const getImageOutputSettings = React.useEffectEvent(() => ({
+        fileName,
+        useSymbols,
+        showGrid: rendererSettings.showGrid,
+    }));
+
+    useEffect(() => {
+        const project = currentProjectRef.current;
+
+        if (project) {
+            project.image.name = fileName;
+            project.exportConfiguration.useSymbols = useSymbols;
+        }
+    }, [fileName, useSymbols]);
+
+    useEffect(() => {
+        const project = currentProjectRef.current;
+        const pattern = reducedColorRef.current;
+        const canvas = canvasRef.current;
+
+        if (!project || !pattern || !canvas) {
+            return;
+        }
+
+        project.rendererConfiguration.showGrid = rendererSettings.showGrid;
+
+        if (!isEditorPage) {
+            setPreviewDataUrl(createPatternPreviewDataUrl(
+                pattern,
+                canvas.width,
+                canvas.height,
+                project.boardConfiguration.board.nbBeadPerRow,
+                rendererSettings.showGrid
+            ));
+        }
+    }, [isEditorPage, rendererSettings.showGrid]);
+
     useEffect(() => {
         if (!isEditorDraftReady) {
+            setProcessing(false);
             return;
         }
 
         if (!imageSrc || !selectedBoard || activePalettes.length === 0) {
+            setProcessing(false);
             return;
         }
 
@@ -1168,7 +1243,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             matchingId,
             ditheringId,
             imageAdjustments,
-            rendererSettings,
+            center: rendererSettings.center,
+            fit: rendererSettings.fit,
         });
         const shouldSkipPaletteOnlyRebuild =
             skipNextPaletteRebuildRef.current &&
@@ -1181,19 +1257,21 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
 
         if (shouldSkipPaletteOnlyRebuild) {
+            setProcessing(false);
             return;
         }
 
-        let isCancelled = false;
+        const controller = new AbortController();
 
         async function processImage(): Promise<void> {
+            const outputSettings = getImageOutputSettings();
             const plannedBeadCount = getPatternBeadCount(
                 selectedBoard,
                 boardWidth,
                 boardHeight
             );
             const largeGenerationKey = getLargePatternGenerationKey(
-                fileName,
+                outputSettings.fileName,
                 imageSrc,
                 boardId,
                 boardWidth,
@@ -1214,14 +1292,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     setPreviewSize({ width: 1, height: 1 });
                     currentProjectRef.current = null;
                     reducedColorRef.current = null;
-                    patternUndoStackRef.current = [];
-                    patternRedoStackRef.current = [];
+                    patternHistoryRef.current.clear();
+                    activeStrokeRef.current = null;
+                    setProcessing(false);
                     return;
                 }
 
                 confirmedLargeGenerationKeyRef.current = largeGenerationKey;
             }
 
+            imageGenerationRef.current = controller;
             setProcessing(true);
             setErrorMessage(null);
 
@@ -1234,72 +1314,103 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     matchingId,
                     ditheringId,
                     imageAdjustments,
-                    rendererSettings,
-                    useSymbols,
+                    rendererSettings: {
+                        center: rendererSettings.center,
+                        fit: rendererSettings.fit,
+                        showGrid: outputSettings.showGrid,
+                    },
+                    useSymbols: outputSettings.useSymbols,
                 });
 
                 const image = new window.Image();
-                image.src = imageSrc;
                 image.style.filter = project.imageConfiguration.css();
 
                 await new Promise<void>((resolve, reject) => {
                     image.onload = () => resolve();
                     image.onerror = () =>
                         reject(new Error('Unable to load selected image.'));
+                    image.src = imageSrc;
                 });
 
-                if (isCancelled) {
+                if (controller.signal.aborted) {
                     return;
                 }
 
-                project.image = { name: fileName, src: image } as LoadImage;
                 project.srcWidth = image.width;
                 project.srcHeight = image.height;
 
-                const canvas = canvasRef.current;
-
-                if (!canvas) {
-                    return;
-                }
-
-                canvas.width = boardWidth * selectedBoard.beadsPerRow;
-                canvas.height = boardHeight * selectedBoard.beadsPerRow;
-
-                const context = canvas.getContext('2d', {
+                // Keep the current pattern intact until this generation finishes.
+                const sourceCanvas = document.createElement('canvas');
+                sourceCanvas.width = boardWidth * selectedBoard.beadsPerRow;
+                sourceCanvas.height = boardHeight * selectedBoard.beadsPerRow;
+                const sourceContext = sourceCanvas.getContext('2d', {
                     willReadFrequently: true,
                 });
 
-                if (!context) {
+                if (!sourceContext) {
                     throw new Error('Canvas 2D context is unavailable.');
                 }
 
-                context.clearRect(0, 0, canvas.width, canvas.height);
-
                 const imagePosition = drawImageInsideCanvas(
-                    canvas,
+                    sourceCanvas,
                     image,
                     project.rendererConfiguration
                 );
-                const resultImageData = reduceColor(canvas, project, imagePosition);
+                const resultImageData = sourceContext.getImageData(
+                    0, 0, sourceCanvas.width, sourceCanvas.height
+                );
                 const restoredPatternData = takePendingEditedPattern(
-                    canvas.width,
-                    canvas.height
+                    sourceCanvas.width,
+                    sourceCanvas.height
                 );
 
                 if (restoredPatternData) {
                     resultImageData.data.set(restoredPatternData);
+                } else {
+                    const pixels = await quantizePattern({
+                        pixels: resultImageData.data,
+                        width: sourceCanvas.width,
+                        height: sourceCanvas.height,
+                        palettes: project.paletteConfiguration.palettes,
+                        matchingId,
+                        dithering: {
+                            enable: project.ditheringConfiguration.enable,
+                            hardness: project.ditheringConfiguration.hardness,
+                        },
+                        drawingPosition: {
+                            x: imagePosition.xStart,
+                            y: imagePosition.yStart,
+                            width: imagePosition.width,
+                            height: imagePosition.height,
+                        },
+                    }, { signal: controller.signal });
+                    if (controller.signal.aborted) {
+                        return;
+                    }
+                    resultImageData.data.set(pixels);
                 }
 
-                context.putImageData(resultImageData, 0, 0);
+                const latestOutputSettings = getImageOutputSettings();
+                project.image = { name: latestOutputSettings.fileName, src: image } as LoadImage;
+                project.exportConfiguration.useSymbols = latestOutputSettings.useSymbols;
+                project.rendererConfiguration.showGrid = latestOutputSettings.showGrid;
 
-                if (isCancelled) {
+                const canvas = canvasRef.current;
+                if (!canvas) {
                     return;
                 }
+                canvas.width = sourceCanvas.width;
+                canvas.height = sourceCanvas.height;
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                if (!context) {
+                    throw new Error('Canvas 2D context is unavailable.');
+                }
+                context.putImageData(resultImageData, 0, 0);
 
                 currentProjectRef.current = project;
                 reducedColorRef.current = resultImageData.data;
-                patternUndoStackRef.current = [];
-                patternRedoStackRef.current = [];
+                patternHistoryRef.current.clear();
+                activeStrokeRef.current = null;
                 setManualPatternRevision(restoredPatternData ? 1 : 0);
                 setHistoryRevision((previous) => previous + 1);
 
@@ -1330,6 +1441,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 lastProcessedImageSettingsKeyRef.current =
                     imageProcessingSettingsKey;
             } catch (error) {
+                if (controller.signal.aborted) {
+                    return;
+                }
                 const nextMessage =
                     error instanceof Error
                         ? error.message
@@ -1340,20 +1454,28 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 setPreviewSize({ width: 1, height: 1 });
                 currentProjectRef.current = null;
                 reducedColorRef.current = null;
-                patternUndoStackRef.current = [];
-                patternRedoStackRef.current = [];
+                patternHistoryRef.current.clear();
+                activeStrokeRef.current = null;
                 pendingEditedPatternRef.current = null;
                 setManualPatternRevision(0);
                 setHistoryRevision((previous) => previous + 1);
             } finally {
-                setProcessing(false);
+                if (!controller.signal.aborted) {
+                    if (imageGenerationRef.current === controller) {
+                        imageGenerationRef.current = null;
+                    }
+                    setProcessing(false);
+                }
             }
         }
 
         void processImage();
 
         return () => {
-            isCancelled = true;
+            controller.abort();
+            if (imageGenerationRef.current === controller) {
+                imageGenerationRef.current = null;
+            }
         };
     }, [
         activePalettes,
@@ -1364,13 +1486,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         imageAdjustments,
         imageSrc,
         matchingId,
-        rendererSettings,
+        rendererSettings.center,
+        rendererSettings.fit,
         selectedBoard,
         setAutomaticEditorColorRef,
         syncEditorColorAfterPatternBuild,
         takePendingEditedPattern,
-        fileName,
-        useSymbols,
         isEditorDraftReady,
     ]);
 
@@ -1507,8 +1628,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
         currentProjectRef.current = project;
         reducedColorRef.current = nextPatternData;
-        patternUndoStackRef.current = [];
-        patternRedoStackRef.current = [];
+        patternHistoryRef.current.clear();
+        activeStrokeRef.current = null;
 
         const nextUsage = restoredPatternData
             ? computeUsage(nextPatternData, project.paletteConfiguration.palettes)
@@ -1572,13 +1693,35 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         sourceMode,
     ]);
 
+    // Run after image/blank generation effects so a new request cannot save
+    // its settings alongside pixels from the previous completed pattern.
+    useEffect(() => {
+        if (!isEditorDraftReady || processing || imageGenerationRef.current ||
+            pendingEditedPatternRef.current || activeStrokeRef.current ||
+            (sourceMode === 'image' && !currentProjectRef.current)) {
+            return;
+        }
+
+        persistEditorDraft(createCurrentEditorDraft());
+    }, [
+        createCurrentEditorDraft,
+        historyRevision,
+        isEditorDraftReady,
+        manualPatternRevision,
+        persistEditorDraft,
+        processing,
+        sourceMode,
+    ]);
+
     const loadSelectedFile = (file: File | null) => {
         if (!file) {
             return;
         }
 
+        imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
         setSourceMode('image');
+        setImageSrc(null);
         builtBlankPatternRevisionRef.current = -1;
         currentProjectRef.current = null;
         reducedColorRef.current = null;
@@ -1586,8 +1729,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         skipNextPaletteRebuildRef.current = false;
         lastProcessedImageSrcRef.current = null;
         lastProcessedImageSettingsKeyRef.current = null;
-        patternUndoStackRef.current = [];
-        patternRedoStackRef.current = [];
+        patternHistoryRef.current.clear();
+        activeStrokeRef.current = null;
         setManualPatternRevision(0);
         setHistoryRevision((previous) => previous + 1);
         setFileName(file.name.replace(/\.[^.]+$/, ''));
@@ -1639,8 +1782,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         skipNextPaletteRebuildRef.current = false;
         lastProcessedImageSrcRef.current = null;
         lastProcessedImageSettingsKeyRef.current = null;
-        patternUndoStackRef.current = [];
-        patternRedoStackRef.current = [];
+        patternHistoryRef.current.clear();
+        activeStrokeRef.current = null;
         setManualPatternRevision(0);
         builtBlankPatternRevisionRef.current = -1;
         setBlankPatternRevision((previous) => previous + 1);
@@ -1705,8 +1848,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             setBoardId(pendingBoardId);
             setBoardWidth(pendingBoardWidth);
             setBoardHeight(pendingBoardHeight);
-            patternUndoStackRef.current = [];
-            patternRedoStackRef.current = [];
+            patternHistoryRef.current.clear();
+            activeStrokeRef.current = null;
             pendingEditedPatternRef.current = null;
             setManualPatternRevision(0);
 
@@ -1863,6 +2006,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        finishActiveStroke();
         pinchZoomStateRef.current = {
             distance,
             zoom: previewZoom,
@@ -1895,7 +2039,6 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
     const syncEditedPattern = (
         nextData: Uint8ClampedArray,
-        saveHistory = true,
         changedPoints: EditorPoint[] = []
     ) => {
         const project = currentProjectRef.current;
@@ -1909,15 +2052,6 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         const canPatchEditedPixels =
             changedPoints.length > 0 &&
             nextData.length === canvas.width * canvas.height * 4;
-
-        if (saveHistory && reducedColorRef.current) {
-            patternUndoStackRef.current.push(
-                new Uint8ClampedArray(reducedColorRef.current)
-            );
-            patternRedoStackRef.current = [];
-            setManualPatternRevision((previous) => previous + 1);
-            setHistoryRevision((previous) => previous + 1);
-        }
 
         reducedColorRef.current = nextData;
 
@@ -1941,9 +2075,6 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             context.putImageData(editedImageData, 0, 0);
         }
 
-        setBeadsUsage(
-            computeUsage(nextData, project.paletteConfiguration.palettes)
-        );
         if (isEditorPage) {
             const beadSizePx = getPreviewBeadRenderSize(
                 canvas.width,
@@ -1992,31 +2123,65 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
     };
 
-    const handleUndoPatternEdit = () => {
-        const currentPattern = reducedColorRef.current;
-        const previousPattern = patternUndoStackRef.current.pop();
+    const publishPatternChange = (patch: PatternPatch, direction: 'undo' | 'redo') => {
+        const palettes = currentProjectRef.current?.paletteConfiguration.palettes;
 
-        if (!currentPattern || !previousPattern) {
-            return;
+        if (palettes) {
+            setBeadsUsage((usage) => updatePatternUsage(usage, palettes, patch, direction));
         }
 
-        patternRedoStackRef.current.push(new Uint8ClampedArray(currentPattern));
-        syncEditedPattern(new Uint8ClampedArray(previousPattern), false);
+        setManualPatternRevision((previous) => previous + 1);
         setHistoryRevision((previous) => previous + 1);
     };
 
-    const handleRedoPatternEdit = () => {
-        const currentPattern = reducedColorRef.current;
-        const nextPattern = patternRedoStackRef.current.pop();
-
-        if (!currentPattern || !nextPattern) {
+    const commitPatternChange = (patch: PatternPatch | null) => {
+        if (!patch) {
             return;
         }
 
-        patternUndoStackRef.current.push(new Uint8ClampedArray(currentPattern));
-        syncEditedPattern(new Uint8ClampedArray(nextPattern), false);
-        setHistoryRevision((previous) => previous + 1);
+        patternHistoryRef.current.push(patch);
+        publishPatternChange(patch, 'redo');
     };
+
+    const finishActiveStroke = () => {
+        const activeStroke = activeStrokeRef.current;
+        activeStrokeRef.current = null;
+
+        if (activeStroke && activeStroke.data === reducedColorRef.current) {
+            commitPatternChange(activeStroke.stroke.finish());
+        }
+    };
+
+    const restoreHistory = (direction: 'undo' | 'redo') => {
+        if (processing || imageGenerationRef.current) {
+            return;
+        }
+        finishActiveStroke();
+        const currentPattern = reducedColorRef.current;
+
+        if (!currentPattern) {
+            return;
+        }
+
+        const patch = patternHistoryRef.current[direction](currentPattern);
+
+        if (!patch) {
+            return;
+        }
+
+        // Large fills are cheaper to redraw as a whole than one canvas call per cell.
+        const points = patch.indices.length <= 512
+            ? Array.from(patch.indices, (index) => ({
+                x: (index / 4) % previewSize.width,
+                y: Math.floor(index / 4 / previewSize.width),
+            }))
+            : [];
+        syncEditedPattern(currentPattern, points);
+        publishPatternChange(patch, direction);
+    };
+
+    const handleUndoPatternEdit = () => restoreHistory('undo');
+    const handleRedoPatternEdit = () => restoreHistory('redo');
 
     const getEditorPointFromEvent = (
         event: React.PointerEvent<HTMLCanvasElement>
@@ -2069,23 +2234,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
-        const nextData = new Uint8ClampedArray(currentData);
-
-        if (activeEditorTool === 'erase') {
-            if (nextData[index + 3] === 0) {
-                return;
-            }
-
-            setPatternPixelToEntry(nextData, width, point, null);
-            syncEditedPattern(nextData, true, [point]);
-            return;
-        }
-
         if (!activeEditorColorEntry) {
             return;
         }
 
         if (activeEditorTool === 'fill') {
+            const nextData = new Uint8ClampedArray(currentData);
             if (
                 fillMatchingPatternRegion(
                     nextData,
@@ -2096,28 +2250,41 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 )
             ) {
                 syncEditedPattern(nextData);
+                commitPatternChange(createPatternPatch(currentData, nextData));
             }
+        }
+    };
+
+    const paintStrokeAtPoint = (point: EditorPoint) => {
+        const activeStroke = activeStrokeRef.current;
+
+        if (!activeStroke || activeStroke.data !== reducedColorRef.current) {
             return;
         }
 
-        if (
-            paletteEntryMatchesPatternPixel(
-                activeEditorColorEntry,
-                nextData,
-                index
-            )
-        ) {
-            return;
+        const changedPoints: EditorPoint[] = [];
+
+        for (const nextPoint of getPatternLinePoints(activeStroke.lastPoint, point)) {
+            const index = getPatternDataIndex(previewSize.width, nextPoint);
+            if (activeStroke.color[3] === 0 && activeStroke.data[index + 3] === 0) {
+                continue;
+            }
+            if (activeStroke.stroke.setPixel(index, activeStroke.color)) {
+                changedPoints.push(nextPoint);
+            }
         }
 
-        setPatternPixelToEntry(nextData, width, point, activeEditorColorEntry);
-        syncEditedPattern(nextData, true, [point]);
+        activeStroke.lastPoint = point;
+        if (changedPoints.length > 0) {
+            syncEditedPattern(activeStroke.data, changedPoints);
+        }
     };
 
     const handleEditorImagePointerDown = (
         event: React.PointerEvent<HTMLCanvasElement>
     ) => {
-        if (activeEditorTool === 'pan') {
+        if (!event.isPrimary || event.button !== 0 || processing ||
+            activeEditorTool === 'pan' || pinchZoomStateRef.current) {
             return;
         }
 
@@ -2128,21 +2295,45 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
 
         event.preventDefault();
+        finishActiveStroke();
+
+        if (activeEditorTool === 'pick' || activeEditorTool === 'fill') {
+            applyEditorToolAtPoint(point);
+            return;
+        }
+
+        const data = reducedColorRef.current;
+        if (!data || (activeEditorTool === 'bead' && !activeEditorColorEntry)) {
+            return;
+        }
+
+        const color = activeEditorColorEntry?.color;
+        activeStrokeRef.current = {
+            pointerId: event.pointerId,
+            data,
+            stroke: new PatternStroke(data),
+            lastPoint: point,
+            color: activeEditorTool === 'erase'
+                ? [0, 0, 0, 0]
+                : [color.r, color.g, color.b, color.a ?? 255],
+        };
         try {
             event.currentTarget.setPointerCapture(event.pointerId);
         } catch {
             // Programmatic PointerEvents do not always create an active pointer.
         }
-        applyEditorToolAtPoint(point);
+        paintStrokeAtPoint(point);
     };
 
     const handleEditorImagePointerMove = (
         event: React.PointerEvent<HTMLCanvasElement>
     ) => {
-        if (
-            event.buttons !== 1 ||
-            (activeEditorTool !== 'bead' && activeEditorTool !== 'erase')
-        ) {
+        if (activeStrokeRef.current?.pointerId !== event.pointerId) {
+            return;
+        }
+
+        if ((event.buttons & 1) === 0 || pinchZoomStateRef.current) {
+            finishActiveStroke();
             return;
         }
 
@@ -2153,7 +2344,23 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
 
         event.preventDefault();
-        applyEditorToolAtPoint(point);
+        paintStrokeAtPoint(point);
+    };
+
+    const handleEditorImagePointerEnd = (
+        event: React.PointerEvent<HTMLCanvasElement>
+    ) => {
+        if (activeStrokeRef.current?.pointerId !== event.pointerId) {
+            return;
+        }
+
+        if (event.type === 'pointerup') {
+            const point = getEditorPointFromEvent(event);
+            if (point) {
+                paintStrokeAtPoint(point);
+            }
+        }
+        finishActiveStroke();
     };
 
     const handlePreviewPanPointerDown = (
@@ -2211,8 +2418,21 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleOpenEditorPage = () => {
-        persistEditorDraft();
-        router.push('/editor');
+        if (processing || imageGenerationRef.current) {
+            return;
+        }
+        try {
+            if (!persistEditorDraft(createCurrentEditorDraft(true))) {
+                setErrorMessage(
+                    'Could not open the editor because browser storage is unavailable or full. Allow browser storage or try a smaller image.'
+                );
+                return;
+            }
+
+            router.push('/editor');
+        } catch {
+            setErrorMessage('Could not prepare the pattern for editing. Try generating it again.');
+        }
     };
 
     const toggleEditorMobilePanel = (panel: Exclude<EditorMobilePanel, null>) => {
@@ -2232,23 +2452,34 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleSaveProject = () => {
-        const draft = createCurrentEditorDraft();
-        const projectJson = serializeEditorProject(draft);
-        const projectBlob = new Blob([projectJson], {
-            type: 'application/json',
-        });
-        const projectUrl = URL.createObjectURL(projectBlob);
-        const link = document.createElement('a');
+        if (processing || imageGenerationRef.current) {
+            return;
+        }
+        finishActiveStroke();
+        try {
+            const draft = createCurrentEditorDraft(true);
+            const projectJson = serializeEditorProject(draft);
+            const projectBlob = new Blob([projectJson], {
+                type: 'application/json',
+            });
+            const projectUrl = URL.createObjectURL(projectBlob);
+            const link = document.createElement('a');
 
-        link.href = projectUrl;
-        link.download = getProjectDownloadFileName(fileName);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(projectUrl);
+            try {
+                link.href = projectUrl;
+                link.download = getProjectDownloadFileName(fileName);
+                document.body.appendChild(link);
+                link.click();
+            } finally {
+                link.remove();
+                URL.revokeObjectURL(projectUrl);
+            }
 
-        saveEditorDraft(draft);
-        setErrorMessage(null);
+            persistEditorDraft(draft);
+            setErrorMessage(null);
+        } catch {
+            setErrorMessage('Could not save the complete project. Your pattern is still open; try saving again.');
+        }
     };
 
     const handleOpenProjectPicker = () => {
@@ -2276,46 +2507,35 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             }
 
             restoreEditorDraft(draft);
-            saveEditorDraft(draft);
+            persistEditorDraft(draft);
         } catch {
             setErrorMessage('Could not read project file.');
         }
     };
 
-    const handleGridExport = () => {
-        if (!canvasRef.current) {
-            return;
-        }
-
-        const sourceCanvas = canvasRef.current;
+    const handleGridExport = (
+        pattern: Uint8ClampedArray,
+        width: number,
+        height: number,
+        beadsPerBoard: number,
+        exportFileName: string
+    ) => {
         const cellSize = 20;
         const exportCanvas = document.createElement('canvas');
-        exportCanvas.width = sourceCanvas.width * cellSize;
-        exportCanvas.height = sourceCanvas.height * cellSize;
+        exportCanvas.width = width * cellSize;
+        exportCanvas.height = height * cellSize;
 
-        const sourceContext = sourceCanvas.getContext('2d', {
-            willReadFrequently: true,
-        });
         const exportContext = exportCanvas.getContext('2d');
 
-        if (!sourceContext || !exportContext) {
-            return;
+        if (!exportContext) {
+            throw new Error('Could not create the grid export canvas.');
         }
-
-        const sourceImageData = sourceContext.getImageData(
-            0,
-            0,
-            sourceCanvas.width,
-            sourceCanvas.height
-        );
-        const beadsPerBoard =
-            currentProjectRef.current?.boardConfiguration.board.nbBeadPerRow ?? 29;
 
         drawGridExportPattern(
             exportContext,
-            sourceImageData.data,
-            sourceCanvas.width,
-            sourceCanvas.height,
+            pattern,
+            width,
+            height,
             {
                 cellSize,
                 beadsPerBoard,
@@ -2323,27 +2543,45 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         );
 
         const link = document.createElement('a');
-        link.download = `${fileName}_grid.png`;
+        link.download = `${exportFileName}_grid.png`;
         link.href = exportCanvas.toDataURL('image/png');
+        if (!link.href.startsWith('data:image/png')) {
+            throw new Error('The grid is too large to export as a PNG.');
+        }
         link.click();
     };
 
     const handleExport = async (exportId: string) => {
+        if (exportInProgressRef.current) {
+            return;
+        }
+
+        finishActiveStroke();
         if (
             !currentProjectRef.current ||
             !reducedColorRef.current ||
-            beadsUsage.size === 0
+            !selectedBoard
         ) {
             return;
         }
 
-        if (exportingId !== null) {
+        const pattern = new Uint8ClampedArray(reducedColorRef.current);
+        const project = createProjectForCurrentSettings(
+            currentProjectRef.current.paletteConfiguration.palettes,
+            selectedBoard,
+            boardWidth,
+            boardHeight
+        );
+        project.image = { ...currentProjectRef.current.image, name: fileName };
+        project.srcWidth = currentProjectRef.current.srcWidth;
+        project.srcHeight = currentProjectRef.current.srcHeight;
+        const usage = computeUsage(pattern, project.paletteConfiguration.palettes);
+
+        if (usage.size === 0) {
             return;
         }
 
-        currentProjectRef.current.exportConfiguration.useSymbols = useSymbols;
-        currentProjectRef.current.image.name = fileName;
-
+        exportInProgressRef.current = true;
         setErrorMessage(null);
         setExportingId(exportId);
 
@@ -2351,11 +2589,17 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             await waitForNextPaint();
             await exportEditorPattern({
                 exportId,
-                reducedColor: reducedColorRef.current,
-                beadsUsage,
-                project: currentProjectRef.current,
+                reducedColor: pattern,
+                beadsUsage: usage,
+                project,
                 fileName,
-                exportGridPng: handleGridExport,
+                exportGridPng: () => handleGridExport(
+                    pattern,
+                    previewSize.width,
+                    previewSize.height,
+                    selectedBoard.beadsPerRow,
+                    fileName
+                ),
             });
         } catch (error) {
             const nextMessage =
@@ -2364,6 +2608,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     : 'Unexpected export error.';
             setErrorMessage(`${nextMessage}${EXPORT_ERROR_RECOVERY_ADVICE}`);
         } finally {
+            exportInProgressRef.current = false;
             setExportingId(null);
         }
     };
@@ -2391,6 +2636,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             }
 
             event.preventDefault();
+            finishActiveStroke();
 
             switch (action.type) {
                 case 'undo':
@@ -2414,6 +2660,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
     );
 
+    const finishStrokeOnBlur = React.useEffectEvent(() => finishActiveStroke());
+
     useEffect(() => {
         if (!isEditorPage) {
             return;
@@ -2422,11 +2670,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         const handleWindowShortcuts = (event: KeyboardEvent) => {
             handleEditorShortcuts(event);
         };
+        const handleBlur = () => finishStrokeOnBlur();
 
         document.addEventListener('keydown', handleWindowShortcuts);
+        window.addEventListener('blur', handleBlur);
 
         return () => {
             document.removeEventListener('keydown', handleWindowShortcuts);
+            window.removeEventListener('blur', handleBlur);
         };
     }, [isEditorPage]);
 
@@ -2435,7 +2686,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             ref={editorRootRef}
             className={
                 isEditorPage
-                    ? 'h-[100svh] w-full overflow-hidden bg-brutal-bg'
+                    ? 'flex h-[100svh] w-full flex-col overflow-hidden bg-brutal-bg'
                     : 'w-full space-y-6'
             }
         >
@@ -2451,9 +2702,15 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 </div>
             )}
 
+            {draftWarning && (
+                <div role="status" className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-sm font-bold text-brutal-black">
+                    {draftWarning}
+                </div>
+            )}
+
             {isEditorPage ? (
                 isEditorDraftReady ? (
-                <div className="relative grid h-full min-h-0 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
+                <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
                     <div className="col-span-full min-w-0 border-b-2 border-brutal-black bg-white sm:border-b-4">
                         <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[232px_minmax(0,1fr)_312px]">
                         <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3 xl:col-span-2">
@@ -2921,6 +3178,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             onPointerMove={
                                                 handleEditorImagePointerMove
                                             }
+                                            onPointerUp={handleEditorImagePointerEnd}
+                                            onPointerCancel={handleEditorImagePointerEnd}
+                                            onLostPointerCapture={handleEditorImagePointerEnd}
                                             className={`absolute block max-w-none select-none bg-white ${
                                                 activeEditorTool === 'pan'
                                                     ? 'cursor-grab'
@@ -3846,7 +4106,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <button
                                     type="button"
                                     onClick={handleOpenEditorPage}
-                                    disabled={!previewDataUrl}
+                                    disabled={!previewDataUrl || processing}
                                     className="flex min-h-[50px] min-w-0 flex-col items-center justify-center bg-brand-purple px-1.5 py-1.5 text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                                     aria-label="Open editor"
                                 >
@@ -4297,6 +4557,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                                 {homeMobilePanel === 'export' ? (
                                     <div className="space-y-3">
+                                        {errorMessage && (
+                                            <p role="alert" className="border-2 border-brutal-black bg-brand-magenta p-3 text-sm font-bold text-white">
+                                                {errorMessage}
+                                            </p>
+                                        )}
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
                                                 File Name
@@ -5077,7 +5342,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <button
                                     type="button"
                                     onClick={handleOpenEditorPage}
-                                    disabled={!previewDataUrl}
+                                    disabled={!previewDataUrl || processing}
                                     className="hidden border-2 border-brutal-black bg-white px-1.5 py-0.5 font-vt323 text-xs font-bold uppercase leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0 sm:block"
                                 >
                                     Edit Pattern
@@ -5416,6 +5681,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
 
                         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
+                            {errorMessage && (
+                                <p role="alert" className="border-2 border-brutal-black bg-brand-magenta p-3 text-sm font-bold text-white">
+                                    {errorMessage}
+                                </p>
+                            )}
                             <div>
                                 <label
                                     htmlFor={EXPORT_FILE_NAME_ID}

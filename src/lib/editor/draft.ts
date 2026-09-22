@@ -1,9 +1,15 @@
 import { BoardOptionId } from './config';
+import { BOARDS } from '../core/model/board/board.model';
 import { Palette } from '@/lib/core/model/palette/palette.model';
 
 export const EDITOR_DRAFT_STORAGE_KEY = 'bead-pattern-editor-draft-v1';
 export const EDITOR_DRAFT_PATTERN_MAX_BYTES = 1_500_000;
 export const EDITOR_DRAFT_BOARD_COUNT_MAX = 20;
+export const EDITOR_PROJECT_PATTERN_DIMENSION_MAX =
+    EDITOR_DRAFT_BOARD_COUNT_MAX *
+    Math.max(...Object.values(BOARDS).map((board) => board.nbBeadPerRow));
+export const EDITOR_PROJECT_PATTERN_MAX_BYTES =
+    EDITOR_PROJECT_PATTERN_DIMENSION_MAX ** 2 * 4;
 export const EDITOR_PROJECT_FILE_TYPE = 'bead-pattern-project-v1';
 export const EDITOR_PROJECT_FILE_EXTENSION = '.bead-pattern.json';
 
@@ -62,7 +68,11 @@ export function createEditorDraft(
 }
 
 function isValidPatternDimension(value: number): boolean {
-    return Number.isInteger(value) && value > 0;
+    return (
+        Number.isInteger(value) &&
+        value > 0 &&
+        value <= EDITOR_PROJECT_PATTERN_DIMENSION_MAX
+    );
 }
 
 function getExpectedPatternByteLength(width: number, height: number): number {
@@ -267,6 +277,25 @@ export function encodeEditorPatternDraft(
     };
 }
 
+export function encodeEditorProjectPattern(
+    data: Uint8ClampedArray,
+    width: number,
+    height: number
+): EditorPatternDraft {
+    const pattern = encodeEditorPatternDraft(
+        data,
+        width,
+        height,
+        EDITOR_PROJECT_PATTERN_MAX_BYTES
+    );
+
+    if (!pattern) {
+        throw new Error('Cannot save a project with invalid pattern dimensions or pixel data.');
+    }
+
+    return pattern;
+}
+
 export function decodeEditorPatternDraft(
     draft: EditorPatternDraft | null | undefined
 ): Uint8ClampedArray | null {
@@ -286,7 +315,10 @@ export function decodeEditorPatternDraft(
         draft.height
     );
 
-    if (draft.byteLength !== expectedByteLength) {
+    if (
+        draft.byteLength !== expectedByteLength ||
+        draft.data.length > Math.ceil(expectedByteLength / 3) * 4
+    ) {
         return null;
     }
 
@@ -367,13 +399,18 @@ export function loadEditorDraft(): EditorDraft | null {
     }
 }
 
-export function saveEditorDraft(draft: EditorDraft): void {
+export function saveEditorDraft(draft: EditorDraft): boolean {
     if (typeof window === 'undefined') {
-        return;
+        return false;
     }
 
-    window.sessionStorage.setItem(
-        EDITOR_DRAFT_STORAGE_KEY,
-        JSON.stringify(draft)
-    );
+    try {
+        window.sessionStorage.setItem(
+            EDITOR_DRAFT_STORAGE_KEY,
+            JSON.stringify(draft)
+        );
+        return true;
+    } catch {
+        return false;
+    }
 }

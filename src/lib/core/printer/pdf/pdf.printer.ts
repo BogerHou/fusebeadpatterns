@@ -5,6 +5,7 @@ import _ from 'lodash';
 import './MonoFont';
 
 import { Printer } from './../printer';
+import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
 import {
     createPaletteEntryColorMap,
@@ -42,12 +43,12 @@ export class PdfPrinter implements Printer {
         return 'PDF';
     }
 
-    print(
+    async print(
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
         filename: string
-    ) {
+    ): Promise<void> {
         const height = 297;
         const width = 210;
         const margin = 5;
@@ -58,7 +59,11 @@ export class PdfPrinter implements Printer {
         this.boardMapping(doc, project, margin, width, height);
         this.usage(doc, usage, width, height, margin, project);
         this.beadMapping(doc, project, reducedColor, width, height, margin);
-        doc.save(`${filename}.pdf`);
+        const blob = doc.output('blob');
+        if (!(blob instanceof Blob)) {
+            throw new Error('The PDF could not be generated.');
+        }
+        downloadBlob(blob, `${filename}.pdf`);
     }
 
     boardMapping(

@@ -1,6 +1,7 @@
 import * as Excel from 'exceljs/dist/exceljs';
 
 import { Printer } from '../printer';
+import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
 import { ColorToHex } from '../../model/color/hex.model';
 import {
@@ -216,29 +217,24 @@ export class XlsxPrinter implements Printer {
         worksheet.properties.defaultColWidth = 40 / 7.025;
     }
 
-    print(
+    async print(
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
         filename: string
-    ) {
+    ): Promise<void> {
         const workbook = new Excel.Workbook();
 
         this.pattern(workbook, reducedColor, project);
         this.usage(workbook, usage, project);
 
-        workbook.xlsx.writeBuffer().then((buffer) => {
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(
-                new Blob([buffer], {
-                    type:
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                })
-            );
-            a.setAttribute('download', `${filename}.xlsx`);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        });
+        const buffer = await workbook.xlsx.writeBuffer();
+        downloadBlob(
+            new Blob([buffer], {
+                type:
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+            `${filename}.xlsx`
+        );
     }
 }
