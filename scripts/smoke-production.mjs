@@ -1,4 +1,7 @@
 const baseUrl = process.env.SMOKE_BASE_URL ?? 'https://fusebeadpatterns.art';
+const checkPublicRedirects = ['fusebeadpatterns.art', 'www.fusebeadpatterns.art'].includes(
+    new URL(baseUrl).hostname
+);
 
 const checks = [
     {
@@ -53,6 +56,7 @@ const canonicalRedirectChecks = [
 
 const maxAttempts = 3;
 const requestTimeoutMs = 15000;
+const maxCanonicalRedirects = 3;
 
 function toUrl(path) {
     return new URL(path, baseUrl).toString();
@@ -82,6 +86,8 @@ async function runCheck(check) {
             headers: {
                 'user-agent': 'bead-pattern-maker-smoke/1.0',
             },
+            // A local predeploy must never follow a redirect onto the public site.
+            redirect: 'manual',
             signal: controller.signal,
         });
     } finally {
@@ -149,40 +155,53 @@ async function runCheckWithRetry(check) {
 }
 
 async function runCanonicalRedirectCheck(url) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-        controller.abort();
-    }, requestTimeoutMs);
+    let current = new URL(url);
+    const visited = new Set();
+    const hops = [];
 
-    let response;
+    while (true) {
+        if (!['http:', 'https:'].includes(current.protocol) ||
+            !['fusebeadpatterns.art', 'www.fusebeadpatterns.art'].includes(current.hostname) ||
+            current.port || current.username || current.password) {
+            throw new Error(`Canonical redirect left the approved site: ${current}`);
+        }
+        if (visited.has(current.href)) {
+            throw new Error(`Canonical redirect loop at ${current}`);
+        }
+        visited.add(current.href);
 
-    try {
-        response = await fetch(url, {
-            headers: {
-                'user-agent': 'bead-pattern-maker-smoke/1.0',
-            },
-            redirect: 'manual',
-            signal: controller.signal,
-        });
-    } finally {
-        clearTimeout(timeout);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+        let response;
+        try {
+            response = await fetch(current.href, {
+                headers: { 'user-agent': 'bead-pattern-maker-smoke/1.0' },
+                redirect: 'manual',
+                signal: controller.signal,
+            });
+            await response.body?.cancel();
+        } finally {
+            clearTimeout(timeout);
+        }
+
+        if (response.status === 200 && current.href === normalizeUrl(canonicalUrl) && hops.length > 0) {
+            return { url, status: response.status, location: current.href, redirects: hops.length };
+        }
+        if (![301, 308].includes(response.status)) {
+            throw new Error(`${current} returned HTTP ${response.status}; expected a permanent redirect or HTTP 200 at ${canonicalUrl}`);
+        }
+        if (hops.length >= maxCanonicalRedirects) {
+            throw new Error(`${url} exceeded ${maxCanonicalRedirects} canonical redirects`);
+        }
+        const location = response.headers.get('location');
+        if (!location) throw new Error(`${current} redirected without a location`);
+        const next = new URL(location, current);
+        if (current.protocol === 'https:' && next.protocol === 'http:') {
+            throw new Error(`Canonical redirect downgraded HTTPS: ${current} -> ${next}`);
+        }
+        hops.push(current.href);
+        current = next;
     }
-
-    const location = response.headers.get('location');
-
-    if (![301, 308].includes(response.status)) {
-        throw new Error(`${url} returned HTTP ${response.status}, expected 301 or 308`);
-    }
-
-    if (!location || normalizeUrl(location) !== normalizeUrl(canonicalUrl)) {
-        throw new Error(`${url} redirected to ${location ?? 'missing location'}`);
-    }
-
-    return {
-        url,
-        status: response.status,
-        location,
-    };
 }
 
 async function runCanonicalRedirectCheckWithRetry(url) {
@@ -205,11 +224,15 @@ async function runCanonicalRedirectCheckWithRetry(url) {
 
 const failures = [];
 
-for (const url of canonicalRedirectChecks) {
+if (!checkPublicRedirects) {
+    console.log('Local/custom target: public host/TLS redirect checks are not requested.');
+}
+
+for (const url of checkPublicRedirects ? canonicalRedirectChecks : []) {
     try {
         const result = await runCanonicalRedirectCheckWithRetry(url);
         console.log(
-            `OK canonical-redirect ${result.status} ${result.url} -> ${result.location}`
+            `OK canonical-redirect ${result.redirects} permanent hop(s) ${result.url} -> ${result.location} HTTP ${result.status}`
         );
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
