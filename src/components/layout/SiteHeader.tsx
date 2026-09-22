@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-type SiteHeaderSection = 'generator' | 'editor' | 'guides' | 'about';
+type SiteHeaderSection = 'generator' | 'patterns' | 'editor' | 'guides' | 'about';
 
 type SiteHeaderProps = {
     active?: SiteHeaderSection;
@@ -14,6 +14,7 @@ const navItems: Array<{
     prefetch?: false;
 }> = [
     { id: 'generator', label: 'Generator', href: '/' },
+    { id: 'patterns', label: 'Patterns', href: '/patterns' },
     { id: 'editor', label: 'Editor', href: '/editor', prefetch: false },
     { id: 'guides', label: 'Guides', href: '/guides' },
     { id: 'about', label: 'About', href: '/about' },
@@ -39,7 +40,7 @@ export default function SiteHeader({ active }: SiteHeaderProps) {
                     Fuse Bead Patterns
                 </div>
             </Link>
-            <nav className="grid w-full grid-cols-4 gap-1 text-center text-[10px] font-bold uppercase sm:flex sm:w-auto sm:items-center sm:gap-3 sm:text-sm">
+            <nav className="grid w-full grid-cols-5 gap-1 text-center text-[10px] font-bold uppercase sm:flex sm:w-auto sm:items-center sm:gap-3 sm:text-sm">
                 {navItems.map((item) => {
                     const isActive = item.id === active;
 

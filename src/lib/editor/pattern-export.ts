@@ -13,7 +13,7 @@ export type ExportEditorPatternOptions = {
     beadsUsage: Map<string, number>;
     project: Project;
     fileName: string;
-    exportGridPng: () => void;
+    exportGridPng: () => void | Promise<void>;
     printerLoaders?: Partial<Record<CoreExportId, EditorPrinterLoader>>;
 };
 
@@ -56,7 +56,7 @@ export async function exportEditorPattern({
     printerLoaders = {},
 }: ExportEditorPatternOptions): Promise<void> {
     if (exportId === 'grid_png') {
-        exportGridPng();
+        await exportGridPng();
         return;
     }
 
@@ -68,5 +68,5 @@ export async function exportEditorPattern({
         printerLoaders[exportId] ?? DEFAULT_PRINTER_LOADERS[exportId];
     const Printer = await loadPrinter();
 
-    new Printer().print(reducedColor, beadsUsage, project, fileName);
+    await new Printer().print(reducedColor, beadsUsage, project, fileName);
 }

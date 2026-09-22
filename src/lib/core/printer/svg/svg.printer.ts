@@ -2,6 +2,7 @@ import 'canvas2svg';
 import * as _ from 'lodash';
 
 import { Printer } from '../printer';
+import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
 import { Color } from '../../model/color/color.model';
 import {
@@ -419,25 +420,20 @@ export class SvgPrinter implements Printer {
         return svg;
     }
 
-    print(
+    async print(
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
         filename: string
-    ) {
+    ): Promise<void> {
         const svg = this.drawSVG(reducedColor, usage, project);
 
-        // generate & save file
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(
+        downloadBlob(
             new Blob([new XMLSerializer().serializeToString(svg)], {
                 type: 'image/svg+xml',
-            })
+            }),
+            `${filename}.svg`
         );
-        a.setAttribute('download', `${filename}.svg`);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
     }
 
     // Welcome to realm of magic values, works only for current font

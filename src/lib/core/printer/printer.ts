@@ -7,5 +7,5 @@ export interface Printer {
         usage: Map<string, number>,
         project: Project,
         filename: string
-    ): void;
+    ): Promise<void>;
 }

@@ -2,6 +2,12 @@
 
 This checklist tracks the remaining work after the April 2026 UI, content, and launch review.
 
+## Live Site Constraints
+
+- The site is indexed and receives traffic. Keep current URLs, page copy, metadata, canonical tags, structured data, internal links, sitemap, robots and redirects unchanged during internal editor optimization.
+- Capture a local production baseline with `scripts/check-public-pages.mjs snapshot` before changing code; rebuild and run `compare` afterward. This guard checks local outputs and does not predict rankings.
+- Content and SEO items below are future proposals, not part of the current internal optimization work. Do not commit, push or deploy without an explicit request.
+
 ## Next
 
 - [ ] Reduce export chunk weight by moving PDF/SVG font payloads out of JavaScript or loading them as static assets.
@@ -37,6 +43,14 @@ This checklist tracks the remaining work after the April 2026 UI, content, and l
 
 ## Done
 
+- [x] Move larger-pattern color matching to a cancellable Web Worker, retaining an identical fallback and preserving saved project pixels.
+- [x] Cache repeated input color matches within a bounded per-conversion cache; compare output bytes against the original algorithm.
+- [x] Check real Worker assets, latest-result handling and fallback equivalence in the production browser smoke test.
+- [x] Add a local public-page regression guard for crawlable content, SEO output and routing.
+- [x] Use per-stroke pixel differences for bounded undo/redo history and incremental color usage updates.
+- [x] Keep export filename, symbols and grid changes from regenerating edited pixels.
+- [x] Preserve full-size project files separately from the bounded automatic session draft, with visible draft failure feedback.
+- [x] Await actual async export completion and surface failures with a retry path.
 - [x] Add a simple responsive editor control surface for tablet and mobile users.
 - [x] Add a minimal project save/open workflow separate from final PDF/SVG/PNG/XLSX export.
 - [x] Add large-project safeguards: clear bead-count warning, slow-operation warning, and a cancel/retry path.

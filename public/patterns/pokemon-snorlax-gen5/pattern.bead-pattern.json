@@ -1,0 +1,152 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "pokemon-snorlax-gen5",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Slate Blue",
+            "ref": "80-15252",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 94,
+              "g": 109,
+              "b": 123,
+              "a": 255
+            }
+          },
+          {
+            "name": "Light Grey",
+            "ref": "80-15181",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 179,
+              "g": 186,
+              "b": 184,
+              "a": 255
+            }
+          },
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "Pastel Yellow",
+            "ref": "80-19056",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 233,
+              "g": 226,
+              "b": 144,
+              "a": 255
+            }
+          },
+          {
+            "name": "Slime",
+            "ref": "80-15259",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 200,
+              "g": 200,
+              "b": 92,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          },
+          {
+            "name": "Charcoal",
+            "ref": "80-15207",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 79,
+              "g": 89,
+              "b": 90,
+              "a": 255
+            }
+          },
+          {
+            "name": "Mocha",
+            "ref": "80-15239",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 200,
+              "g": 182,
+              "b": 147,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXm17/15te/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF5te/+zurj/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABebXv/s7q4/7O6uP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAyMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/p4pD/6eKQ/7O6uP+zurj/s7q4/zIyNP8yMjT/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AAAAAAAAAABPWVr/T1la/8jIXP/IyFz/yMhc/09ZWv9PWVr/T1la/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT1la/09ZWv9PWVr/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

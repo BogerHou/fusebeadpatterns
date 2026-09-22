@@ -106,84 +106,122 @@ export function reduceColor(
         willReadFrequently: true,
     })!;
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const enabledPaletteEntries = getEnabledPaletteEntries(
-        project.paletteConfiguration.palettes
+    reduceColorPixels(imageData.data, canvas.width, canvas.height, {
+        palettes: project.paletteConfiguration.palettes,
+        matching: project.matchingConfiguration.matching,
+        dithering: project.ditheringConfiguration,
+        drawingPosition: {
+            x: drawingPosition.xStart,
+            y: drawingPosition.yStart,
+            width: drawingPosition.width,
+            height: drawingPosition.height,
+        },
+    });
+
+    return imageData;
+}
+
+export interface ReduceColorPixelsOptions {
+    palettes: Palette[];
+    matching: Matching;
+    dithering: { enable: boolean; hardness: number };
+    drawingPosition: { x: number; y: number; width: number; height: number };
+}
+
+// Bound per-conversion memory even for photographs with mostly unique colors.
+const MAX_COLOR_MATCH_CACHE_ENTRIES = 4096;
+
+/** Quantize RGBA pixels in place without requiring Canvas or other DOM APIs. */
+export function reduceColorPixels(
+    data: Uint8ClampedArray,
+    width: number,
+    height: number,
+    options: ReduceColorPixelsOptions
+): Uint8ClampedArray {
+    const enabledPaletteEntries = getEnabledPaletteEntries(options.palettes);
+    const matchedColors = new Map<number, PaletteEntry>();
+    const drawingPosition = new ImagePosition(
+        options.drawingPosition.x,
+        options.drawingPosition.y,
+        options.drawingPosition.width,
+        options.drawingPosition.height
     );
 
-    for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-            const color = get(imageData, canvas, x, y);
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const color = getPixel(data, width, x, y);
             if (color.a !== 0) {
-                const closestPaletteEntry = getClosestPaletteEntryFromEntries(
-                    enabledPaletteEntries,
-                    color,
-                    project.matchingConfiguration.matching
-                );
-                set(imageData, canvas, x, y, closestPaletteEntry.color);
+                // Read after diffusion so a changed pixel never reuses its
+                // original image color's match. Alpha participates in matching.
+                const key = getPackedColorKey(color.r, color.g, color.b, color.a);
+                let closestPaletteEntry = matchedColors.get(key);
+                if (!closestPaletteEntry) {
+                    closestPaletteEntry = getClosestPaletteEntryFromEntries(
+                        enabledPaletteEntries,
+                        color,
+                        options.matching
+                    );
+                    if (matchedColors.size < MAX_COLOR_MATCH_CACHE_ENTRIES) {
+                        matchedColors.set(key, closestPaletteEntry);
+                    }
+                }
+                setPixel(data, width, x, y, closestPaletteEntry.color);
 
-                if (project.ditheringConfiguration.enable) {
+                if (options.dithering.enable) {
                     const quantError = color.sub(closestPaletteEntry.color);
 
                     if (drawingPosition.contains(x + 1, y)) {
-                        set(
-                            imageData,
-                            canvas,
+                        setPixel(
+                            data,
+                            width,
                             x + 1,
                             y,
-                            get(imageData, canvas, x + 1, y).add(
-                                quantError.mult(
-                                    ((project.ditheringConfiguration.hardness /
-                                        100) *
-                                        7) /
-                                        16
+                            getPixel(data, width, x + 1, y).add(
+                                scaleColor(
+                                    quantError,
+                                    ((options.dithering.hardness / 100) * 7) / 16
                                 )
                             )
                         );
                     }
                     if (drawingPosition.contains(x - 1, y + 1)) {
-                        set(
-                            imageData,
-                            canvas,
+                        setPixel(
+                            data,
+                            width,
                             x - 1,
                             y + 1,
-                            get(imageData, canvas, x - 1, y + 1).add(
-                                quantError.mult(
-                                    ((project.ditheringConfiguration.hardness /
-                                        100) *
-                                        3) /
-                                        16
+                            getPixel(data, width, x - 1, y + 1).add(
+                                scaleColor(
+                                    quantError,
+                                    ((options.dithering.hardness / 100) * 3) / 16
                                 )
                             )
                         );
                     }
                     if (drawingPosition.contains(x, y + 1)) {
-                        set(
-                            imageData,
-                            canvas,
+                        setPixel(
+                            data,
+                            width,
                             x,
                             y + 1,
-                            get(imageData, canvas, x, y + 1).add(
-                                quantError.mult(
-                                    ((project.ditheringConfiguration.hardness /
-                                        100) *
-                                        5) /
-                                        16
+                            getPixel(data, width, x, y + 1).add(
+                                scaleColor(
+                                    quantError,
+                                    ((options.dithering.hardness / 100) * 5) / 16
                                 )
                             )
                         );
                     }
                     if (drawingPosition.contains(x + 1, y + 1)) {
-                        set(
-                            imageData,
-                            canvas,
+                        setPixel(
+                            data,
+                            width,
                             x + 1,
                             y + 1,
-                            get(imageData, canvas, x + 1, y + 1).add(
-                                quantError.mult(
-                                    ((project.ditheringConfiguration.hardness /
-                                        100) *
-                                        1) /
-                                        16
+                            getPixel(data, width, x + 1, y + 1).add(
+                                scaleColor(
+                                    quantError,
+                                    ((options.dithering.hardness / 100) * 1) / 16
                                 )
                             )
                         );
@@ -193,34 +231,44 @@ export function reduceColor(
         }
     }
 
-    return imageData;
+    return data;
 }
 
-function get(
-    source: ImageData,
-    canvas: HTMLCanvasElement,
+function scaleColor(color: Color, factor: number): Color {
+    // Color.mult mutates its input; each neighbor needs the original error.
+    return new Color(
+        color.r * factor,
+        color.g * factor,
+        color.b * factor,
+        color.a
+    );
+}
+
+function getPixel(
+    data: Uint8ClampedArray,
+    width: number,
     x: number,
     y: number
 ): Color {
     return new Color(
-        source.data[y * canvas.width * 4 + x * 4],
-        source.data[y * canvas.width * 4 + x * 4 + 1],
-        source.data[y * canvas.width * 4 + x * 4 + 2],
-        source.data[y * canvas.width * 4 + x * 4 + 3]
+        data[y * width * 4 + x * 4],
+        data[y * width * 4 + x * 4 + 1],
+        data[y * width * 4 + x * 4 + 2],
+        data[y * width * 4 + x * 4 + 3]
     );
 }
 
-function set(
-    source: ImageData,
-    canvas: HTMLCanvasElement,
+function setPixel(
+    data: Uint8ClampedArray,
+    width: number,
     x: number,
     y: number,
     color: Color
 ) {
-    source.data[y * canvas.width * 4 + x * 4] = color.r;
-    source.data[y * canvas.width * 4 + x * 4 + 1] = color.g;
-    source.data[y * canvas.width * 4 + x * 4 + 2] = color.b;
-    source.data[y * canvas.width * 4 + x * 4 + 3] = color.a;
+    data[y * width * 4 + x * 4] = color.r;
+    data[y * width * 4 + x * 4 + 1] = color.g;
+    data[y * width * 4 + x * 4 + 2] = color.b;
+    data[y * width * 4 + x * 4 + 3] = color.a;
 }
 
 export function getClosestPaletteEntry(
