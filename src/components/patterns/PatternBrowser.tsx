@@ -6,13 +6,13 @@ import { PatternGrid, type PatternCardData } from './PatternCards';
 const normalizeSearch = (value: string) => value.normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '').replaceAll('-', ' ').toLowerCase().trim();
 
-export default function PatternBrowser({ patterns }: { patterns: PatternCardData[] }) {
+export default function PatternBrowser({ patterns, collections }: { patterns: PatternCardData[]; collections: Array<{ id: string; title: string }> }) {
     const [query, setQuery] = useState('');
     const [theme, setTheme] = useState('all');
-    const normalizedQuery = normalizeSearch(query);
+    const searchWords = normalizeSearch(query).split(/\s+/).filter(Boolean);
     const matching = patterns.filter((pattern) =>
         (theme === 'all' || (theme === 'originals' ? pattern.collectionId === null : pattern.collectionId === theme)) &&
-        normalizeSearch(`${pattern.title} ${pattern.collectionId ?? 'original halloween'}`).includes(normalizedQuery)
+        searchWords.every((word) => normalizeSearch(`${pattern.title} ${pattern.collectionId ?? 'original halloween'}`).includes(word))
     );
 
     return (
@@ -26,8 +26,9 @@ export default function PatternBrowser({ patterns }: { patterns: PatternCardData
                     Theme
                     <select id="pattern-theme" value={theme} onChange={(event) => setTheme(event.target.value)} className="mt-1.5 block min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 font-normal">
                         <option value="all">All themes</option>
-                        <option value="stardew-valley">Stardew Valley</option>
-                        <option value="pokemon">Pokémon</option>
+                        {collections.map((collection) => (
+                            <option key={collection.id} value={collection.id}>{collection.title}</option>
+                        ))}
                         <option value="originals">Original Halloween scenes</option>
                     </select>
                 </label>

@@ -25,13 +25,13 @@ export default function PatternsPage() {
             <main className="mx-auto w-full max-w-6xl flex-1 px-3 pb-10 sm:px-4 sm:pb-12">
                 <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Patterns', href: '/patterns' }]} />
                 <h1 className="font-vt323 text-4xl uppercase leading-none sm:text-6xl">Free Printable Perler Bead Patterns</h1>
-                <p className="mt-4 max-w-3xl text-base leading-7 text-gray-700 sm:text-lg">Explore Stardew Valley, Pokémon, and Halloween bead patterns. Choose a picture to download its free printable pattern.</p>
+                <p className="mt-4 max-w-3xl text-base leading-7 text-gray-700 sm:text-lg">Explore Stardew Valley, Pokémon, Minecraft, Super Mario, Kirby, and Halloween bead patterns. Choose a picture to download its free printable pattern.</p>
                 <nav aria-label="Pattern collections" className="my-6 flex flex-wrap gap-3 text-sm font-bold">
                     {patternCollections.map((collection) => (
                         <Link key={collection.id} href={`/patterns/${collection.slug}`} className="inline-flex min-h-11 items-center border-2 border-brutal-black bg-white px-4 py-2 hover:bg-brand-yellow">{collection.title} <span className="ml-2" aria-hidden="true">→</span></Link>
                     ))}
                 </nav>
-                <PatternBrowser patterns={patterns.map(toPatternCard)} />
+                <PatternBrowser patterns={patterns.map(toPatternCard)} collections={patternCollections.map(({ id, title }) => ({ id, title }))} />
                 <section className="mt-10 border-t-2 border-brutal-black pt-5">
                     <h2 className="font-vt323 text-3xl">Before you start</h2>
                     <p className="mt-2 max-w-3xl leading-7 text-gray-700">Check the design size, bead colors, and assembly notes on each pattern. Print PDFs at actual size and check the scale before placing beads.</p>

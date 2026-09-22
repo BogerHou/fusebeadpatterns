@@ -1,0 +1,152 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "pokemon-leafeon-gen5",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "Fern",
+            "ref": "80-15219",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 127,
+              "g": 151,
+              "b": 26,
+              "a": 255
+            }
+          },
+          {
+            "name": "Mocha",
+            "ref": "80-15239",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 200,
+              "g": 182,
+              "b": 147,
+              "a": 255
+            }
+          },
+          {
+            "name": "Charcoal",
+            "ref": "80-15207",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 79,
+              "g": 89,
+              "b": 90,
+              "a": 255
+            }
+          },
+          {
+            "name": "Sour Apple",
+            "ref": "80-15241",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 163,
+              "g": 222,
+              "b": 111,
+              "a": 255
+            }
+          },
+          {
+            "name": "Slime",
+            "ref": "80-15259",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 200,
+              "g": 200,
+              "b": 92,
+              "a": 255
+            }
+          },
+          {
+            "name": "Pastel Yellow",
+            "ref": "80-19056",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 233,
+              "g": 226,
+              "b": 144,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/AAAAADIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/f5ca/3+XGv8yMjT/f5ca/3+XGv8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP9/lxr/MjI0/3+XGv9/lxr/f5ca/3+XGv8yMjT/AAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAyMjT/f5ca/3+XGv9/lxr/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAMjI0/8i2k/9/lxr/MjI0/3+XGv9/lxr/f5ca/09ZWv8AAAAAMjI0/zIyNP9/lxr/f5ca/3+XGv8yMjT/AAAAAAAAAAAAAAAAMjI0/3+XGv9/lxr/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AAAAAAAAAABPWVr/yLaT/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE9ZWv9PWVr/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "pokemon-garchomp-gen5",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Charcoal",
+            "ref": "80-15207",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 79,
+              "g": 89,
+              "b": 90,
+              "a": 255
+            }
+          },
+          {
+            "name": "Pastel Lavender",
+            "ref": "80-19054",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 147,
+              "g": 127,
+              "b": 191,
+              "a": 255
+            }
+          },
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "Sunflower",
+            "ref": "80-15268",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 222,
+              "g": 186,
+              "b": 11,
+              "a": 255
+            }
+          },
+          {
+            "name": "Lemon",
+            "ref": "80-15269",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 246,
+              "g": 217,
+              "b": 1,
+              "a": 255
+            }
+          },
+          {
+            "name": "Grape",
+            "ref": "80-15243",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 80,
+              "g": 59,
+              "b": 156,
+              "a": 255
+            }
+          },
+          {
+            "name": "Spice",
+            "ref": "80-15212",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 217,
+              "g": 89,
+              "b": 58,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          },
+          {
+            "name": "Light Grey",
+            "ref": "80-15181",
+            "symbol": "J",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 179,
+              "g": 186,
+              "b": 184,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE9ZWv8yMjT/T1la/+rv7v9PWVr/6u/u/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPWVr/T1la/09ZWv9PWVr/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

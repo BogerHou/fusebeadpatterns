@@ -19,11 +19,11 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(19);
+        expect(patterns).toHaveLength(100);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
-        expect(patternCollections.map(({ slug }) => slug)).toEqual(['stardew-valley', 'pokemon']);
+        expect(patternCollections.map(({ slug }) => slug)).toEqual(['stardew-valley', 'pokemon', 'minecraft', 'super-mario', 'kirby']);
         for (const pattern of patterns) {
             expect(pattern.slug).toMatch(/^[a-z0-9-]+(?:\/[a-z0-9-]+)?$/);
             expect(getPatternById(pattern.id)).toBe(pattern);
@@ -41,9 +41,20 @@ describe('pattern library content integrity', () => {
                     expect(pattern.version).toBe('Gen V menu icon');
                     expect(pattern.source?.url).toContain('/0b133a62e914976d3d7ea33aaa1ac676ca248c30/');
                     expect(pattern.source?.url).toContain('/generation-v/icons/');
-                } else {
+                } else if (pattern.collectionId === 'stardew-valley') {
                     expect(pattern.version).toBe('Wiki game depiction');
                     expect(pattern.source?.url).toMatch(/^https:\/\/stardewvalleywiki.com\/File:/);
+                } else if (pattern.collectionId === 'minecraft') {
+                    expect(pattern.version).toBe('Java Edition 1.21.1');
+                    expect(pattern.source?.url).toContain('/aef047f783f44424a591eeecf6b230d5bb0c8095/');
+                } else if (pattern.collectionId === 'super-mario') {
+                    expect(['Super Mario Bros. (NES)', 'Super Mario Bros. 3 (NES)']).toContain(pattern.version);
+                    expect(pattern.source?.url).toMatch(/^https:\/\/www.mariowiki.com\/File:/);
+                } else if (pattern.collectionId === 'kirby') {
+                    expect(pattern.version).toBe('Kirby’s Adventure (NES)');
+                    expect(pattern.source?.url).toMatch(/^https:\/\/wikirby.com\/wiki\/File:KA_/);
+                } else {
+                    throw new Error(`Reference version checks missing for ${pattern.collectionId}`);
                 }
             } else {
                 expect(pattern.source).toBeNull();
@@ -51,7 +62,10 @@ describe('pattern library content integrity', () => {
             }
         }
         expect(getPatternsForCollection('stardew-valley')).toHaveLength(6);
-        expect(getPatternsForCollection('pokemon')).toHaveLength(11);
+        expect(getPatternsForCollection('pokemon')).toHaveLength(46);
+        expect(getPatternsForCollection('minecraft')).toHaveLength(28);
+        expect(getPatternsForCollection('super-mario')).toHaveLength(15);
+        expect(getPatternsForCollection('kirby')).toHaveLength(3);
         expect(getPatternBySlug('missing')).toBeUndefined();
         expect(getPatternById('missing')).toBeUndefined();
         expect(getCollectionBySlug('missing')).toBeUndefined();
@@ -75,6 +89,13 @@ describe('pattern library content integrity', () => {
         const junimo = getPatternById('sdv-junimo');
         expect(junimo?.notes.join(' ')).toContain('three separate parts');
         expect(junimo?.notes.join(' ')).toContain('backing');
+    });
+
+    it('does not count duplicate pixel artwork as separate patterns', async () => {
+        const pixels = await Promise.all(patterns.map(async (pattern) =>
+            (await sharp(publicPath(pattern.assets.pixels)).ensureAlpha().raw().toBuffer()).toString('base64')
+        ));
+        expect(new Set(pixels).size).toBe(patterns.length);
     });
 
     for (const pattern of patterns) {
