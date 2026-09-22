@@ -1,0 +1,165 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "pokemon-mew-gen5",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "Coral",
+            "ref": "80-15272",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 255,
+              "g": 154,
+              "b": 139,
+              "a": 255
+            }
+          },
+          {
+            "name": "Bubblegum",
+            "ref": "80-19006",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 216,
+              "g": 114,
+              "b": 154,
+              "a": 255
+            }
+          },
+          {
+            "name": "Spice",
+            "ref": "80-15212",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 217,
+              "g": 89,
+              "b": 58,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          },
+          {
+            "name": "Pastel Lavender",
+            "ref": "80-19054",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 147,
+              "g": 127,
+              "b": 191,
+              "a": 255
+            }
+          },
+          {
+            "name": "Charcoal",
+            "ref": "80-15207",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 79,
+              "g": 89,
+              "b": 90,
+              "a": 255
+            }
+          },
+          {
+            "name": "Grape",
+            "ref": "80-15243",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 80,
+              "g": 59,
+              "b": 156,
+              "a": 255
+            }
+          },
+          {
+            "name": "Blueberry Creme",
+            "ref": "80-19093",
+            "symbol": "J",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 133,
+              "g": 168,
+              "b": 227,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT//5qL//+ai///mov/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT//5qL//+ai/8yMjT/MjI0/zIyNP//mov//5qL//+ai/8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0//+ai/8yMjT/MjI0/wAAAAAAAAAAAAAAADIyNP8yMjT//5qL//+ai///mov/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT//5qL/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/Ycpr//5qL//+ai//Ycpr/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT//5qL/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAADIyNP/Ycpr/2HKa/9hymv8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT//5qL//+ai/8yMjT/MjI0/wAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0//+ai///mov/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP/Ycpr/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0//+ai///mov/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAMjI0/9hymv8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT//5qL/zIyNP//mov//5qL/zIyNP//mov/2HKa/zIyNP8yMjT/MjI0/zIyNP/Ycpr/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP//mov//5qL//+ai///mov//5qL/9hymv/Ycpr/MjI0/9lZOv//mov//5qL/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/9lZOv//mov//5qL//+ai//ZWTr/2Vk6/9hymv8yMjT//5qL//+ai///mov/2HKa/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP+Tf7//2Vk6//+ai///mov/2Vk6/+rv7v/q7+7/2Vk6/zIyNP//mov//5qL/9hymv/Ycpr/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT1la/1A7nP/ZWTr//5qL//+ai//ZWTr/hajj/+rv7v/ZWTr/T1la/09ZWv9PWVr/2HKa/9hymv9PWVr/2HKa/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPWVr//5qL//+ai///mov//5qL/9lZOv+Tf7//6u/u/9lZOv9PWVr/2HKa/9hymv9PWVr/T1la/09ZWv/Ycpr/2HKa/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPWVr//5qL//+ai///mov/2HKa/9hymv/ZWTr/T1la/09ZWv9PWVr/T1la/wAAAAAAAAAAAAAAAE9ZWv9PWVr/T1la/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE9ZWv/Ycpr/2HKa/9hymv9PWVr/T1la/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE9ZWv9PWVr/T1la/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

@@ -2,8 +2,8 @@
 
 import NextImage from 'next/image';
 import Link from 'next/link';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ChevronDown,
     Eraser,
@@ -90,6 +90,8 @@ import {
 } from '@/lib/editor/palette-state';
 import { buildEditorProject } from '@/lib/editor/project';
 import { getFirstImageFile } from '@/lib/editor/upload';
+import { loadLibraryEditorProject } from '@/lib/editor/library-project';
+import { getLibraryProject } from '@/lib/patterns/project-links';
 import type { Project } from '@/lib/core/model/project/project.model';
 import {
     Palette,
@@ -281,14 +283,14 @@ const HOME_MOBILE_PANELS: {
     },
 ];
 
-async function loadPalette(paletteId: string): Promise<Palette> {
+async function loadPalette(paletteId: string, signal?: AbortSignal): Promise<Palette> {
     const paletteOption = getPaletteOption(paletteId);
 
     if (!paletteOption) {
         throw new Error(`Unknown palette preset: ${paletteId}`);
     }
 
-    const response = await fetch(`/palettes/${paletteOption.file}`);
+    const response = await fetch(`/palettes/${paletteOption.file}`, { signal });
 
     if (!response.ok) {
         throw new Error(`Failed to load palette file: ${paletteOption.file}`);
@@ -381,6 +383,130 @@ function getProjectDownloadFileName(fileName: string): string {
     return `${safeBaseName}${EDITOR_PROJECT_FILE_EXTENSION}`;
 }
 
+type LibraryPatternEntryProps = {
+    hasCurrentPattern: boolean;
+    canSaveCurrentPattern: boolean;
+    busy: boolean;
+    onOpen: (draft: EditorDraft) => void;
+    onSave: () => void;
+    onLoadingChange: (loading: boolean) => void;
+};
+
+function LibraryPatternEntry({
+    patternId,
+    hasCurrentPattern,
+    canSaveCurrentPattern,
+    busy,
+    onOpen,
+    onSave,
+    onLoadingChange,
+}: LibraryPatternEntryProps & { patternId: string }) {
+    const project = getLibraryProject(patternId);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const requestRef = useRef<AbortController | null>(null);
+
+    useEffect(() => () => {
+        requestRef.current?.abort();
+        onLoadingChange(false);
+    }, [onLoadingChange]);
+
+    const clearLibraryRequest = () => {
+        // This is client-only state on the same static route. Next's native
+        // History integration updates useSearchParams without a cached route
+        // navigation restoring the old query string in production.
+        window.history.replaceState(null, '', '/editor');
+    };
+
+    const dismiss = () => {
+        requestRef.current?.abort();
+        onLoadingChange(false);
+        clearLibraryRequest();
+    };
+
+    const openPattern = async () => {
+        if (!project || loading || busy) return;
+        const controller = new AbortController();
+        requestRef.current = controller;
+        setLoading(true);
+        onLoadingChange(true);
+        setError(null);
+
+        try {
+            const draft = await loadLibraryEditorProject(project.id, controller.signal);
+            if (controller.signal.aborted) return;
+            onOpen(draft);
+            clearLibraryRequest();
+        } catch (error) {
+            if (!controller.signal.aborted) {
+                setError(error instanceof Error ? error.message : 'The pattern could not be loaded. Please try again.');
+            }
+        } finally {
+            if (!controller.signal.aborted) {
+                setLoading(false);
+                onLoadingChange(false);
+            }
+        }
+    };
+
+    return (
+        <section
+            aria-label="Open library pattern"
+            data-testid="library-pattern-entry"
+            className="shrink-0 border-2 border-brutal-black bg-brand-yellow px-3 py-3 text-sm text-brutal-black sm:px-4"
+        >
+            <p className="font-bold">
+                {project ? `Open ${project.title}?` : 'This pattern is not in the library.'}
+            </p>
+            <p className="mt-1">
+                {project
+                    ? hasCurrentPattern
+                        ? 'Your current pattern is still open. Save a project copy before replacing it.'
+                        : 'Open this ready-made pattern to edit its beads and colors.'
+                    : 'Your current project has not changed. You can continue editing or choose another pattern.'}
+            </p>
+            {error && <p role="alert" className="mt-2 font-bold">{error}</p>}
+            <div className="mt-2 flex flex-wrap gap-2">
+                {project && (
+                    <button
+                        type="button"
+                        data-testid="open-library-pattern"
+                        onClick={() => void openPattern()}
+                        disabled={loading || busy}
+                        className="border-2 border-brutal-black bg-brutal-black px-3 py-2 font-bold text-white disabled:opacity-50"
+                    >
+                        {loading ? 'Opening pattern...' : hasCurrentPattern ? 'Replace current pattern' : 'Open pattern'}
+                    </button>
+                )}
+                {project && hasCurrentPattern && (
+                    <button
+                        type="button"
+                        onClick={onSave}
+                        disabled={!canSaveCurrentPattern || loading || busy}
+                        className="border-2 border-brutal-black bg-white px-3 py-2 font-bold disabled:opacity-50"
+                    >
+                        Save current project
+                    </button>
+                )}
+                <button
+                    type="button"
+                    data-testid="dismiss-library-pattern"
+                    onClick={dismiss}
+                    className="border-2 border-brutal-black bg-white px-3 py-2 font-bold"
+                >
+                    {hasCurrentPattern ? 'Keep current pattern' : 'Continue without opening'}
+                </button>
+                {!project && <Link href="/patterns" className="px-2 py-2 font-bold underline">Browse patterns</Link>}
+            </div>
+        </section>
+    );
+}
+
+function LibraryPatternRequest(props: LibraryPatternEntryProps) {
+    const patternId = useSearchParams().get('pattern');
+    return patternId === null ? null : <LibraryPatternEntry key={patternId} patternId={patternId} {...props} />;
+}
+
 export default function Editor({ mode = 'home' }: EditorProps) {
     const router = useRouter();
     const isEditorPage = mode === 'editor';
@@ -414,6 +540,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [exportingId, setExportingId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [draftWarning, setDraftWarning] = useState<string | null>(null);
+    const [isLibraryPatternLoading, setIsLibraryPatternLoading] = useState(false);
     const [beadsUsage, setBeadsUsage] = useState<Map<string, number>>(new Map());
     const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
     const [previewSize, setPreviewSize] = useState({ width: 1, height: 1 });
@@ -474,6 +601,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const pendingColorSelectionRef = useRef<ColorPickerSelection | null>(null);
     const pendingEditedPatternRef = useRef<EditorPatternDraft | null>(null);
     const restoredPaletteIdsRef = useRef<string[] | null>(null);
+    const paletteSyncAbortRef = useRef<AbortController | null>(null);
     const activeEditorColorValueRef = useRef<string | null>(null);
     const editorColorSelectionModeRef = useRef<'auto' | 'manual'>('auto');
     const builtBlankPatternRevisionRef = useRef(-1);
@@ -881,6 +1009,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft) => {
             imageGenerationRef.current?.abort();
+            // Invalidate immediately: the old palette request can finish before
+            // React runs the previous effect's cleanup after a project restore.
+            paletteSyncAbortRef.current?.abort();
             const nextSourceMode =
                 draft.sourceMode ?? (draft.imageSrc ? 'image' : 'image');
 
@@ -1040,24 +1171,28 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
-        let isCancelled = false;
+        const controller = new AbortController();
+        paletteSyncAbortRef.current = controller;
 
         async function syncSelectedPalettes() {
             try {
                 const loadedPalettes = await Promise.all(
-                    selectedPaletteIds.map((paletteId) => loadPalette(paletteId))
+                    selectedPaletteIds.map((paletteId) => loadPalette(paletteId, controller.signal))
                 );
 
-                if (isCancelled) {
+                if (controller.signal.aborted) {
                     return;
                 }
 
                 paletteHistoryRef.current = [];
                 setActivePalettes((previousPalettes) =>
-                    mergePaletteEnabledState(loadedPalettes, previousPalettes)
+                    controller.signal.aborted
+                        ? previousPalettes
+                        : mergePaletteEnabledState(loadedPalettes, previousPalettes)
                 );
                 setErrorMessage(null);
             } catch (error) {
+                if (controller.signal.aborted) return;
                 const nextMessage =
                     error instanceof Error
                         ? error.message
@@ -1074,7 +1209,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         void syncSelectedPalettes();
 
         return () => {
-            isCancelled = true;
+            controller.abort();
         };
     }, [isEditorDraftReady, selectedPaletteIds]);
 
@@ -2708,9 +2843,25 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 </div>
             )}
 
+            {isEditorPage && isEditorDraftReady && (
+                <Suspense fallback={null}>
+                    <LibraryPatternRequest
+                        hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
+                        canSaveCurrentPattern={canSaveProject}
+                        busy={processing || exportingId !== null}
+                        onOpen={(draft) => {
+                            restoreEditorDraft(draft);
+                            persistEditorDraft(draft);
+                        }}
+                        onSave={handleSaveProject}
+                        onLoadingChange={setIsLibraryPatternLoading}
+                    />
+                </Suspense>
+            )}
+
             {isEditorPage ? (
                 isEditorDraftReady ? (
-                <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
+                <div inert={isLibraryPatternLoading} className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
                     <div className="col-span-full min-w-0 border-b-2 border-brutal-black bg-white sm:border-b-4">
                         <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[232px_minmax(0,1fr)_312px]">
                         <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3 xl:col-span-2">

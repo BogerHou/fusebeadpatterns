@@ -131,6 +131,13 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                         </div>
                     </div>
                 </article>
+                <p className="mt-6 text-sm leading-7 text-gray-700 sm:text-base">
+                    Ready to try a project?{' '}
+                    <Link href="/patterns" className="font-bold underline decoration-2 underline-offset-4">
+                        Browse printable bead patterns
+                    </Link>{' '}
+                    with board sizes, color lists, and downloadable charts.
+                </p>
             </main>
             <SiteFooter active="guides" />
         </>

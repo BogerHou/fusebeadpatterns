@@ -4,6 +4,7 @@ import Editor from '../components/editor/Editor';
 import { guidePages } from './guides/guide-data';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
+import FeaturedPatterns from '@/components/patterns/FeaturedPatterns';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 
@@ -123,6 +124,8 @@ export default function Home() {
                 <div className="w-full max-w-6xl mb-12 sm:mb-24">
                     <Editor />
                 </div>
+
+                <FeaturedPatterns />
 
                 {/* How It Works Section */}
                 <div className="w-full max-w-6xl mb-12 sm:mb-24">

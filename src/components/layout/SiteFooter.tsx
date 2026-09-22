@@ -3,6 +3,7 @@ import { guidePages } from '@/app/guides/guide-data';
 
 type SiteFooterSection =
     | 'generator'
+    | 'patterns'
     | 'editor'
     | 'guides'
     | 'about'
@@ -29,6 +30,7 @@ const footerGroups: Array<{
         title: 'Make',
         links: [
             { id: 'generator', label: 'Generator', href: '/' },
+            { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
             {
                 id: 'editor',
                 label: 'Advanced Editor',

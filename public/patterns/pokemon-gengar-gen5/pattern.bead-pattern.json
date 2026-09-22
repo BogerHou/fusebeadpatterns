@@ -1,0 +1,152 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "pokemon-gengar-gen5",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Charcoal",
+            "ref": "80-15207",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 79,
+              "g": 89,
+              "b": 90,
+              "a": 255
+            }
+          },
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "Lavender",
+            "ref": "80-15182",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 175,
+              "g": 159,
+              "b": 206,
+              "a": 255
+            }
+          },
+          {
+            "name": "Grey",
+            "ref": "80-19017",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 144,
+              "g": 148,
+              "b": 151,
+              "a": 255
+            }
+          },
+          {
+            "name": "Plum",
+            "ref": "80-19060",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 167,
+              "g": 93,
+              "b": 157,
+              "a": 255
+            }
+          },
+          {
+            "name": "Hot Coral",
+            "ref": "80-19059",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 221,
+              "g": 89,
+              "b": 91,
+              "a": 255
+            }
+          },
+          {
+            "name": "Light Grey",
+            "ref": "80-15181",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 179,
+              "g": 186,
+              "b": 184,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT1la/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE9ZWv8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/r5/O/zIyNP8AAAAAMjI0/09ZWv8AAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP+vn87/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/6+fzv8yMjT/MjI0/wAAAAAAAAAAMjI0/zIyNP+vn87/MjI0/zIyNP+vn87/MjI0/wAAAAAAAAAAMjI0/zIyNP+vn87/r5/O/5CUl/8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/r5/O/6+fzv+vn87/MjI0/zIyNP+QlJf/MjI0/6+fzv+QlJf/MjI0/5CUl/+QlJf/MjI0/zIyNP+vn87/r5/O/6+fzv+QlJf/kJSX/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP+QlJf/r5/O/6+fzv+QlJf/MjI0/zIyNP+vn87/r5/O/6+fzv+QlJf/T1la/5CUl/9PWVr/r5/O/6+fzv+vn87/kJSX/5CUl/8yMjT/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T1la/09ZWv8AAAAAAAAAAAAAAAAAAAAAT1la/5CUl/+QlJf/kJSX/09ZWv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT1la/09ZWv9PWVr/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

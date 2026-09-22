@@ -1,0 +1,139 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "ghost-cat-pumpkin",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "K",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "W",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          },
+          {
+            "name": "Flamingo",
+            "ref": "80-15203",
+            "symbol": "P",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 242,
+              "g": 175,
+              "b": 183,
+              "a": 255
+            }
+          },
+          {
+            "name": "Robin's Egg",
+            "ref": "80-15202",
+            "symbol": "S",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 169,
+              "g": 205,
+              "b": 213,
+              "a": 255
+            }
+          },
+          {
+            "name": "Pastel Green",
+            "ref": "80-19053",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 109,
+              "g": 204,
+              "b": 148,
+              "a": 255
+            }
+          },
+          {
+            "name": "Orange",
+            "ref": "80-19004",
+            "symbol": "O",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 235,
+              "g": 123,
+              "b": 49,
+              "a": 255
+            }
+          },
+          {
+            "name": "Spice",
+            "ref": "80-15212",
+            "symbol": "R",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 217,
+              "g": 89,
+              "b": 58,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v/q7+7/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/+rv7v/q7+7/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u//Kvt//q7+7/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v/q7+7/8q+3/+rv7v8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/8q+3/+rv7v/q7+7/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/yr7f/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP/q7+7/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v+pzdX/6u/u/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v/q7+7/6u/u/+rv7v8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/6u/u/+rv7v+pzdX/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/+rv7v/q7+7/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP/q7+7/6u/u/6nN1f8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v8yMjT/MjI0/+rv7v/q7+7/6u/u/zIyNP/q7+7/6u/u/+rv7v8yMjT/MjI0/+rv7v/q7+7/qc3V/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v/yr7f/8q+3//Kvt//q7+7/6u/u/+rv7v8yMjT/6u/u/zIyNP/q7+7/6u/u/+rv7v/yr7f/8q+3//Kvt/+pzdX/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/6nN1f8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/23MlP9tzJT/bcyU/+rv7v/q7+7/6u/u/+rv7v/q7+7/qc3V/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/bcyU/23MlP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v+pzdX/qc3V/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP/rezH/63sx/+t7Mf/rezH/63sx/+t7Mf/rezH/63sx/zIyNP/q7+7/6u/u/+rv7v+pzdX/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/63sx/+t7Mf/rezH/63sx/9lZOv/rezH/63sx/+t7Mf/rezH/63sx/+rv7v/q7+7/6u/u/6nN1f8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/+rv7v/q7+7/MjI0/zIyNP/ZWTr/63sx/zIyNP/rezH/2Vk6/+t7Mf/rezH/MjI0/+t7Mf/ZWTr/MjI0/zIyNP/q7+7/qc3V/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v8yMjT/63sx/9lZOv/rezH/63sx/+t7Mf/ZWTr/63sx/+t7Mf/rezH/63sx/9lZOv/rezH/MjI0/6nN1f+pzdX/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/63sx/+t7Mf/rezH/MjI0/zIyNP8yMjT/MjI0/+t7Mf/rezH/63sx/zIyNP/q7+7/qc3V/6nN1f+pzdX/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/63sx/+t7Mf/rezH/63sx/+t7Mf/rezH/63sx/+t7Mf8yMjT/6u/u/+rv7v+pzdX/qc3V/+rv7v8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}
