@@ -484,6 +484,90 @@ async function assertPatternState(cdp, expectedPixels, description, expectedHist
     }
 }
 
+async function runPaletteChangeRegression(cdp) {
+    await installPatternRegressionHelpers(cdp);
+    const draftExpression = `(() => {
+        const draft = JSON.parse(sessionStorage.getItem('bead-pattern-editor-draft-v1'));
+        if (!draft?.editedPattern) return null;
+        return {
+            sourceMode: draft.sourceMode,
+            selectedPaletteIds: draft.selectedPaletteIds,
+            paletteNames: draft.activePalettes.map((palette) => palette.name),
+            enabledColors: draft.activePalettes.flatMap((palette) => palette.entries)
+                .filter((entry) => entry.enabled)
+                .map(({ color }) => [color.r, color.g, color.b, color.a ?? 255].join(',')),
+            pattern: draft.editedPattern,
+        };
+    })()`;
+    await waitForState(cdp, `(() => {
+        const saved = ${draftExpression};
+        return saved?.sourceMode === 'blank' &&
+            saved.pattern.data === window.__patternRegression.pixels();
+    })()`, 'automatic recovery of the drawn and reopened blank pattern');
+    const before = await cdp.evaluate(draftExpression);
+    const beforePixels = Buffer.from(before.pattern.data, 'base64');
+    const beforeAlpha = beforePixels.filter((_, index) => index % 4 === 3);
+    const beads = beforeAlpha.filter((alpha) => alpha > 0).length;
+    if (!beads || beads === beforeAlpha.length || before.selectedPaletteIds.includes('hama')) {
+        throw new Error('Brand regression needs a non-Hama drawn pattern with beads and empty cells.');
+    }
+
+    await cdp.evaluate("window.__patternRegression.click('Setup')");
+    await waitForState(cdp, `Array.from(document.querySelectorAll('label')).some((label) =>
+        window.__patternRegression.visible(label) &&
+        label.querySelector('select') && label.textContent.includes('Color Brand'))`, 'mobile Color Brand setup');
+    await cdp.evaluate(`(() => {
+        const label = Array.from(document.querySelectorAll('label')).find((element) =>
+            window.__patternRegression.visible(element) &&
+            element.querySelector('select') && element.textContent.includes('Color Brand'));
+        const select = label.querySelector('select');
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, 'hama');
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    await waitForState(cdp, `window.__patternRegression.button('Apply Changes')?.disabled === false`, 'enabled brand Apply Changes');
+    await cdp.evaluate("window.__patternRegression.click('Apply Changes')");
+    await waitForState(cdp, `(() => {
+        const saved = ${draftExpression};
+        return saved?.selectedPaletteIds.length === 1 && saved.selectedPaletteIds[0] === 'hama' &&
+            saved.paletteNames.length === 1 && saved.paletteNames[0] === 'Hama Midi' &&
+            saved.pattern.data === window.__patternRegression.pixels();
+    })()`, 'automatically saved Hama pattern matching the working canvas');
+    // A second initialization or palette fetch must not erase the completed grid.
+    await sleep(500);
+    const after = await cdp.evaluate(draftExpression);
+    const afterPixels = Buffer.from(after.pattern.data, 'base64');
+    const afterAlpha = afterPixels.filter((_, index) => index % 4 === 3);
+    if (after.pattern.width !== before.pattern.width || after.pattern.height !== before.pattern.height ||
+        afterPixels.length !== beforePixels.length || !afterAlpha.equals(beforeAlpha)) {
+        throw new Error('Applying Color Brand changed the saved pattern dimensions or bead silhouette.');
+    }
+    if (after.selectedPaletteIds.length !== 1 || after.selectedPaletteIds[0] !== 'hama' ||
+        after.paletteNames.length !== 1 || after.paletteNames[0] !== 'Hama Midi') {
+        throw new Error('Applying Color Brand did not retain the target Hama palette in automatic recovery.');
+    }
+    const targetColors = new Set(after.enabledColors);
+    for (let offset = 0; offset < afterPixels.length; offset += 4) {
+        if (afterPixels[offset + 3] > 0 && !targetColors.has(afterPixels.subarray(offset, offset + 4).join(','))) {
+            throw new Error('Brand remapping left a bead outside the enabled Hama colors.');
+        }
+    }
+    if (await cdp.evaluate('window.__patternRegression.pixels()') !== after.pattern.data) {
+        throw new Error('Brand change automatic recovery no longer matches the working canvas.');
+    }
+    await cdp.evaluate("window.__patternRegression.click('Setup')");
+    return {
+        targetBrand: 'Hama Midi',
+        sourceMode: after.sourceMode,
+        width: after.pattern.width,
+        height: after.pattern.height,
+        beadsBefore: beads,
+        beadsAfter: afterAlpha.filter((alpha) => alpha > 0).length,
+        identicalAlpha: true,
+        allBeadsUseEnabledTargetColors: true,
+        automaticRecoveryMatchesCanvas: true,
+    };
+}
+
 async function runPatternPreservationRegression(cdp) {
     await cdp.evaluate('document.querySelector(\'button[aria-label="Close export dialog"]\')?.click()');
     await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -1723,6 +1807,8 @@ async function main() {
             );
         }
 
+        const paletteChange = await runPaletteChangeRegression(cdp);
+
         const exportButton = await cdp.evaluate(`
             (() => {
                 const visible = (element) => {
@@ -1801,6 +1887,7 @@ async function main() {
                         savedProjectBytes: projectRoundTrip.savedProjectBytes,
                         restoredSameCanvas: projectRoundTrip.restoredSameCanvas,
                     },
+                    paletteChange,
                     exportDialogOpened: true,
                     horizontalOverflow: result.horizontalOverflow,
                     errors: result.errors,

@@ -412,7 +412,10 @@ export function createPaletteEntryColorMap(
             keyMode
         );
 
-        if (!entriesByColor.has(key)) {
+        const existing = entriesByColor.get(key);
+        // Prefer a color that matching can use, but retain disabled-only colors
+        // so existing hand-edited pixels still appear in usage and exports.
+        if (!existing || (!existing.enabled && entry.enabled)) {
             entriesByColor.set(key, entry);
         }
     });

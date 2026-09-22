@@ -1,0 +1,178 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "minecraft-diamond-ore-1-21-1",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Grey",
+            "ref": "80-19017",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 144,
+              "g": 148,
+              "b": 151,
+              "a": 255
+            }
+          },
+          {
+            "name": "Stone",
+            "ref": "80-15260",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 152,
+              "g": 140,
+              "b": 140,
+              "a": 255
+            }
+          },
+          {
+            "name": "Slate Blue",
+            "ref": "80-15252",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 94,
+              "g": 109,
+              "b": 123,
+              "a": 255
+            }
+          },
+          {
+            "name": "Dark Grey",
+            "ref": "80-19092",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 88,
+              "g": 92,
+              "b": 97,
+              "a": 255
+            }
+          },
+          {
+            "name": "Sky",
+            "ref": "80-15216",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 74,
+              "g": 192,
+              "b": 216,
+              "a": 255
+            }
+          },
+          {
+            "name": "Caribbean Sea",
+            "ref": "80-15266",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 108,
+              "g": 200,
+              "b": 173,
+              "a": 255
+            }
+          },
+          {
+            "name": "Lagoon",
+            "ref": "80-15217",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 0,
+              "g": 164,
+              "b": 172,
+              "a": 255
+            }
+          },
+          {
+            "name": "Mist",
+            "ref": "80-15215",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 147,
+              "g": 176,
+              "b": 189,
+              "a": 255
+            }
+          },
+          {
+            "name": "Mint",
+            "ref": "80-15240",
+            "symbol": "J",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 179,
+              "g": 238,
+              "b": 213,
+              "a": 255
+            }
+          },
+          {
+            "name": "Pewter",
+            "ref": "80-15206",
+            "symbol": "K",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 148,
+              "g": 161,
+              "b": 157,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkJSX/5iMjP+YjIz/kJSX/5iMjP9ebXv/Xm17/5iMjP9ebXv/WFxh/15te/9ebXv/mIyM/5CUl/+QlJf/kJSX/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACYjIz/mIyM/15te/+YjIz/WFxh/5CUl/+QlJf/kJSX/5CUl/+YjIz/mIyM/15te/9YXGH/WFxh/15te/+YjIz/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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

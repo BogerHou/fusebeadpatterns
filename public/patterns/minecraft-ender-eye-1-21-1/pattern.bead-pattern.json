@@ -1,0 +1,204 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-09-22T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "minecraft-ender-eye-1-21-1",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Forest",
+            "ref": "80-15247",
+            "symbol": "A",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 0,
+              "g": 93,
+              "b": 87,
+              "a": 255
+            }
+          },
+          {
+            "name": "Evergreen",
+            "ref": "80-15179",
+            "symbol": "B",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 48,
+              "g": 85,
+              "b": 69,
+              "a": 255
+            }
+          },
+          {
+            "name": "Teal",
+            "ref": "80-15218",
+            "symbol": "C",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 4,
+              "g": 127,
+              "b": 138,
+              "a": 255
+            }
+          },
+          {
+            "name": "Sage",
+            "ref": "80-15254",
+            "symbol": "D",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 154,
+              "g": 169,
+              "b": 142,
+              "a": 255
+            }
+          },
+          {
+            "name": "Mint",
+            "ref": "80-15240",
+            "symbol": "E",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 179,
+              "g": 238,
+              "b": 213,
+              "a": 255
+            }
+          },
+          {
+            "name": "Sherbet",
+            "ref": "80-15214",
+            "symbol": "F",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 216,
+              "g": 228,
+              "b": 124,
+              "a": 255
+            }
+          },
+          {
+            "name": "Kiwi Lime",
+            "ref": "80-19061",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 105,
+              "g": 184,
+              "b": 69,
+              "a": 255
+            }
+          },
+          {
+            "name": "Green",
+            "ref": "80-19080",
+            "symbol": "H",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 77,
+              "g": 171,
+              "b": 100,
+              "a": 255
+            }
+          },
+          {
+            "name": "Sour Apple",
+            "ref": "80-15241",
+            "symbol": "J",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 163,
+              "g": 222,
+              "b": 111,
+              "a": 255
+            }
+          },
+          {
+            "name": "Shamrock",
+            "ref": "80-15199",
+            "symbol": "K",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 0,
+              "g": 143,
+              "b": 83,
+              "a": 255
+            }
+          },
+          {
+            "name": "Dark Spruce",
+            "ref": "80-15261",
+            "symbol": "L",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 20,
+              "g": 49,
+              "b": 59,
+              "a": 255
+            }
+          },
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "M",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

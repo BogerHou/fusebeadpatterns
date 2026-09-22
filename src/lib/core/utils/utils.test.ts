@@ -159,6 +159,84 @@ describe('core utils', () => {
         ).toBe('opaque');
     });
 
+    it.each(['rgb', 'rgba'] as const)(
+        'uses the first enabled duplicate with stable color order in %s maps',
+        (keyMode) => {
+            const disabled = createEntry('disabled', new Color(1, 2, 3, 255));
+            disabled.enabled = false;
+            const other = createEntry('other', new Color(4, 5, 6, 255));
+            const first = createEntry('first-enabled', new Color(
+                1, 2, 3, keyMode === 'rgb' ? 128 : 255
+            ));
+            const second = createEntry('second-enabled', new Color(1, 2, 3, 255));
+            const key = getPaletteEntryColorKey(1, 2, 3, 255, keyMode);
+            const createMap = (enabledEntries: PaletteEntry[]) =>
+                createPaletteEntryColorMap([
+                    new Palette('disabled colors', [disabled, other]),
+                    new Palette('enabled colors', [...enabledEntries, disabled]),
+                ], keyMode);
+
+            const map = createMap([first, second]);
+
+            expect(map.get(key)).toBe(first);
+            expect([...map.keys()]).toEqual([
+                key,
+                getPaletteEntryColorKey(4, 5, 6, 255, keyMode),
+            ]);
+            expect(createMap([second, first]).get(key)).toBe(second);
+            expect(disabled.enabled).toBe(false);
+        }
+    );
+
+    it.each(['rgb', 'rgba'] as const)(
+        'retains the first duplicate when all matching entries are disabled in %s maps',
+        (keyMode) => {
+            const first = createEntry('first-disabled', new Color(1, 2, 3, 255));
+            const second = createEntry('second-disabled', new Color(
+                1, 2, 3, keyMode === 'rgb' ? 128 : 255
+            ));
+            first.enabled = false;
+            second.enabled = false;
+
+            const map = createPaletteEntryColorMap([
+                new Palette('first', [first]),
+                new Palette('second', [second]),
+            ], keyMode);
+
+            expect(map.size).toBe(1);
+            expect(map.get(getPaletteEntryColorKey(1, 2, 3, 255, keyMode))).toBe(first);
+        }
+    );
+
+    it('attributes usage to the enabled color used by matching and retains disabled-only pixels', () => {
+        const disabledWhite = createEntry('disabled-white', new Color(255, 255, 255, 255));
+        const enabledWhite = createEntry('enabled-white', new Color(255, 255, 255, 255));
+        const duplicateWhite = createEntry('duplicate-white', new Color(255, 255, 255, 255));
+        const disabledBlue = createEntry('disabled-blue', new Color(0, 0, 255, 255));
+        const duplicateBlue = createEntry('duplicate-blue', new Color(0, 0, 255, 255));
+        disabledWhite.enabled = false;
+        disabledBlue.enabled = false;
+        duplicateBlue.enabled = false;
+        const palettes = [
+            new Palette('first', [disabledWhite, disabledBlue]),
+            new Palette('second', [enabledWhite, duplicateWhite, duplicateBlue]),
+        ];
+        const matched = getClosestPaletteEntry(
+            palettes, new Color(254, 254, 254, 255), MATCHINGS.EUCLIDEAN
+        );
+
+        expect(matched).toBe(enabledWhite);
+        expect(computeUsage(new Uint8ClampedArray([
+            matched.color.r, matched.color.g, matched.color.b, matched.color.a,
+            255, 255, 255, 255,
+            0, 0, 255, 255,
+            0, 0, 255, 128,
+        ]), palettes)).toEqual(new Map([
+            ['enabled-white', 2],
+            ['disabled-blue', 1],
+        ]));
+    });
+
     it('builds reusable enabled entry maps by color ref', () => {
         const disabledFirst = createEntry('shared', new Color(1, 1, 1, 255));
         disabledFirst.enabled = false;

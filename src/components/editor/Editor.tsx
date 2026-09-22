@@ -74,6 +74,7 @@ import {
 import { drawGridExportPattern } from '@/lib/editor/grid-export';
 import { exportEditorPattern } from '@/lib/editor/pattern-export';
 import { quantizePattern } from '@/lib/editor/pattern-quantization';
+import { remapPatternPalette } from '@/lib/editor/pattern-palette';
 import {
     getEditorShortcutAction,
     type EditorShortcutTool as EditorTool,
@@ -588,6 +589,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const currentProjectRef = useRef<Project | null>(null);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
     const imageGenerationRef = useRef<AbortController | null>(null);
+    const settingsUpdateRef = useRef<AbortController | null>(null);
     const paletteHistoryRef = useRef<Palette[][]>([]);
     const patternHistoryRef = useRef(new PatternHistory());
     const activeStrokeRef = useRef<{
@@ -1006,8 +1008,19 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         return saved;
     }, []);
 
+    const cancelSettingsUpdate = useCallback(() => {
+        settingsUpdateRef.current?.abort();
+        settingsUpdateRef.current = null;
+        setProcessing(false);
+    }, []);
+
+    useEffect(() => () => {
+        settingsUpdateRef.current?.abort();
+    }, []);
+
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft) => {
+            cancelSettingsUpdate();
             imageGenerationRef.current?.abort();
             // Invalidate immediately: the old palette request can finish before
             // React runs the previous effect's cleanup after a project restore.
@@ -1084,7 +1097,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 setBlankPatternRevision((previous) => previous + 1);
             }
         },
-        [setAutomaticEditorColorRef]
+        [cancelSettingsUpdate, setAutomaticEditorColorRef]
     );
 
     useEffect(() => {
@@ -1361,6 +1374,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     }, [isEditorPage, rendererSettings.showGrid]);
 
     useEffect(() => {
+        if (settingsUpdateRef.current) {
+            return;
+        }
+
         if (!isEditorDraftReady) {
             setProcessing(false);
             return;
@@ -1832,6 +1849,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     // its settings alongside pixels from the previous completed pattern.
     useEffect(() => {
         if (!isEditorDraftReady || processing || imageGenerationRef.current ||
+            settingsUpdateRef.current ||
             pendingEditedPatternRef.current || activeStrokeRef.current ||
             (sourceMode === 'image' && !currentProjectRef.current)) {
             return;
@@ -1853,6 +1871,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
         setSourceMode('image');
@@ -1903,6 +1922,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        cancelSettingsUpdate();
+        imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
         setSourceMode('blank');
         setImageSrc(null);
@@ -1925,6 +1946,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleApplyPatternSettings = async () => {
+        if (processing || settingsUpdateRef.current || imageGenerationRef.current) {
+            return;
+        }
+
         const boardOption = getBoardOption(pendingBoardId);
 
         if (!boardOption) {
@@ -1945,8 +1970,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        const currentProject = currentProjectRef.current;
+        const currentPattern = reducedColorRef.current;
+        const canvas = canvasRef.current;
+        const preservePattern = Boolean(
+            currentProject && currentPattern && canvas &&
+            pendingBoardId === boardId &&
+            pendingBoardWidth === boardWidth &&
+            pendingBoardHeight === boardHeight
+        );
+
         if (
-            hasManualPatternChanges &&
+            !preservePattern && hasManualPatternChanges &&
             !window.confirm(
                 'Changing pattern setup will rebuild the pattern and discard manual bead edits. Continue?'
             )
@@ -1968,44 +2003,101 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             );
         }
 
+        finishActiveStroke();
+        const controller = new AbortController();
+        settingsUpdateRef.current = controller;
+        paletteSyncAbortRef.current?.abort();
         setProcessing(true);
         setErrorMessage(null);
 
         try {
-            const nextPalette = await loadPalette(pendingPrimaryPaletteId);
+            const nextPalette = await loadPalette(
+                pendingPrimaryPaletteId, controller.signal
+            );
             const nextPalettes = mergePaletteEnabledState(
                 [nextPalette],
                 activePalettes
             );
 
-            setSelectedPaletteIds([pendingPrimaryPaletteId]);
+            if (preservePattern && currentPattern && currentProject && canvas) {
+                const nextData = await remapPatternPalette(
+                    currentPattern,
+                    canvas.width,
+                    canvas.height,
+                    nextPalettes,
+                    matchingId,
+                    { signal: controller.signal }
+                );
+
+                if (controller.signal.aborted || currentProjectRef.current !== currentProject ||
+                    reducedColorRef.current !== currentPattern) {
+                    return;
+                }
+
+                const context = canvas.getContext('2d');
+                if (!context) {
+                    throw new Error('Canvas 2D context is unavailable.');
+                }
+                const nextImageData = context.createImageData(canvas.width, canvas.height);
+                nextImageData.data.set(nextData);
+                const nextPreview = createPatternPreviewDataUrl(
+                    nextData, canvas.width, canvas.height,
+                    boardOption.beadsPerRow, rendererSettings.showGrid
+                );
+                const nextUsage = computeUsage(nextData, nextPalettes);
+
+                // Commit the grid and its palette together, only after conversion succeeds.
+                context.putImageData(nextImageData, 0, 0);
+                reducedColorRef.current = nextData;
+                currentProject.paletteConfiguration.palettes = clonePalettes(nextPalettes);
+                skipNextPaletteRebuildRef.current = sourceMode === 'image';
+                setBeadsUsage(nextUsage);
+                setPreviewDataUrl(nextPreview);
+                syncEditorColorAfterPatternBuild(nextUsage, nextPalettes);
+                setManualPatternRevision((previous) => previous + 1);
+            } else {
+                if (controller.signal.aborted) {
+                    return;
+                }
+                setManualPatternRevision(0);
+                if (sourceMode === 'blank') {
+                    // Let the blank effect initialize once, with the new settings.
+                    builtBlankPatternRevisionRef.current = -1;
+                    setBlankPatternRevision((previous) => previous + 1);
+                }
+            }
+
+            const nextPaletteIds = [pendingPrimaryPaletteId];
+            // This palette was already loaded above. A second fetch could rebuild
+            // the image and replace the grid that was just converted.
+            restoredPaletteIdsRef.current = nextPaletteIds;
+            setSelectedPaletteIds(nextPaletteIds);
             setActivePalettes(nextPalettes);
+            setColorPickerPaletteId(pendingPrimaryPaletteId);
             setBoardId(pendingBoardId);
             setBoardWidth(pendingBoardWidth);
             setBoardHeight(pendingBoardHeight);
+            // Pixel-only undo patches contain the old brand's colors. Keep the
+            // current edits, but start history again with the converted palette.
+            paletteHistoryRef.current = [];
             patternHistoryRef.current.clear();
             activeStrokeRef.current = null;
             pendingEditedPatternRef.current = null;
-            setManualPatternRevision(0);
-
-            if (sourceMode === 'blank') {
-                builtBlankPatternRevisionRef.current = -1;
-                initializeBlankPattern(
-                    nextPalettes,
-                    pendingBoardId,
-                    pendingBoardWidth,
-                    pendingBoardHeight
-                );
-                setBlankPatternRevision((previous) => previous + 1);
-            }
+            setHistoryRevision((previous) => previous + 1);
         } catch (error) {
+            if (controller.signal.aborted) {
+                return;
+            }
             const nextMessage =
                 error instanceof Error
                     ? error.message
                     : 'Unexpected settings update error.';
             setErrorMessage(nextMessage);
         } finally {
-            setProcessing(false);
+            if (settingsUpdateRef.current === controller) {
+                settingsUpdateRef.current = null;
+                setProcessing(false);
+            }
         }
     };
 
@@ -2288,7 +2380,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const restoreHistory = (direction: 'undo' | 'redo') => {
-        if (processing || imageGenerationRef.current) {
+        if (processing || imageGenerationRef.current || settingsUpdateRef.current) {
             return;
         }
         finishActiveStroke();
@@ -2418,7 +2510,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const handleEditorImagePointerDown = (
         event: React.PointerEvent<HTMLCanvasElement>
     ) => {
-        if (!event.isPrimary || event.button !== 0 || processing ||
+        if (!event.isPrimary || event.button !== 0 || processing || settingsUpdateRef.current ||
             activeEditorTool === 'pan' || pinchZoomStateRef.current) {
             return;
         }
@@ -2553,7 +2645,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleOpenEditorPage = () => {
-        if (processing || imageGenerationRef.current) {
+        if (processing || imageGenerationRef.current || settingsUpdateRef.current) {
             return;
         }
         try {
@@ -2587,7 +2679,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleSaveProject = () => {
-        if (processing || imageGenerationRef.current) {
+        if (processing || imageGenerationRef.current || settingsUpdateRef.current) {
             return;
         }
         finishActiveStroke();
