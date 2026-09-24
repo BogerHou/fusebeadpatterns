@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, VT323 } from 'next/font/google';
+import PatternAnalytics from '@/components/analytics/PatternAnalytics';
 import './globals.css';
 
 const inter = Inter({
@@ -54,8 +55,6 @@ export const metadata: Metadata = {
     },
 };
 
-import Script from 'next/script';
-
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -67,24 +66,9 @@ export default function RootLayout({
             className={`${inter.variable} ${vt323.variable} h-full antialiased`}
             suppressHydrationWarning
         >
-            <head>
-                <Script
-                    strategy="lazyOnload"
-                    async
-                    src="https://www.googletagmanager.com/gtag/js?id=G-K3EC5BK93E"
-                ></Script>
-                <Script id="google-analytics" strategy="lazyOnload">
-                    {`
-                        window.dataLayer = window.dataLayer || [];
-                        function gtag(){dataLayer.push(arguments);}
-                        gtag('js', new Date());
-
-                        gtag('config', 'G-K3EC5BK93E');
-                    `}
-                </Script>
-            </head>
             <body className="min-h-full flex flex-col bg-[#F4F4F0] text-gray-900 font-sans">
                 {children}
+                <PatternAnalytics />
             </body>
         </html>
     );
