@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { guidePages } from './guides/guide-data';
 import { patterns, patternCollections, getPatternHref } from '@/lib/patterns/catalog';
+import { patternContentUpdatedAt } from '@/lib/patterns/content';
 
 const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
 
@@ -14,19 +15,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         {
             url: 'https://fusebeadpatterns.art/about',
-            lastModified: lastContentUpdate,
+            lastModified: new Date('2026-09-24T00:00:00.000Z'),
             changeFrequency: 'monthly',
             priority: 0.8,
         },
         {
             url: 'https://fusebeadpatterns.art/guides',
-            lastModified: lastContentUpdate,
+            lastModified: new Date('2026-09-24T00:00:00.000Z'),
             changeFrequency: 'monthly',
             priority: 0.8,
         },
         ...guidePages.map((guide) => ({
             url: `https://fusebeadpatterns.art/guides/${guide.slug}`,
-            lastModified: lastContentUpdate,
+            lastModified: guide.updatedAt ? new Date(guide.updatedAt) : lastContentUpdate,
             changeFrequency: 'monthly' as const,
             priority: 0.7,
         })),
@@ -48,11 +49,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         ...patternCollections.map((collection) => ({
             url: `https://fusebeadpatterns.art/patterns/${collection.slug}`,
-            lastModified: new Date('2026-09-22T00:00:00.000Z'),
+            lastModified: new Date(patternContentUpdatedAt),
         })),
         ...patterns.map((pattern) => ({
             url: `https://fusebeadpatterns.art${getPatternHref(pattern)}`,
-            lastModified: new Date(pattern.updatedAt),
+            lastModified: new Date(pattern.updatedAt > patternContentUpdatedAt ? pattern.updatedAt : patternContentUpdatedAt),
             images: [`https://fusebeadpatterns.art${pattern.assets.preview}`],
         })),
     ];

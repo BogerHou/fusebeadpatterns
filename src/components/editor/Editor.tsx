@@ -93,6 +93,7 @@ import { buildEditorProject } from '@/lib/editor/project';
 import { getFirstImageFile } from '@/lib/editor/upload';
 import { loadLibraryEditorProject } from '@/lib/editor/library-project';
 import { getLibraryProject } from '@/lib/patterns/project-links';
+import { trackPatternEvent } from '@/lib/analytics';
 import type { Project } from '@/lib/core/model/project/project.model';
 import {
     Palette,
@@ -388,7 +389,7 @@ type LibraryPatternEntryProps = {
     hasCurrentPattern: boolean;
     canSaveCurrentPattern: boolean;
     busy: boolean;
-    onOpen: (draft: EditorDraft) => void;
+    onOpen: (draft: EditorDraft, patternId: string) => void;
     onSave: () => void;
     onLoadingChange: (loading: boolean) => void;
 };
@@ -436,7 +437,7 @@ function LibraryPatternEntry({
         try {
             const draft = await loadLibraryEditorProject(project.id, controller.signal);
             if (controller.signal.aborted) return;
-            onOpen(draft);
+            onOpen(draft, project.id);
             clearLibraryRequest();
         } catch (error) {
             if (!controller.signal.aborted) {
@@ -587,6 +588,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const editorImageFileInputRef = useRef<HTMLInputElement>(null);
     const projectFileInputRef = useRef<HTMLInputElement>(null);
     const currentProjectRef = useRef<Project | null>(null);
+    const libraryPatternIdRef = useRef<string | null>(null);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
     const imageGenerationRef = useRef<AbortController | null>(null);
     const settingsUpdateRef = useRef<AbortController | null>(null);
@@ -1020,6 +1022,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft) => {
+            libraryPatternIdRef.current = null;
             cancelSettingsUpdate();
             imageGenerationRef.current?.abort();
             // Invalidate immediately: the old palette request can finish before
@@ -1871,6 +1874,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        libraryPatternIdRef.current = null;
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
@@ -1922,6 +1926,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        libraryPatternIdRef.current = null;
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
@@ -2793,6 +2798,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
 
         const pattern = new Uint8ClampedArray(reducedColorRef.current);
+        const exportedLibraryPatternId = libraryPatternIdRef.current;
         const project = createProjectForCurrentSettings(
             currentProjectRef.current.paletteConfiguration.palettes,
             selectedBoard,
@@ -2827,6 +2833,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     selectedBoard.beadsPerRow,
                     fileName
                 ),
+            });
+            trackPatternEvent({
+                name: 'pattern_export',
+                patternId: exportedLibraryPatternId,
+                paletteId: primaryPaletteId,
+                format: exportId,
+                entryPoint: isEditorPage ? 'editor' : 'home',
             });
         } catch (error) {
             const nextMessage =
@@ -2941,8 +2954,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
                         busy={processing || exportingId !== null}
-                        onOpen={(draft) => {
+                        onOpen={(draft, patternId) => {
                             restoreEditorDraft(draft);
+                            libraryPatternIdRef.current = patternId;
                             persistEditorDraft(draft);
                         }}
                         onSave={handleSaveProject}

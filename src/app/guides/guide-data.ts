@@ -2,10 +2,22 @@ export type GuideSection = {
     heading: string;
     body: string[];
     bullets?: string[];
+    links?: Array<{
+        href: string;
+        label: string;
+    }>;
+    figure?: {
+        src: string;
+        alt: string;
+        caption: string;
+        width: number;
+        height: number;
+    };
 };
 
 export type GuidePage = {
     slug: string;
+    updatedAt?: string;
     title: string;
     description: string;
     eyebrow: string;
@@ -62,6 +74,7 @@ export const guidePages: GuidePage[] = [
     },
     {
         slug: 'perler-bead-pegboards',
+        updatedAt: '2026-09-24',
         title: 'Perler Bead Pegboard Size Guide',
         description:
             'Understand how pegboard size, board count, and pattern dimensions work when planning Perler, Hama, Artkal, and other fuse bead projects.',
@@ -94,11 +107,77 @@ export const guidePages: GuidePage[] = [
                     'Detailed photos: test multiple sizes before exporting.',
                 ],
             },
+            {
+                heading: 'Print a library PDF at its intended size',
+                body: [
+                    'Ready-made PDFs in the pattern library include a 50 mm scale line. In your PDF print dialog, select 100% or Actual size and turn off Fit to page or Shrink to fit. Print one page before placing beads.',
+                    'Measure the printed scale line with a ruler: it should be 50 mm long. If it is shorter or longer, check the print scaling settings and print again. Match the printed grid to your actual pegboard before using it as a placement guide.',
+                    'This scale check applies to the library PDFs that carry the scale line. An editor export may use a different page layout; use its row and column grid as a chart unless you have checked the physical spacing. Choosing a different color brand does not change a midi chart into a mini or maxi placement template.',
+                ],
+            },
         ],
         relatedLinks: [
             { href: '/', label: 'Try a board size' },
             { href: '/guides/photo-to-perler-bead-pattern', label: 'Photo conversion guide' },
             { href: '/guides/mini-perler-beads', label: 'Mini bead guide' },
+            { href: '/guides/perler-to-hama-artkal', label: 'Switch bead brands' },
+        ],
+    },
+    {
+        slug: 'perler-to-hama-artkal',
+        updatedAt: '2026-09-24',
+        title: 'How to Convert a Perler Pattern to Hama or Artkal Colors',
+        description:
+            'Use the editor to match a ready-made Perler pattern to Hama or Artkal colors, keep the bead layout, and export an updated chart and color list.',
+        eyebrow: 'Bead Colors',
+        intro:
+            'You can use a ready-made pattern with a different bead palette. Library previews and downloads use Perler Midi by default. Open the pattern in the editor, change Color Brand while keeping the board settings unchanged, then export a new chart for your selected brand.',
+        sections: [
+            {
+                heading: '1. Open a ready-made pattern',
+                body: [
+                    'On a pattern page, choose Open in editor. When the editor asks to open the library pattern, choose Open pattern. If another project is already open, save it first with Save current project, then choose Replace current pattern.',
+                    'For example, start with the Stardew Valley Blue Chicken pattern. Its original Perler version uses 192 beads in 8 colors on one 29 × 29 board, with a 16 × 16 motif. The editor opens the bead grid itself, so you do not need to upload or trace the preview image.',
+                ],
+                links: [
+                    { href: '/patterns/stardew-valley/blue-chicken', label: 'Open the Blue Chicken pattern' },
+                ],
+            },
+            {
+                heading: '2. Change the color brand and apply it',
+                body: [
+                    'Find Pattern Setup beside the canvas. On a phone, open Setup. In Color Brand, choose Hama Midi or the Artkal palette that matches your bead range. Leave Pegboard, Boards Wide, and Boards Tall unchanged, then choose Apply Changes.',
+                    'A brand-only change keeps the current bead positions, empty cells, and manual edits. Each current color is matched to the closest enabled color in the selected palette. Changing the board settings is a separate operation that can rebuild the layout.',
+                    'If you have edited the pattern, save a project copy before switching brands. Your current edits stay in the converted grid, but Undo history starts again after the palette change. Reopen the saved copy if you need the exact previous colors.',
+                ],
+                figure: {
+                    src: '/guides/perler-to-hama-artkal/editor-hama-setup.png',
+                    alt: 'Blue Chicken in the editor with Hama Midi selected, 192 beads, and an unchanged 29 × 29 board.',
+                    caption: 'The Blue Chicken after applying Hama Midi in the actual editor. This screenshot shows the digital palette result; it does not verify the colors of physical beads.',
+                    width: 1280,
+                    height: 720,
+                },
+            },
+            {
+                heading: '3. Check the new colors',
+                body: [
+                    'Compare the outline, face, and small details on the canvas. Similar Perler colors can map to the same Hama or Artkal color, so the number of colors may decrease even though the bead layout stays the same. You can adjust individual beads if a detail needs more contrast.',
+                    'The match uses digital palette colors, not measurements of your physical beads. Check the new color names and codes against the beads you own. A palette change does not verify bead size, pegboard fit, or melting compatibility between brands.',
+                ],
+            },
+            {
+                heading: '4. Export the converted pattern',
+                body: [
+                    'Choose Export above the canvas, or File then Export Pattern on a phone. Set Export Format to PDF, choose a file name that includes the brand, and select Export PDF. Use Symbols In Printable Exports if you want symbols as well as colors in the chart.',
+                    'Use the newly exported chart and its target-brand color list to plan your bead quantities. The PDF and grid PNG on the original library page remain the Perler version; they are not replaced when you edit your own copy.',
+                    'Use Save Project to keep an editable copy with the selected palette. Before building, compare the printed chart with the on-screen result and check that you have the required colors.',
+                ],
+            },
+        ],
+        relatedLinks: [
+            { href: '/patterns/stardew-valley/blue-chicken', label: 'Try the Blue Chicken pattern' },
+            { href: '/patterns', label: 'Browse more patterns' },
+            { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
         ],
     },
     {

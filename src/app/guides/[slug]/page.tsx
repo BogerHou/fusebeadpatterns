@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
@@ -93,6 +94,19 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                                         <p key={paragraph}>{paragraph}</p>
                                     ))}
                                 </div>
+                                {section.links ? (
+                                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-base sm:text-lg">
+                                        {section.links.map((link) => (
+                                            <Link
+                                                key={link.href}
+                                                href={link.href}
+                                                className="font-bold underline decoration-2 underline-offset-4"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                ) : null}
                                 {section.bullets ? (
                                     <ul className="mt-4 grid gap-2">
                                         {section.bullets.map((bullet) => (
@@ -104,6 +118,21 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                                             </li>
                                         ))}
                                     </ul>
+                                ) : null}
+                                {section.figure ? (
+                                    <figure className="mt-5 max-w-5xl">
+                                        <Image
+                                            src={section.figure.src}
+                                            alt={section.figure.alt}
+                                            width={section.figure.width}
+                                            height={section.figure.height}
+                                            unoptimized
+                                            className="h-auto w-full"
+                                        />
+                                        <figcaption className="mt-2 text-sm leading-6 text-gray-600">
+                                            {section.figure.caption}
+                                        </figcaption>
+                                    </figure>
                                 ) : null}
                             </section>
                         ))}
