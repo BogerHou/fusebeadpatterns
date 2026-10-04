@@ -2,6 +2,7 @@ export type GuideSection = {
     heading: string;
     body: string[];
     bullets?: string[];
+    patternIds?: string[];
     links?: Array<{
         href: string;
         label: string;
@@ -182,6 +183,7 @@ export const guidePages: GuidePage[] = [
     },
     {
         slug: 'mini-perler-beads',
+        updatedAt: '2026-10-04',
         title: 'Mini Perler Beads Guide for Detailed Patterns',
         description:
             'Learn when mini Perler beads make sense, how they compare with midi beads, and how to plan detailed fuse bead patterns.',
@@ -189,6 +191,41 @@ export const guidePages: GuidePage[] = [
         intro:
             'Mini beads are useful when you want more detail in a smaller physical project. They do not change how the image is converted, but they do change the real-world scale of the finished pattern.',
         sections: [
+            {
+                heading: 'Six small Perler bead patterns to download',
+                body: [
+                    'Each of these designs fits within 16 × 16 bead positions. Choose a picture for its free printable PDF, color list, and Open in editor option.',
+                    'These are small designs in the library’s default Perler Midi colors. Mini refers to bead size, not the number of cells; use the steps below if you want to make them with mini beads.',
+                ],
+                patternIds: [
+                    'smb-super-star',
+                    'smb-small-mario',
+                    'kirby-adventure-normal',
+                    'sdv-junimo',
+                    'minecraft-diamond-sword-1-21-1',
+                    'sdv-blue-chicken',
+                ],
+            },
+            {
+                heading: 'Use a small chart with mini beads',
+                body: [
+                    'Use a mini pegboard that matches your beads. Work by row and column: one occupied chart square becomes one bead, and blank squares stay empty. You do not need to enlarge a small design to fill the board.',
+                    'Library PDFs are prepared for a midi grid. Use them as reference charts, not as full-size placement templates under a mini pegboard. Changing a color palette alone does not change the printed grid spacing.',
+                ],
+            },
+            {
+                heading: 'Match the chart to your mini bead colors',
+                body: [
+                    'Choose Open in editor on the pattern page, then Open pattern. If you already have a project open, use Save current project before choosing Replace current pattern.',
+                    'In Pattern Setup, or Setup on a phone, set Color Brand to Perler Mini, Hama Mini, or Artkal S Mini to match your beads. Leave Pegboard, Boards Wide, and Boards Tall unchanged to keep the existing digital layout, then choose Apply Changes. These grid settings do not determine which physical pegboard you own.',
+                    'Check the new colors and small details before exporting a new PDF. Several original colors may map to one color in your mini palette. Compare the exported color names and codes with your beads, and use the chart by row and column unless you have verified its physical spacing.',
+                    'Changing Pegboard is a separate operation that can rebuild the grid. Use a mini board preset when generating a new pattern that needs that board’s full grid.',
+                ],
+                links: [
+                    { href: '/guides/perler-to-hama-artkal', label: 'How palette conversion works' },
+                    { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
+                ],
+            },
             {
                 heading: 'Bead size does not change the image algorithm',
                 body: [

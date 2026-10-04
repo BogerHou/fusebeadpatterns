@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return [
         {
             url: 'https://fusebeadpatterns.art',
-            lastModified: lastContentUpdate,
+            lastModified: new Date('2026-10-04T00:00:00.000Z'),
             changeFrequency: 'weekly',
             priority: 1,
         },

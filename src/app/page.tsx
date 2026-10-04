@@ -107,19 +107,19 @@ export default function Home() {
                         <p className="hero-description">Upload a photo, preview the bead layout, adjust the size, then export a printable <strong>perler bead pattern</strong> or open the editor for cleanup. Everything runs in your browser.</p>
                         <div className="hero-actions">
                             <a href="#generator" className="button-primary">Make a pattern <span aria-hidden="true">↓</span></a>
-                            <Link href="/patterns" className="text-link">Find a pattern <span aria-hidden="true">↗</span></Link>
+                            <Link href="/patterns" className="text-link">Browse free printable patterns <span aria-hidden="true">↗</span></Link>
                         </div>
                         <p className="hero-note">Free to use <span aria-hidden="true">·</span> No account needed</p>
                     </div>
                     <PatternStudy />
                 </section>
 
+                <FeaturedPatterns />
+
                 <section id="generator" aria-label="Pattern generator" className="home-generator">
                     <div className="generator-label"><span className="eyebrow">Your workspace</span><span>Upload → Adjust → Make</span></div>
                     <Editor />
                 </section>
-
-                <FeaturedPatterns />
 
                 <section className="home-section" aria-labelledby="how-it-works">
                     <div className="section-intro"><p className="eyebrow">One bead at a time</p><h2 id="how-it-works" className="section-heading">How The Generator Works</h2></div>

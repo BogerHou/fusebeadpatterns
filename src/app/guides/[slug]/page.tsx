@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { getGuideBySlug, guidePages } from '../guide-data';
 import GuideHeader from '../GuideHeader';
+import GuidePatternGallery from '../GuidePatternGallery';
 
 type GuideRouteProps = {
     params: Promise<{
@@ -94,6 +95,9 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                                         <p key={paragraph}>{paragraph}</p>
                                     ))}
                                 </div>
+                                {section.patternIds ? (
+                                    <GuidePatternGallery patternIds={section.patternIds} />
+                                ) : null}
                                 {section.links ? (
                                     <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-base sm:text-lg">
                                         {section.links.map((link) => (
