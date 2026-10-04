@@ -26,18 +26,18 @@ export default function GuidesPage() {
     return (
         <>
             <GuideHeader />
-            <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-3 pb-10 sm:px-4 sm:pb-12">
+            <main id="main-content" tabIndex={-1} className="page-shell flex flex-1 flex-col pb-16 sm:pb-24">
                 <Breadcrumbs
                     items={[
                         { label: 'Home', href: '/' },
                         { label: 'Guides', href: '/guides' },
                     ]}
                 />
-                <div className="mb-7 sm:mb-10">
-                    <h1 className="inline-block border-2 border-brutal-black bg-brand-yellow px-3 py-2 font-vt323 text-3xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a] sm:border-4 sm:px-4 sm:py-3 sm:text-5xl sm:shadow-brutal">
+                <div className="mb-10 pt-4 sm:mb-14 sm:pt-8">
+                    <h1 className="page-heading">
                         Perler Bead Guides
                     </h1>
-                    <p className="mt-4 max-w-3xl text-base font-medium sm:mt-5 sm:text-xl">
+                    <p className="mt-5 max-w-[62ch] text-base leading-8 text-[#59685d] sm:text-lg">
                         Planning notes for photo conversion, pegboard sizing,
                         mini beads, beginner kits, and storage. Use these
                         guides when a pattern needs more planning than the
@@ -45,20 +45,20 @@ export default function GuidesPage() {
                     </p>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="grid gap-x-12 md:grid-cols-2">
                     {guidePages.map((guide) => (
                         <Link
                             key={guide.slug}
                             href={`/guides/${guide.slug}`}
-                            className="group border-2 border-brutal-black bg-white p-4 shadow-[2px_2px_0_0_#1a1a1a] transition-transform hover:-translate-y-1 hover:bg-brand-cyan sm:border-4 sm:p-5 sm:shadow-brutal"
+                            className="group border-t border-[#d9ded5] py-7 transition-colors hover:border-[#28614e] sm:py-9"
                         >
-                            <div className="mb-3 inline-block border-2 border-brutal-black bg-brand-yellow px-2 py-1 text-xs font-bold uppercase tracking-[0.12em]">
+                            <div className="eyebrow mb-4">
                                 {guide.eyebrow}
                             </div>
-                            <h2 className="font-vt323 text-2xl uppercase leading-none sm:text-4xl">
+                            <h2 className="font-display text-2xl font-semibold leading-tight tracking-[-0.035em] text-[#243e36] transition-colors group-hover:text-[#28614e] sm:text-3xl">
                                 {guide.title}
                             </h2>
-                            <p className="mt-3 text-base font-medium text-gray-700 group-hover:text-black">
+                            <p className="mt-4 max-w-[55ch] text-base leading-7 text-[#59685d]">
                                 {guide.description}
                             </p>
                         </Link>

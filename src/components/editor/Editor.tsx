@@ -24,6 +24,8 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { EditorDialog } from './EditorDialog';
 import { EditorSection } from './EditorSection';
+import { useDialogFocus } from './useDialogFocus';
+import './editor-studio.css';
 
 import {
     BOARD_OPTIONS,
@@ -455,9 +457,9 @@ function LibraryPatternEntry({
         <section
             aria-label="Open library pattern"
             data-testid="library-pattern-entry"
-            className="shrink-0 border-2 border-brutal-black bg-brand-yellow px-3 py-3 text-sm text-brutal-black sm:px-4"
+            className="shrink-0 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-3 text-sm text-brutal-black sm:px-4"
         >
-            <p className="font-bold">
+            <p className="font-semibold">
                 {project ? `Open ${project.title}?` : 'This pattern is not in the library.'}
             </p>
             <p className="mt-1">
@@ -467,7 +469,7 @@ function LibraryPatternEntry({
                         : 'Open this ready-made pattern to edit its beads and colors.'
                     : 'Your current project has not changed. You can continue editing or choose another pattern.'}
             </p>
-            {error && <p role="alert" className="mt-2 font-bold">{error}</p>}
+            {error && <p role="alert" className="mt-2 font-semibold">{error}</p>}
             <div className="mt-2 flex flex-wrap gap-2">
                 {project && (
                     <button
@@ -475,7 +477,7 @@ function LibraryPatternEntry({
                         data-testid="open-library-pattern"
                         onClick={() => void openPattern()}
                         disabled={loading || busy}
-                        className="border-2 border-brutal-black bg-brutal-black px-3 py-2 font-bold text-white disabled:opacity-50"
+                        className="rounded-lg border border-[#d9ded5] bg-brutal-black px-3 py-2 font-semibold text-white disabled:opacity-50"
                     >
                         {loading ? 'Opening pattern...' : hasCurrentPattern ? 'Replace current pattern' : 'Open pattern'}
                     </button>
@@ -485,7 +487,7 @@ function LibraryPatternEntry({
                         type="button"
                         onClick={onSave}
                         disabled={!canSaveCurrentPattern || loading || busy}
-                        className="border-2 border-brutal-black bg-white px-3 py-2 font-bold disabled:opacity-50"
+                        className="rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold disabled:opacity-50"
                     >
                         Save current project
                     </button>
@@ -494,11 +496,11 @@ function LibraryPatternEntry({
                     type="button"
                     data-testid="dismiss-library-pattern"
                     onClick={dismiss}
-                    className="border-2 border-brutal-black bg-white px-3 py-2 font-bold"
+                    className="rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold"
                 >
                     {hasCurrentPattern ? 'Keep current pattern' : 'Continue without opening'}
                 </button>
-                {!project && <Link href="/patterns" className="px-2 py-2 font-bold underline">Browse patterns</Link>}
+                {!project && <Link href="/patterns" className="px-2 py-2 font-semibold underline">Browse patterns</Link>}
             </div>
         </section>
     );
@@ -580,6 +582,15 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [blankPatternRevision, setBlankPatternRevision] = useState(0);
     const [historyRevision, setHistoryRevision] = useState(0);
     const [manualPatternRevision, setManualPatternRevision] = useState(0);
+
+    const mobileColorButtonRef = useRef<HTMLButtonElement>(null);
+    const colorPickerDialogRef = useDialogFocus(isColorPickerOpen, () => {
+        setColorPickerQuery('');
+        setIsColorPickerOpen(false);
+    }, mobileColorButtonRef);
+    const exportDialogRef = useDialogFocus(isExportDialogOpen, () => {
+        setIsExportDialogOpen(false);
+    });
 
     const editorRootRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -2926,24 +2937,24 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             ref={editorRootRef}
             className={
                 isEditorPage
-                    ? 'flex h-[100svh] w-full flex-col overflow-hidden bg-brutal-bg'
-                    : 'w-full space-y-6'
+                    ? 'editor-studio editor-workspace flex h-[100svh] w-full flex-col overflow-hidden bg-brutal-bg'
+                    : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
             {isEditorPage && !isEditorDraftReady ? (
-                <div className="flex h-full min-h-[100svh] items-center justify-center border-2 border-brutal-black bg-brutal-bg font-vt323 text-2xl uppercase tracking-[0.08em] text-brutal-black sm:border-4 sm:text-3xl">
+                <div className="flex h-full min-h-[100svh] items-center justify-center rounded-lg border border-[#d9ded5] bg-brutal-bg font-sans text-lg text-brutal-black sm:border sm:text-xl">
                     Loading Editor...
                 </div>
             ) : null}
 
             {errorMessage && (
-                <div className="border-2 border-brutal-black bg-brand-magenta px-3 py-2 text-sm font-bold text-white shadow-[2px_2px_0_0_#1a1a1a] sm:border-4 sm:px-4 sm:py-3 sm:text-base sm:shadow-brutal">
+                <div className="rounded-lg border border-[#d9ded5] bg-brand-magenta px-3 py-2 text-sm font-semibold text-white shadow-sm sm:border sm:px-4 sm:py-3 sm:text-base sm:shadow-brutal">
                     {errorMessage}
                 </div>
             )}
 
             {draftWarning && (
-                <div role="status" className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-sm font-bold text-brutal-black">
+                <div role="status" className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-sm font-semibold text-brutal-black">
                     {draftWarning}
                 </div>
             )}
@@ -2967,26 +2978,26 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isEditorPage ? (
                 isEditorDraftReady ? (
-                <div inert={isLibraryPatternLoading} className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden border-2 border-brutal-black bg-brutal-bg text-brutal-black sm:border-4 sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
-                    <div className="col-span-full min-w-0 border-b-2 border-brutal-black bg-white sm:border-b-4">
+                <div inert={isLibraryPatternLoading} className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden rounded-lg border border-[#d9ded5] bg-brutal-bg text-brutal-black sm:border sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
+                    <div className="col-span-full min-w-0 border-b border-[#d9ded5] bg-white sm:border-b">
                         <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[232px_minmax(0,1fr)_312px]">
                         <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3 xl:col-span-2">
                             <Link
                                 href="/"
                                 aria-label="Back to generator"
-                                className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-brutal-black bg-brand-cyan font-vt323 text-3xl leading-none text-brutal-black hover:bg-brand-yellow sm:h-9 sm:w-9"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-brand-cyan font-sans text-xl leading-none text-brutal-black hover:bg-brand-yellow sm:h-9 sm:w-9"
                                 title="Back to generator"
                             >
                                 &lt;
                             </Link>
-                            <h1 className="truncate font-vt323 text-2xl uppercase leading-none sm:text-3xl">
+                            <h1 className="truncate font-sans text-lg font-semibold leading-none sm:text-xl">
                                 Editor
                             </h1>
                         </div>
-                        <div className="flex h-full shrink-0 items-center xl:col-start-3 xl:min-w-0 xl:justify-end xl:border-l-4 xl:border-brutal-black">
+                        <div className="flex h-full shrink-0 items-center xl:col-start-3 xl:min-w-0 xl:justify-end xl:border-l xl:border-[#d9ded5]">
                             {hasEditablePattern ? (
                                 <>
-                                    <div className="hidden h-full items-center gap-1 border-l-2 border-brutal-black/20 px-2 md:flex">
+                                    <div className="hidden h-full items-center gap-1 border-l border-brutal-black/20 px-2 md:flex">
                                         <button
                                             type="button"
                                             onClick={() =>
@@ -2995,7 +3006,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
-                                            className="flex h-7 min-w-7 items-center justify-center border-2 border-brutal-black bg-white px-2 text-sm font-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
+                                            className="flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 text-sm font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
                                             aria-label="Zoom out"
                                         >
                                             -
@@ -3003,7 +3014,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         <button
                                             type="button"
                                             onClick={() => setClampedPreviewZoom(1)}
-                                            className="h-7 min-w-12 border-2 border-brutal-black bg-white px-2 text-[11px] font-black hover:bg-brand-yellow"
+                                            className="h-7 min-w-12 rounded-lg border border-[#d9ded5] bg-white px-2 text-[11px] font-semibold hover:bg-brand-yellow"
                                             aria-label="Reset zoom"
                                         >
                                             {Math.round(previewZoom * 100)}%
@@ -3016,7 +3027,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
-                                            className="flex h-7 min-w-7 items-center justify-center border-2 border-brutal-black bg-white px-2 text-sm font-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
+                                            className="flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 text-sm font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
                                             aria-label="Zoom in"
                                         >
                                             +
@@ -3026,7 +3037,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         type="button"
                                         onClick={handleUndoPatternEdit}
                                         disabled={!canUndoPattern}
-                                        className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
+                                        className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                                     >
                                         Undo
                                     </button>
@@ -3034,7 +3045,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         type="button"
                                         onClick={handleRedoPatternEdit}
                                         disabled={!canRedoPattern}
-                                        className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
+                                        className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                                     >
                                         Redo
                                     </button>
@@ -3043,7 +3054,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <button
                                 type="button"
                                 onClick={handleOpenProjectPicker}
-                                className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-cyan sm:block"
+                                className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-cyan sm:block"
                             >
                                 Open
                             </button>
@@ -3056,7 +3067,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         ? 'Save project JSON'
                                         : 'Create or open a pattern before saving'
                                 }
-                                className="hidden h-full border-l-2 border-brutal-black/20 bg-white px-3 text-xs font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
+                                className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                             >
                                 Save
                             </button>
@@ -3069,13 +3080,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         ? 'Export pattern'
                                         : 'Create or import a pattern before exporting'
                                 }
-                                className="h-full border-l-2 border-brutal-black bg-brand-purple px-3 text-[11px] font-black uppercase tracking-[0.1em] text-brutal-black hover:bg-brand-yellow disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:border-l-4 sm:px-4 sm:text-xs"
+                                className="h-full border-l border-[#28614e] bg-[#28614e] px-3 text-[11px] font-semibold text-white transition-colors hover:bg-[#214f40] disabled:cursor-not-allowed disabled:border-[#d9ded5] disabled:bg-gray-200 disabled:text-gray-500 sm:px-4 sm:text-xs"
                             >
                                 Export
                             </button>
                         </div>
                         </div>
-                        <div className="grid h-11 grid-cols-4 border-t-2 border-brutal-black/15 text-[10px] font-black uppercase tracking-[0.08em] xl:hidden">
+                        <div className="grid h-11 grid-cols-4 border-t border-brutal-black/15 text-[10px] font-semibold xl:hidden">
                             {[
                                 {
                                     id: 'file' as const,
@@ -3109,7 +3120,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             toggleEditorMobilePanel(item.id)
                                         }
                                         aria-expanded={isActive}
-                                        className={`flex min-w-0 items-center justify-center gap-1 border-l-2 border-brutal-black/15 first:border-l-0 ${
+                                        className={`flex min-w-0 items-center justify-center gap-1 border-l border-brutal-black/15 first:border-l-0 ${
                                             isActive
                                                 ? 'bg-brand-yellow text-brutal-black'
                                                 : 'bg-white text-brutal-black/75 hover:bg-brand-cyan'
@@ -3134,10 +3145,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
                     </div>
 
-                    <aside className="hidden min-h-0 overflow-y-auto border-r-4 border-brutal-black bg-white xl:block">
+                    <aside className="hidden min-h-0 overflow-y-auto border-r border-[#d9ded5] bg-white xl:block">
                         <div className="space-y-5 p-3">
                             <div>
-                                <div className="mb-2 inline-flex border-2 border-brutal-black bg-brand-yellow px-2 py-0.5 font-vt323 text-xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a]">
+                                <div className="mb-2 block text-xs font-semibold leading-5 text-[#627168]">
                                     Tools
                                 </div>
                                 <div className="grid grid-cols-5 gap-2">
@@ -3153,10 +3164,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             onClick={() =>
                                                 setActiveEditorTool(tool.id)
                                             }
-                                            className={`flex h-9 w-9 items-center justify-center justify-self-center border-2 transition-colors ${
+                                            className={`flex h-9 w-9 items-center justify-center justify-self-center rounded-lg border transition-colors ${
                                                 activeEditorTool === tool.id
-                                                    ? 'border-brutal-black bg-brand-yellow text-brutal-black shadow-[2px_2px_0_0_#1a1a1a]'
-                                                    : 'border-brutal-black/15 bg-white text-gray-500 hover:border-brutal-black hover:bg-brand-cyan hover:text-brutal-black'
+                                                    ? 'border-[#d9ded5] bg-brand-yellow text-brutal-black shadow-sm'
+                                                    : 'border-brutal-black/15 bg-white text-gray-500 hover:border-[#d9ded5] hover:bg-brand-cyan hover:text-brutal-black'
                                             }`}
                                         >
                                             <tool.icon
@@ -3169,28 +3180,28 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </div>
 
                             <div>
-                                <div className="mb-2 inline-flex border-2 border-brutal-black bg-brand-cyan px-2 py-0.5 font-vt323 text-xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a]">
+                                <div className="mb-2 block text-xs font-semibold leading-5 text-[#627168]">
                                     Bead Color
                                 </div>
                                 {activeEditorColorEntry && (
                                     <button
                                         type="button"
                                         onClick={openColorPicker}
-                                        className="mb-3 block w-full border-2 border-brutal-black bg-brutal-bg p-2 text-left shadow-[2px_2px_0_0_#1a1a1a] transition-colors hover:bg-brand-yellow"
+                                        className="mb-3 block w-full rounded-lg border border-[#d9ded5] bg-brutal-bg p-2 text-left shadow-sm transition-colors hover:bg-brand-yellow"
                                         title="Select bead color"
                                     >
                                         <div className="flex items-center gap-3">
                                             <span
-                                                className="h-9 w-9 shrink-0 rounded-full border-2 border-brutal-black"
+                                                className="h-9 w-9 shrink-0 rounded-full border border-[#d9ded5]"
                                                 style={{
                                                     backgroundColor: `rgb(${activeEditorColorEntry.color.r} ${activeEditorColorEntry.color.g} ${activeEditorColorEntry.color.b})`,
                                                 }}
                                             />
                                             <span className="min-w-0 flex-1">
-                                                <span className="block break-words text-[13px] font-bold leading-4 text-brutal-black">
+                                                <span className="block break-words text-[13px] font-semibold leading-4 text-brutal-black">
                                                     {activeEditorColorEntry.name}
                                                 </span>
-                                                <span className="mt-0.5 block text-[11px] font-semibold uppercase leading-4 text-brutal-black/60">
+                                                <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-brutal-black/60">
                                                     {activeEditorColorEntry.ref}
                                                 </span>
                                             </span>
@@ -3199,7 +3210,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 )}
 
                                 <div className="mb-2">
-                                    <div className="text-[10px] font-black uppercase tracking-[0.16em] text-brutal-black/65">
+                                    <div className="text-[10px] font-semibold text-brutal-black/65">
                                         Quick Colors
                                     </div>
                                 </div>
@@ -3219,14 +3230,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         setManualEditorColorRef(ref);
                                                         setActiveEditorTool('bead');
                                                     }}
-                                                    className={`flex min-h-11 items-center gap-3 border-2 px-2.5 py-2 text-left transition-colors ${
+                                                    className={`flex min-h-11 items-center gap-3 rounded-lg border px-2.5 py-2 text-left transition-colors ${
                                                         activeEditorColorRef === ref
-                                                            ? 'border-brutal-black bg-brand-cyan shadow-[2px_2px_0_0_#1a1a1a]'
-                                                            : 'border-brutal-black/15 bg-white hover:border-brutal-black hover:bg-brand-yellow'
+                                                            ? 'border-[#d9ded5] bg-brand-cyan shadow-sm'
+                                                            : 'border-brutal-black/15 bg-white hover:border-[#d9ded5] hover:bg-brand-yellow'
                                                     }`}
                                                 >
                                                     <span
-                                                        className="h-5 w-5 shrink-0 rounded-full border-2 border-brutal-black"
+                                                        className="h-5 w-5 shrink-0 rounded-full border border-[#d9ded5]"
                                                         style={{
                                                             backgroundColor: entry
                                                                 ? `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`
@@ -3234,10 +3245,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         }}
                                                     />
                                                     <span className="min-w-0 flex-1">
-                                                        <span className="block whitespace-normal text-[13px] font-bold leading-4 text-brutal-black">
+                                                        <span className="block whitespace-normal text-[13px] font-semibold leading-4 text-brutal-black">
                                                             {entry?.name ?? ref}
                                                         </span>
-                                                        <span className="mt-0.5 block text-[11px] font-semibold uppercase leading-4 text-brutal-black/55">
+                                                        <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-brutal-black/55">
                                                             {entry?.ref ?? ref}
                                                         </span>
                                                     </span>
@@ -3245,7 +3256,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             )
                                         )
                                     ) : (
-                                        <div className="border-2 border-dashed border-brutal-black/25 bg-brutal-bg p-2 text-[10px] font-black uppercase tracking-[0.12em] text-brutal-black/45">
+                                        <div className="rounded-lg border border-dashed border-brutal-black/25 bg-brutal-bg p-2 text-[10px] font-semibold text-brutal-black/45">
                                             No colors yet
                                         </div>
                                     )}
@@ -3257,9 +3268,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     <main className="relative min-h-0 overflow-hidden bg-brutal-bg xl:col-start-2">
                         {processing && (
                             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-                                <span className="max-w-[280px] animate-pulse border-4 border-brutal-black bg-brand-yellow p-4 text-center font-vt323 text-3xl leading-none text-black shadow-brutal">
+                                <span className="max-w-[280px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-4 text-center font-sans text-xl leading-none text-black shadow-brutal">
                                     <span className="block">PROCESSING...</span>
-                                    <span className="mt-2 block font-sans text-[11px] font-black uppercase leading-4 tracking-[0.08em]">
+                                    <span className="mt-2 block font-sans text-[11px] font-semibold leading-4">
                                         {processingHint}
                                     </span>
                                 </span>
@@ -3293,13 +3304,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             (_, index) => (
                                                 <span
                                                     key={index}
-                                                    className="border-2 border-dashed border-brutal-black/35 bg-white"
+                                                    className="rounded-lg border border-dashed border-brutal-black/35 bg-white"
                                                 />
                                             )
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <p className="text-xs font-black uppercase tracking-[0.2em] text-brutal-black/65">
+                                        <p className="text-xs font-semibold text-brutal-black/65">
                                             Choose a start point
                                         </p>
                                         <div className="flex flex-wrap justify-center gap-2">
@@ -3307,21 +3318,21 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 htmlFor={
                                                     EDITOR_EMPTY_UPLOAD_INPUT_ID
                                                 }
-                                                className="flex min-h-11 cursor-pointer items-center justify-center border-2 border-brutal-black bg-brand-yellow px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-white sm:border-4 sm:px-4 sm:shadow-brutal-sm"
+                                                className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[#d9ded5] bg-brand-yellow px-4 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-white sm:border sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Convert Image
                                             </label>
                                             <button
                                                 type="button"
                                                 onClick={handleCreateBlankPattern}
-                                                className="min-h-11 border-2 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan sm:border-4 sm:px-4 sm:shadow-brutal-sm"
+                                                className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-4 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-brand-cyan sm:border sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Blank Pattern
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={handleOpenProjectPicker}
-                                                className="min-h-11 border-2 border-brutal-black bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-purple sm:border-4 sm:px-4 sm:shadow-brutal-sm"
+                                                className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-4 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-brand-purple sm:border sm:px-4 sm:shadow-brutal-sm"
                                             >
                                                 Open Project
                                             </button>
@@ -3459,9 +3470,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     </main>
 
                     {editorMobilePanel && (
-                        <div className="absolute inset-x-2 top-[100px] z-30 max-h-[calc(100svh-174px)] overflow-y-auto border-2 border-brutal-black bg-white p-3 shadow-[2px_2px_0_0_#1a1a1a] sm:top-[102px] sm:max-h-[calc(100svh-184px)] sm:border-4 sm:shadow-brutal xl:hidden">
+                        <div className="absolute inset-x-2 top-[100px] z-30 max-h-[calc(100svh-174px)] overflow-y-auto rounded-lg border border-[#d9ded5] bg-white p-3 shadow-sm sm:top-[102px] sm:max-h-[calc(100svh-184px)] sm:border sm:shadow-brutal xl:hidden">
                             <div className="mb-3 flex items-center justify-between gap-3">
-                                <div className="font-vt323 text-2xl uppercase leading-none">
+                                <div className="font-sans text-lg leading-none">
                                     {editorMobilePanel === 'file'
                                         ? 'File'
                                         : editorMobilePanel === 'edit'
@@ -3473,7 +3484,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <button
                                     type="button"
                                     onClick={() => setEditorMobilePanel(null)}
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none hover:bg-brand-yellow"
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none hover:bg-brand-yellow"
                                     aria-label="Close mobile editor panel"
                                 >
                                     ×
@@ -3487,7 +3498,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             handleOpenEditorImagePicker();
                                             setEditorMobilePanel(null);
                                         }}
-                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a]"
+                                        className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-[11px] font-semibold shadow-sm"
                                     >
                                         <ImageIcon className="h-4 w-4" />
                                         Convert Image
@@ -3498,7 +3509,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             handleCreateBlankPattern();
                                             setEditorMobilePanel(null);
                                         }}
-                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                        className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                     >
                                         Blank Pattern
                                     </button>
@@ -3508,7 +3519,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             handleOpenProjectPicker();
                                             setEditorMobilePanel(null);
                                         }}
-                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                        className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                     >
                                         <FileText className="h-4 w-4" />
                                         Open Project
@@ -3520,7 +3531,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             setEditorMobilePanel(null);
                                         }}
                                         disabled={!canSaveProject}
-                                        className="flex min-h-12 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                        className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         <Save className="h-4 w-4" />
                                         Save Project
@@ -3532,7 +3543,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             setEditorMobilePanel(null);
                                         }}
                                         disabled={!canExportPattern}
-                                        className="col-span-2 flex min-h-12 items-center justify-center border-2 border-brutal-black bg-brand-purple px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
+                                        className="col-span-2 flex min-h-12 items-center justify-center rounded-lg border border-[#d9ded5] bg-brand-purple px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
                                     >
                                         Export Pattern
                                     </button>
@@ -3554,10 +3565,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     setActiveEditorTool(tool.id);
                                                     setEditorMobilePanel(null);
                                                 }}
-                                                className={`flex min-h-14 flex-col items-center justify-center gap-1 border-2 text-[10px] font-black uppercase tracking-[0.06em] ${
+                                                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg border text-[10px] font-semibold ${
                                                     activeEditorTool === tool.id
-                                                        ? 'border-brutal-black bg-brand-yellow shadow-[2px_2px_0_0_#1a1a1a]'
-                                                        : 'border-brutal-black/25 bg-white text-brutal-black/70 hover:border-brutal-black hover:bg-brand-cyan'
+                                                        ? 'border-[#d9ded5] bg-brand-yellow shadow-sm'
+                                                        : 'border-brutal-black/25 bg-white text-brutal-black/70 hover:border-[#d9ded5] hover:bg-brand-cyan'
                                                 }`}
                                             >
                                                 <tool.icon
@@ -3573,7 +3584,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             type="button"
                                             onClick={handleUndoPatternEdit}
                                             disabled={!canUndoPattern}
-                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Undo
                                         </button>
@@ -3581,7 +3592,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             type="button"
                                             onClick={handleRedoPatternEdit}
                                             disabled={!canRedoPattern}
-                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Redo
                                         </button>
@@ -3596,7 +3607,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 !hasEditablePattern ||
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
-                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Zoom -
                                         </button>
@@ -3611,7 +3622,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 !hasEditablePattern ||
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
-                                            className="min-h-11 border-2 border-brutal-black bg-white px-2 py-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                            className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
                                             Zoom +
                                         </button>
@@ -3627,10 +3638,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         disabled={enabledColorCount === 0}
                                         aria-label="Select bead color"
                                         title="Select bead color"
-                                        className="flex w-full items-center gap-3 border-2 border-brutal-black bg-brutal-bg p-3 text-left shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                        className="flex w-full items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg p-3 text-left shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         <span
-                                            className="h-8 w-8 shrink-0 rounded-full border-2 border-brutal-black"
+                                            className="h-8 w-8 shrink-0 rounded-full border border-[#d9ded5]"
                                             style={{
                                                 backgroundColor:
                                                     activeEditorColorEntry
@@ -3639,10 +3650,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             }}
                                         />
                                         <span className="min-w-0">
-                                            <span className="block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/60">
+                                            <span className="block text-[11px] font-semibold text-brutal-black/60">
                                                 Active Color
                                             </span>
-                                            <span className="block truncate text-sm font-bold">
+                                            <span className="block truncate text-sm font-semibold">
                                                 {activeEditorColorEntry?.name ??
                                                     'Choose a color'}
                                             </span>
@@ -3667,15 +3678,15 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 null
                                                             );
                                                         }}
-                                                        className={`flex min-h-10 items-center gap-2 border-2 px-2 py-1.5 text-left ${
+                                                        className={`flex min-h-10 items-center gap-2 rounded-lg border px-2 py-1.5 text-left ${
                                                             activeEditorColorRef ===
                                                             ref
-                                                                ? 'border-brutal-black bg-brand-cyan shadow-[2px_2px_0_0_#1a1a1a]'
-                                                                : 'border-brutal-black/20 bg-white hover:border-brutal-black hover:bg-brand-yellow'
+                                                                ? 'border-[#d9ded5] bg-brand-cyan shadow-sm'
+                                                                : 'border-brutal-black/20 bg-white hover:border-[#d9ded5] hover:bg-brand-yellow'
                                                         }`}
                                                     >
                                                         <span
-                                                            className="h-4 w-4 shrink-0 rounded-full border-2 border-brutal-black"
+                                                            className="h-4 w-4 shrink-0 rounded-full border border-[#d9ded5]"
                                                             style={{
                                                                 backgroundColor:
                                                                     entry
@@ -3683,7 +3694,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                         : '#d1d5db',
                                                             }}
                                                         />
-                                                        <span className="truncate text-[11px] font-bold">
+                                                        <span className="truncate text-[11px] font-semibold">
                                                             {entry?.ref ?? ref}
                                                         </span>
                                                     </button>
@@ -3696,7 +3707,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             setIsPaletteManagerOpen(true);
                                             setEditorMobilePanel(null);
                                         }}
-                                        className="min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                        className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                     >
                                         Manage Palettes
                                     </button>
@@ -3707,7 +3718,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div>
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Color Brand
                                             </span>
                                             <select
@@ -3717,7 +3728,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.value
                                                     )
                                                 }
-                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             >
                                                 {PALETTE_OPTIONS.map(
                                                     (option) => (
@@ -3732,7 +3743,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             </select>
                                         </label>
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Pegboard
                                             </span>
                                             <select
@@ -3743,7 +3754,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             .value as BoardOptionId
                                                     )
                                                 }
-                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             >
                                                 {BOARD_OPTIONS.map((option) => (
                                                     <option
@@ -3756,7 +3767,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             </select>
                                         </label>
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Boards Wide
                                             </span>
                                             <input
@@ -3771,11 +3782,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         )
                                                     )
                                                 }
-                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             />
                                         </label>
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Boards Tall
                                             </span>
                                             <input
@@ -3790,13 +3801,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         )
                                                     )
                                                 }
-                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             />
                                         </label>
                                     </div>
                                     {imageSrc ? (
-                                        <div className="mt-3 space-y-3 border-t-2 border-brutal-black/10 pt-3">
-                                            <label className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black">
+                                        <div className="mt-3 space-y-3 border-t border-brutal-black/10 pt-3">
+                                            <label className="flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black">
                                                 <span>Show Reference</span>
                                                 <input
                                                     type="checkbox"
@@ -3806,11 +3817,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             event.target.checked
                                                         )
                                                     }
-                                                    className="h-4 w-4 accent-black"
+                                                    className="h-4 w-4 accent-[#28614e]"
                                                 />
                                             </label>
                                             <label className="block">
-                                                <span className="mb-1 flex items-center justify-between text-xs font-bold uppercase tracking-[0.08em] text-brutal-black">
+                                                <span className="mb-1 flex items-center justify-between text-xs font-semibold text-brutal-black">
                                                     <span>Source Opacity</span>
                                                     <span>
                                                         {referenceOpacity}%
@@ -3834,20 +3845,20 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             )
                                                         )
                                                     }
-                                                    className="w-full accent-black disabled:opacity-40"
+                                                    className="w-full accent-[#28614e] disabled:opacity-40"
                                                 />
                                             </label>
                                         </div>
                                     ) : null}
                                     {hasPendingPatternSettings ? (
-                                        <div className="mt-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                        <div className="mt-3 rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold text-brutal-black/70">
                                             {pendingPaletteLabel} ·{' '}
                                             {pendingPatternSize} ·{' '}
                                             {pendingBoardCountStatus}
                                         </div>
                                     ) : null}
                                     {pendingLargePatternWarning ? (
-                                        <div className="mt-3 border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                        <div className="mt-3 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-[11px] font-semibold leading-4 text-brutal-black">
                                             {pendingLargePatternWarning}
                                         </div>
                                     ) : null}
@@ -3860,7 +3871,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             !hasPendingPatternSettings ||
                                             processing
                                         }
-                                        className="mt-3 min-h-11 w-full border-2 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+                                        className="mt-3 min-h-11 w-full rounded-lg border border-[#d9ded5] bg-brand-purple px-3 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         Apply Changes
                                     </button>
@@ -3869,7 +3880,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
                     )}
 
-                    <div className="absolute inset-x-0 bottom-0 z-30 border-t-2 border-brutal-black bg-white p-1.5 shadow-[0_-2px_0_0_#1a1a1a] sm:border-t-4 sm:p-2 sm:shadow-[0_-3px_0_0_#1a1a1a] xl:hidden">
+                    <div className="absolute inset-x-0 bottom-0 z-30 border-t border-[#d9ded5] bg-white p-1.5 shadow-sm sm:border-t sm:p-2 sm:shadow-lg xl:hidden">
                         <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] sm:gap-1.5 [&::-webkit-scrollbar]:hidden">
                             {EDITOR_TOOLS.map((tool) => (
                                 <button
@@ -3882,10 +3893,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         setActiveEditorTool(tool.id);
                                         setEditorMobilePanel(null);
                                     }}
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 transition-colors ${
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors ${
                                         activeEditorTool === tool.id
-                                            ? 'border-brutal-black bg-brand-yellow text-brutal-black shadow-[2px_2px_0_0_#1a1a1a]'
-                                            : 'border-brutal-black/25 bg-white text-gray-600 hover:border-brutal-black hover:bg-brand-cyan hover:text-brutal-black'
+                                            ? 'border-[#d9ded5] bg-brand-yellow text-brutal-black shadow-sm'
+                                            : 'border-brutal-black/25 bg-white text-gray-600 hover:border-[#d9ded5] hover:bg-brand-cyan hover:text-brutal-black'
                                     }`}
                                 >
                                     <tool.icon
@@ -3895,15 +3906,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </button>
                             ))}
                             <button
+                                ref={mobileColorButtonRef}
                                 type="button"
                                 onClick={openColorPicker}
                                 disabled={enabledColorCount === 0}
                                 aria-label="Select bead color"
                                 title="Select bead color"
-                                className="flex h-10 min-w-[82px] shrink-0 items-center justify-center gap-2 border-2 border-brutal-black bg-white px-2 text-[11px] font-black uppercase tracking-[0.08em] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
+                                className="flex h-10 min-w-[82px] shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                             >
                                 <span
-                                    className="h-4 w-4 shrink-0 rounded-full border-2 border-brutal-black"
+                                    className="h-4 w-4 shrink-0 rounded-full border border-[#d9ded5]"
                                     style={{
                                         backgroundColor: activeEditorColorEntry
                                             ? `rgb(${activeEditorColorEntry.color.r} ${activeEditorColorEntry.color.g} ${activeEditorColorEntry.color.b})`
@@ -3915,9 +3927,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
                     </div>
 
-                    <aside className="hidden min-h-0 overflow-y-auto border-l-4 border-brutal-black bg-white xl:col-start-3 xl:block">
-                        <div className="border-b-4 border-brutal-black p-4">
-                            <div className="mb-3 inline-flex border-2 border-brutal-black bg-brand-yellow px-2 py-0.5 font-vt323 text-xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a]">
+                    <aside className="hidden min-h-0 overflow-y-auto border-l border-[#d9ded5] bg-white xl:col-start-3 xl:block">
+                        <div className="border-b border-[#d9ded5] p-4">
+                            <div className="mb-3 block text-xs font-semibold leading-5 text-[#627168]">
                                 Project
                             </div>
                             <dl className="space-y-2 text-sm font-semibold">
@@ -3925,7 +3937,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <dt className="text-brutal-black/60">
                                         Pattern Size
                                     </dt>
-                                    <dd className="text-right font-black">
+                                    <dd className="text-right font-semibold">
                                         {patternSize}
                                     </dd>
                                 </div>
@@ -3933,13 +3945,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <dt className="text-brutal-black/60">
                                         Total Beads
                                     </dt>
-                                    <dd className="text-right font-black">
+                                    <dd className="text-right font-semibold">
                                         {totalBeads}
                                     </dd>
                                 </div>
                                 <div className="flex justify-between gap-3">
                                     <dt className="text-brutal-black/60">Colors</dt>
-                                    <dd className="text-right font-black">
+                                    <dd className="text-right font-semibold">
                                         {colorsUsed}
                                     </dd>
                                 </div>
@@ -3947,13 +3959,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
 
                         {imageSrc && (
-                            <div className="border-b-4 border-brutal-black p-4">
-                                <div className="mb-3 inline-flex border-2 border-brutal-black bg-brand-cyan px-2 py-0.5 font-vt323 text-xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a]">
+                            <div className="border-b border-[#d9ded5] p-4">
+                                <div className="mb-3 block text-xs font-semibold leading-5 text-[#627168]">
                                     Source Image
                                 </div>
                                 <label
                                     htmlFor={IMAGE_UPLOAD_INPUT_ID}
-                                    className="group relative block h-24 cursor-pointer overflow-hidden border-2 border-brutal-black bg-brutal-bg"
+                                    className="group relative block h-24 cursor-pointer overflow-hidden rounded-lg border border-[#d9ded5] bg-brutal-bg"
                                     title="Change source image"
                                 >
                                     <NextImage
@@ -3968,7 +3980,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 : 0.28,
                                         }}
                                     />
-                                    <span className="absolute inset-x-0 bottom-0 translate-y-full bg-brutal-black px-2 py-1 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-white transition-transform group-hover:translate-y-0 group-focus-within:translate-y-0">
+                                    <span className="absolute inset-x-0 bottom-0 translate-y-full bg-brutal-black px-2 py-1 text-center text-[10px] font-semibold text-white transition-transform group-hover:translate-y-0 group-focus-within:translate-y-0">
                                         Change Source
                                     </span>
                                     <input
@@ -3984,7 +3996,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div className="mt-3 space-y-3">
                                     <label
                                         htmlFor={EDITOR_SOURCE_VISIBLE_ID}
-                                        className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black"
+                                        className="flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black"
                                     >
                                         <span>Show Source</span>
                                         <input
@@ -3997,14 +4009,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     event.target.checked
                                                 )
                                             }
-                                            className="h-4 w-4 accent-black"
+                                            className="h-4 w-4 accent-[#28614e]"
                                         />
                                     </label>
                                     <label
                                         htmlFor={EDITOR_SOURCE_OPACITY_ID}
                                         className="block"
                                     >
-                                        <span className="mb-1 flex items-center justify-between text-xs font-bold uppercase tracking-[0.08em] text-brutal-black">
+                                        <span className="mb-1 flex items-center justify-between text-xs font-semibold text-brutal-black">
                                             <span>Source Opacity</span>
                                             <span>{referenceOpacity}%</span>
                                         </span>
@@ -4027,7 +4039,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     )
                                                 )
                                             }
-                                            className="w-full accent-black disabled:opacity-40"
+                                            className="w-full accent-[#28614e] disabled:opacity-40"
                                         />
                                     </label>
                                 </div>
@@ -4035,11 +4047,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         )}
 
                         <div className="space-y-4 p-4">
-                            <div className="inline-flex border-2 border-brutal-black bg-brand-yellow px-2 py-0.5 font-vt323 text-xl uppercase leading-none shadow-[2px_2px_0_0_#1a1a1a]">
+                            <div className="block text-xs font-semibold leading-5 text-[#627168]">
                                 Pattern Setup
                             </div>
                             <label className="block">
-                                <span className="mb-1 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black/65">
+                                <span className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black/65">
                                     <span>Color Brand</span>
                                     <span className="truncate text-[11px] text-brutal-black">
                                         {fullscreenPaletteSummary}
@@ -4052,7 +4064,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setPendingPrimaryPaletteId(event.target.value)
                                     }
-                                    className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                    className="w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                 >
                                     {PALETTE_OPTIONS.map((option) => (
                                         <option
@@ -4065,7 +4077,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </select>
                             </label>
                             <label className="block">
-                                <span className="mb-1 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black/65">
+                                <span className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black/65">
                                     <span>Pegboard</span>
                                     <span className="truncate text-[11px] text-brutal-black">
                                         {selectedBoard?.label ?? 'Not selected'}
@@ -4080,7 +4092,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             event.target.value as BoardOptionId
                                         )
                                     }
-                                    className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                    className="w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                 >
                                     {BOARD_OPTIONS.map((option) => (
                                         <option
@@ -4094,7 +4106,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </label>
                             <div className="grid grid-cols-2 gap-3">
                                 <label className="block">
-                                    <span className="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black/65">
+                                    <span className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold text-brutal-black/65">
                                         <span>Boards Wide</span>
                                         <span className="text-[11px] text-brutal-black">
                                             {boardWidth}
@@ -4114,11 +4126,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 )
                                             )
                                         }
-                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                        className="w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                     />
                                 </label>
                                 <label className="block">
-                                    <span className="mb-1 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.08em] text-brutal-black/65">
+                                    <span className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold text-brutal-black/65">
                                         <span>Boards Tall</span>
                                         <span className="text-[11px] text-brutal-black">
                                             {boardHeight}
@@ -4138,18 +4150,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 )
                                             )
                                         }
-                                        className="w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                        className="w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                     />
                                 </label>
                             </div>
                             {hasPendingPatternSettings ? (
-                                <div className="border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                <div className="rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold text-brutal-black/70">
                                     {pendingPaletteLabel} · {pendingPatternSize}{' '}
                                     · {pendingBoardCountStatus}
                                 </div>
                             ) : null}
                             {pendingLargePatternWarning ? (
-                                <div className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                <div className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-[11px] font-semibold leading-4 text-brutal-black">
                                     {pendingLargePatternWarning}
                                 </div>
                             ) : null}
@@ -4159,7 +4171,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 disabled={
                                     !hasPendingPatternSettings || processing
                                 }
-                                className="w-full border-4 border-brutal-black bg-brand-purple px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-brutal-black shadow-brutal-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+                                className="w-full rounded-lg border border-[#d9ded5] bg-brand-purple px-3 py-2 text-xs font-semibold text-brutal-black shadow-brutal-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                             >
                                 Apply Changes
                             </button>
@@ -4171,10 +4183,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             ) : (
                 <>
                     <div className="relative flex h-[calc(100svh-215px)] min-h-[430px] flex-col sm:hidden">
-                        <section className="flex min-h-0 flex-1 flex-col overflow-hidden border-2 border-brutal-black bg-white shadow-[2px_2px_0_0_#1a1a1a]">
-                            <div className="flex min-h-11 items-center justify-between gap-2 border-b-2 border-brutal-black bg-brand-cyan px-2.5 py-2">
+                        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#d9ded5] bg-white shadow-sm">
+                            <div className="flex min-h-11 items-center justify-between gap-2 border-b border-[#d9ded5] bg-brand-cyan px-2.5 py-2">
                                 <div className="min-w-0">
-                                    <div className="font-vt323 text-2xl uppercase leading-none text-brutal-black">
+                                    <div className="font-sans text-lg leading-none text-brutal-black">
                                         Pattern Preview
                                     </div>
                                 </div>
@@ -4183,7 +4195,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onClick={() =>
                                         toggleHomeMobilePanel('image')
                                     }
-                                    className="min-h-9 shrink-0 border-2 border-brutal-black bg-brand-yellow px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-brutal-black"
+                                    className="min-h-9 shrink-0 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-1.5 text-[11px] font-semibold text-brutal-black"
                                 >
                                     {imageSrc ? 'Change' : 'Upload'}
                                 </button>
@@ -4239,26 +4251,26 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             handleImageDrop(event);
                                             setHomeMobilePanel(null);
                                         }}
-                                        className={`absolute inset-3 flex cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed border-brutal-black px-5 text-center ${
+                                        className={`absolute inset-3 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#d9ded5] px-5 text-center ${
                                             draggingUpload
                                                 ? 'bg-brand-yellow'
                                                 : 'bg-white'
                                         }`}
                                     >
-                                        <span className="grid h-20 w-20 grid-cols-3 grid-rows-3 gap-1 opacity-60">
+                                        <span className="grid h-20 w-20 grid-cols-3 grid-rows-3 gap-2 rounded-2xl bg-[#f0f3ed] p-3">
                                             {Array.from({ length: 9 }).map(
                                                 (_, index) => (
                                                     <span
                                                         key={index}
-                                                        className="border-2 border-dashed border-brutal-black/30 bg-brutal-bg"
+                                                        className="rounded-full border border-[#c8d6ca] bg-white"
                                                     />
                                                 )
                                             )}
                                         </span>
-                                        <span className="font-vt323 text-3xl uppercase leading-none text-brutal-black">
+                                        <span className="font-sans text-xl leading-none text-brutal-black">
                                             Upload Image
                                         </span>
-                                        <span className="max-w-[260px] text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-brutal-black/55">
+                                        <span className="max-w-[260px] text-[11px] font-semibold leading-4 text-brutal-black/55">
                                             Choose a photo and preview the bead
                                             pattern here.
                                         </span>
@@ -4288,7 +4300,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
-                                            className="flex h-8 min-w-8 items-center justify-center border-2 border-brutal-black bg-white px-2 font-vt323 text-xl leading-none text-brutal-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                            className="flex h-8 min-w-8 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 font-sans text-sm leading-none text-brutal-black shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                             aria-label="Zoom out preview"
                                         >
                                             -
@@ -4298,7 +4310,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             onClick={() =>
                                                 setClampedPreviewZoom(1)
                                             }
-                                            className="h-8 min-w-[52px] border-2 border-brutal-black bg-white px-2 font-vt323 text-base font-bold uppercase leading-none text-brutal-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow"
+                                            className="h-8 min-w-[52px] rounded-lg border border-[#d9ded5] bg-white px-2 font-sans text-base font-semibold leading-none text-brutal-black shadow-sm hover:bg-brand-yellow"
                                             aria-label="Reset preview zoom"
                                         >
                                             {Math.round(previewZoom * 100)}%
@@ -4313,7 +4325,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
-                                            className="flex h-8 min-w-8 items-center justify-center border-2 border-brutal-black bg-white px-2 font-vt323 text-xl leading-none text-brutal-black shadow-[1px_1px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                            className="flex h-8 min-w-8 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 font-sans text-sm leading-none text-brutal-black shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                             aria-label="Zoom in preview"
                                         >
                                             +
@@ -4323,11 +4335,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                                 {processing ? (
                                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-                                        <span className="max-w-[260px] animate-pulse border-2 border-brutal-black bg-brand-yellow p-3 text-center font-vt323 text-2xl uppercase leading-none text-black shadow-[2px_2px_0_0_#1a1a1a]">
+                                        <span className="max-w-[260px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-3 text-center font-sans text-lg leading-none text-black shadow-sm">
                                             <span className="block">
                                                 Processing...
                                             </span>
-                                            <span className="mt-2 block font-sans text-[10px] font-black uppercase leading-4 tracking-[0.08em]">
+                                            <span className="mt-2 block font-sans text-[10px] font-semibold leading-4">
                                                 {processingHint}
                                             </span>
                                         </span>
@@ -4335,28 +4347,28 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 ) : null}
                             </div>
 
-                            <div className="grid grid-cols-[1fr_1fr_1fr_1.2fr] border-t-2 border-brutal-black bg-white text-center">
-                                <div className="border-r-2 border-brutal-black px-2 py-2">
-                                    <div className="text-[9px] font-black uppercase tracking-[0.12em] text-brutal-black/50">
+                            <div className="grid grid-cols-[1fr_1fr_1fr_1.2fr] border-t border-[#d9ded5] bg-white text-center">
+                                <div className="border-r border-[#d9ded5] px-2 py-2">
+                                    <div className="text-[9px] font-semibold text-brutal-black/50">
                                         Size
                                     </div>
-                                    <div className="truncate text-xs font-black text-brutal-black">
+                                    <div className="truncate text-xs font-semibold text-brutal-black">
                                         {patternSize}
                                     </div>
                                 </div>
-                                <div className="border-r-2 border-brutal-black px-2 py-2">
-                                    <div className="text-[9px] font-black uppercase tracking-[0.12em] text-brutal-black/50">
+                                <div className="border-r border-[#d9ded5] px-2 py-2">
+                                    <div className="text-[9px] font-semibold text-brutal-black/50">
                                         Beads
                                     </div>
-                                    <div className="truncate text-xs font-black text-brutal-black">
+                                    <div className="truncate text-xs font-semibold text-brutal-black">
                                         {totalBeads}
                                     </div>
                                 </div>
-                                <div className="border-r-2 border-brutal-black px-2 py-2">
-                                    <div className="text-[9px] font-black uppercase tracking-[0.12em] text-brutal-black/50">
+                                <div className="border-r border-[#d9ded5] px-2 py-2">
+                                    <div className="text-[9px] font-semibold text-brutal-black/50">
                                         Colors
                                     </div>
-                                    <div className="truncate text-xs font-black text-brutal-black">
+                                    <div className="truncate text-xs font-semibold text-brutal-black">
                                         {colorsUsed}
                                     </div>
                                 </div>
@@ -4367,13 +4379,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     className="flex min-h-[50px] min-w-0 flex-col items-center justify-center bg-brand-purple px-1.5 py-1.5 text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                                     aria-label="Open editor"
                                 >
-                                    <span className="flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-[0.08em]">
+                                    <span className="flex items-center justify-center gap-1 text-[9px] font-semibold">
                                         <Pencil className="h-3 w-3 shrink-0" />
                                         <span className="truncate">
                                             Editor
                                         </span>
                                     </span>
-                                    <span className="truncate text-xs font-black uppercase">
+                                    <span className="truncate text-xs font-semibold">
                                         {previewDataUrl ? 'Open' : 'Upload'}
                                     </span>
                                 </button>
@@ -4381,9 +4393,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </section>
 
                         {homeMobilePanel ? (
-                            <div className="absolute inset-x-2 bottom-[74px] z-40 max-h-[64svh] overflow-y-auto border-2 border-brutal-black bg-white p-3 shadow-[2px_2px_0_0_#1a1a1a]">
+                            <div className="absolute inset-x-2 bottom-[74px] z-40 max-h-[64svh] overflow-y-auto rounded-lg border border-[#d9ded5] bg-white p-3 shadow-sm">
                                 <div className="mb-3 flex items-center justify-between gap-3">
-                                    <div className="font-vt323 text-2xl uppercase leading-none">
+                                    <div className="font-sans text-lg leading-none">
                                         {homeMobilePanel === 'image'
                                             ? 'Image'
                                             : homeMobilePanel === 'brand'
@@ -4399,7 +4411,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         onClick={() =>
                                             setHomeMobilePanel(null)
                                         }
-                                        className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none hover:bg-brand-yellow"
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none hover:bg-brand-yellow"
                                         aria-label="Close mobile generator panel"
                                     >
                                         ×
@@ -4420,7 +4432,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 handleImageDrop(event);
                                                 setHomeMobilePanel(null);
                                             }}
-                                            className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-2 border-2 border-brutal-black px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] ${
+                                            className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#d9ded5] px-3 py-2 text-[11px] font-semibold shadow-sm ${
                                                 draggingUpload
                                                     ? 'bg-brand-yellow'
                                                     : 'bg-brand-yellow hover:bg-white'
@@ -4449,7 +4461,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     handleOpenProjectPicker();
                                                     setHomeMobilePanel(null);
                                                 }}
-                                                className="min-h-11 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan"
+                                                className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                             >
                                                 Open Project
                                             </button>
@@ -4460,7 +4472,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     setHomeMobilePanel(null);
                                                 }}
                                                 disabled={!canSaveProject}
-                                                className="min-h-11 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                                className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                             >
                                                 Save Project
                                             </button>
@@ -4471,7 +4483,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 {homeMobilePanel === 'pegboard' ? (
                                     <div className="space-y-3">
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Pegboard
                                             </span>
                                             <select
@@ -4484,7 +4496,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             .value as BoardOptionId
                                                     )
                                                 }
-                                                className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             >
                                                 {BOARD_OPTIONS.map(
                                                     (option) => (
@@ -4500,7 +4512,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         </label>
                                         <div className="grid grid-cols-2 gap-3">
                                             <label className="block">
-                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                     Boards Wide
                                                 </span>
                                                 <input
@@ -4518,11 +4530,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             )
                                                         )
                                                     }
-                                                    className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                    className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                                 />
                                             </label>
                                             <label className="block">
-                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                     Boards Tall
                                                 </span>
                                                 <input
@@ -4540,15 +4552,15 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             )
                                                         )
                                                     }
-                                                    className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                    className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                                 />
                                             </label>
                                         </div>
-                                        <div className="border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                        <div className="rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold text-brutal-black/70">
                                             {compactPatternStatus}
                                         </div>
                                         {currentLargePatternWarning ? (
-                                            <div className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-brutal-black">
+                                            <div className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-[11px] font-semibold leading-4 text-brutal-black">
                                                 {currentLargePatternWarning}
                                             </div>
                                         ) : null}
@@ -4558,7 +4570,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 {homeMobilePanel === 'brand' ? (
                                     <div className="space-y-3">
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Color Brand
                                             </span>
                                             <select
@@ -4570,7 +4582,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.value
                                                     )
                                                 }
-                                                className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             >
                                                 {PALETTE_OPTIONS.map(
                                                     (option) => (
@@ -4598,7 +4610,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 return (
                                                     <label
                                                         key={option.id}
-                                                        className={`flex min-h-11 items-center gap-2 border-2 border-brutal-black px-2 py-2 text-[11px] font-black uppercase tracking-[0.06em] ${
+                                                        className={`flex min-h-11 items-center gap-2 rounded-lg border border-[#d9ded5] px-2 py-2 text-[11px] font-semibold ${
                                                             selected
                                                                 ? 'bg-brand-yellow'
                                                                 : 'bg-white'
@@ -4620,7 +4632,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                     option.id
                                                                 )
                                                             }
-                                                            className="h-4 w-4 shrink-0 accent-black"
+                                                            className="h-4 w-4 shrink-0 accent-[#28614e]"
                                                         />
                                                         <span className="truncate">
                                                             {option.label}
@@ -4629,7 +4641,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 );
                                             })}
                                         </div>
-                                        <div className="border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-brutal-black/70">
+                                        <div className="rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold text-brutal-black/70">
                                             {compactColorBrandStatus}
                                         </div>
                                     </div>
@@ -4639,7 +4651,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <div className="space-y-3">
                                         <div className="grid gap-3">
                                             <label className="block">
-                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                     Matching
                                                 </span>
                                                 <select
@@ -4650,7 +4662,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             event.target.value
                                                         )
                                                     }
-                                                    className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                    className="min-h-11 w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                                 >
                                                     {MATCHING_OPTIONS.map(
                                                         (option) => (
@@ -4667,7 +4679,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 </select>
                                             </label>
                                             <label className="block">
-                                                <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                     Dithering
                                                 </span>
                                                 <select
@@ -4678,7 +4690,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             event.target.value
                                                         )
                                                     }
-                                                    className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                    className="min-h-11 w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                                 >
                                                     {DITHERING_OPTIONS.map(
                                                         (option) => (
@@ -4721,9 +4733,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         ).map(([key, label, min, max]) => (
                                             <label
                                                 key={key}
-                                                className="block border-2 border-brutal-black bg-white p-2"
+                                                className="block rounded-lg border border-[#d9ded5] bg-white p-2"
                                             >
-                                                <span className="mb-1 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                                <span className="mb-1 flex items-center justify-between text-[11px] font-semibold text-brutal-black/65">
                                                     <span>{label}</span>
                                                     <span>
                                                         {imageAdjustments[key]}
@@ -4750,7 +4762,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             })
                                                         )
                                                     }
-                                                    className="w-full accent-black"
+                                                    className="w-full accent-[#28614e]"
                                                 />
                                             </label>
                                         ))}
@@ -4768,7 +4780,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             ).map(([key, label]) => (
                                                 <label
                                                     key={key}
-                                                    className="flex min-h-11 items-center gap-3 border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em]"
+                                                    className="flex min-h-11 items-center gap-3 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold"
                                                 >
                                                     <input
                                                         name={`homeMobileRenderer-${key}`}
@@ -4789,7 +4801,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 })
                                                             )
                                                         }
-                                                        className="h-4 w-4 accent-black"
+                                                        className="h-4 w-4 accent-[#28614e]"
                                                     />
                                                     {label}
                                                 </label>
@@ -4805,7 +4817,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     DEFAULT_RENDERER_SETTINGS
                                                 );
                                             }}
-                                            className="min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow"
+                                            className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow"
                                         >
                                             Reset Adjustments
                                         </button>
@@ -4815,12 +4827,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 {homeMobilePanel === 'export' ? (
                                     <div className="space-y-3">
                                         {errorMessage && (
-                                            <p role="alert" className="border-2 border-brutal-black bg-brand-magenta p-3 text-sm font-bold text-white">
+                                            <p role="alert" className="rounded-lg border border-[#d9ded5] bg-brand-magenta p-3 text-sm font-semibold text-white">
                                                 {errorMessage}
                                             </p>
                                         )}
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 File Name
                                             </span>
                                             <input
@@ -4832,11 +4844,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.value
                                                     )
                                                 }
-                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             />
                                         </label>
                                         <label className="block">
-                                            <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.12em] text-brutal-black/65">
+                                            <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 Export Format
                                             </span>
                                             <select
@@ -4847,7 +4859,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.value
                                                     )
                                                 }
-                                                className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-2 py-2 text-sm font-bold text-brutal-black focus:bg-brand-yellow focus:outline-none"
+                                                className="min-h-11 w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-sm font-semibold text-brutal-black focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                             >
                                                 {EXPORT_OPTIONS.map(
                                                     (option) => (
@@ -4861,7 +4873,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 )}
                                             </select>
                                         </label>
-                                        <label className="flex min-h-11 items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em]">
+                                        <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold">
                                             <input
                                                 name="homeMobileExportSymbols"
                                                 type="checkbox"
@@ -4871,7 +4883,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.checked
                                                     )
                                                 }
-                                                className="h-4 w-4 accent-black"
+                                                className="h-4 w-4 accent-[#28614e]"
                                             />
                                             Use Symbols In Printable Exports
                                         </label>
@@ -4879,7 +4891,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             <div
                                                 role="status"
                                                 aria-live="polite"
-                                                className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-[11px] font-black uppercase leading-4 tracking-[0.08em] text-brutal-black"
+                                                className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-[11px] font-semibold leading-4 text-brutal-black"
                                             >
                                                 {exportStatusText}
                                             </div>
@@ -4892,7 +4904,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 )
                                             }
                                             disabled={!canExportPattern}
-                                            className="min-h-12 w-full border-2 border-brutal-black bg-brand-purple px-3 py-2 font-vt323 text-xl font-bold uppercase tracking-[0.08em] text-brutal-black shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-cyan disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
+                                            className="min-h-12 w-full rounded-lg border border-[#28614e] bg-[#28614e] px-3 py-2 font-sans text-sm font-semibold text-white shadow-sm hover:bg-[#214f40] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
                                         >
                                             {exportingId === exportFormatId
                                                 ? 'Exporting...'
@@ -4902,7 +4914,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             type="button"
                                             onClick={handleSaveProject}
                                             disabled={!canSaveProject}
-                                            className="min-h-11 w-full border-2 border-brutal-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.08em] shadow-[2px_2px_0_0_#1a1a1a] hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
+                                            className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                         >
                                             Save Project
                                         </button>
@@ -4911,7 +4923,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </div>
                         ) : null}
 
-                        <div className="z-40 border-t-2 border-brutal-black bg-white px-1.5 pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_0_0_#1a1a1a]">
+                        <div className="z-40 border-t border-[#d9ded5] bg-white px-1.5 pb-[env(safe-area-inset-bottom)] shadow-sm">
                             <div className="grid h-16 grid-cols-5">
                                 {HOME_MOBILE_PANELS.map((item) => {
                                     const Icon = item.icon;
@@ -4926,7 +4938,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 toggleHomeMobilePanel(item.id)
                                             }
                                             aria-expanded={isActive}
-                                            className={`flex min-w-0 flex-col items-center justify-center gap-1 border-l-2 border-brutal-black/15 px-1 text-[10px] font-black uppercase tracking-[0.06em] first:border-l-0 ${
+                                            className={`flex min-w-0 flex-col items-center justify-center gap-1 border-l border-brutal-black/15 px-1 text-[10px] font-semibold first:border-l-0 ${
                                                 isActive
                                                     ? 'bg-brand-yellow text-brutal-black'
                                                     : 'bg-white text-brutal-black/75 hover:bg-brand-cyan'
@@ -4948,8 +4960,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             <div className="hidden items-stretch gap-4 sm:grid sm:gap-6 xl:h-[calc(100svh-330px)] xl:min-h-[560px] xl:max-h-[640px] xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
                 <div className="min-h-0 xl:h-full">
-                    <Card className="h-full overflow-y-auto bg-brand-cyan p-1.5 [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:p-2.5 sm:[border-width:4px] sm:shadow-brutal">
-                        <div className="space-y-2">
+                    <Card className="h-full overflow-y-auto bg-white p-3 sm:p-4">
+                        <div className="space-y-3">
                             <EditorSection title="Image">
                                 <label
                                     htmlFor={IMAGE_UPLOAD_INPUT_ID}
@@ -4962,10 +4974,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     className={`group relative block w-full cursor-pointer text-center transition-colors ${
                                         imageSrc
                                             ? 'mx-auto max-w-[340px] overflow-hidden rounded-md border border-[#cfd6dc] bg-[#eef1f4] p-0 hover:border-[#9aa7b0]'
-                                            : `border-2 border-dashed border-brutal-black p-2.5 sm:border-4 sm:p-3 ${
+                                            : `rounded-lg border border-dashed border-[#a8b8aa] p-3 sm:p-4 ${
                                                   draggingUpload
                                                       ? 'bg-brand-yellow'
-                                                      : 'bg-white hover:bg-gray-50'
+                                                      : 'bg-[#f0f4ed] hover:bg-brand-cyan'
                                               }`
                                     }`}
                                 >
@@ -4980,12 +4992,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     className="object-contain"
                                                 />
                                             </span>
-                                            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[#54595d] px-3 py-2 text-center text-[11px] font-bold uppercase leading-none tracking-[0.18em] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[#54595d] px-3 py-2 text-center text-[11px] font-semibold leading-none text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                                                 Change Source
                                             </span>
                                         </span>
                                     ) : (
-                                        <span className="font-bold text-base uppercase tracking-[0.12em]">
+                                        <span className="font-semibold text-base">
                                             Upload Image
                                         </span>
                                     )}
@@ -5012,7 +5024,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             event.target.value
                                         )
                                     }
-                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base focus:outline-none sm:border-4 sm:text-xl"
+                                    className="w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white p-1.5 font-sans text-base focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:border sm:text-sm"
                                 >
                                     {PALETTE_OPTIONS.map((option) => (
                                         <option
@@ -5024,7 +5036,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     ))}
                                 </select>
 
-                                <div className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-brutal-black/70">
+                                <div className="px-1 text-[10px] font-semibold text-brutal-black/70">
                                     {compactColorBrandStatus}
                                 </div>
                             </EditorSection>
@@ -5040,7 +5052,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             event.target.value as BoardOptionId
                                         )
                                     }
-                                    className="w-full appearance-none rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base focus:outline-none sm:border-4 sm:text-xl"
+                                    className="w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white p-1.5 font-sans text-base focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:border sm:text-sm"
                                 >
                                     {BOARD_OPTIONS.map((option) => (
                                         <option
@@ -5054,7 +5066,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="mb-1 block text-sm font-bold uppercase tracking-wide text-brutal-black/70">
+                                        <label className="mb-1 block text-sm font-semibold tracking-wide text-brutal-black/70">
                                             Boards Wide
                                         </label>
                                         <input
@@ -5072,11 +5084,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     )
                                                 )
                                             }
-                                            className="w-full rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base font-bold focus:outline-none sm:border-4 sm:text-xl"
+                                            className="w-full rounded-lg border border-[#d9ded5] bg-white p-1.5 font-sans text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:border sm:text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-sm font-bold uppercase tracking-wide text-brutal-black/70">
+                                        <label className="mb-1 block text-sm font-semibold tracking-wide text-brutal-black/70">
                                             Boards Tall
                                         </label>
                                         <input
@@ -5094,26 +5106,26 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     )
                                                 )
                                             }
-                                            className="w-full rounded-none border-2 border-brutal-black bg-white p-1.5 font-vt323 text-base font-bold focus:outline-none sm:border-4 sm:text-xl"
+                                            className="w-full rounded-lg border border-[#d9ded5] bg-white p-1.5 font-sans text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:border sm:text-sm"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-brutal-black/70">
+                                <div className="px-1 text-[10px] font-semibold text-brutal-black/70">
                                     {compactPatternStatus}
                                 </div>
                                 {currentLargePatternWarning ? (
-                                    <div className="border-2 border-brutal-black bg-brand-yellow px-2 py-1 text-[10px] font-bold uppercase leading-4 tracking-[0.12em] text-brutal-black">
+                                    <div className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-2 py-1 text-[10px] font-semibold leading-4 text-brutal-black">
                                         {currentLargePatternWarning}
                                     </div>
                                 ) : null}
                             </EditorSection>
 
-                            <div className="grid grid-cols-3 gap-1.5 border-t-2 border-brutal-black/15 pt-2 sm:gap-2 sm:border-t-4">
+                            <div className="grid grid-cols-3 gap-1.5 border-t border-brutal-black/15 pt-2 sm:gap-2 sm:border-t">
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={() => setIsPaletteManagerOpen(true)}
                                 >
                                     Colors
@@ -5121,7 +5133,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={() => setIsAdvancedOpen(true)}
                                 >
                                     Advanced
@@ -5129,7 +5141,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={() => setIsExportDialogOpen(true)}
                                     disabled={!canExportPattern}
                                 >
@@ -5140,7 +5152,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={handleOpenProjectPicker}
                                 >
                                     Open Project
@@ -5148,7 +5160,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:4px] sm:shadow-brutal"
+                                    className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={handleSaveProject}
                                     disabled={!canSaveProject}
                                 >
@@ -5169,7 +5181,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div>
                                     <label
                                         htmlFor={EDITOR_MATCHING_ID}
-                                        className="mb-1 block font-bold"
+                                        className="mb-1 block font-semibold"
                                     >
                                         Matching
                                     </label>
@@ -5180,7 +5192,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         onChange={(event) =>
                                             setMatchingId(event.target.value)
                                         }
-                                        className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl text-black focus:outline-none"
+                                        className="w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white p-2 font-sans text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                     >
                                         {MATCHING_OPTIONS.map((option) => (
                                             <option
@@ -5196,7 +5208,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div>
                                     <label
                                         htmlFor={EDITOR_DITHERING_ID}
-                                        className="mb-1 block font-bold"
+                                        className="mb-1 block font-semibold"
                                     >
                                         Dithering
                                     </label>
@@ -5207,7 +5219,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         onChange={(event) =>
                                             setDitheringId(event.target.value)
                                         }
-                                        className="w-full appearance-none rounded-none border-4 border-brutal-black bg-white p-2 font-vt323 text-xl text-black focus:outline-none"
+                                        className="w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white p-2 font-sans text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1"
                                     >
                                         {DITHERING_OPTIONS.map((option) => (
                                             <option
@@ -5236,12 +5248,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     return (
                                         <div
                                             key={key}
-                                            className="space-y-2 border-4 border-brutal-black bg-white p-3 text-black"
+                                            className="space-y-2 rounded-lg border border-[#d9ded5] bg-white p-3 text-black"
                                         >
                                             <div className="flex items-center justify-between gap-4">
                                                 <label
                                                     htmlFor={numberId}
-                                                    className="font-bold uppercase"
+                                                    className="font-semibold"
                                                 >
                                                     {label}
                                                 </label>
@@ -5268,7 +5280,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             })
                                                         )
                                                     }
-                                                    className="w-24 rounded-none border-4 border-brutal-black bg-white p-1 font-vt323 text-xl text-black"
+                                                    className="w-24 rounded-lg border border-[#d9ded5] bg-white p-1 font-sans text-sm text-black"
                                                 />
                                             </div>
                                             <input
@@ -5290,7 +5302,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         })
                                                     )
                                                 }
-                                                className="w-full accent-black"
+                                                className="w-full accent-[#28614e]"
                                             />
                                         </div>
                                     );
@@ -5300,7 +5312,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
                                 <label
                                     htmlFor={EDITOR_RENDER_CENTER_ID}
-                                    className="flex items-center gap-3 border-4 border-brutal-black bg-white px-3 py-2 font-bold uppercase text-black"
+                                    className="flex items-center gap-3 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold text-black"
                                 >
                                     <input
                                         id={EDITOR_RENDER_CENTER_ID}
@@ -5316,13 +5328,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 })
                                             )
                                         }
-                                        className="h-5 w-5 accent-black"
+                                        className="h-5 w-5 accent-[#28614e]"
                                     />
                                     Center
                                 </label>
                                 <label
                                     htmlFor={EDITOR_RENDER_FIT_ID}
-                                    className="flex items-center gap-3 border-4 border-brutal-black bg-white px-3 py-2 font-bold uppercase text-black"
+                                    className="flex items-center gap-3 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold text-black"
                                 >
                                     <input
                                         id={EDITOR_RENDER_FIT_ID}
@@ -5337,13 +5349,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 })
                                             )
                                         }
-                                        className="h-5 w-5 accent-black"
+                                        className="h-5 w-5 accent-[#28614e]"
                                     />
                                     Fit To Boards
                                 </label>
                                 <label
                                     htmlFor={EDITOR_RENDER_GRID_ID}
-                                    className="flex items-center gap-3 border-4 border-brutal-black bg-white px-3 py-2 font-bold uppercase text-black md:col-span-2 xl:col-span-1"
+                                    className="flex items-center gap-3 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold text-black md:col-span-2 xl:col-span-1"
                                 >
                                     <input
                                         id={EDITOR_RENDER_GRID_ID}
@@ -5361,7 +5373,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 })
                                             )
                                         }
-                                        className="h-5 w-5 accent-black"
+                                        className="h-5 w-5 accent-[#28614e]"
                                     />
                                     Show Board Grid In Preview
                                 </label>
@@ -5402,7 +5414,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         <label
                                             key={option.id}
                                             htmlFor={optionInputId}
-                                            className={`flex cursor-pointer items-center gap-3 border-4 border-brutal-black px-3 py-2 font-bold ${
+                                            className={`flex cursor-pointer items-center gap-3 rounded-lg border border-[#d9ded5] px-3 py-2 font-semibold ${
                                                 selected
                                                     ? 'bg-brand-yellow'
                                                     : 'bg-white hover:bg-gray-50'
@@ -5418,9 +5430,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         option.id
                                                     )
                                                 }
-                                                className="h-5 w-5 accent-black"
+                                                className="h-5 w-5 accent-[#28614e]"
                                             />
-                                            <span className="text-sm uppercase">
+                                            <span className="text-sm">
                                                 {option.label}
                                             </span>
                                         </label>
@@ -5442,14 +5454,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     return (
                                         <div
                                             key={palette.name}
-                                            className="border-4 border-brutal-black bg-gray-50"
+                                            className="rounded-lg border border-[#d9ded5] bg-gray-50"
                                         >
-                                            <div className="flex flex-wrap items-center justify-between gap-3 border-b-4 border-brutal-black bg-brand-cyan px-3 py-2">
+                                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9ded5] bg-brand-cyan px-3 py-2">
                                                 <div>
-                                                    <div className="font-vt323 text-2xl uppercase">
+                                                    <div className="font-sans text-lg">
                                                         {palette.name}
                                                     </div>
-                                                    <div className="text-xs font-bold uppercase tracking-wide">
+                                                    <div className="text-xs font-semibold tracking-wide">
                                                         {enabledEntries} /{' '}
                                                         {
                                                             palette.entries
@@ -5460,7 +5472,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 </div>
                                                 <label
                                                     htmlFor={enableAllInputId}
-                                                    className="flex items-center gap-2 border-4 border-brutal-black bg-white px-3 py-2 text-xs font-bold uppercase"
+                                                    className="flex items-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-xs font-semibold"
                                                 >
                                                     <input
                                                         id={enableAllInputId}
@@ -5480,7 +5492,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 true
                                                             )
                                                         }
-                                                        className="h-4 w-4 accent-black"
+                                                        className="h-4 w-4 accent-[#28614e]"
                                                     />
                                                     Enable All
                                                 </label>
@@ -5505,23 +5517,23 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                     true
                                                                 )
                                                             }
-                                                            className={`flex items-center gap-3 border-4 border-brutal-black px-3 py-2 text-left transition-colors ${
+                                                            className={`flex items-center gap-3 rounded-lg border border-[#d9ded5] px-3 py-2 text-left transition-colors ${
                                                                 entry.enabled
                                                                     ? 'bg-white hover:bg-brand-yellow'
                                                                     : 'bg-gray-200 text-gray-500'
                                                             }`}
                                                         >
                                                             <span
-                                                                className="h-6 w-6 shrink-0 rounded-full border-4 border-brutal-black"
+                                                                className="h-6 w-6 shrink-0 rounded-full border border-[#d9ded5]"
                                                                 style={{
                                                                     backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
                                                                 }}
                                                             />
                                                             <span className="min-w-0">
-                                                                <span className="block font-vt323 text-xl uppercase leading-none">
+                                                                <span className="block font-sans text-sm leading-none">
                                                                     {entry.ref}
                                                                 </span>
-                                                                <span className="block truncate text-xs font-bold uppercase">
+                                                                <span className="block truncate text-xs font-semibold">
                                                                     {
                                                                         entry.name
                                                                     }
@@ -5543,16 +5555,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                 <div className="min-h-0 xl:h-full">
                     <Card
-                        className="z-10 flex min-h-[320px] flex-1 flex-col border-brutal-black bg-white p-0 [border-width:2px] [box-shadow:2px_2px_0_0_#1a1a1a] sm:min-h-[480px] sm:[border-width:4px] sm:shadow-brutal xl:h-full xl:min-h-0"
+                        className="z-10 flex min-h-[320px] flex-1 flex-col border-[#d9ded5] bg-white p-0 [border-width:1px] shadow-sm sm:min-h-[480px] sm:[border-width:1px] sm:shadow-brutal xl:h-full xl:min-h-0"
                     >
                         <div className="relative min-h-[240px] flex-1 overflow-hidden bg-white sm:min-h-[280px]">
                             {processing && (
                                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-                                    <span className="max-w-[260px] animate-pulse border-2 border-brutal-black bg-brand-yellow p-3 text-center font-vt323 text-2xl leading-none text-black shadow-[2px_2px_0_0_#1a1a1a] sm:max-w-[280px] sm:border-4 sm:p-4 sm:text-3xl sm:shadow-brutal">
+                                    <span className="max-w-[260px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-3 text-center font-sans text-lg leading-none text-black shadow-sm sm:max-w-[280px] sm:border sm:p-4 sm:text-xl sm:shadow-brutal">
                                         <span className="block">
                                             PROCESSING...
                                         </span>
-                                        <span className="mt-2 block font-sans text-[11px] font-black uppercase leading-4 tracking-[0.08em]">
+                                        <span className="mt-2 block font-sans text-[11px] font-semibold leading-4">
                                             {processingHint}
                                         </span>
                                     </span>
@@ -5569,7 +5581,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         !previewDataUrl ||
                                         previewZoom <= PREVIEW_MIN_ZOOM
                                     }
-                                    className="flex h-6 min-w-6 items-center justify-center border-2 border-brutal-black bg-white px-1 font-vt323 text-base leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
+                                    className="flex h-6 min-w-6 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-1 font-sans text-base leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
                                     aria-label="Zoom out preview"
                                 >
                                     -
@@ -5578,7 +5590,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     type="button"
                                     onClick={() => setClampedPreviewZoom(1)}
                                     disabled={!previewDataUrl}
-                                    className="min-w-[48px] border-2 border-brutal-black bg-white px-1.5 py-0.5 font-vt323 text-sm font-bold uppercase leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
+                                    className="min-w-[48px] rounded-lg border border-[#d9ded5] bg-white px-1.5 py-0.5 font-sans text-sm font-semibold leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
                                 >
                                     {Math.round(previewZoom * 100)}%
                                 </button>
@@ -5591,7 +5603,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         !previewDataUrl ||
                                         previewZoom >= PREVIEW_MAX_ZOOM
                                     }
-                                    className="flex h-6 min-w-6 items-center justify-center border-2 border-brutal-black bg-white px-1 font-vt323 text-base leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
+                                    className="flex h-6 min-w-6 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-1 font-sans text-base leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
                                     aria-label="Zoom in preview"
                                 >
                                     +
@@ -5600,7 +5612,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     type="button"
                                     onClick={handleOpenEditorPage}
                                     disabled={!previewDataUrl || processing}
-                                    className="hidden border-2 border-brutal-black bg-white px-1.5 py-0.5 font-vt323 text-xs font-bold uppercase leading-none text-black shadow-[1px_1px_0_0_#1f2937] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0 sm:block"
+                                    className="hidden rounded-lg border border-[#d9ded5] bg-white px-1.5 py-0.5 font-sans text-xs font-semibold leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0 sm:block"
                                 >
                                     Edit Pattern
                                 </button>
@@ -5620,19 +5632,19 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 }}
                             >
                                 {!previewDataUrl && (
-                                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center text-gray-400">
+                                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center text-[#627168]">
                                         <div
-                                            className="grid h-24 w-24 grid-cols-3 grid-rows-3 gap-1 opacity-45"
+                                            className="grid h-24 w-24 grid-cols-3 grid-rows-3 gap-2.5 rounded-2xl border border-[#d9ded5] bg-[#f3f5ef] p-4"
                                             aria-hidden="true"
                                         >
                                             {Array.from({ length: 9 }).map((_, index) => (
                                                 <span
                                                     key={index}
-                                                    className="border-2 border-dashed border-gray-300 bg-gray-50"
+                                                    className="rounded-full border border-[#cad7cb] bg-white"
                                                 />
                                             ))}
                                         </div>
-                                        <p className="max-w-xs text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+                                        <p className="max-w-[260px] text-sm leading-6 text-[#627168]">
                                             Upload an image to generate a centered board preview
                                         </p>
                                     </div>
@@ -5745,7 +5757,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </div>
 
                             <div className="pointer-events-none absolute inset-x-2 bottom-1.5 z-30 flex justify-center sm:inset-x-3">
-                                <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-brutal-black/80 sm:gap-x-4 sm:text-[10px] sm:tracking-[0.14em]">
+                                <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[9px] font-semibold text-brutal-black/80 sm:gap-x-4 sm:text-[10px] sm:tracking-normal">
                                     <span>Pattern Size: {patternSize}</span>
                                     <span>Total Beads: {totalBeads}</span>
                                     <span>Colors: {colorsUsed}</span>
@@ -5760,18 +5772,20 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isColorPickerOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-black/35 p-0 sm:items-center sm:justify-center sm:p-3"
+                    ref={colorPickerDialogRef}
+                    tabIndex={-1}
+                    className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-[#243e36]/35 backdrop-blur-sm p-0 sm:items-center sm:justify-center sm:p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Select Color"
                 >
-                    <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[86vh] sm:max-w-4xl sm:border-2 sm:border-brutal-black sm:shadow-[3px_3px_0_0_#1a1a1a]">
-                        <div className="flex items-center justify-between gap-3 border-b-2 border-brutal-black bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
+                    <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[86vh] sm:max-w-4xl sm:rounded-xl sm:border sm:border-[#d9ded5] sm:shadow-lg">
+                        <div className="flex items-center justify-between gap-3 border-b border-[#d9ded5] bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
-                                <div className="font-vt323 text-2xl uppercase leading-none text-brutal-black sm:text-3xl">
+                                <div className="font-sans text-lg leading-none text-brutal-black sm:text-xl">
                                     Select Color
                                 </div>
-                                <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brutal-black/60 sm:text-[11px]">
+                                <div className="mt-1 text-[10px] font-semibold text-brutal-black/60 sm:text-[11px]">
                                     Pick a bead color from the loaded palettes
                                 </div>
                             </div>
@@ -5781,7 +5795,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     setColorPickerQuery('');
                                     setIsColorPickerOpen(false);
                                 }}
-                                className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none text-brutal-black hover:bg-brand-cyan sm:h-9 sm:w-9 sm:text-2xl"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none text-brutal-black hover:bg-brand-cyan sm:h-9 sm:w-9 sm:text-lg"
                                 aria-label="Close color picker"
                             >
                                 ×
@@ -5789,7 +5803,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </div>
 
                         <div className="grid min-h-0 flex-1 md:grid-cols-[220px_minmax(0,1fr)]">
-                            <aside className="max-h-32 overflow-auto border-b-2 border-brutal-black bg-brutal-bg p-2.5 sm:max-h-40 sm:p-3 md:max-h-none md:border-b-0 md:border-r-2">
+                            <aside className="max-h-32 overflow-auto border-b border-[#d9ded5] bg-brutal-bg p-2.5 sm:max-h-40 sm:p-3 md:max-h-none md:border-b-0 md:border-r">
                                 <div className="space-y-1.5 sm:space-y-2">
                                     {PALETTE_OPTIONS.map((option) => {
                                         const palette =
@@ -5807,16 +5821,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         option.id
                                                     )
                                                 }
-                                                className={`flex min-h-11 w-full items-center justify-between border-2 px-2.5 py-1.5 text-left transition-colors ${
+                                                className={`flex min-h-11 w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
                                                     isActive
-                                                        ? 'border-brutal-black bg-brand-yellow text-brutal-black'
-                                                        : 'border-brutal-black/20 bg-white text-brutal-black hover:border-brutal-black hover:bg-brand-cyan'
+                                                        ? 'border-[#d9ded5] bg-brand-yellow text-brutal-black'
+                                                        : 'border-brutal-black/20 bg-white text-brutal-black hover:border-[#d9ded5] hover:bg-brand-cyan'
                                                 }`}
                                             >
-                                                <span className="text-sm font-bold">
+                                                <span className="text-sm font-semibold">
                                                     {option.label}
                                                 </span>
-                                                <span className="text-xs font-bold text-brutal-black/55">
+                                                <span className="text-xs font-semibold text-brutal-black/55">
                                                     {palette?.entries.length ??
                                                         '...'}
                                                 </span>
@@ -5828,7 +5842,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <div className="min-h-0 overflow-auto p-3 sm:p-4">
                                 {!currentColorPickerPalette ? (
-                                    <div className="flex h-full min-h-[260px] items-center justify-center font-vt323 text-3xl uppercase text-brutal-black/45">
+                                    <div className="flex h-full min-h-[260px] items-center justify-center font-sans text-xl text-brutal-black/45">
                                         Loading colors...
                                     </div>
                                 ) : (
@@ -5844,16 +5858,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }
                                                 aria-label="Search bead colors"
                                                 placeholder="Search color or code"
-                                                className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 text-sm font-bold focus:bg-brand-yellow focus:outline-none sm:max-w-xs"
+                                                className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-sm font-semibold focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:max-w-xs"
                                             />
-                                            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-brutal-black/55">
+                                            <div className="text-[11px] font-semibold text-brutal-black/55">
                                                 {currentColorPickerEntries.length}{' '}
                                                 colors
                                             </div>
                                         </div>
                                         {currentColorPickerEntries.length ===
                                         0 ? (
-                                            <div className="border-2 border-dashed border-brutal-black/25 bg-brutal-bg p-4 text-sm font-bold uppercase tracking-[0.1em] text-brutal-black/45">
+                                            <div className="rounded-lg border border-dashed border-brutal-black/25 bg-brutal-bg p-4 text-sm font-semibold text-brutal-black/45">
                                                 No matching colors
                                             </div>
                                         ) : (
@@ -5875,23 +5889,23 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                 entry
                                                             )
                                                         }
-                                                        className={`flex min-h-11 items-center gap-2 border-2 px-2.5 py-2 text-left transition-colors sm:gap-3 sm:px-3 ${
+                                                        className={`flex min-h-11 items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors sm:gap-3 sm:px-3 ${
                                                             isActive
-                                                                ? 'border-brutal-black bg-brand-cyan'
-                                                                : 'border-brutal-black/15 bg-white hover:border-brutal-black hover:bg-brand-yellow'
+                                                                ? 'border-[#d9ded5] bg-brand-cyan'
+                                                                : 'border-brutal-black/15 bg-white hover:border-[#d9ded5] hover:bg-brand-yellow'
                                                         }`}
                                                     >
                                                         <span
-                                                            className="h-7 w-7 shrink-0 rounded-full border-2 border-brutal-black sm:h-8 sm:w-8"
+                                                            className="h-7 w-7 shrink-0 rounded-full border border-[#d9ded5] sm:h-8 sm:w-8"
                                                             style={{
                                                                 backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
                                                             }}
                                                         />
                                                         <span className="min-w-0">
-                                                            <span className="block truncate text-sm font-bold text-brutal-black">
+                                                            <span className="block truncate text-sm font-semibold text-brutal-black">
                                                                 {entry.name}
                                                             </span>
-                                                            <span className="block text-xs font-semibold uppercase text-brutal-black/55">
+                                                            <span className="block text-xs font-semibold text-brutal-black/55">
                                                                 {entry.ref}
                                                             </span>
                                                         </span>
@@ -5911,26 +5925,28 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isExportDialogOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-black/35 p-0 sm:items-center sm:justify-center sm:p-3"
+                    ref={exportDialogRef}
+                    tabIndex={-1}
+                    className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-[#243e36]/35 backdrop-blur-sm p-0 sm:items-center sm:justify-center sm:p-3"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Export"
                     aria-busy={exportingId !== null}
                 >
-                    <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[90svh] sm:max-w-lg sm:border-2 sm:border-brutal-black sm:shadow-[3px_3px_0_0_#1a1a1a]">
-                        <div className="flex items-center justify-between gap-3 border-b-2 border-brutal-black bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
+                    <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[90svh] sm:max-w-lg sm:rounded-xl sm:border sm:border-[#d9ded5] sm:shadow-lg">
+                        <div className="flex items-center justify-between gap-3 border-b border-[#d9ded5] bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
-                                <div className="font-vt323 text-2xl uppercase leading-none sm:text-3xl">
+                                <div className="font-sans text-lg leading-none sm:text-xl">
                                     Export
                                 </div>
-                                <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-600 sm:text-[11px]">
+                                <div className="mt-1 text-[10px] font-semibold text-gray-600 sm:text-[11px]">
                                     Choose file name, format and printable options
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setIsExportDialogOpen(false)}
-                                className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-brutal-black bg-white font-vt323 text-3xl leading-none hover:bg-brand-yellow sm:h-9 sm:w-9 sm:text-2xl"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none hover:bg-brand-yellow sm:h-9 sm:w-9 sm:text-lg"
                                 aria-label="Close export dialog"
                             >
                                 ×
@@ -5939,14 +5955,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
                             {errorMessage && (
-                                <p role="alert" className="border-2 border-brutal-black bg-brand-magenta p-3 text-sm font-bold text-white">
+                                <p role="alert" className="rounded-lg border border-[#d9ded5] bg-brand-magenta p-3 text-sm font-semibold text-white">
                                     {errorMessage}
                                 </p>
                             )}
                             <div>
                                 <label
                                     htmlFor={EXPORT_FILE_NAME_ID}
-                                    className="mb-1 block text-sm font-bold"
+                                    className="mb-1 block text-sm font-semibold"
                                 >
                                     Export File Name
                                 </label>
@@ -5958,14 +5974,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setFileName(event.target.value)
                                     }
-                                    className="min-h-11 w-full rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base font-bold focus:bg-brand-yellow focus:outline-none sm:text-lg"
+                                    className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-sans text-base font-semibold focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:text-lg"
                                 />
                             </div>
 
                             <div>
                                 <label
                                     htmlFor={EXPORT_FORMAT_ID}
-                                    className="mb-1 block text-sm font-bold"
+                                    className="mb-1 block text-sm font-semibold"
                                 >
                                     Export Format
                                 </label>
@@ -5976,7 +5992,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setExportFormatId(event.target.value)
                                     }
-                                    className="min-h-11 w-full appearance-none rounded-none border-2 border-brutal-black bg-white px-3 py-2 font-vt323 text-base focus:bg-brand-yellow focus:outline-none sm:text-lg"
+                                    className="min-h-11 w-full appearance-auto rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-sans text-base focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:text-lg"
                                 >
                                     {EXPORT_OPTIONS.map((option) => (
                                         <option
@@ -5991,7 +6007,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <label
                                 htmlFor={EXPORT_SYMBOLS_ID}
-                                className="flex min-h-11 items-center gap-3 border-2 border-brutal-black bg-brutal-bg px-3 py-2 text-xs font-bold uppercase sm:text-sm"
+                                className="flex min-h-11 items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-xs font-semibold sm:text-sm"
                             >
                                 <input
                                     id={EXPORT_SYMBOLS_ID}
@@ -6001,7 +6017,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onChange={(event) =>
                                         setUseSymbols(event.target.checked)
                                     }
-                                    className="h-4 w-4 accent-black"
+                                    className="h-4 w-4 accent-[#28614e]"
                                 />
                                 Use Symbols In Printable Exports
                             </label>
@@ -6010,7 +6026,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div
                                     role="status"
                                     aria-live="polite"
-                                    className="border-2 border-brutal-black bg-brand-yellow px-3 py-2 text-xs font-black uppercase leading-5 tracking-[0.08em] text-brutal-black"
+                                    className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-xs font-semibold leading-5 text-brutal-black"
                                 >
                                     {exportStatusText}
                                 </div>
@@ -6018,7 +6034,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <button
                                 type="button"
-                                className="min-h-11 w-full border-2 border-brutal-black bg-brand-purple px-4 py-2 font-vt323 text-lg font-bold uppercase tracking-[0.08em] text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:text-xl"
+                                className="min-h-11 w-full rounded-lg border border-[#28614e] bg-[#28614e] px-4 py-2 font-sans text-base font-semibold text-white hover:bg-[#214f40] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:text-sm"
                                 onClick={() => void handleExport(exportFormatId)}
                                 disabled={!canExportPattern}
                             >
@@ -6032,7 +6048,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <button
                                         key={option.id}
                                         type="button"
-                                        className={`min-h-11 border-2 border-brutal-black px-2 py-1 font-vt323 text-sm font-bold uppercase leading-none tracking-[0.06em] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 sm:text-base ${
+                                        className={`min-h-11 rounded-lg border border-[#d9ded5] px-2 py-1 font-sans text-sm font-semibold leading-none disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-100 disabled:text-gray-400 sm:text-base ${
                                             option.id === exportFormatId
                                                 ? 'bg-brand-yellow'
                                                 : 'bg-white hover:bg-brand-cyan'

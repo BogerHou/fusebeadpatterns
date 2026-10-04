@@ -13,20 +13,20 @@ export const Button: React.FC<ButtonProps> = ({
     ...props
 }) => {
     const baseStyles =
-        'font-bold border-4 border-brutal-black transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none font-vt323 tracking-widest uppercase';
+        'rounded-lg border font-sans font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28614e] disabled:cursor-not-allowed disabled:opacity-50';
 
     const variants = {
-        primary: 'bg-brand-purple text-brutal-black hover:bg-brand-cyan shadow-brutal',
-        secondary: 'bg-white text-brutal-black hover:bg-gray-100 shadow-brutal',
-        danger: 'bg-brand-magenta text-white hover:bg-red-500 shadow-brutal',
-        warning: 'bg-brand-yellow text-brutal-black hover:bg-yellow-300 shadow-brutal',
-        success: 'bg-brand-green text-brutal-black hover:bg-green-400 shadow-brutal',
+        primary: 'border-[#28614e] bg-[#28614e] text-white hover:bg-[#214f40]',
+        secondary: 'border-[#d9ded5] bg-white text-brutal-black hover:bg-[#f0f3ed]',
+        danger: 'border-[#b5444a] bg-brand-magenta text-white hover:bg-[#983a40]',
+        warning: 'border-[#ded5a2] bg-brand-yellow text-brutal-black hover:bg-[#e7ddab]',
+        success: 'border-[#cadbc9] bg-brand-green text-brutal-black hover:bg-[#cfdfce]',
     };
 
     const sizes = {
-        sm: 'py-1 px-3 text-lg',
-        md: 'py-2 px-6 text-xl',
-        lg: 'py-3 px-8 text-2xl',
+        sm: 'py-1.5 px-3 text-sm',
+        md: 'py-2.5 px-5 text-sm',
+        lg: 'py-3 px-7 text-base',
     };
 
     return (

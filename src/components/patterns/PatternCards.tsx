@@ -15,20 +15,23 @@ export function toPatternCard(pattern: Pattern): PatternCardData {
 export function PatternGrid({ patterns, headingLevel = 2 }: { patterns: PatternCardData[]; headingLevel?: 2 | 3 }) {
     const Heading = headingLevel === 3 ? 'h3' : 'h2';
     return (
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        <div className="pattern-grid">
             {patterns.map((pattern) => (
-                <article key={pattern.id} className="min-w-0 border-2 border-brutal-black bg-white shadow-brutal-sm" data-pattern-card={pattern.id}>
-                    <Link href={`/patterns/${pattern.slug}`} prefetch={false} className="group block h-full focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-brand-purple">
+                <article key={pattern.id} className="pattern-card" data-pattern-card={pattern.id}>
+                    <Link href={`/patterns/${pattern.slug}`} prefetch={false} className="pattern-card-link">
+                        <div className="pattern-art">
                         <Image
                             src={pattern.preview}
                             alt={`${pattern.title} Perler bead pattern`}
                             width={580}
                             height={580}
                             unoptimized
-                            className="aspect-square w-full bg-[#faf8f3] object-contain [image-rendering:pixelated]"
+                            className="pattern-image"
                         />
-                        <div className="border-t-2 border-brutal-black p-3 sm:p-4">
-                            <Heading className="font-vt323 text-2xl leading-tight group-hover:underline decoration-2 underline-offset-4 sm:text-3xl">{pattern.title}</Heading>
+                        </div>
+                        <div className="pattern-card-title">
+                            <Heading >{pattern.title}</Heading>
+                            <span aria-hidden="true">↗</span>
                         </div>
                     </Link>
                 </article>

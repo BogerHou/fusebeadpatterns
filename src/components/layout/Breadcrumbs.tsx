@@ -37,7 +37,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
             />
             <nav
                 aria-label="Breadcrumb"
-                className="mb-4 w-full text-xs font-bold text-brutal-black/70 sm:mb-5 sm:text-sm"
+                className="mb-6 w-full text-xs font-medium text-muted"
             >
                 <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 sm:gap-2">
                     {items.map((item, index) => {
@@ -57,13 +57,13 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
                                     </span>
                                 ) : null}
                                 {isLast ? (
-                                    <span className="text-brutal-black">
+                                    <span className="text-brutal-black" aria-current="page">
                                         {item.label}
                                     </span>
                                 ) : (
                                     <Link
                                         href={item.href}
-                                        className="inline-flex min-h-10 items-center px-1.5 text-brutal-black hover:text-brand-purple hover:underline decoration-2 underline-offset-4"
+                                        className="inline-flex min-h-10 items-center px-1.5 text-muted hover:text-accent hover:underline decoration-2 underline-offset-4"
                                     >
                                         {item.label}
                                     </Link>
