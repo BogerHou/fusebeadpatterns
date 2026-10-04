@@ -357,6 +357,110 @@ async function waitForState(cdp, expression, description) {
     throw new Error(`Timed out waiting for ${description}.`);
 }
 
+async function runDialogKeyboardRegression(cdp, label, triggerSelector, triggerText = null) {
+    const selector = `[role="dialog"][aria-label=${JSON.stringify(label)}]`;
+    const triggerPoint = await cdp.evaluate(`
+        (() => {
+            const button = Array.from(document.querySelectorAll(${JSON.stringify(triggerSelector)}))
+                .find((element) => element.getClientRects().length > 0 && !element.disabled &&
+                    (${JSON.stringify(triggerText)} === null || element.textContent.trim() === ${JSON.stringify(triggerText)}));
+            if (!button) throw new Error('Missing keyboard regression trigger: ' + ${JSON.stringify(label)});
+            window.__dialogKeyboardTrigger = button;
+            button.scrollIntoView({ block: 'center', behavior: 'instant' });
+            button.focus({ preventScroll: true });
+            const rect = button.getBoundingClientRect();
+            return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        })()
+    `);
+    await clickPoint(cdp, triggerPoint.x, triggerPoint.y);
+    await waitForState(cdp, `(() => {
+        const dialog = document.querySelector(${JSON.stringify(selector)});
+        return dialog && dialog.contains(document.activeElement);
+    })()`, `${label} initial dialog focus`);
+    if (label === 'Select Color') {
+        await waitForState(cdp, `!!document.querySelector(${JSON.stringify(selector)})
+            ?.querySelector('input[aria-label="Search bead colors"]')`, 'loaded color picker controls');
+    }
+
+    await cdp.evaluate(`
+        (() => {
+            const dialog = document.querySelector(${JSON.stringify(selector)});
+            const controls = Array.from(dialog.querySelectorAll('button, input, select, textarea, a[href], [tabindex]'))
+                .filter((element) => element.tabIndex >= 0 && !element.disabled &&
+                    element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+            if (controls.length < 2) throw new Error('Dialog regression needs multiple focusable controls.');
+            window.__dialogKeyboardFirst = controls[0];
+            window.__dialogKeyboardLast = controls[controls.length - 1];
+            if (document.activeElement !== controls[0]) throw new Error('Dialog did not focus its first control.');
+        })()
+    `);
+
+    const pressKey = async (key, shift = false) => {
+        const code = key === 'Tab' ? 9 : 27;
+        await cdp.send('Input.dispatchKeyEvent', {
+            type: 'keyDown', key, code: key, windowsVirtualKeyCode: code,
+            nativeVirtualKeyCode: code, modifiers: shift ? 8 : 0,
+        });
+        await cdp.send('Input.dispatchKeyEvent', {
+            type: 'keyUp', key, code: key, windowsVirtualKeyCode: code,
+            nativeVirtualKeyCode: code, modifiers: shift ? 8 : 0,
+        });
+    };
+
+    await pressKey('Tab', true);
+    await waitForState(cdp, 'document.activeElement === window.__dialogKeyboardLast', `${label} Shift+Tab wraps to last control`);
+    await pressKey('Tab');
+    await waitForState(cdp, 'document.activeElement === window.__dialogKeyboardFirst', `${label} Tab wraps to first control`);
+    await pressKey('Tab');
+    await waitForState(cdp, `document.activeElement !== window.__dialogKeyboardFirst &&
+        document.querySelector(${JSON.stringify(selector)})?.contains(document.activeElement)`, `${label} Tab advances within dialog`);
+    await pressKey('Escape');
+    await waitForState(cdp, `!document.querySelector(${JSON.stringify(selector)}) &&
+        document.activeElement === window.__dialogKeyboardTrigger`, `${label} Escape closes and restores trigger focus`);
+    await cdp.evaluate(`
+        delete window.__dialogKeyboardTrigger;
+        delete window.__dialogKeyboardFirst;
+        delete window.__dialogKeyboardLast;
+    `);
+    return { initialFocus: true, backwardWrap: true, forwardWrap: true, escapeRestoresTrigger: true };
+}
+
+async function runMobileColorPanelFocusRegression(cdp) {
+    const panelTab = await cdp.evaluate(`(() => {
+        const button = Array.from(document.querySelectorAll('button[aria-expanded]'))
+            .find((element) => element.getClientRects().length > 0 && element.textContent.trim() === 'Colors');
+        if (!button) throw new Error('Mobile Colors panel tab is missing.');
+        const rect = button.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    })()`);
+    await clickPoint(cdp, panelTab.x, panelTab.y);
+    await waitForState(cdp, `Array.from(document.querySelectorAll('button[title="Select bead color"]'))
+        .some((button) => button.textContent.includes('Active Color'))`, 'mobile Colors panel');
+    const pickerTrigger = await cdp.evaluate(`(() => {
+        const buttons = Array.from(document.querySelectorAll('button[title="Select bead color"]'));
+        const button = buttons.find((element) => element.textContent.includes('Active Color'));
+        window.__unmountedColorTrigger = button;
+        window.__persistentColorTrigger = buttons.find((element) => element.textContent.trim() === 'Color');
+        if (!window.__persistentColorTrigger) throw new Error('Persistent Color toolbar entry is missing.');
+        button.focus({ preventScroll: true });
+        const rect = button.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    })()`);
+    await clickPoint(cdp, pickerTrigger.x, pickerTrigger.y);
+    await waitForState(cdp, `!window.__unmountedColorTrigger.isConnected &&
+        document.querySelector('[role="dialog"][aria-label="Select Color"]')?.contains(document.activeElement)`,
+    'color dialog opened after removing its panel trigger');
+    for (const type of ['keyDown', 'keyUp']) {
+        await cdp.send('Input.dispatchKeyEvent', {
+            type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
+        });
+    }
+    await waitForState(cdp, `!document.querySelector('[role="dialog"][aria-label="Select Color"]') &&
+        document.activeElement === window.__persistentColorTrigger`, 'color dialog restores persistent toolbar focus');
+    await cdp.evaluate(`delete window.__unmountedColorTrigger; delete window.__persistentColorTrigger;`);
+    return { removedPanelTrigger: true, escapeRestoresPersistentColorEntry: true };
+}
+
 async function installPatternRegressionHelpers(cdp) {
     await cdp.evaluate(`
         window.__patternRegression = {
@@ -1124,6 +1228,7 @@ async function runWorkerRegression(cdp) {
     });
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await openWorkerRegressionPage(cdp, 'native');
+    const advancedKeyboard = await runDialogKeyboardRegression(cdp, 'Advanced', 'button', 'Advanced');
     await cdp.evaluate("window.__workerRegression.upload('#ff0000')");
     await waitForWorkerPattern(cdp, 'real native Worker pattern');
     const redPixels = await cdp.evaluate('window.__patternRegression.pixels()');
@@ -1252,6 +1357,7 @@ async function runWorkerRegression(cdp) {
     return {
         nativeWorker: native,
         fallback,
+        advancedDialogKeyboard: advancedKeyboard,
         staleImageResultIgnored: true,
         staleParameterResultIgnored: true,
         committedPixelsPreservedWhilePending: true,
@@ -1337,6 +1443,35 @@ async function main() {
             }
             await sleep(125);
         }
+
+        const generatorEntry = await cdp.evaluate(`
+            (() => {
+                const link = document.querySelector('a[href="#generator"]');
+                if (!link) throw new Error('Home generator entry link is missing.');
+                link.scrollIntoView({ block: 'center', behavior: 'instant' });
+                const rect = link.getBoundingClientRect();
+                return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            })()
+        `);
+        await clickPoint(cdp, generatorEntry.x, generatorEntry.y);
+        await cdp.evaluate(`
+            (async () => {
+                let previousScrollY = window.scrollY;
+                let stableSamples = 0;
+                for (let attempt = 0; attempt < 80; attempt += 1) {
+                    await new Promise((resolve) => setTimeout(resolve, 50));
+                    const target = document.getElementById('generator');
+                    const rect = target?.getBoundingClientRect();
+                    const settled = Math.abs(window.scrollY - previousScrollY) < 0.5;
+                    const reachedGenerator = location.hash === '#generator' &&
+                        rect && rect.top >= -1 && rect.top < innerHeight && rect.bottom > 0;
+                    stableSamples = settled && reachedGenerator ? stableSamples + 1 : 0;
+                    if (stableSamples >= 4) return;
+                    previousScrollY = window.scrollY;
+                }
+                throw new Error('Home generator entry did not settle in the viewport.');
+            })()
+        `);
 
         const homeFlow = await cdp.evaluate(`
             (async () => {
@@ -1696,6 +1831,12 @@ async function main() {
         await clickPoint(cdp, flow.canvas.x, flow.canvas.y);
         await sleep(350);
 
+        const colorDialogKeyboard = await runDialogKeyboardRegression(
+            cdp, 'Select Color', 'button[title="Select bead color"]'
+        );
+        const colorPanelFocus = await runMobileColorPanelFocusRegression(cdp);
+        const exportDialogKeyboard = await runDialogKeyboardRegression(cdp, 'Export', 'button', 'Export');
+
         const projectRoundTrip = await cdp.evaluate(`
             (async () => {
                 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1888,6 +2029,7 @@ async function main() {
                         restoredSameCanvas: projectRoundTrip.restoredSameCanvas,
                     },
                     paletteChange,
+                    dialogKeyboard: { color: colorDialogKeyboard, colorPanel: colorPanelFocus, export: exportDialogKeyboard },
                     exportDialogOpened: true,
                     horizontalOverflow: result.horizontalOverflow,
                     errors: result.errors,

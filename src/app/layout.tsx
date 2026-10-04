@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, VT323 } from 'next/font/google';
+import { Inter, Manrope } from 'next/font/google';
 import PatternAnalytics from '@/components/analytics/PatternAnalytics';
 import './globals.css';
 
@@ -8,10 +8,10 @@ const inter = Inter({
     subsets: ['latin'],
 });
 
-const vt323 = VT323({
-    variable: '--font-vt323',
-    weight: '400',
+const manrope = Manrope({
+    variable: '--font-display',
     subsets: ['latin'],
+    display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -63,10 +63,10 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`${inter.variable} ${vt323.variable} h-full antialiased`}
+            className={`${inter.variable} ${manrope.variable} h-full antialiased`}
             suppressHydrationWarning
         >
-            <body className="min-h-full flex flex-col bg-[#F4F4F0] text-gray-900 font-sans">
+            <body className="min-h-full flex flex-col font-sans">
                 {children}
                 <PatternAnalytics />
             </body>

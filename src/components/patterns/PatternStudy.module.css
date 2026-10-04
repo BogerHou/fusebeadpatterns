@@ -1,0 +1,19 @@
+.study { background: #edf0e5; border-radius: 14px; padding: 18px 22px 12px; position: relative; }
+.topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topline > span { font-size: 10px; max-width: 135px; line-height: 1.6; }
+.controls { display: flex; gap: 2px; border: 1px solid #c5cfbf; padding: 2px; border-radius: 6px; }
+.controls button { min-height: 44px; padding: 5px 10px; font-size: 13px; border-radius: 4px; transition: color 160ms, background 160ms; }
+.controls button[aria-pressed="true"] { color: white; background: #28614e; }
+.controls button:hover:not([aria-pressed="true"]) { background: #dce4d5; }
+.art { max-width: 300px; margin: 0 auto; }
+.art img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; }
+.caption { border-top: 1px solid #cad4c1; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding-top: 12px; position: relative; }
+.title { display: block; font-size: 14px; font-weight: 600; }
+.note { display: block; color: #59685f; font-size: 12px; margin-top: 5px; }
+.open { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; font-size: 20px; border-radius: 50%; border: 1px solid #a6b69d; transition: background 160ms; }
+.open:hover { background: #dce4d5; }
+@media (max-width: 760px) {
+  .study { padding: 14px 16px; }
+  .controls button { min-height: 44px; padding-inline: 10px; font-size: 13px; }
+  .art { max-width: 220px; margin: 8px auto; }
+}

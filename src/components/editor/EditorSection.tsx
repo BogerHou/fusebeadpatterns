@@ -7,8 +7,8 @@ type EditorSectionProps = {
 
 export function EditorSection({ title, children }: EditorSectionProps) {
     return (
-        <section className="space-y-1.5 border-t-2 border-brutal-black/15 pt-2 first:border-t-0 first:pt-0 sm:border-t-4 sm:pt-2.5">
-            <div className="font-vt323 text-[1.25rem] uppercase leading-none text-brutal-black sm:text-[1.7rem]">
+        <section className="space-y-2 border-t border-[#d9ded5] pt-3 first:border-t-0 first:pt-0">
+            <div className="text-sm font-semibold leading-5 text-brutal-black">
                 {title}
             </div>
             {children}

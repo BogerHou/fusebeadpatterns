@@ -1,0 +1,8 @@
+@media (max-width: 760px) {
+  /* Keep text controls readable without triggering focus zoom on iOS. */
+  .editor-workspace input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+  .editor-workspace select,
+  .editor-workspace textarea {
+    font-size: 16px;
+  }
+}
