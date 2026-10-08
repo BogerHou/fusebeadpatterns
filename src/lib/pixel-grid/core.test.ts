@@ -4,6 +4,7 @@ import { inflateSync, crc32 } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { createGrid, setPixel, paintLine, resizeNearest, resizeImage, GridHistory, gridsEqual, serializeProject, parseProject, inspectImage, encodePng, LIMITS } from './core';
 import type { PixelGrid, RgbaPixels, ResizeMode } from './core';
+import { PixelGridError, type PixelGridErrorCode } from './errors';
 // Independent Node inflater/CRC checks validate our browser-only PNG encoder.
 function decodeOwnPng(bytes: Uint8Array) {
     assert.deepEqual(Array.from(bytes.subarray(0,8)),[137,80,78,71,13,10,26,10]);
@@ -247,4 +248,57 @@ test('image header limits include the boundary and handle byte-offset views corr
     assert.throws(() => inspectImage(tall), /2048/);
     assert.throws(() => inspectImage(new Uint8Array()), /8 MiB/);
     assert.throws(() => inspectImage(new TextEncoder().encode('GIF89a')), /Supported image/);
+});
+
+test('explicit core validation failures carry stable codes for localized UI', async () => {
+    const grid = createGrid(1, 1), project = JSON.parse(serializeProject(grid));
+    const missing = { ...project }; delete missing.pixels;
+    const png = await encodePng(grid), incompletePng = png.slice(), largePng = png.slice();
+    new DataView(incompletePng.buffer).setUint32(8, 9999);
+    new DataView(largePng.buffer).setUint32(16, 2049);
+    const chunk = new Uint8Array(20); new DataView(chunk.buffer).setUint32(0, 8); chunk.set(new TextEncoder().encode('acTL'), 4);
+    const animatedPng = new Uint8Array(png.length + 20); animatedPng.set(png.subarray(0, 33)); animatedPng.set(chunk, 33); animatedPng.set(png.subarray(33), 53);
+    const webp = new Uint8Array(30), view = new DataView(webp.buffer);
+    webp.set(new TextEncoder().encode('RIFF'), 0); webp.set(new TextEncoder().encode('WEBPVP8X'), 8); view.setUint32(16, 10, true);
+    const incompleteWebp = webp.slice(); new DataView(incompleteWebp.buffer).setUint32(16, 30, true);
+    const animatedWebp = webp.slice(); animatedWebp[20] = 2;
+    const failures: [PixelGridErrorCode, () => unknown][] = [
+        ['INVALID_DIMENSIONS', () => createGrid(0, 1)],
+        ['PIXEL_DATA_LENGTH', () => createGrid(1, 1, [0, 0, 0])],
+        ['INVALID_RGBA_CHANNELS', () => createGrid(1, 1, [0, 0, NaN, 0])],
+        ['INVALID_PIXEL_POSITION', () => paintLine(grid, [0, 0], [NaN, 1], [0, 0, 0, 0])],
+        ['INVALID_RESIZE_MODE', () => resizeImage(grid, 1, 1, 'invalid' as ResizeMode)],
+        ['SOURCE_IMAGE_LIMIT', () => resizeImage({ width: 2049, height: 1, pixels: [] }, 1, 1)],
+        ['INVALID_HISTORY_LIMIT', () => new GridHistory(0)],
+        ['PROJECT_TOO_LARGE', () => parseProject(' '.repeat(LIMITS.maxProjectBytes + 1))],
+        ['PROJECT_INVALID_JSON', () => parseProject('{')],
+        ['PROJECT_UNSUPPORTED_FORMAT', () => parseProject('{}')],
+        ['PROJECT_MISSING_FIELDS', () => parseProject(JSON.stringify(missing))],
+        ['PROJECT_UNSUPPORTED_FIELDS', () => parseProject(JSON.stringify({ ...project, extra: true }))],
+        ['IMAGE_FILE_SIZE', () => inspectImage(new Uint8Array())],
+        ['PNG_INCOMPLETE_CHUNK', () => inspectImage(incompletePng)],
+        ['PNG_ANIMATED', () => inspectImage(animatedPng)],
+        ['JPEG_INVALID_MARKER', () => inspectImage(Uint8Array.from([255, 216, 0, 0, 0, 0]))],
+        ['JPEG_INCOMPLETE_SEGMENT', () => inspectImage(Uint8Array.from([255, 216, 255, 192, 0, 255]))],
+        ['JPEG_INVALID_DIMENSIONS', () => inspectImage(Uint8Array.from([255, 216, 255, 192, 0, 7, 0, 0, 0, 0, 0]))],
+        ['WEBP_INCOMPLETE_CHUNK', () => inspectImage(incompleteWebp)],
+        ['WEBP_ANIMATED', () => inspectImage(animatedWebp)],
+        ['IMAGE_UNSUPPORTED_FORMAT', () => inspectImage(new TextEncoder().encode('GIF89a'))],
+        ['IMAGE_MIME_MISMATCH', () => inspectImage(png, 'image/jpeg')],
+        ['IMAGE_DIMENSIONS_LIMIT', () => inspectImage(largePng)],
+    ];
+    for (const [code, action] of failures) assert.throws(action, (error: unknown) => error instanceof PixelGridError && error.name === 'PixelGridError' && error.code === code, code);
+    vi.stubGlobal('CompressionStream', undefined);
+    try { await assert.rejects(encodePng(grid), (error: unknown) => error instanceof PixelGridError && error.code === 'PNG_EXPORT_UNSUPPORTED'); }
+    finally { vi.unstubAllGlobals(); }
+});
+
+test('sparse RGBA arrays cannot silently turn missing channels into zero', () => {
+    const sparse = new Array<number>(4); sparse[0] = 81; sparse[3] = 0;
+    const grid = createGrid(1, 1, [11, 22, 33, 128]), before = serializeProject(grid);
+    for (const operation of [() => createGrid(1, 1, sparse), () => setPixel(grid, 0, 0, sparse)]) {
+        assert.throws(operation, (error: unknown) => error instanceof PixelGridError && error.code === 'INVALID_RGBA_CHANNELS');
+    }
+    assert.equal(serializeProject(grid), before);
+    assert.equal(1 in sparse, false);
 });

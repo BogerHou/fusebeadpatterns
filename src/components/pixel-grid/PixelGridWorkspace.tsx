@@ -8,6 +8,8 @@ import {
     serializeProject, parseProject, inspectImage, encodePng,
     type PixelGrid, type PixelPoint, type ResizeMode, type RgbaSource,
 } from '@/lib/pixel-grid/core';
+import { reducePixelGridColors, countVisibleColors, encodeScaledPng, type ColorLimit } from '@/lib/pixel-grid/conversion';
+import { PIXEL_GRID_MESSAGES, PixelGridUiError, pixelGridErrorMessage, type PixelGridLocale } from '@/lib/pixel-grid/messages';
 import styles from './PixelGridWorkspace.module.css';
 
 type Tool = 'brush' | 'eraser' | 'pan';
@@ -18,11 +20,6 @@ type Stroke = {
     id: number; tool: 'brush' | 'eraser'; last: PixelPoint | null; color: Color; before: PixelGrid;
 } | { id: number; tool: 'pan'; start: PixelPoint; scroll: PixelPoint };
 
-const MODE_LABELS: Record<ResizeMode, string> = {
-    fit: 'kept proportions with transparent margins',
-    crop: 'cropped from the center',
-    stretch: 'stretched to fill',
-};
 const MOVES: Record<string, PixelPoint> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
 function subscribeWideViewport(callback: () => void) {
@@ -41,7 +38,7 @@ function drawGrid(target: HTMLCanvasElement, grid: PixelGrid, scale: number, lin
     source.width = grid.width;
     source.height = grid.height;
     const sourceContext = source.getContext('2d');
-    if (!context || !sourceContext) throw new Error('Canvas drawing is unavailable in this browser.');
+    if (!context || !sourceContext) throw new PixelGridUiError('canvasUnavailable');
     sourceContext.putImageData(new ImageData(new Uint8ClampedArray(grid.pixels), grid.width, grid.height), 0, 0);
     context.imageSmoothingEnabled = false;
     context.drawImage(source, 0, 0, target.width, target.height);
@@ -67,24 +64,28 @@ function drawGrid(target: HTMLCanvasElement, grid: PixelGrid, scale: number, lin
     source.width = source.height = 0;
 }
 
-function errorMessage(error: unknown) {
-    return error instanceof Error && !(error instanceof TypeError)
-        ? error.message
-        : 'This operation could not be completed. Your drawing was kept. Please try again.';
+export interface PixelGridWorkspaceProps {
+    locale?: PixelGridLocale;
+    experience?: 'grid' | 'converter';
 }
 
-export default function PixelGridWorkspace() {
+export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' }: PixelGridWorkspaceProps = {}) {
+    const text = PIXEL_GRID_MESSAGES[locale];
+    const converter = experience === 'converter';
+    const initialSide = converter ? 64 : 16;
     const isWideViewport = useSyncExternalStore(subscribeWideViewport, wideViewport, serverViewport);
     const [settingsExpanded, setSettingsExpanded] = useState<boolean | null>(null);
-    const [grid, setGrid] = useState(() => createGrid(16, 16));
-    const [width, setWidth] = useState('16');
-    const [height, setHeight] = useState('16');
+    const [grid, setGrid] = useState(() => createGrid(initialSide, initialSide));
+    const [width, setWidth] = useState(String(initialSide));
+    const [height, setHeight] = useState(String(initialSide));
     const [mode, setMode] = useState<ResizeMode>('fit');
     const [tool, setTool] = useState<Tool>('brush');
     const [color, setColor] = useState('#f06a45');
     const [alpha, setAlpha] = useState(255);
     const [zoom, setZoom] = useState<Zoom>('fit');
-    const [showGrid, setShowGrid] = useState(true);
+    const [showGrid, setShowGrid] = useState(!converter);
+    const [colorLimit, setColorLimit] = useState<ColorLimit>('original');
+    const [exportScale, setExportScale] = useState<1 | 2 | 4 | 8 | 16>(8);
     const [cursor, setCursor] = useState<PixelPoint>([0, 0]);
     const [focused, setFocused] = useState(false);
     const [panning, setPanning] = useState(false);
@@ -93,7 +94,9 @@ export default function PixelGridWorkspace() {
     const [dirty, setDirty] = useState(false);
     const [sourceInfo, setSourceInfo] = useState<{ name: string; width: number; height: number } | null>(null);
     const [busy, setBusy] = useState(false);
-    const [status, setStatus] = useState({ text: 'Ready. Draw or import an image.', error: false });
+    const [status, setStatus] = useState({ text: converter ? text.converterReady : text.ready, error: false });
+    const imageFileRef = useRef<HTMLInputElement>(null);
+    const projectFileRef = useRef<HTMLInputElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef(grid);
@@ -156,18 +159,27 @@ export default function PixelGridWorkspace() {
     const action = useCallback((callback: () => void) => {
         if (busyRef.current) return;
         finishStroke();
-        try { callback(); } catch (error) { setStatus({ text: errorMessage(error), error: true }); }
-    }, [finishStroke]);
+        try { callback(); } catch (error) { setStatus({ text: pixelGridErrorMessage(error, locale), error: true }); }
+    }, [finishStroke, locale]);
 
     const undo = useCallback((redo = false) => action(() => {
         const next = redo ? historyRef.current.redo(gridRef.current) : historyRef.current.undo(gridRef.current);
-        if (next) publish(next, redo ? 'Redid the last operation.' : 'Undid the last operation.');
-    }), [action, publish]);
+        if (next) publish(next, redo ? text.redone : text.undone);
+    }), [action, publish, text]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (canvas) drawGrid(canvas, grid, scale, showGrid, focused && tool !== 'pan' ? cursor : undefined);
-    }, [grid, scale, showGrid, focused, tool, cursor]);
+        if (!canvas) return;
+        try { drawGrid(canvas, grid, scale, showGrid, focused && tool !== 'pan' ? cursor : undefined); }
+        catch (error) {
+            // Report browser drawing failures without throwing out the workspace.
+            // Cancel the queued report if a newer render or unmount supersedes it.
+            const timer = window.setTimeout(() => {
+                if (mountedRef.current) setStatus({ text: pixelGridErrorMessage(error, locale), error: true });
+            }, 0);
+            return () => window.clearTimeout(timer);
+        }
+    }, [grid, scale, showGrid, focused, tool, cursor, locale]);
 
     useEffect(() => {
         const viewport = viewportRef.current;
@@ -207,7 +219,7 @@ export default function PixelGridWorkspace() {
             event.preventDefault();
             event.stopImmediatePropagation();
             finishStroke();
-            if (window.confirm('You have unsaved pixel edits. Cancel to save an editable project, or leave without saving.')) {
+            if (window.confirm(text.leave)) {
                 allowUnload.current = true;
                 window.location.assign(destination.href);
             }
@@ -239,7 +251,7 @@ export default function PixelGridWorkspace() {
             for (const [url, timer] of activeDownloads) { window.clearTimeout(timer); URL.revokeObjectURL(url); }
             activeDownloads.clear();
         };
-    }, [finishStroke, undo]);
+    }, [finishStroke, undo, text]);
 
     function paintColor(): Color {
         return [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16), alpha];
@@ -326,7 +338,7 @@ export default function PixelGridWorkspace() {
     }
 
     function newCanvas(w = Number(width), h = Number(height)) {
-        action(() => commit(createGrid(w, h), `Created a blank ${w} × ${h} canvas. Undo restores the previous drawing.`));
+        action(() => commit(createGrid(w, h), text.created(w, h)));
     }
 
     function resize(fromSource = false) {
@@ -334,8 +346,24 @@ export default function PixelGridWorkspace() {
             const target = dimensions(Number(width), Number(height));
             const source = fromSource ? sourceRef.current : gridRef.current;
             if (!source) return;
-            const next = resizeImage(source, target.width, target.height, mode);
-            commit(next, `${fromSource ? 'Reapplied the last image' : 'Resized the drawing'} to ${target.width} × ${target.height}; ${MODE_LABELS[mode]}. Undo restores your edits.`);
+            const resized = resizeImage(source, target.width, target.height, mode);
+            const next = converter && fromSource ? reducePixelGridColors(resized, colorLimit) : resized;
+            commit(next, converter && fromSource ? text.converted(next.width, next.height, countVisibleColors(next)) : text.resized(fromSource, target.width, target.height, mode));
+        });
+    }
+
+    function detailSize(side: number) {
+        action(() => {
+            const source = sourceRef.current;
+            const next = source ? reducePixelGridColors(resizeImage(source, side, side, mode), colorLimit) : createGrid(side, side);
+            commit(next, source ? text.converted(side, side, countVisibleColors(next)) : text.created(side, side));
+        });
+    }
+
+    function applyColorLimit() {
+        action(() => {
+            const next = reducePixelGridColors(gridRef.current, colorLimit);
+            commit(next, text.reduced(countVisibleColors(next)));
         });
     }
 
@@ -359,16 +387,16 @@ export default function PixelGridWorkspace() {
         const id = ++taskId.current;
         const current = () => mountedRef.current && taskId.current === id;
         try { await callback(current); }
-        catch (error) { if (current()) setStatus({ text: errorMessage(error), error: true }); }
+        catch (error) { if (current()) setStatus({ text: pixelGridErrorMessage(error, locale), error: true }); }
         finally { if (current()) { busyRef.current = false; setBusy(false); syncHistory(); } }
     }
 
     function importImage(file?: File) {
         if (!file) return;
-        void task('Importing image…', async current => {
+        void task(text.importing, async current => {
             const target = dimensions(Number(width), Number(height));
-            if (file.size > LIMITS.maxImageBytes) throw new Error('Choose an image no larger than 8 MiB.');
-            if (typeof createImageBitmap !== 'function') throw new Error('Image import is unavailable in this browser. Try another browser or open a saved Pixel Grid project.');
+            if (file.size > LIMITS.maxImageBytes) throw new PixelGridUiError('imageTooLarge');
+            if (typeof createImageBitmap !== 'function') throw new PixelGridUiError('importUnavailable');
             const data = await file.arrayBuffer();
             if (!current()) return;
             inspectImage(data, file.type);
@@ -376,17 +404,18 @@ export default function PixelGridWorkspace() {
             let sourceCanvas: HTMLCanvasElement | undefined;
             try {
                 try { bitmap = await createImageBitmap(file); }
-                catch { throw new Error('This image could not be decoded. Try a valid static PNG, JPEG or WebP. Your drawing was kept.'); }
+                catch { throw new PixelGridUiError('decodeFailed'); }
                 if (!current()) return;
-                if (bitmap.width > LIMITS.maxImageSide || bitmap.height > LIMITS.maxImageSide || bitmap.width * bitmap.height > LIMITS.maxImagePixels) throw new Error('Decoded image exceeds the 2048 × 2048 pixel limit.');
+                if (bitmap.width > LIMITS.maxImageSide || bitmap.height > LIMITS.maxImageSide || bitmap.width * bitmap.height > LIMITS.maxImagePixels) throw new PixelGridUiError('decodedTooLarge');
                 sourceCanvas = document.createElement('canvas');
                 sourceCanvas.width = bitmap.width; sourceCanvas.height = bitmap.height;
                 const context = sourceCanvas.getContext('2d', { willReadFrequently: true });
-                if (!context) throw new Error('Image import is unavailable in this browser. Your drawing was kept.');
+                if (!context) throw new PixelGridUiError('importContextUnavailable');
                 context.drawImage(bitmap, 0, 0);
                 const source: SourceImage = { width: bitmap.width, height: bitmap.height, pixels: context.getImageData(0, 0, bitmap.width, bitmap.height).data, name: file.name };
-                const next = resizeImage(source, target.width, target.height, mode);
-                commit(next, `Imported ${file.name} (${source.width} × ${source.height}) → ${target.width} × ${target.height}; ${MODE_LABELS[mode]}.`);
+                const resized = resizeImage(source, target.width, target.height, mode);
+                const next = converter ? reducePixelGridColors(resized, colorLimit) : resized;
+                commit(next, text.imported(file.name, source.width, source.height, target.width, target.height, mode));
                 sourceRef.current = source;
                 setSourceInfo({ name: source.name, width: source.width, height: source.height });
             } finally {
@@ -398,12 +427,12 @@ export default function PixelGridWorkspace() {
 
     function importProject(file?: File) {
         if (!file) return;
-        void task('Opening project…', async current => {
-            if (file.size > LIMITS.maxProjectBytes) throw new Error('Project files must be 512 KiB or smaller.');
-            const text = await file.text();
+        void task(text.opening, async current => {
+            if (file.size > LIMITS.maxProjectBytes) throw new PixelGridUiError('projectTooLarge');
+            const contents = await file.text();
             if (!current()) return;
-            const next = parseProject(text);
-            commit(next, `Opened ${file.name}: ${next.width} × ${next.height}. Undo restores the previous drawing.`);
+            const next = parseProject(contents);
+            commit(next, text.opened(file.name, next.width, next.height));
             sourceRef.current = null;
             setSourceInfo(null);
             savedRef.current = createGrid(next.width, next.height, next.pixels);
@@ -412,14 +441,14 @@ export default function PixelGridWorkspace() {
     }
 
     function savePng(withGrid = false) {
-        void task(withGrid ? 'Exporting enlarged grid PNG…' : 'Exporting original-size PNG…', async current => {
+        void task(withGrid ? text.exportingGrid : text.exportingOriginal, async current => {
             const snapshot = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
             let blob: Blob;
             if (withGrid) {
                 const output = document.createElement('canvas');
                 try {
                     drawGrid(output, snapshot, 16, true);
-                    blob = await new Promise<Blob>((resolve, reject) => output.toBlob(value => value ? resolve(value) : reject(new Error('Grid PNG export failed. Your drawing was kept.')), 'image/png'));
+                    blob = await new Promise<Blob>((resolve, reject) => output.toBlob(value => value ? resolve(value) : reject(new PixelGridUiError('gridExportFailed')), 'image/png'));
                 } finally { output.width = output.height = 0; }
             } else {
                 const data = await encodePng(snapshot);
@@ -428,7 +457,20 @@ export default function PixelGridWorkspace() {
             if (!current()) return;
             download(blob, withGrid ? `grid-${snapshot.width}x${snapshot.height}-16x.png` : `pixel-${snapshot.width}x${snapshot.height}.png`);
             trackPixelGridExport({ format: withGrid ? 'grid_png' : 'png' });
-            setStatus({ text: withGrid ? `Downloaded a ${snapshot.width * 16} × ${snapshot.height * 16} grid PNG. Your original pixels are unchanged.` : `Downloaded the original ${snapshot.width} × ${snapshot.height} PNG with no grid. Save a project to keep an editable copy.`, error: false });
+            setStatus({ text: withGrid ? text.exportedGrid(snapshot.width * 16, snapshot.height * 16) : text.exportedOriginal(snapshot.width, snapshot.height), error: false });
+        });
+    }
+
+    function saveScaledPng() {
+        void task(text.exportingScaled, async current => {
+            const snapshot = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
+            const scale = exportScale;
+            const bytes = await encodeScaledPng(snapshot, scale);
+            const blob = new Blob([bytes], { type: 'image/png' });
+            if (!current()) return;
+            download(blob, `pixel-${snapshot.width}x${snapshot.height}-${scale}x.png`);
+            trackPixelGridExport({ format: 'png' });
+            setStatus({ text: text.exportedScaled(snapshot.width * scale, snapshot.height * scale), error: false });
         });
     }
 
@@ -438,67 +480,91 @@ export default function PixelGridWorkspace() {
             download(new Blob([serializeProject(snapshot)], { type: 'application/json' }), `pixel-${snapshot.width}x${snapshot.height}.pixel-grid.json`);
             trackPixelGridExport({ format: 'project' });
             savedRef.current = snapshot; syncHistory();
-            setStatus({ text: 'Editable project download started. Keep this file to reopen your work after a reload.', error: false });
+            setStatus({ text: text.exportedProject, error: false });
         });
     }
 
+    const imageImport = (
+        <section className={`${styles.panel} ${converter ? styles.converterImport : ''}`} aria-labelledby="pixel-import-title">
+            <h2 id="pixel-import-title">{converter ? text.converterTitle : text.importTitle}</h2>
+            <label htmlFor="pixel-image-file">{text.chooseImage}<input ref={imageFileRef} hidden={locale !== 'en'} id="pixel-image-file" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importImage(file); }} /></label>
+            {locale !== 'en' && <button className={styles.spaced} type="button" disabled={busy} onClick={() => imageFileRef.current?.click()} aria-describedby="pixel-import-title">{text.chooseFile}</button>}
+            <p className={styles.hint}>{converter ? text.converterImportHelp : text.importHelp}</p>
+            {converter && <div className={styles.detailChoices}>
+                <p>{text.detail}</p>
+                <div className={styles.buttons}>{[32, 64, 128].map(side => <button type="button" key={side} disabled={busy} onClick={() => detailSize(side)}>{text.detailButton(side)}</button>)}</div>
+                <p className={styles.hint}>{text.detailHelp}</p>
+            </div>}
+            <button className={styles.spaced} type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{converter ? text.reconvert : text.reapply}</button>
+            <p className={styles.hint}>{sourceInfo ? (converter ? text.converterLastImage : text.lastImage)(sourceInfo.name, sourceInfo.width, sourceInfo.height) : converter ? text.converterNoImage : text.noImage}</p>
+        </section>
+    );
+
     return (
-        <div className={styles.workspace} id="pixel-grid-workspace" aria-busy={busy}>
+        <div className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
+            {converter && imageImport}
             <details className={styles.settingsDisclosure} open={settingsExpanded ?? isWideViewport}>
-                <summary onClick={event => { event.preventDefault(); setSettingsExpanded(!(settingsExpanded ?? isWideViewport)); }}>Canvas &amp; image settings</summary>
-            <aside className={styles.settings} aria-label="Canvas and image settings">
+                <summary onClick={event => { event.preventDefault(); setSettingsExpanded(!(settingsExpanded ?? isWideViewport)); }}>{text.settings}</summary>
+            <aside className={styles.settings} aria-label={text.settingsAria}>
                 <section className={styles.panel} aria-labelledby="pixel-size-title">
-                    <h2 id="pixel-size-title">Canvas size</h2>
-                    <div className={styles.buttons}>{([[16, 16], [32, 32], [24, 40]] as const).map(([w, h]) => <button type="button" key={`${w}x${h}`} disabled={busy} onClick={() => newCanvas(w, h)}>New {w} × {h}</button>)}</div>
+                    <h2 id="pixel-size-title">{text.canvasSize}</h2>
+                    {!converter && <div className={styles.buttons}>{([[16, 16], [32, 32], [24, 40]] as const).map(([w, h]) => <button type="button" key={`${w}x${h}`} disabled={busy} onClick={() => newCanvas(w, h)}>{text.newSize(w, h)}</button>)}</div>}
                     <div className={styles.dimensions}>
-                        <label htmlFor="pixel-width">Width<input id="pixel-width" type="number" min="1" max="128" step="1" value={width} disabled={busy} onChange={event => setWidth(event.target.value)} /></label>
+                        <label htmlFor="pixel-width">{text.width}<input id="pixel-width" type="number" min="1" max="128" step="1" value={width} disabled={busy} onChange={event => setWidth(event.target.value)} /></label>
                         <span aria-hidden="true">×</span>
-                        <label htmlFor="pixel-height">Height<input id="pixel-height" type="number" min="1" max="128" step="1" value={height} disabled={busy} onChange={event => setHeight(event.target.value)} /></label>
+                        <label htmlFor="pixel-height">{text.height}<input id="pixel-height" type="number" min="1" max="128" step="1" value={height} disabled={busy} onChange={event => setHeight(event.target.value)} /></label>
                     </div>
-                    <label htmlFor="pixel-image-mode">Image sizing<select id="pixel-image-mode" value={mode} disabled={busy} onChange={event => setMode(event.target.value as ResizeMode)}><option value="fit">Keep proportions</option><option value="crop">Center crop</option><option value="stretch">Stretch</option></select></label>
-                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy} onClick={() => resize()}>Resize drawing</button><button type="button" disabled={busy} onClick={() => newCanvas()}>New blank canvas</button></div>
-                    <p className={styles.hint}>1–128 pixels per side. Keep proportions leaves transparent margins; Center crop fills the canvas; Stretch changes proportions. Size changes apply when you resize, import, reapply an image or start a blank canvas. Each operation can be undone.</p>
+                    <label htmlFor="pixel-image-mode">{text.sizing}<select id="pixel-image-mode" value={mode} disabled={busy} onChange={event => setMode(event.target.value as ResizeMode)}><option value="fit">{text.fit}</option><option value="crop">{text.crop}</option><option value="stretch">{text.stretch}</option></select></label>
+                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy} onClick={() => resize()}>{text.resizeDrawing}</button><button type="button" disabled={busy} onClick={() => newCanvas()}>{text.newBlank}</button></div>
+                    <p className={styles.hint}>{text.sizeHelp}</p>
                 </section>
-                <section className={styles.panel} aria-labelledby="pixel-import-title">
-                    <h2 id="pixel-import-title">Import image</h2>
-                    <label htmlFor="pixel-image-file">Choose PNG, JPEG or WebP<input id="pixel-image-file" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importImage(file); }} /></label>
-                    <p className={styles.hint}>Static images only: up to 8 MiB and 2048 × 2048 pixels. Import replaces the drawing using the size and mode above. Colors use nearest-neighbor sampling, without a bead palette or automatic color reduction.</p>
-                    <button className={styles.spaced} type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>Reapply last image</button>
-                    <p className={styles.hint}>{sourceInfo ? `Last image: ${sourceInfo.name} (${sourceInfo.width} × ${sourceInfo.height}). Reapply replaces your edits; Undo restores them.` : 'After importing, you can change the size or sizing mode and reapply the same image.'}</p>
-                </section>
+                {converter ? <section className={styles.panel} aria-labelledby="pixel-colors-title">
+                    <h2 id="pixel-colors-title">{text.colorLimit}</h2>
+                    <label htmlFor="pixel-color-limit">{text.colorLimit}<select id="pixel-color-limit" value={colorLimit} disabled={busy} onChange={event => setColorLimit(event.target.value === 'original' ? 'original' : Number(event.target.value) as ColorLimit)}><option value="original">{text.originalColors}</option>{[8, 16, 32, 64].map(value => <option key={value} value={value}>{text.colors(value)}</option>)}</select></label>
+                    <p className={styles.hint}>{text.colorHelp}</p>
+                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button><button type="button" disabled={busy || colorLimit === 'original'} onClick={applyColorLimit}>{text.reduceCurrent}</button></div>
+                    <p className={styles.hint}>{text.converterLimitHelp}</p>
+                </section> : imageImport}
             </aside>
             </details>
             <div className={styles.drawingColumn}>
                 <section className={styles.panel} aria-labelledby="pixel-canvas-title">
-                    <div className={styles.heading}><h2 id="pixel-canvas-title">{grid.width} × {grid.height} pixels</h2><span>{nontransparent.toLocaleString('en-US')} nontransparent pixels</span></div>
-                    <div className={styles.drawingTools} aria-label="Drawing tools">
-                        {([['brush', 'Brush'], ['eraser', 'Eraser'], ['pan', 'Pan']] as const).map(([id, label]) => <button type="button" key={id} aria-pressed={tool === id} disabled={busy} onClick={() => action(() => setTool(id))}>{label}</button>)}
-                        <button className={styles.historyButton} type="button" aria-label="Undo" title="Undo" disabled={busy || !historyState.undo} onClick={() => undo()}><Undo2 size={20} aria-hidden="true" /></button><button className={styles.historyButton} type="button" aria-label="Redo" title="Redo" disabled={busy || !historyState.redo} onClick={() => undo(true)}><Redo2 size={20} aria-hidden="true" /></button>
+                    <div className={styles.heading}><h2 id="pixel-canvas-title">{text.pixels(grid.width, grid.height)}</h2><span>{text.visiblePixels(nontransparent)}{converter ? ` · ${text.visibleColors(countVisibleColors(grid))}` : ''}</span></div>
+                    <div className={styles.drawingTools} aria-label={text.drawingTools}>
+                        {(['brush', 'eraser', 'pan'] as const).map(id => <button type="button" key={id} aria-pressed={tool === id} disabled={busy} onClick={() => action(() => setTool(id))}>{text[id]}</button>)}
+                        <button className={styles.historyButton} type="button" aria-label={text.undo} title={text.undo} disabled={busy || !historyState.undo} onClick={() => undo()}><Undo2 size={20} aria-hidden="true" /></button><button className={styles.historyButton} type="button" aria-label={text.redo} title={text.redo} disabled={busy || !historyState.redo} onClick={() => undo(true)}><Redo2 size={20} aria-hidden="true" /></button>
                     </div>
                     <div className={styles.paintSettings}>
-                        <label className={styles.color} htmlFor="pixel-color">Color<input id="pixel-color" type="color" value={color} disabled={busy} onChange={event => setColor(event.target.value)} /></label>
-                        <label className={styles.alpha} htmlFor="pixel-alpha">Alpha <output>{alpha} / 255</output><input id="pixel-alpha" type="range" min="0" max="255" step="1" value={alpha} disabled={busy} onChange={event => setAlpha(Number(event.target.value))} /></label>
+                        <label className={styles.color} htmlFor="pixel-color">{text.color}<input id="pixel-color" type="color" value={color} disabled={busy} onChange={event => setColor(event.target.value)} /></label>
+                        <label className={styles.alpha} htmlFor="pixel-alpha">{text.alpha} <output>{text.number(alpha)} / 255</output><input id="pixel-alpha" type="range" min="0" max="255" step="1" value={alpha} disabled={busy} onChange={event => setAlpha(Number(event.target.value))} /></label>
                     </div>
                     <div className={styles.viewSettings}>
-                        <label htmlFor="pixel-zoom">Zoom<select id="pixel-zoom" value={zoom} disabled={busy} onChange={event => action(() => { const next = event.target.value as Zoom; setZoom(next); if (next === 'fit' && viewportRef.current) viewportRef.current.scrollLeft = viewportRef.current.scrollTop = 0; })}><option value="fit">Fit</option>{[4, 8, 16, 24, 32].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
-                        <label className={styles.check} htmlFor="pixel-show-grid"><input id="pixel-show-grid" type="checkbox" checked={showGrid} disabled={busy} onChange={event => setShowGrid(event.target.checked)} />Grid</label>
-                        <button type="button" disabled={busy} onClick={() => action(() => commit(createGrid(gridRef.current.width, gridRef.current.height), 'Drawing cleared. Undo restores it.'))}>Clear drawing</button>
+                        <label htmlFor="pixel-zoom">{text.zoom}<select id="pixel-zoom" value={zoom} disabled={busy} onChange={event => action(() => { const next = event.target.value as Zoom; setZoom(next); if (next === 'fit' && viewportRef.current) viewportRef.current.scrollLeft = viewportRef.current.scrollTop = 0; })}><option value="fit">{text.zoomFit}</option>{[4, 8, 16, 24, 32].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
+                        <label className={styles.check} htmlFor="pixel-show-grid"><input id="pixel-show-grid" type="checkbox" checked={showGrid} disabled={busy} onChange={event => setShowGrid(event.target.checked)} />{text.grid}</label>
+                        <button type="button" disabled={busy} onClick={() => action(() => commit(createGrid(gridRef.current.width, gridRef.current.height), text.cleared))}>{text.clear}</button>
                     </div>
-                    <div ref={viewportRef} className={styles.viewport} aria-label="Scrollable drawing area">
-                        <div className={styles.stage}><canvas ref={canvasRef} width={grid.width * scale} height={grid.height * scale} tabIndex={0} role="img" aria-label={`Editable pixel canvas, ${grid.width} columns and ${grid.height} rows. Cursor at column ${cursor[0] + 1}, row ${cursor[1] + 1}.`} aria-describedby="pixel-canvas-help pixel-cursor" className={styles.canvas} style={{ width: grid.width * scale, height: grid.height * scale, cursor: tool === 'pan' ? panning ? 'grabbing' : 'grab' : 'crosshair' }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishStroke(event.pointerId)} onPointerCancel={event => finishStroke(event.pointerId)} onLostPointerCapture={event => finishStroke(event.pointerId)} onKeyDown={keyboard} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} /></div>
+                    <div ref={viewportRef} className={styles.viewport} aria-label={text.scrollArea}>
+                        <div className={styles.stage}><canvas ref={canvasRef} width={grid.width * scale} height={grid.height * scale} tabIndex={0} role="img" aria-label={text.canvasAria(grid.width, grid.height, cursor[0] + 1, cursor[1] + 1)} aria-describedby="pixel-canvas-help pixel-cursor" className={styles.canvas} style={{ width: grid.width * scale, height: grid.height * scale, cursor: tool === 'pan' ? panning ? 'grabbing' : 'grab' : 'crosshair' }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishStroke(event.pointerId)} onPointerCancel={event => finishStroke(event.pointerId)} onLostPointerCapture={event => finishStroke(event.pointerId)} onKeyDown={keyboard} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} /></div>
                     </div>
-                    <p id="pixel-cursor" className={styles.hint}>Cursor: column {cursor[0] + 1}, row {cursor[1] + 1} · {scale} screen pixels per cell</p>
-                    <p id="pixel-canvas-help" className={styles.hint}>Use one finger to draw. Select Pan to move a zoomed view. Arrows move the cursor; Space or Enter draws; Delete erases. Ctrl/Cmd+Z undoes; Shift+Ctrl/Cmd+Z redoes. Zoom and the grid only change the view.</p>
+                    <p id="pixel-cursor" className={styles.hint}>{text.cursor(cursor[0] + 1, cursor[1] + 1, scale)}</p>
+                    <p id="pixel-canvas-help" className={styles.hint}>{text.drawingHelp}</p>
                 </section>
                 <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
                 <section className={styles.panel} aria-labelledby="pixel-save-title">
-                    <div className={styles.heading}><h2 id="pixel-save-title">Save your work</h2><span>{dirty ? 'Unsaved changes' : 'Project saved / unchanged'}</span></div>
-                    <div className={styles.buttons}><button className={styles.primary} type="button" disabled={busy} onClick={() => savePng()}>Save original-size PNG</button><button type="button" disabled={busy} onClick={() => savePng(true)}>Save enlarged grid PNG</button><button type="button" disabled={busy} onClick={saveProject}>Save editable project</button></div>
-                    <p className={styles.hint}>Original PNG: one cell = one pixel, current RGBA, no grid or background. Grid PNG: 16× larger with lines; it is not a sprite file or a full-size bead template.</p>
-                    <label className={styles.spaced} htmlFor="pixel-project-file">Open a saved Pixel Grid project<input id="pixel-project-file" type="file" accept=".json,application/json" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importProject(file); }} /></label>
-                    <p className={styles.hint}>Pixel Grid JSON version 1, up to 512 KiB. Bead-pattern projects use a different format. Undo remembers up to 50 operations in this session. Refreshing loses this session; save an editable project to keep your work.</p>
+                    <div className={styles.heading}><h2 id="pixel-save-title">{text.saveTitle}</h2><span>{dirty ? text.dirty : text.saved}</span></div>
+                    {converter && <div className={styles.scaledExport}>
+                        <label htmlFor="pixel-export-scale">{text.exportScale}<select id="pixel-export-scale" value={exportScale} disabled={busy} onChange={event => setExportScale(Number(event.target.value) as 1 | 2 | 4 | 8 | 16)}>{[1, 2, 4, 8, 16].map(value => <option key={value} value={value}>{text.exportDimensions(grid.width, grid.height, value)}</option>)}</select></label>
+                        <button className={styles.primary} type="button" disabled={busy} onClick={saveScaledPng}>{text.saveScaled}</button>
+                        <p className={styles.hint}>{text.scaledHelp}</p>
+                    </div>}
+                    <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={busy} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={busy} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={busy} onClick={saveProject}>{text.saveProject}</button></div>
+                    <p className={styles.hint}>{text.exportHelp}</p>
+                    <label className={styles.spaced} htmlFor="pixel-project-file">{text.openProject}<input ref={projectFileRef} hidden={locale !== 'en'} id="pixel-project-file" type="file" accept=".json,application/json" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importProject(file); }} /></label>
+                    {locale !== 'en' && <button className={styles.spaced} type="button" disabled={busy} onClick={() => projectFileRef.current?.click()} aria-label={text.openProject}>{text.chooseFile}</button>}
+                    <p className={styles.hint}>{text.projectHelp}</p>
+                    {converter && <p className={styles.hint}>{text.converterProjectHelp}</p>}
                 </section>
-                <p className={styles.hint}>Checkerboard means transparency. Browser image decoding may change color profiles and hidden RGB in fully transparent pixels. Projects and original-size PNGs preserve the current pixel data. Your images are processed on this device.</p>
+                <p className={styles.hint}>{text.processingHelp}</p>
             </div>
         </div>
     );

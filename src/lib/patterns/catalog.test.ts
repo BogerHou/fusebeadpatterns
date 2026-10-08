@@ -1,4 +1,5 @@
 import { readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -19,7 +20,7 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(104);
+        expect(patterns).toHaveLength(106);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -65,6 +66,8 @@ describe('pattern library content integrity', () => {
                     'original-friendly-ghost': 'Original ghost design v1',
                     'original-christmas-tree': 'Original Christmas tree design v1',
                     'original-halloween-bat': 'Original Halloween bat design v1',
+                    'original-snowman': 'Original snowman design v1',
+                    'original-gingerbread-man': 'Original gingerbread man design v1',
                 };
                 expect(originalVersions[pattern.id]).toBeDefined();
                 expect(pattern.version).toBe(originalVersions[pattern.id]);
@@ -98,6 +101,33 @@ describe('pattern library content integrity', () => {
         const junimo = getPatternById('sdv-junimo');
         expect(junimo?.notes.join(' ')).toContain('three separate parts');
         expect(junimo?.notes.join(' ')).toContain('backing');
+    });
+
+    it.each([
+        {
+            id: 'original-snowman', slug: 'snowman', motif: [21, 25], beads: 351,
+            rgbaSha256: 'fb93ee3e1a39210b05f032a1799c279affb14a6eaa40c8104c0b02c17be5f778',
+            colors: [['80-19001', 'White', '#eaefee', 247], ['80-19018', 'Black', '#323234', 56], ['80-19005', 'Red', '#b0353c', 43], ['80-19004', 'Orange', '#eb7b31', 5]],
+        },
+        {
+            id: 'original-gingerbread-man', slug: 'gingerbread-man', motif: [23, 25], beads: 327,
+            rgbaSha256: '65b0551ed86c1af5b24c26fa4219c0d08ff8e9d8f3eb2c7cbc30fd191c3da92b',
+            colors: [['80-15250', 'Gingerbread', '#7e5446', 264], ['80-19001', 'White', '#eaefee', 51], ['80-19005', 'Red', '#b0353c', 12]],
+        },
+    ])('$id keeps its reviewed native grid and Perler material list', async ({ id, slug, motif, beads, rgbaSha256, colors }) => {
+        const pattern = getPatternById(id)!;
+        expect(pattern.slug).toBe(slug);
+        expect(pattern.source).toBeNull();
+        expect(pattern.collectionId).toBeNull();
+        expect([pattern.motifWidth, pattern.motifHeight]).toEqual(motif);
+        expect(pattern.beads).toBe(beads);
+        expect(pattern.palette.map(({ ref, name, hex, count }) => [ref, name, hex, count])).toEqual(colors);
+        const pixels = await sharp(publicPath(pattern.assets.pixels)).ensureAlpha().raw().toBuffer();
+        // Locked to the reviewed v1 source, independently of future catalog regeneration.
+        expect(createHash('sha256').update(pixels).digest('hex')).toBe(rgbaSha256);
+        const draft = parseEditorProject(await readFile(publicPath(pattern.assets.project), 'utf8'))!;
+        expect(draft.selectedPaletteIds).toEqual(['perler']);
+        expect(draft.activePalettes.map(({ name }) => name)).toEqual(['Perler Midi']);
     });
 
     it('does not count duplicate pixel artwork as separate patterns', async () => {

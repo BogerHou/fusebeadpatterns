@@ -80,6 +80,31 @@ export const patternTopics: readonly PatternTopic[] = [
         ],
         updatedAt: '2026-10-08',
     },
+    {
+        slug: 'christmas',
+        label: 'Christmas patterns',
+        title: 'Christmas Perler Bead Patterns',
+        description: 'Make a Christmas tree, snowman or gingerbread man with three free Perler bead patterns. Download printable PDFs or edit each single-board design.',
+        intro: 'Choose a Christmas tree, snowman or gingerbread man for a festive bead project. Each original design fits one 29 × 29 midi pegboard. Open a picture for its free PDF, grid PNG, color list and editable pattern.',
+        patternIds: [
+            'original-christmas-tree',
+            'original-snowman',
+            'original-gingerbread-man',
+        ],
+        selectionHeading: 'Making your Christmas pattern',
+        selectionNotes: [
+            'The downloads use Perler Midi colors and a single 29 × 29 board. The gingerbread man uses three colors; the tree and snowman use four. Check the individual color list before gathering beads.',
+            'These are flat original designs. They have not been physically assembled, iron-tested or tested for hanging. If you plan to hang a finished piece, check its strength and attachment before use.',
+            'Print the PDF at 100% / actual size and check its 50 mm scale. The PNG is a chart to follow, not an actual-size placement template.',
+            'For Hama or Artkal colors, open the pattern in the editor, change the bead brand while keeping the board settings, and export a new chart.',
+        ],
+        relatedLinks: [
+            { href: '/guides/how-to-iron-perler-beads', label: 'Ironing guide' },
+            { href: '/guides/perler-bead-pegboards', label: 'Pegboard size guide' },
+            { href: '/guides/perler-to-hama-artkal', label: 'Switch bead brands' },
+        ],
+        updatedAt: '2026-10-08',
+    },
 ];
 
 export function getPatternTopicBySlug(slug: string): PatternTopic | undefined {

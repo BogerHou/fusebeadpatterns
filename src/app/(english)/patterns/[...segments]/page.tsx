@@ -7,6 +7,7 @@ import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { PatternGrid, toPatternCard } from '@/components/patterns/PatternCards';
 import PatternTopicPage from '@/components/patterns/PatternTopicPage';
+import PatternShare from '@/components/patterns/PatternShare';
 import { patterns, patternCollections, getPatternBySlug, getCollectionBySlug, getPatternsForCollection, getPatternHref, type Pattern } from '@/lib/patterns/catalog';
 import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib/patterns/topics';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
@@ -56,6 +57,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function PatternDetail({ pattern }: { pattern: Pattern }) {
     const collection = patternCollections.find((item) => item.id === pattern.collectionId);
     const href = getPatternHref(pattern);
+    const christmasTopic = getPatternTopicBySlug('christmas');
+    const hasChristmasTopic = christmasTopic?.patternIds.includes(pattern.id);
     const related = patterns.filter((item) => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
     const structuredData = {
         '@context': 'https://schema.org', '@type': 'WebPage',
@@ -87,6 +90,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Print at 100% / actual size. Check the PDF&apos;s 50 mm scale before using it as a placement guide.</p>
                         <Link href={`/editor?pattern=${pattern.id}`} prefetch={false} data-pattern-event="pattern_editor_open" data-pattern-id={pattern.id} data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="text-link mt-5 inline-flex min-h-11 items-center">Open in editor <span aria-hidden="true" className="ml-2">→</span></Link>
                         <p className="text-sm leading-6 text-[#59685d]">Adjust individual beads or colors, then save your own version. These downloads use Perler colors. For Hama or Artkal, change the color brand in the editor and export a new pattern. <Link href={brandGuideHref} className="text-link">How to switch bead brands</Link>.</p>
+                        <PatternShare key={href} url={`${siteUrl}${href}`} title={patternPageTitle(pattern)} />
                     </div>
                 </div>
                 <div className="mt-14 grid items-start gap-10 lg:grid-cols-[1.08fr_1fr] lg:gap-14">
@@ -120,6 +124,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     {pattern.source ? <div className="mt-3 max-w-[70ch]"><p>{pattern.source.description}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link mt-2 inline-block">{pattern.source.label}</a></div> : <p className="mt-3">An original design on a bead grid. It does not depict a named game or anime character.</p>}
                     <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2"><a href={pattern.assets.project} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="project" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="text-link">Download editable project</a><a href={pattern.assets.pixels} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="png" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="text-link">Download pattern pixels</a></div>
                 </details>
+                {hasChristmasTopic && <p className="mt-6"><Link href="/patterns/christmas" className="text-link">More Christmas patterns</Link></p>}
             </article>
             {related.length > 0 && <section className="mt-16 border-t border-[#d9ded5] pt-8 sm:pt-10"><h2 className="section-heading mb-7">More {collection?.title ?? 'original'} patterns</h2><PatternGrid patterns={related.map(toPatternCard)} headingLevel={3} /></section>}
         </>

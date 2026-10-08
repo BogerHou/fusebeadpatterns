@@ -521,6 +521,16 @@ const libraryProjects: LibraryProject[] = [
         "id": "original-halloween-bat",
         "title": "Halloween Bat",
         "projectUrl": "/patterns/original-halloween-bat/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-snowman",
+        "title": "Snowman",
+        "projectUrl": "/patterns/original-snowman/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-gingerbread-man",
+        "title": "Gingerbread Man",
+        "projectUrl": "/patterns/original-gingerbread-man/pattern.bead-pattern.json"
     }
 ];
 

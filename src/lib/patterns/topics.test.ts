@@ -48,4 +48,42 @@ describe('curated pattern topics', () => {
             expect(occupied.size, `${pattern.id} contains a detached piece`).toBe(0);
         }
     });
+
+    it('selects exactly three flat Christmas originals with connected single-board grids', async () => {
+        const topic = getPatternTopicBySlug('christmas')!;
+        expect(topic.patternIds).toEqual(['original-christmas-tree', 'original-snowman', 'original-gingerbread-man']);
+        expect(topic.title).toBe('Christmas Perler Bead Patterns');
+        for (const pattern of getPatternsForTopic(topic)) {
+            expect(pattern.source).toBeNull();
+            expect(pattern.collectionId).toBeNull();
+            expect(pattern.version).toMatch(/^Original .+ design v1$/);
+            expect([pattern.gridWidth, pattern.gridHeight]).toEqual([29, 29]);
+            expect(pattern.colorCount).toBeLessThanOrEqual(4);
+            expect(pattern.notes.join(' ')).toContain('not been physically assembled or iron-tested');
+            const draft = parseEditorProject(await readFile(path.join(process.cwd(), 'public', pattern.assets.project), 'utf8'))!;
+            expect(draft.selectedPaletteIds).toEqual(['perler']);
+            expect([draft.boardId, draft.boardWidth, draft.boardHeight]).toEqual(['midi', 1, 1]);
+            const data = Buffer.from(draft.editedPattern!.data, 'base64');
+            const occupied = new Set<number>();
+            for (let cell = 0; cell < 29 * 29; cell++) if (data[cell * 4 + 3] !== 0) occupied.add(cell);
+            expect(occupied.size).toBe(pattern.beads);
+            // Every occupied cell must stay connected even after removing one bead.
+            for (const removed of [undefined, ...occupied]) {
+                const unvisited = new Set(occupied);
+                if (removed !== undefined) unvisited.delete(removed);
+                const queue = [unvisited.values().next().value!];
+                unvisited.delete(queue[0]);
+                while (queue.length) {
+                    const cell = queue.pop()!;
+                    const x = cell % 29, y = Math.floor(cell / 29);
+                    for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+                        if (nx < 0 || nx >= 29 || ny < 0 || ny >= 29) continue;
+                        const next = ny * 29 + nx;
+                        if (unvisited.delete(next)) queue.push(next);
+                    }
+                }
+                expect(unvisited.size, `${pattern.id}: disconnected after removing ${removed}`).toBe(0);
+            }
+        }
+    });
 });
