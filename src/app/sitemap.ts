@@ -22,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         {
             url: 'https://fusebeadpatterns.art/guides',
-            lastModified: new Date('2026-09-24T00:00:00.000Z'),
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
             changeFrequency: 'monthly',
             priority: 0.8,
         },
@@ -54,6 +54,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         })),
         {
             url: 'https://fusebeadpatterns.art/ja/patterns',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        {
+            url: 'https://fusebeadpatterns.art/ja/guides/photo-to-perler-bead-pattern',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
         ...patternCollections.map((collection) => ({

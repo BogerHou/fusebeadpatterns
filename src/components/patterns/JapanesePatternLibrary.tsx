@@ -139,6 +139,9 @@ export default function JapanesePatternLibrary() {
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
                     PDF内の説明と色名は英語です。画像を押すと図案を拡大表示できます。
                 </p>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+                    自分の画像を使いたい方は、<Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">画像から図案を作る手順</Link>をご覧ください。
+                </p>
 
                 <div id="patterns" className="mt-9 space-y-12">
                     {groups.map((group) => (
@@ -182,8 +185,8 @@ export default function JapanesePatternLibrary() {
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">自分の写真から図案を作れますか？</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
-                                <Link href="/" hrefLang="en" className="text-link">画像から図案を作るツール（英語）</Link>
-                                を利用できます。画像のアップロード、配色の調整、図案の書き出しに対応しています。この日本語ページからのダウンロードには、ツールの操作は必要ありません。
+                                <Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">日本語の作成ガイド</Link>
+                                で、画像のアップロード、配色の調整、PDFの保存まで確認できます。実際に操作するツールの画面は英語です。完成済みの図案をこのページから保存する場合は、ツールの操作は必要ありません。
                             </p>
                         </details>
                     </div>

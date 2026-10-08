@@ -59,6 +59,13 @@ export class PdfPrinter implements Printer {
         this.boardMapping(doc, project, margin, width, height);
         this.usage(doc, usage, width, height, margin, project);
         this.beadMapping(doc, project, reducedColor, width, height, margin);
+        if (
+            project.boardConfiguration.nbBoardWidth === 1 &&
+            project.boardConfiguration.nbBoardHeight === 1
+        ) {
+            // A board-position index is only useful when assembling multiple boards.
+            doc.deletePage(1);
+        }
         const blob = doc.output('blob');
         if (!(blob instanceof Blob)) {
             throw new Error('The PDF could not be generated.');

@@ -295,6 +295,93 @@ export const guidePages: GuidePage[] = [
             { href: '/guides/mini-perler-beads', label: 'Mini bead guide' },
         ],
     },
+    {
+        slug: 'how-to-iron-perler-beads',
+        updatedAt: '2026-10-08',
+        title: 'How to Iron Perler Beads',
+        description:
+            'Learn how to iron Perler beads with the standard fusing method, judge when beads are joined, and troubleshoot loose beads, sticking paper, and excess heat.',
+        eyebrow: 'Finishing Your Pattern',
+        intro:
+            'Have an adult fuse the design with ironing paper and a dry iron on a medium setting. Keep the iron moving, let the first side cool, then remove the design from its pegboard and fuse the reverse. The aim is connected beads with open centers.',
+        sections: [
+            {
+                heading: 'Before you start',
+                body: [
+                    'These steps follow Perler’s standard fusing instructions. Check the instructions supplied with your particular beads, especially for Mini, Biggie, or another brand.',
+                    'Keep your chart nearby for one last check of bead positions and missing colors. A digital preview shows the layout; it cannot tell you whether physical beads have fused.',
+                ],
+                bullets: [
+                    'Your beaded design on its matching pegboard.',
+                    'A household iron, ironing paper, and a flat, heat-safe work surface.',
+                    'A few spare beads for a small test patch.',
+                ],
+            },
+            {
+                heading: '1. Test your iron and cover the beads',
+                body: [
+                    'Turn steam off. Start at medium heat and try a few spare beads before working on your finished design: irons vary, so a dial setting is not a precise temperature guarantee.',
+                    'Flatten creases in the ironing paper and cover the design. The iron must not touch bare beads or the pegboard.',
+                ],
+                links: [
+                    { href: 'https://perler.com/pages/frequently-asked-questions', label: 'Perler’s iron settings and test-patch advice' },
+                ],
+            },
+            {
+                heading: '2. Fuse the first side evenly',
+                body: [
+                    'Move the iron in small circles over the paper without pressing down. Work across the whole design, including its edges. Watch for neighboring bead edges to join while their center holes remain open.',
+                    'Perler gives roughly 10–20 seconds per side as a starting guide. Colors and project size affect the time needed; inspect the joins instead of treating a timer as proof that the design is ready.',
+                ],
+                links: [
+                    { href: 'https://perler.com/blogs/projects/standard-fusing-method', label: 'Perler’s standard method and demonstration video' },
+                ],
+            },
+            {
+                heading: '3. Cool, flip, and fuse the reverse',
+                body: [
+                    'Let the first side cool before removing the paper and lifting the design from the pegboard. Turn the design over, cover the unfused side with ironing paper, and repeat the fusing step. Let it cool completely before handling.',
+                    'Check the finished piece against the chart. If your project uses bead holes for assembly, check those openings too; extra melting can close them.',
+                ],
+            },
+            {
+                heading: 'If beads separate or stick to the paper',
+                body: [
+                    'Loose edges: check for areas that missed even heat. If edges are not joining, Perler recommends adjusting the temperature upward a little. Work gradually rather than switching straight to maximum heat.',
+                    'Sticking paper: let the design cool a little longer and peel slowly. If beads lift with the paper, return them to their positions and re-fuse those sections.',
+                    'Closing holes or a warping pegboard: the heat may be too high. Lower it and check your test patch before continuing. Pressing harder is not the solution.',
+                ],
+                links: [
+                    { href: 'https://perler.com/pages/frequently-asked-questions', label: 'Perler’s fusing troubleshooting advice' },
+                ],
+            },
+            {
+                heading: 'Do you need the tape method?',
+                body: [
+                    'It is an alternative for large projects, not an extra step in the standard method above. Perler describes it as a way to reduce seams between connected boards and beads springing off during fusing. It requires a separate setup and careful transfer before ironing.',
+                    'For a large project, follow Perler’s complete illustrated instructions. The manufacturer explicitly says its tape method is not suitable for Mini Beads.',
+                ],
+                links: [
+                    { href: 'https://perler.com/blogs/projects/the-tape-method-for-fusing-large-projects', label: 'Read Perler’s complete tape-method instructions' },
+                ],
+            },
+            {
+                heading: 'Choose a small pattern for your next project',
+                body: [
+                    'Our easy pattern collection contains connected designs that fit a single 29 × 29 board and use a limited palette. Download the chart, check its color list against your supplies, and place the beads before using this finishing guide.',
+                    'Library charts use Perler Midi colors by default. Changing a chart to Hama or Artkal colors in the editor does not establish that different physical bead brands can be mixed or ironed at the same setting.',
+                ],
+                links: [
+                    { href: '/patterns/easy', label: 'Choose an easy Perler bead pattern' },
+                ],
+            },
+        ],
+        relatedLinks: [
+            { href: '/patterns/easy', label: 'Download an easy pattern' },
+            { href: '/guides/perler-bead-kits-and-storage', label: 'Check your supplies' },
+            { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
+        ],
+    },
 ];
 
 export function getGuideBySlug(slug: string): GuidePage | undefined {
