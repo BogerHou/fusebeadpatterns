@@ -1,12 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
-import Editor from '../components/editor/Editor';
+import Editor from '@/components/editor/Editor';
 import { guidePages } from './guides/guide-data';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 import FeaturedPatterns from '@/components/patterns/FeaturedPatterns';
 import PatternStudy from '@/components/patterns/PatternStudy';
-import './home.css';
+import '../home.css';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 

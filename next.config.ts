@@ -77,6 +77,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
     poweredByHeader: false,
+    // Unmatched routes need one 404 document across the English and Japanese roots.
+    experimental: { globalNotFound: true },
     async redirects() {
         return [
             {

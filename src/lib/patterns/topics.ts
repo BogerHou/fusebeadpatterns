@@ -1,0 +1,90 @@
+import { getPatternById, type Pattern } from './catalog';
+
+export type PatternTopic = {
+    slug: string;
+    label: string;
+    title: string;
+    description: string;
+    intro: string;
+    patternIds: readonly string[];
+    selectionHeading: string;
+    selectionNotes: readonly string[];
+    relatedLinks: ReadonlyArray<{ href: string; label: string }>;
+    updatedAt: string;
+};
+
+export const patternTopics: readonly PatternTopic[] = [
+    {
+        slug: 'easy',
+        label: 'Easy patterns',
+        title: 'Easy Perler Bead Patterns',
+        description: 'Choose easy Perler bead patterns with four colors or fewer and one 29 × 29 board. Find Kirby, Ditto and Mario designs with free printable charts.',
+        intro: 'Start with fewer colors to gather and a single board to fill. These Perler bead patterns use four colors or fewer on one 29 × 29 midi pegboard. Choose a picture for its free PDF, color list and editable pattern.',
+        patternIds: [
+            'smb-super-mushroom',
+            'kirby-adventure-normal',
+            'pokemon-ditto-gen5',
+            'smb-bob-omb-smb3',
+            'kirby-waddle-dee-adventure',
+            'smb-question-block',
+        ],
+        selectionHeading: 'Choosing your first pattern',
+        selectionNotes: [
+            'These designs are selected for their small color lists, single-board layouts and connected shapes. Bob-omb uses two colors; Ditto uses four. A low color count can make sorting beads simpler, but it does not guarantee an easy finish.',
+            'Open a pattern to check its bead counts and assembly notes. The designs have not been physically assembled or iron-tested. Take care when lifting and fusing a finished board, and follow the instructions for your bead brand.',
+            'The printable files use Perler midi colors. Small designs are not the same as mini-size beads: keep the intended board size and check the PDF’s 50 mm scale at 100% / actual size before placing beads.',
+        ],
+        relatedLinks: [
+            { href: '/guides/perler-bead-kits-and-storage', label: 'Beginner supplies guide' },
+            { href: '/guides/perler-bead-pegboards', label: 'Choose a pegboard' },
+            { href: '/patterns/cute', label: 'Cute pattern ideas' },
+        ],
+        updatedAt: '2026-10-08',
+    },
+    {
+        slug: 'cute',
+        label: 'Cute ideas',
+        title: 'Cute Perler Bead Ideas',
+        description: 'Find cute Perler bead ideas featuring Pikachu, Eevee, Kirby, Ditto and Stardew Valley’s Blue Chicken. Open a design for its free printable pattern.',
+        intro: 'Pick a favorite character for your next bead project. Browse Pikachu, Eevee, Kirby and more cute Perler bead ideas, then open a picture to download its free printable chart or edit the colors.',
+        patternIds: [
+            'pokemon-pikachu-gen5',
+            'pokemon-eevee-gen5',
+            'kirby-adventure-normal',
+            'sdv-blue-chicken',
+            'pokemon-ditto-gen5',
+            'pokemon-pichu-gen5',
+            'pokemon-piplup-gen5',
+            'pokemon-jigglypuff-gen5',
+            'pokemon-torchic-gen5',
+            'pokemon-togepi-gen5',
+            'pokemon-mudkip-gen5',
+            'kirby-waddle-dee-adventure',
+        ],
+        selectionHeading: 'From a cute idea to a bead project',
+        selectionNotes: [
+            'This collection brings together recognizable Pokémon, Kirby and Stardew Valley characters. Each pattern page identifies the reference version, so you can check the design before gathering beads.',
+            'For fewer colors, start with Kirby or Ditto. Pikachu, Eevee and the Blue Chicken have thin one-bead connections: read their assembly notes before planning a piece you will move or handle. These patterns have not been physically assembled or iron-tested.',
+            'Every design fits on one 29 × 29 midi pegboard. The drawings are small, but the downloads are not mini-bead placement templates. Print at 100% / actual size and check the scale, or follow the mini bead guide if you use a different bead size.',
+            'Downloads use Perler colors. To work with Hama or Artkal, open the selected pattern in the editor, switch the color brand while keeping the board settings, and export a new chart.',
+        ],
+        relatedLinks: [
+            { href: '/patterns/easy', label: 'Patterns with fewer colors' },
+            { href: '/guides/mini-perler-beads', label: 'Mini bead size guide' },
+            { href: '/guides/perler-to-hama-artkal', label: 'Switch bead brands' },
+        ],
+        updatedAt: '2026-10-08',
+    },
+];
+
+export function getPatternTopicBySlug(slug: string): PatternTopic | undefined {
+    return patternTopics.find((topic) => topic.slug === slug);
+}
+
+export function getPatternsForTopic(topic: PatternTopic): Pattern[] {
+    return topic.patternIds.map((id) => {
+        const pattern = getPatternById(id);
+        if (!pattern) throw new Error(`Unknown pattern ${id} in topic ${topic.slug}`);
+        return pattern;
+    });
+}
