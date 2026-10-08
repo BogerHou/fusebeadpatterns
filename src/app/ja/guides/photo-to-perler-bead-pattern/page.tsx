@@ -56,6 +56,7 @@ export default function JapanesePhotoPatternGuide() {
                         <span lang="en" className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
                     </Link>
                     <nav className="site-nav" aria-label="メインメニュー">
+                        <Link href="/ja">図案を作る</Link>
                         <Link href="/ja/patterns">無料の図案</Link>
                         <Link href="/#generator" hrefLang="en" prefetch={false}>作成ツール（英語）</Link>
                     </nav>
@@ -80,8 +81,11 @@ export default function JapanesePhotoPatternGuide() {
                         画像を読み込み、配色とサイズを決め、必要な部分を直してPDFに保存するまでを紹介します。
                     </p>
                     <p className="mt-4 leading-8 text-muted">
-                        ツールの画面と書き出すPDFの表記は英語です。本文では画面の英語のボタン名と、日本語の意味を並べて説明します。
+                        本文は英語版ツールの操作ガイドです。英語のボタン名と、日本語の意味を並べて説明します。
                         完成済みの図案が欲しい場合は、<Link href="/ja/patterns" className="text-link">日本語の無料図案一覧</Link>から直接保存できます。
+                    </p>
+                    <p className="mt-4 leading-8 text-muted">
+                        日本語の画面で作成したい場合は、<Link href="/ja" className="text-link">日本語の図案作成ツール</Link>を開いてください。画像の読み込み、配色と枚数の設定、マスの修正、日本語PDFの保存まで進められます。
                     </p>
                     <Link href="/#generator" hrefLang="en" prefetch={false} className="button-primary mt-6">
                         作成ツールを開く（英語）<span aria-hidden="true">↗</span>
@@ -330,7 +334,7 @@ export default function JapanesePhotoPatternGuide() {
 
             <footer className="mt-auto border-t border-line bg-[#edeee7]">
                 <div className="mx-auto max-w-[1248px] px-5 py-8 sm:px-10">
-                    <p className="text-sm leading-7 text-muted">図案のダウンロードは日本語の案内で、作成・編集ツールは英語で利用できます。</p>
+                    <p className="text-sm leading-7 text-muted">日本語の作成ツールと図案一覧、詳しい英語版エディターを利用できます。</p>
                     <nav aria-label="関連ページ" className="mt-3 flex flex-wrap gap-x-6">
                         <Link href="/ja/patterns" className="text-link">日本語の図案</Link>
                         <Link href="/privacy-policy" hrefLang="en" className="text-link">プライバシー（英語）</Link>

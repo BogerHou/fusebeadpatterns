@@ -6,6 +6,14 @@ export type GuideSection = {
     links?: Array<{
         href: string;
         label: string;
+        download?: boolean;
+    }>;
+    comparison?: Array<{
+        src: string;
+        alt: string;
+        caption: string;
+        width: number;
+        height: number;
     }>;
     figure?: {
         src: string;
@@ -41,6 +49,67 @@ export const guidePages: GuidePage[] = [
             'Photo-to-pattern tools work best when you treat the image like pixel art. The goal is not to preserve every detail, but to make a bead layout that still reads clearly after colors are reduced to real fuse bead palettes.',
         sections: [
             {
+                heading: 'A real photo test: when more beads are not enough',
+                body: [
+                    'This dark cat photograph shows why you should inspect a conversion before buying beads. Both results below were generated with Perler Midi colors, without hand-painted corrections. The white chest remains recognizable, but much of the eyes, whiskers and dark face is lost at both sizes.',
+                ],
+                comparison: [
+                    {
+                        src: '/guides/photo-to-pattern/cat-source.jpg',
+                        alt: 'Original photograph of a black-and-white cat with yellow-green eyes.',
+                        caption: 'Original photo · 792 × 960 pixels. Anjeagotilla0920, Wikimedia Commons, CC0 1.0.',
+                        width: 792,
+                        height: 960,
+                    },
+                    {
+                        src: '/guides/photo-to-pattern/cat-perler-29_grid.png',
+                        alt: 'Actual automatic cat photo conversion on a 29 by 29 Perler bead grid.',
+                        caption: '29 × 29 · 1 board · 667 beads · 11 colors.',
+                        width: 580,
+                        height: 580,
+                    },
+                    {
+                        src: '/guides/photo-to-pattern/cat-perler-58_grid.png',
+                        alt: 'Actual automatic cat photo conversion on a 58 by 58 Perler bead grid.',
+                        caption: '58 × 58 · 4 boards · 2,726 beads · 13 colors.',
+                        width: 1160,
+                        height: 1160,
+                    },
+                ],
+                links: [
+                    { href: 'https://commons.wikimedia.org/wiki/File:TUXEDO_CAT.jpg', label: 'Photo source and author' },
+                    { href: 'https://creativecommons.org/publicdomain/zero/1.0/', label: 'CC0 1.0 license' },
+                ],
+            },
+            {
+                heading: 'Try the same photo in the generator',
+                body: [
+                    'Save the source photo below, open the generator, and choose Upload Image. Select Perler Midi and the Midi 29 × 29 pegboard. Set Boards Wide and Boards Tall to 1 for the smaller result, or set both to 2 for the larger result.',
+                    'For this comparison, all 103 Perler Midi colors were enabled. In Advanced, Matching was DeltaE CIE2000 and Dithering was None. Brightness, Contrast and Saturation were 100; Grayscale was 0; Center and Fit To Boards were checked. The source was not cropped or retouched.',
+                    'The photo is taller than it is wide, so fitting it on a square board leaves empty columns. Those cells need no beads. The dark background inside the photograph is still part of the pattern: uploading a photo does not remove its background.',
+                ],
+                links: [
+                    { href: '/guides/photo-to-pattern/cat-source.jpg', label: 'Save the source photo', download: true },
+                    { href: '/#generator', label: 'Try the generator' },
+                ],
+            },
+            {
+                heading: 'Download and compare the actual results',
+                body: [
+                    'The 29 × 29 version uses 667 beads; the 58 × 58 version uses 2,726. The larger version adds a few highlights, but the eye colors and fine whiskers are still largely missing. Dark fur merges with the background. For this photo, the extra beads do not produce a clear pet portrait. Try a brighter source with a simpler background, crop closer to the face, or plan to redraw key features in the editor.',
+                    'These are the files exported by the generator with Use Symbols In Printable Exports checked. The smaller PDF has a color list and one chart page. The larger PDF has an overview, a color list and four board charts. Match each chart symbol to its color code and quantity in the list. Grid PNG is useful for inspecting the layout. These exports are not verified life-size pegboard templates and do not include the library PDFs’ 50 mm calibration line.',
+                    'These downloads are practice conversions, not finished portrait patterns. To work on either example, save its project file and choose Open Project in the generator or editor. Review the bead colors you own and clean up the eyes, background and outlines before making it. The examples have not been physically assembled or iron-tested.',
+                ],
+                links: [
+                    { href: '/guides/photo-to-pattern/cat-perler-29.pdf', label: '29 × 29 PDF', download: true },
+                    { href: '/guides/photo-to-pattern/cat-perler-29_grid.png', label: '29 × 29 grid PNG', download: true },
+                    { href: '/guides/photo-to-pattern/cat-perler-29.bead-pattern.json', label: '29 × 29 editable project', download: true },
+                    { href: '/guides/photo-to-pattern/cat-perler-58.pdf', label: '58 × 58 PDF', download: true },
+                    { href: '/guides/photo-to-pattern/cat-perler-58_grid.png', label: '58 × 58 grid PNG', download: true },
+                    { href: '/guides/photo-to-pattern/cat-perler-58.bead-pattern.json', label: '58 × 58 editable project', download: true },
+                ],
+            },
+            {
                 heading: 'Start with a clear source image',
                 body: [
                     'Choose a photo with a clear subject, strong contrast, and a simple background. Portraits, game sprites, pets, icons, and logos usually convert better than busy scenes.',
@@ -75,7 +144,7 @@ export const guidePages: GuidePage[] = [
     },
     {
         slug: 'perler-bead-pegboards',
-        updatedAt: '2026-09-24',
+        updatedAt: '2026-10-08',
         title: 'Perler Bead Pegboard Size Guide',
         description:
             'Understand how pegboard size, board count, and pattern dimensions work when planning Perler, Hama, Artkal, and other fuse bead projects.',
@@ -116,6 +185,20 @@ export const guidePages: GuidePage[] = [
                     'This scale check applies to the library PDFs that carry the scale line. An editor export may use a different page layout; use its row and column grid as a chart unless you have checked the physical spacing. Choosing a different color brand does not change a midi chart into a mini or maxi placement template.',
                 ],
             },
+            {
+                heading: 'Download a blank grid and check your printer',
+                body: [
+                    'Choose A4 or US Letter to match your paper. Each free sheet contains a blank 29 × 29 grid with a 5 mm pitch and two 50 mm calibration rulers, one horizontal and one vertical. The full outside grid is 145 mm wide; the distance between the first and last cell centers is 140 mm.',
+                    'Print at 100% or Actual size, with Fit to page turned off. Measure both rulers before using the grid. If either ruler is not 50 mm, correct the printer scaling and try again. Check your actual pegboard separately; these files have been checked digitally, not tested on a physical board.',
+                    'Use the blank grid to sketch a design or plan a group activity. The editable SVG files use the same dimensions, but design software may resize an imported SVG, so measure a fresh print after editing. These sheets do not rescale an existing editor export.',
+                ],
+                links: [
+                    { href: '/printables/calibration/29x29-5mm-a4.pdf', label: 'A4 grid and calibration PDF' },
+                    { href: '/printables/calibration/29x29-5mm-us-letter.pdf', label: 'US Letter grid and calibration PDF' },
+                    { href: '/printables/calibration/29x29-5mm-a4.svg', label: 'Editable A4 SVG' },
+                    { href: '/printables/calibration/29x29-5mm-us-letter.svg', label: 'Editable US Letter SVG' },
+                ],
+            },
         ],
         relatedLinks: [
             { href: '/', label: 'Try a board size' },
@@ -148,7 +231,7 @@ export const guidePages: GuidePage[] = [
                 heading: '2. Change the color brand and apply it',
                 body: [
                     'Find Pattern Setup beside the canvas. On a phone, open Setup. In Color Brand, choose Hama Midi or the Artkal palette that matches your bead range. Leave Pegboard, Boards Wide, and Boards Tall unchanged, then choose Apply Changes.',
-                    'A brand-only change keeps the current bead positions, empty cells, and manual edits. Each current color is matched to the closest enabled color in the selected palette. Changing the board settings is a separate operation that can rebuild the layout.',
+                    'A brand-only change keeps the current bead positions, empty cells, and manual edits. Beads identified as Black or White in the current palette keep that color name when the selected palette has an enabled equivalent. Other colors use the closest enabled digital color. Changing the board settings is a separate operation that can rebuild the layout.',
                     'If you have edited the pattern, save a project copy before switching brands. Your current edits stay in the converted grid, but Undo history starts again after the palette change. Reopen the saved copy if you need the exact previous colors.',
                 ],
                 figure: {

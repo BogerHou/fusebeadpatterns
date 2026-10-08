@@ -39,6 +39,7 @@ export default function PatternsPage() {
                         <Link key={topic.slug} href={`/patterns/${topic.slug}`} className="underline underline-offset-4">{topic.label}</Link>
                     ))}
                     <a href="/ja/patterns" lang="ja" hrefLang="ja" className="underline underline-offset-4">日本語の図案</a>
+                    <a href="/de/patterns" lang="de" hrefLang="de" className="underline underline-offset-4">Deutsche Vorlagen</a>
                 </div>
                 <nav aria-label="Pattern collections" className="collection-nav">
                     {patternCollections.map((collection) => (

@@ -20,6 +20,7 @@ type FooterLink = {
     label: string;
     href: string;
     prefetch?: false;
+    lang?: string;
 };
 
 const footerGroups: Array<{
@@ -31,6 +32,7 @@ const footerGroups: Array<{
         links: [
             { id: 'generator', label: 'Generator', href: '/' },
             { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
+            { label: '日本語で図案を作る', href: '/ja', lang: 'ja', prefetch: false },
             {
                 id: 'editor',
                 label: 'Advanced Editor',
@@ -81,7 +83,7 @@ export default function SiteFooter({
                             <ul>
                                 {group.links.map((link) => (
                                     <li key={link.href}>
-                                        <Link href={link.href} prefetch={link.prefetch} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
+                                        <Link href={link.href} prefetch={link.prefetch} lang={link.lang} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
                                     </li>
                                 ))}
                             </ul>

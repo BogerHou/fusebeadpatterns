@@ -28,6 +28,8 @@ export const patternTopics: readonly PatternTopic[] = [
             'kirby-waddle-dee-adventure',
             'smb-question-block',
             'original-soccer-ball',
+            'original-friendly-ghost',
+            'original-christmas-tree',
         ],
         selectionHeading: 'Choosing your first pattern',
         selectionNotes: [

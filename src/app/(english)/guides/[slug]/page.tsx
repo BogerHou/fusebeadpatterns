@@ -98,12 +98,33 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                                 {section.patternIds ? (
                                     <GuidePatternGallery patternIds={section.patternIds} />
                                 ) : null}
+                                {section.comparison ? (
+                                    <div className="mt-7 grid gap-6 sm:grid-cols-3">
+                                        {section.comparison.map((figure) => (
+                                            <figure key={figure.src}>
+                                                <Image
+                                                    src={figure.src}
+                                                    alt={figure.alt}
+                                                    width={figure.width}
+                                                    height={figure.height}
+                                                    unoptimized
+                                                    className="aspect-square h-auto w-full rounded-lg border border-[#d9ded5] object-contain"
+                                                />
+                                                <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
+                                                    {figure.caption}
+                                                </figcaption>
+                                            </figure>
+                                        ))}
+                                    </div>
+                                ) : null}
                                 {section.links ? (
                                     <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-base sm:text-lg">
                                         {section.links.map((link) => (
                                             <Link
                                                 key={link.href}
                                                 href={link.href}
+                                                download={link.download}
+                                                prefetch={link.download ? false : undefined}
                                                 className="text-link"
                                             >
                                                 {link.label}

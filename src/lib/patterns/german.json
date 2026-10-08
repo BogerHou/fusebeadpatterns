@@ -1,0 +1,12 @@
+{
+  "patterns": [
+    { "id": "pokemon-pikachu-gen5", "name": "Pikachu" },
+    { "id": "pokemon-eevee-gen5", "name": "Evoli" },
+    { "id": "pokemon-bulbasaur-gen5", "name": "Bisasam" },
+    { "id": "pokemon-charmander-gen5", "name": "Glumanda" },
+    { "id": "pokemon-squirtle-gen5", "name": "Schiggy" },
+    { "id": "pokemon-mew-gen5", "name": "Mew" },
+    { "id": "pokemon-vaporeon-gen5", "name": "Aquana" },
+    { "id": "pokemon-jolteon-gen5", "name": "Blitza" }
+  ]
+}
