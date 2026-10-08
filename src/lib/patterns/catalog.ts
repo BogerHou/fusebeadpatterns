@@ -8852,6 +8852,57 @@ export const patterns: Pattern[] = [
             "pdf": "/patterns/original-christmas-tree/pattern.pdf"
         },
         "updatedAt": "2026-10-08"
+    },
+    {
+        "id": "original-halloween-bat",
+        "slug": "halloween-bat",
+        "title": "Halloween Bat",
+        "collectionId": null,
+        "version": "Original Halloween bat design v1",
+        "description": "Make a flat bat with spread purple-and-black wings, two ears and white eyes on one square pegboard. Download the printable PDF or open the editable pattern.",
+        "beads": 252,
+        "colorCount": 3,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 27,
+        "motifHeight": 17,
+        "palette": [
+            {
+                "symbol": "K",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 178
+            },
+            {
+                "symbol": "P",
+                "ref": "80-19007",
+                "name": "Purple",
+                "hex": "#684b86",
+                "count": 68
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 6
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-halloween-bat/preview.png",
+            "grid": "/patterns/original-halloween-bat/grid.png",
+            "pixels": "/patterns/original-halloween-bat/pixels.png",
+            "project": "/patterns/original-halloween-bat/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-halloween-bat/pattern.pdf"
+        },
+        "updatedAt": "2026-10-08"
     }
 ];
 

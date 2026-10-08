@@ -13,7 +13,7 @@ import { spawnSync } from 'node:child_process';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const inputs = process.argv.slice(2);
 const packs = [];
-for (const directory of inputs.length ? inputs : ['artifacts/pattern-samples/2026-09-22/library-v2', 'artifacts/pattern-samples/2026-09-22/expansion-v3', 'artifacts/pattern-samples/2026-09-22/expansion-v4', 'artifacts/pattern-samples/2026-09-22/expansion-v5', 'artifacts/pattern-samples/2026-09-22/expansion-v6-pokemon', 'artifacts/pattern-samples/2026-09-22/expansion-v7-minecraft', 'artifacts/pattern-samples/2026-09-22/expansion-v8-classics', 'artifacts/pattern-samples/2026-10-08/soccer-ball', 'artifacts/pattern-samples/2026-10-08/original-seasonal-v1']) {
+for (const directory of inputs.length ? inputs : ['artifacts/pattern-samples/2026-09-22/library-v2', 'artifacts/pattern-samples/2026-09-22/expansion-v3', 'artifacts/pattern-samples/2026-09-22/expansion-v4', 'artifacts/pattern-samples/2026-09-22/expansion-v5', 'artifacts/pattern-samples/2026-09-22/expansion-v6-pokemon', 'artifacts/pattern-samples/2026-09-22/expansion-v7-minecraft', 'artifacts/pattern-samples/2026-09-22/expansion-v8-classics', 'artifacts/pattern-samples/2026-10-08/soccer-ball', 'artifacts/pattern-samples/2026-10-08/original-seasonal-v1', 'artifacts/pattern-samples/2026-10-08/original-halloween-bat-v1']) {
     const input = path.resolve(root, directory);
     packs.push({ input, source: JSON.parse(await readFile(path.join(input, 'manifest.json'), 'utf8')) });
 }
@@ -86,6 +86,7 @@ const reviewedAdditions = {
     'original-soccer-ball': { slug: 'soccer-ball', kind: 'original' },
     'original-friendly-ghost': { slug: 'ghost', kind: 'original' },
     'original-christmas-tree': { slug: 'christmas-tree', kind: 'original' },
+    'original-halloween-bat': { slug: 'halloween-bat', kind: 'original' },
 };
 const expectedCount = publishedCount + Object.keys(reviewedAdditions).length;
 if (ids.length !== expectedCount || ids.length !== Object.keys(specs).length || new Set(ids).size !== ids.length || ids.some((id) => !Object.hasOwn(specs, id))) {
@@ -280,6 +281,13 @@ for index, entry in enumerate(ids):
         raise ValueError('PDF order/content mismatch for ' + entry['id'])
     writer = PdfWriter()
     writer.add_page(original)
+    # This reviewed addition includes an explicit actual-size print preference.
+    # Keep published PDF bytes unchanged by applying it only to the new design.
+    if entry['id'] == 'original-halloween-bat':
+        if reader.trailer['/Root'].get('/ViewerPreferences', {}).get('/PrintScaling') != '/None':
+            raise ValueError('Reviewed bat PDF must disable automatic print scaling')
+        writer.create_viewer_preferences()
+        writer.viewer_preferences.print_scaling = '/None'
     writer.add_metadata({'/Title': entry['title'] + ' Perler Bead Pattern', '/Author': 'Fuse Bead Patterns', '/Subject': subject})
     destination = pathlib.Path(output) / entry['id'] / 'pattern.pdf'
     with destination.open('wb') as stream:
@@ -310,7 +318,7 @@ The ${packs.length} reviewed packs integrate ${patterns.length} local patterns i
 - Super Mario references are sprites from the original Super Mario Bros. or Super Mario Bros. 3, as specified individually in the source records. The existing Super Star source records the Nestopia palette and represents one static color frame. A Nestopia palette label is asserted only where the individual source file history records it. Kirby references are specific Kirby’s Adventure sprites archived by WiKirby. An animation state or game version must not be inferred beyond the source evidence.
 - The Small Luigi file is a documented community palette reconstruction using Mario's native shape and Luigi's game palette; its file history specifies Nestopia. Do not describe this reference as an untouched direct game export. Its source disclosure is retained on the pattern detail page.
 - Perler mapping preserves visible occupied cells and distinct source color regions. It approximates source RGB colors using the repository palette, not physical bead measurements. There is no outline redraw, interpolation or color-region merging.
-- The original autumn scenes, soccer ball, sheet ghost and Christmas tree have no named-character association and no franchise collection. They are not substitutes for searches for a specific character. The soccer ball, ghost and Christmas tree each have a recorded version 1 grid design.
+- The original autumn scenes, soccer ball, sheet ghost, Christmas tree and Halloween bat have no named-character association and no franchise collection. They are not substitutes for searches for a specific character. The soccer ball, ghost, Christmas tree and Halloween bat each have a recorded version 1 grid design.
 - This is a curated batch, not a search-volume ranking. Existing community signals do not establish demand for every variant or this specific menu-icon version.
 
 ## Source authenticity and publication rights
@@ -335,7 +343,7 @@ ${provenance.map(({ id, source, kind }) => kind === 'source-adapted'
 
 \`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. PDFs are extracted losslessly from the reviewed source packs. The existing 100 downloads retain their content. New downloads use recognizable titles and concise printing instructions. Source-adapted pages retain their source links; every reviewed chart PDF includes a 50 mm print scale. The color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
 
-To regenerate after reviewing a new source pack, run \`node scripts/build-pattern-library.mjs\`. Python with \`pypdf\` is required; set \`PYTHON\` when it is not the default runtime. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22, plus artifacts/pattern-samples/2026-10-08/soccer-ball and artifacts/pattern-samples/2026-10-08/original-seasonal-v1. New packs include \`site-entries.json\` with reviewed stable slugs and descriptions. Source-adapted designs retain their collection slug and specific reference-version requirements. Original designs use a single-segment slug and an explicit \`version\`, such as \`Original soccer ball design v1\`, without a third-party \`reference\`. To use other locations, pass all pack directories as arguments. The script verifies ${patterns.length} unique IDs and slugs, a fixed fingerprint of the published 100 IDs/slugs/kinds, the explicitly reviewed additions, source hashes, fidelity flags, PDF page order/text and unchanged PDF drawing instructions. Do not replace the published fingerprint with one calculated from the generated catalog; a missing old pack must fail validation. Future additions require review and an explicit addition to the builder's reviewed list. It is intentionally not part of the website build: CI and production need only checked-in assets. After generation, run \`npx vitest run src/lib/patterns/catalog.test.ts\`, compare all existing catalog entries and asset hashes, and render the new PDF downloads for visual review.
+To regenerate after reviewing a new source pack, run \`node scripts/build-pattern-library.mjs\`. Python with \`pypdf\` is required; set \`PYTHON\` when it is not the default runtime. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22, plus artifacts/pattern-samples/2026-10-08/soccer-ball, artifacts/pattern-samples/2026-10-08/original-seasonal-v1 and artifacts/pattern-samples/2026-10-08/original-halloween-bat-v1. New packs include \`site-entries.json\` with reviewed stable slugs and descriptions. Source-adapted designs retain their collection slug and specific reference-version requirements. Original designs use a single-segment slug and an explicit \`version\`, such as \`Original soccer ball design v1\`, without a third-party \`reference\`. To use other locations, pass all pack directories as arguments. The script verifies ${patterns.length} unique IDs and slugs, a fixed fingerprint of the published 100 IDs/slugs/kinds, the explicitly reviewed additions, source hashes, fidelity flags, PDF page order/text and unchanged PDF drawing instructions. Do not replace the published fingerprint with one calculated from the generated catalog; a missing old pack must fail validation. Future additions require review and an explicit addition to the builder's reviewed list. It is intentionally not part of the website build: CI and production need only checked-in assets. After generation, run \`npx vitest run src/lib/patterns/catalog.test.ts\`, compare all existing catalog entries and asset hashes, and render the new PDF downloads for visual review.
 
 ## Editor brand switching
 
