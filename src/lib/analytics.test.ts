@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildPatternEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackPatternEvent } from './analytics';
+import { buildPatternEvent, buildPixelGridExportEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackPatternEvent, trackPixelGridExport } from './analytics';
 
 const download = {
     name: 'pattern_download',
@@ -77,5 +77,71 @@ describe('pattern analytics', () => {
         vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } });
         expect(() => trackPatternEvent(download)).not.toThrow();
         expect(trackPatternEvent(download)).toBe(false);
+    });
+});
+
+describe('pixel grid export analytics', () => {
+    it('only accepts the three pixel formats with a fixed entry point and independent event', () => {
+        for (const format of ['png', 'grid_png', 'project']) {
+            expect(buildPixelGridExportEvent({ format })).toEqual({
+                name: 'pixel_grid_export', parameters: { entry_point: 'pixel_grid', file_format: format },
+            });
+        }
+        for (const format of ['pdf', 'svg', 'jpg', '', 'PNG', 'private.png', 'https://example.com/private.png']) {
+            expect(buildPixelGridExportEvent({ format })).toBeNull();
+        }
+        expect(buildPatternEvent({ ...download, name: 'pixel_grid_export' })).toBeNull();
+    });
+
+    it('drops caller-supplied content, dimensions, URLs and overrides without reading them', () => {
+        const input = {
+            format: 'png', entryPoint: 'private-work', name: 'pattern_export',
+            width: 31, height: 47, fileName: 'private-client.png', url: 'https://example.com/private.png',
+            get image() { throw new Error('Private image must not be read'); },
+            project: { name: 'private-work', pixels: [1, 2, 3, 4] },
+        };
+        const gtag = vi.fn();
+        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        expect(trackPixelGridExport(input)).toBe(true);
+        expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'pixel_grid_export', {
+            entry_point: 'pixel_grid', file_format: 'png',
+        });
+    });
+
+    it('sends once per call on either production host and rejects unknown formats', () => {
+        for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
+            const gtag = vi.fn();
+            vi.stubGlobal('window', { location: { hostname }, gtag });
+            for (const format of ['png', 'grid_png', 'project']) {
+                expect(trackPixelGridExport({ format })).toBe(true);
+            }
+            expect(trackPixelGridExport({ format: 'private-file.png' })).toBe(false);
+            expect(gtag.mock.calls).toEqual(['png', 'grid_png', 'project'].map(format => [
+                'event', 'pixel_grid_export', { entry_point: 'pixel_grid', file_format: format },
+            ]));
+        }
+    });
+
+    it('does not send on the server, local preview or nonproduction host', () => {
+        expect(trackPixelGridExport({ format: 'png' })).toBe(false);
+        const gtag = vi.fn();
+        for (const hostname of ['localhost', '127.0.0.1', 'fusebeadpatterns-git-preview.vercel.app', 'preview.fusebeadpatterns.art', 'fusebeadpatterns.art.example.com']) {
+            vi.stubGlobal('window', { location: { hostname }, gtag });
+            expect(trackPixelGridExport({ format: 'project' })).toBe(false);
+        }
+        expect(gtag).not.toHaveBeenCalled();
+    });
+
+    it('keeps analytics absence, exceptions and blocked access out of the export flow', () => {
+        const unavailable = [
+            { location: { hostname: 'fusebeadpatterns.art' } },
+            { location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } },
+            { location: { hostname: 'fusebeadpatterns.art' }, get gtag() { throw new Error('Denied'); } },
+        ];
+        for (const browser of unavailable) {
+            vi.stubGlobal('window', browser);
+            expect(() => trackPixelGridExport({ format: 'project' })).not.toThrow();
+            expect(trackPixelGridExport({ format: 'project' })).toBe(false);
+        }
     });
 });
