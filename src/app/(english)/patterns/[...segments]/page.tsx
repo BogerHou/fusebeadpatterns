@@ -117,7 +117,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                 </section>
                 <details className="mt-8 border-t border-[#d9ded5] pt-5 text-sm leading-7 text-[#59685d]">
                     <summary className="min-h-11 cursor-pointer font-semibold text-[#243e36]">{pattern.source ? 'Reference version & source' : 'About this original design'}</summary>
-                    {pattern.source ? <div className="mt-3 max-w-[70ch]"><p>{pattern.source.description}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link mt-2 inline-block">{pattern.source.label}</a></div> : <p className="mt-3">An original scene drawn on a bead grid. It does not depict a named game or anime character.</p>}
+                    {pattern.source ? <div className="mt-3 max-w-[70ch]"><p>{pattern.source.description}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link mt-2 inline-block">{pattern.source.label}</a></div> : <p className="mt-3">An original design on a bead grid. It does not depict a named game or anime character.</p>}
                     <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2"><a href={pattern.assets.project} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="project" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="text-link">Download editable project</a><a href={pattern.assets.pixels} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="png" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="text-link">Download pattern pixels</a></div>
                 </details>
             </article>

@@ -1,0 +1,74 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-10-08T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "original-soccer-ball",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Black",
+            "ref": "80-19018",
+            "symbol": "K",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 50,
+              "g": 50,
+              "b": 52,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "W",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/zIyNP8yMjT/6u/u/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/+rv7v8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAMjI0/zIyNP/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP/q7+7/6u/u/+rv7v8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/MjI0/zIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v/q7+7/6u/u/zIyNP8yMjT/MjI0/zIyNP8yMjT/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8yMjT/6u/u/+rv7v/q7+7/6u/u/+rv7v8yMjT/MjI0/zIyNP8yMjT/MjI0/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8yMjT/MjI0/zIyNP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

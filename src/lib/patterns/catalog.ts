@@ -8706,6 +8706,50 @@ export const patterns: Pattern[] = [
             "pdf": "/patterns/ghost-cat-pumpkin/pattern.pdf"
         },
         "updatedAt": "2026-09-22"
+    },
+    {
+        "id": "original-soccer-ball",
+        "slug": "soccer-ball",
+        "title": "Soccer Ball",
+        "collectionId": null,
+        "version": "Original soccer ball design v1",
+        "description": "Make a black-and-white soccer ball (football) on one pegboard. Download the free printable PDF or open the editable pattern.",
+        "beads": 501,
+        "colorCount": 2,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 25,
+        "motifHeight": 25,
+        "palette": [
+            {
+                "symbol": "K",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 283
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 218
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-soccer-ball/preview.png",
+            "grid": "/patterns/original-soccer-ball/grid.png",
+            "pixels": "/patterns/original-soccer-ball/pixels.png",
+            "project": "/patterns/original-soccer-ball/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-soccer-ball/pattern.pdf"
+        },
+        "updatedAt": "2026-10-08"
     }
 ];
 

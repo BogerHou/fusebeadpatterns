@@ -27,10 +27,12 @@ export const patternTopics: readonly PatternTopic[] = [
             'smb-bob-omb-smb3',
             'kirby-waddle-dee-adventure',
             'smb-question-block',
+            'original-soccer-ball',
         ],
         selectionHeading: 'Choosing your first pattern',
         selectionNotes: [
             'These designs are selected for their small color lists, single-board layouts and connected shapes. Bob-omb uses two colors; Ditto uses four. A low color count can make sorting beads simpler, but it does not guarantee an easy finish.',
+            'The soccer ball uses only black and white, but fills 501 bead positions. Choose it for a larger single-board project; the smaller character designs need fewer beads.',
             'Open a pattern to check its bead counts and assembly notes. The designs have not been physically assembled or iron-tested. Take care when lifting and fusing a finished board, and follow the instructions for your bead brand.',
             'The printable files use Perler midi colors. Small designs are not the same as mini-size beads: keep the intended board size and check the PDF’s 50 mm scale at 100% / actual size before placing beads.',
         ],

@@ -176,8 +176,8 @@ describe('remapPatternPalette', () => {
         ]));
     });
 
-    it('remaps all 100 published library projects to Hama and Artkal without losing beads', async () => {
-        expect(patterns).toHaveLength(100);
+    it('remaps every library project to Hama and Artkal without losing beads', async () => {
+        expect(patterns).toHaveLength(101);
         const targets = await Promise.all(['hama', 'artkal_a'].map(async (id) => {
             const option = getPaletteOption(id);
             if (!option) throw new Error(`Missing palette option: ${id}`);
@@ -233,6 +233,6 @@ describe('remapPatternPalette', () => {
                 conversions++;
             }
         }
-        expect(conversions).toBe(200);
+        expect(conversions).toBe(patterns.length * targets.length);
     }, 15_000);
 });
