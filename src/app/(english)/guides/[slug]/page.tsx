@@ -95,6 +95,43 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                                         <p key={paragraph}>{paragraph}</p>
                                     ))}
                                 </div>
+                                {section.table ? (
+                                    <div
+                                        role="region"
+                                        aria-label={section.table.caption}
+                                        tabIndex={0}
+                                        className="mt-6 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#28614e]"
+                                    >
+                                        <table className="w-full min-w-[40rem] border-collapse text-left text-base leading-7 text-[#43564d]">
+                                            <caption className="pb-4 text-left text-sm leading-6 text-[#59685d]">
+                                                {section.table.caption}
+                                            </caption>
+                                            <thead>
+                                                <tr className="border-y border-[#d9ded5] bg-[#f2f4ed]">
+                                                    {section.table.headers.map((header) => (
+                                                        <th key={header} scope="col" className="px-4 py-3 font-semibold text-[#243e36]">
+                                                            {header}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {section.table.rows.map((row) => (
+                                                    <tr key={row.label} className="border-b border-[#d9ded5] align-top">
+                                                        <th scope="row" className="px-4 py-4 font-semibold text-[#243e36]">
+                                                            {row.label}
+                                                        </th>
+                                                        {row.cells.map((cell, index) => (
+                                                            <td key={index} className="px-4 py-4">
+                                                                {cell}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : null}
                                 {section.patternIds ? (
                                     <GuidePatternGallery patternIds={section.patternIds} />
                                 ) : null}

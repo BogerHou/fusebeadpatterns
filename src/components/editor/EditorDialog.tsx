@@ -5,6 +5,7 @@ type EditorDialogProps = {
     title: string;
     summary: string;
     onClose: () => void;
+    restoreFocusFallback?: React.RefObject<HTMLElement | null>;
     children: React.ReactNode;
 };
 
@@ -12,9 +13,10 @@ export function EditorDialog({
     title,
     summary,
     onClose,
+    restoreFocusFallback,
     children,
 }: EditorDialogProps) {
-    const dialogRef = useDialogFocus(true, onClose);
+    const dialogRef = useDialogFocus(true, onClose, restoreFocusFallback);
 
     return (
         <div
