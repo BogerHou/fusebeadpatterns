@@ -99,7 +99,7 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                                     <GuidePatternGallery patternIds={section.patternIds} />
                                 ) : null}
                                 {section.comparison ? (
-                                    <div className="mt-7 grid gap-6 sm:grid-cols-3">
+                                    <div className={`mt-7 grid gap-6 ${section.comparison.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
                                         {section.comparison.map((figure) => (
                                             <figure key={figure.src}>
                                                 <Image

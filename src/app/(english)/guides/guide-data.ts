@@ -41,6 +41,7 @@ export type GuidePage = {
 export const guidePages: GuidePage[] = [
     {
         slug: 'photo-to-perler-bead-pattern',
+        updatedAt: '2026-10-08',
         title: 'How to Turn a Photo Into a Perler Bead Pattern',
         description:
             'Learn how to convert a photo into a printable Perler bead or fuse bead pattern, choose the right board size, and clean up the final design.',
@@ -107,6 +108,41 @@ export const guidePages: GuidePage[] = [
                     { href: '/guides/photo-to-pattern/cat-perler-58.pdf', label: '58 × 58 PDF', download: true },
                     { href: '/guides/photo-to-pattern/cat-perler-58_grid.png', label: '58 × 58 grid PNG', download: true },
                     { href: '/guides/photo-to-pattern/cat-perler-58.bead-pattern.json', label: '58 × 58 editable project', download: true },
+                ],
+            },
+            {
+                heading: 'A smooth illustration: compare the small details',
+                body: [
+                    'A simple illustration can still need cleanup. This original AI-generated rocket illustration has smooth edges and a transparent background. Both automatic conversions below use the same Perler Midi settings as the photo example: all 103 colors enabled, CIE2000 matching, no dithering, and Center and Fit To Boards checked.',
+                    'The 29 × 29 result uses 337 beads and 32 colors. The 58 × 58 result uses 1,216 beads and 32 colors. The larger grid gives the window more room, but both versions include several shades along the smooth edges. A larger board does not automatically simplify the materials list.',
+                ],
+                comparison: [
+                    { src: '/guides/photo-to-pattern/rocket-source.png', alt: 'Original smooth rocket illustration with a round teal window and transparent background.', caption: 'Original tutorial illustration, 1,254 × 1,254 pixels. AI-generated; not a finished bead pattern.', width: 1254, height: 1254 },
+                    { src: '/guides/photo-to-pattern/rocket-perler-29-auto_grid.png', alt: 'Automatic rocket conversion on a 29 by 29 Perler grid before manual edits.', caption: 'Automatic 29 × 29 conversion: 337 beads, 32 colors.', width: 580, height: 580 },
+                    { src: '/guides/photo-to-pattern/rocket-perler-58-auto_grid.png', alt: 'Automatic rocket conversion on a 58 by 58 Perler grid before manual edits.', caption: 'Automatic 58 × 58 conversion: 1,216 beads, 32 colors.', width: 1160, height: 1160 },
+                ],
+                links: [
+                    { href: '/guides/photo-to-pattern/rocket-source.png', label: 'Save the rocket source image', download: true },
+                    { href: '/guides/photo-to-pattern/rocket-perler-29-auto.bead-pattern.json', label: 'Open the unedited example', download: true },
+                ],
+            },
+            {
+                heading: 'Repair a window outline with 16 bead edits',
+                body: [
+                    'Open the unedited rocket project in the editor. Turn off Show Source so you can inspect the beads, then choose Midnight (Perler 80-15201) from Quick Colors. The automatic small version has a patchy mix of gray, blue and teal around the window. Paint a continuous Midnight outline around it.',
+                    'Using the numbered rows and columns, paint columns 14–16 in rows 9 and 15; columns 13 and 17 in rows 10 and 14; and columns 12 and 18 in rows 11–13. These are 16 existing beads. Leave the turquoise center, hull, fins and flame unchanged. Drag around the outline in one stroke, then try Undo and Redo to compare it.',
+                    'The edited version still has 337 beads and now uses 31 colors. Only the window outline was repaired; the remaining shades have not been simplified. This is a practice project for learning the editor, and it has not been physically assembled or iron-tested.',
+                    'Use the three-page PDF as a counted chart with symbols and a materials list. Its grid is enlarged to fit the page; it is not a life-size 5 mm pegboard template.',
+                ],
+                comparison: [
+                    { src: '/guides/photo-to-pattern/rocket-perler-29-auto_grid.png', alt: 'Before editing: several gray and blue shades interrupt the small rocket window outline.', caption: 'Before: the automatic 29 × 29 result.', width: 580, height: 580 },
+                    { src: '/guides/photo-to-pattern/rocket-perler-29-cleanup_grid.png', alt: 'After 16 manual bead edits: a continuous Midnight outline surrounds the teal rocket window.', caption: 'After: 16 beads repainted Midnight, with every other cell unchanged.', width: 580, height: 580 },
+                ],
+                links: [
+                    { href: '/editor', label: 'Try the edits in the editor' },
+                    { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup.bead-pattern.json', label: 'Edited project', download: true },
+                    { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup_grid.png', label: 'Edited grid PNG', download: true },
+                    { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup.pdf', label: 'Edited PDF with symbols', download: true },
                 ],
             },
             {

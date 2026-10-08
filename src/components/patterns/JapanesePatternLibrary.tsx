@@ -69,6 +69,13 @@ function DownloadCard({ id, name }: { id: string; name: string }) {
                 </a>
             </div>
             <Link
+                href={`/ja?pattern=${encodeURIComponent(id)}`}
+                prefetch={false}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4"
+                aria-label={`${name}の図案を日本語で編集`}
+            >日本語で編集<span className="ml-2" aria-hidden="true">→</span></Link>
+            <br />
+            <Link
                 href={getPatternHref(pattern)}
                 hrefLang="en"
                 prefetch={false}
@@ -119,10 +126,15 @@ export default function JapanesePatternLibrary() {
                     自分の画像からは、<Link href="/ja" className="text-link">日本語の図案作成ツール</Link>で作れます。詳しい調整は<Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">英語版ツールの使い方ガイド</Link>もご覧ください。
                 </p>
 
+                <nav aria-label="図案のテーマ" className="mt-5 flex flex-wrap gap-x-6 text-sm font-medium">
+                    {groups.map(group => <a key={group.id} href={`#${group.id}-heading`} className="inline-flex min-h-11 items-center text-accent underline underline-offset-4">{group.title}</a>)}
+                </nav>
+
                 <div id="patterns" className="mt-9 space-y-12">
                     {groups.map((group) => (
                         <section key={group.id} aria-labelledby={`${group.id}-heading`}>
-                            <h2 id={`${group.id}-heading`} className="mb-6 text-xl font-semibold leading-relaxed sm:text-2xl">{group.title}</h2>
+                            <h2 id={`${group.id}-heading`} className="text-xl font-semibold leading-relaxed sm:text-2xl">{group.title}</h2>
+                            <p className="mb-6 mt-2 text-sm leading-7 text-muted">{group.version}をもとにした図案です。29×29マスの四角いミディ用プレートを使います。</p>
                             <div className="pattern-grid">
                                 {group.patterns.map((pattern) => <DownloadCard key={pattern.id} {...pattern} />)}
                             </div>
