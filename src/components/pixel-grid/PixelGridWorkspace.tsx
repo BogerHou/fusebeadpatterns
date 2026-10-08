@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
+import { trackPixelGridExport } from '@/lib/analytics';
 import {
     LIMITS, createGrid, dimensions, paintLine, resizeImage, GridHistory, gridsEqual,
     serializeProject, parseProject, inspectImage, encodePng,
@@ -426,6 +427,7 @@ export default function PixelGridWorkspace() {
             }
             if (!current()) return;
             download(blob, withGrid ? `grid-${snapshot.width}x${snapshot.height}-16x.png` : `pixel-${snapshot.width}x${snapshot.height}.png`);
+            trackPixelGridExport({ format: withGrid ? 'grid_png' : 'png' });
             setStatus({ text: withGrid ? `Downloaded a ${snapshot.width * 16} × ${snapshot.height * 16} grid PNG. Your original pixels are unchanged.` : `Downloaded the original ${snapshot.width} × ${snapshot.height} PNG with no grid. Save a project to keep an editable copy.`, error: false });
         });
     }
@@ -434,6 +436,7 @@ export default function PixelGridWorkspace() {
         action(() => {
             const snapshot = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
             download(new Blob([serializeProject(snapshot)], { type: 'application/json' }), `pixel-${snapshot.width}x${snapshot.height}.pixel-grid.json`);
+            trackPixelGridExport({ format: 'project' });
             savedRef.current = snapshot; syncHistory();
             setStatus({ text: 'Editable project download started. Keep this file to reopen your work after a reload.', error: false });
         });

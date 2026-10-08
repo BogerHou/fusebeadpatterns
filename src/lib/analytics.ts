@@ -9,6 +9,7 @@ const PALETTES = new Set([
 const ENTRY_POINTS = new Set(['pattern_detail', 'palette_guide', 'collection', 'patterns', 'editor', 'home']);
 const DOWNLOAD_FORMATS = new Set(['pdf', 'grid_png', 'project', 'png']);
 const EXPORT_FORMATS = new Set(['pdf', 'grid_png', 'svg', 'png', 'jpg', 'xlsx']);
+const PIXEL_GRID_EXPORT_FORMATS = new Set(['png', 'grid_png', 'project']);
 
 export type PatternEventInput = {
     name: string;
@@ -26,6 +27,12 @@ type PatternEvent = {
         pattern_id?: string;
         file_format?: string;
     };
+};
+
+type PixelGridExportInput = { format: string };
+type PixelGridExportEvent = {
+    name: 'pixel_grid_export';
+    parameters: { entry_point: 'pixel_grid'; file_format: string };
 };
 
 export function isProductionAnalyticsHost(hostname: string): boolean {
@@ -54,7 +61,7 @@ export function buildPatternEvent(input: PatternEventInput): PatternEvent | null
 }
 
 type AnalyticsWindow = Pick<Window, 'location'> & {
-    gtag?: (command: 'event', name: string, parameters: PatternEvent['parameters']) => void;
+    gtag?: (command: 'event', name: string, parameters: PatternEvent['parameters'] | PixelGridExportEvent['parameters']) => void;
 };
 
 export function trackPatternEvent(input: PatternEventInput): boolean {
@@ -65,6 +72,31 @@ export function trackPatternEvent(input: PatternEventInput): boolean {
         const analyticsWindow = window as AnalyticsWindow;
         if (typeof analyticsWindow.gtag !== 'function') return false;
         const event = buildPatternEvent(input);
+        if (!event) return false;
+        analyticsWindow.gtag('event', event.name, event.parameters);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+export function buildPixelGridExportEvent(input: PixelGridExportInput): PixelGridExportEvent | null {
+    const format = input.format;
+    if (!PIXEL_GRID_EXPORT_FORMATS.has(format)) return null;
+    return {
+        name: 'pixel_grid_export',
+        parameters: { entry_point: 'pixel_grid', file_format: format },
+    };
+}
+
+// Call only after the prepared file's download starts. This measures initiation,
+// not a confirmed disk save. Analytics failure must not affect the editor state.
+export function trackPixelGridExport(input: PixelGridExportInput): boolean {
+    try {
+        if (typeof window === 'undefined' || !isProductionAnalyticsHost(window.location.hostname)) return false;
+        const analyticsWindow = window as AnalyticsWindow;
+        if (typeof analyticsWindow.gtag !== 'function') return false;
+        const event = buildPixelGridExportEvent(input);
         if (!event) return false;
         analyticsWindow.gtag('event', event.name, event.parameters);
         return true;
