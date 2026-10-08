@@ -38,6 +38,7 @@ export default function PatternsPage() {
                     {patternTopics.map((topic) => (
                         <Link key={topic.slug} href={`/patterns/${topic.slug}`} className="underline underline-offset-4">{topic.label}</Link>
                     ))}
+                    <Link href="/patterns/hama" className="underline underline-offset-4">Hama patterns</Link>
                     <a href="/ja/patterns" lang="ja" hrefLang="ja" className="underline underline-offset-4">日本語の図案</a>
                     <a href="/de/patterns" lang="de" hrefLang="de" className="underline underline-offset-4">Deutsche Vorlagen</a>
                     <a href="/fr/modeles-perles-a-repasser-noel" lang="fr" hrefLang="fr" className="underline underline-offset-4">Noël en perles (français)</a>
