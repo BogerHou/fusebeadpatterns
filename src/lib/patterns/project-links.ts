@@ -501,6 +501,11 @@ const libraryProjects: LibraryProject[] = [
         "id": "ghost-cat-pumpkin",
         "title": "Pumpkin Hug Ghost Cat",
         "projectUrl": "/patterns/ghost-cat-pumpkin/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-soccer-ball",
+        "title": "Soccer Ball",
+        "projectUrl": "/patterns/original-soccer-ball/pattern.bead-pattern.json"
     }
 ];
 

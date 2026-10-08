@@ -12,7 +12,7 @@ export default function PatternBrowser({ patterns, collections }: { patterns: Pa
     const searchWords = normalizeSearch(query).split(/\s+/).filter(Boolean);
     const matching = patterns.filter((pattern) =>
         (theme === 'all' || (theme === 'originals' ? pattern.collectionId === null : pattern.collectionId === theme)) &&
-        searchWords.every((word) => normalizeSearch(`${pattern.title} ${pattern.collectionId ?? 'original halloween'}`).includes(word))
+        searchWords.every((word) => normalizeSearch(`${pattern.title} ${pattern.description} ${pattern.collectionId ?? 'original'}`).includes(word))
     );
 
     return (
@@ -20,7 +20,7 @@ export default function PatternBrowser({ patterns, collections }: { patterns: Pa
             <div className="pattern-filters">
                 <label className="pattern-search" htmlFor="pattern-search">
                     Search patterns
-                    <input id="pattern-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Character name"  />
+                    <input id="pattern-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Character or design name"  />
                 </label>
                 <label className="pattern-theme" htmlFor="pattern-theme">
                     Theme
@@ -29,7 +29,7 @@ export default function PatternBrowser({ patterns, collections }: { patterns: Pa
                         {collections.map((collection) => (
                             <option key={collection.id} value={collection.id}>{collection.title}</option>
                         ))}
-                        <option value="originals">Original Halloween scenes</option>
+                        <option value="originals">Original designs</option>
                     </select>
                 </label>
                 <p role="status" className="pattern-count">{matching.length} {matching.length === 1 ? 'pattern' : 'patterns'}</p>
@@ -38,7 +38,7 @@ export default function PatternBrowser({ patterns, collections }: { patterns: Pa
             {matching.length === 0 && (
                 <div className="pattern-empty">
                     <h2>No patterns match this search.</h2>
-                    <p>Try a character name or choose another theme.</p>
+                    <p>Try a character or design name, or choose another theme.</p>
                     <button type="button" onClick={() => { setQuery(''); setTheme('all'); }} className="button-secondary">Clear filters</button>
                 </div>
             )}

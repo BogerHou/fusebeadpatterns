@@ -4,12 +4,12 @@ import type { Pattern } from '@/lib/patterns/catalog';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 
 export type PatternCardData = Pick<Pattern,
-    'id' | 'slug' | 'title' | 'collectionId'
+    'id' | 'slug' | 'title' | 'collectionId' | 'description'
 > & { preview: string };
 
 export function toPatternCard(pattern: Pattern): PatternCardData {
-    const { id, slug, collectionId } = pattern;
-    return { id, slug, title: getPatternDisplayName(pattern), collectionId, preview: pattern.assets.preview };
+    const { id, slug, collectionId, description } = pattern;
+    return { id, slug, title: getPatternDisplayName(pattern), collectionId, description, preview: pattern.assets.preview };
 }
 
 export function PatternGrid({ patterns, headingLevel = 2 }: { patterns: PatternCardData[]; headingLevel?: 2 | 3 }) {

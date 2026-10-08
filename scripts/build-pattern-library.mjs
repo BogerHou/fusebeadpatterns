@@ -13,7 +13,7 @@ import { spawnSync } from 'node:child_process';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const inputs = process.argv.slice(2);
 const packs = [];
-for (const directory of inputs.length ? inputs : ['artifacts/pattern-samples/2026-09-22/library-v2', 'artifacts/pattern-samples/2026-09-22/expansion-v3', 'artifacts/pattern-samples/2026-09-22/expansion-v4', 'artifacts/pattern-samples/2026-09-22/expansion-v5', 'artifacts/pattern-samples/2026-09-22/expansion-v6-pokemon', 'artifacts/pattern-samples/2026-09-22/expansion-v7-minecraft', 'artifacts/pattern-samples/2026-09-22/expansion-v8-classics']) {
+for (const directory of inputs.length ? inputs : ['artifacts/pattern-samples/2026-09-22/library-v2', 'artifacts/pattern-samples/2026-09-22/expansion-v3', 'artifacts/pattern-samples/2026-09-22/expansion-v4', 'artifacts/pattern-samples/2026-09-22/expansion-v5', 'artifacts/pattern-samples/2026-09-22/expansion-v6-pokemon', 'artifacts/pattern-samples/2026-09-22/expansion-v7-minecraft', 'artifacts/pattern-samples/2026-09-22/expansion-v8-classics', 'artifacts/pattern-samples/2026-10-08/soccer-ball']) {
     const input = path.resolve(root, directory);
     packs.push({ input, source: JSON.parse(await readFile(path.join(input, 'manifest.json'), 'utf8')) });
 }
@@ -58,10 +58,19 @@ for (const { input, source } of packs) {
     const additions = JSON.parse(await readFile(path.join(input, 'site-entries.json'), 'utf8'));
     if (!Array.isArray(additions) || additions.length !== source.patterns.length) throw new Error(`Incomplete editorial review in ${input}`);
     for (const entry of additions) {
-        if (Object.hasOwn(specs, entry.id) || !source.patterns.some(({ id }) => id === entry.id)) throw new Error(`Duplicate or unknown editorial ID: ${entry.id}`);
-        if (!/^(pokemon|minecraft|super-mario|kirby|stardew-valley)\/[a-z0-9-]+$/.test(entry.slug) || typeof entry.description !== 'string' || !entry.description.trim()) throw new Error(`Invalid editorial content: ${entry.id}`);
-        if (!entry.slug.startsWith('pokemon/') && !entry.reference) throw new Error(`Missing specific reference version: ${entry.id}`);
-        if (entry.reference && ['version', 'label', 'description'].some((field) => typeof entry.reference[field] !== 'string' || !entry.reference[field].trim())) throw new Error(`Incomplete reference: ${entry.id}`);
+        const pattern = source.patterns.find(({ id }) => id === entry.id);
+        if (Object.hasOwn(specs, entry.id) || !pattern) throw new Error(`Duplicate or unknown editorial ID: ${entry.id}`);
+        if (!['original', 'source-adapted'].includes(pattern.kind)) throw new Error(`Unknown pattern kind: ${entry.id}`);
+        const original = pattern.kind === 'original';
+        const slugFormat = original ? /^[a-z0-9]+(?:-[a-z0-9]+)*$/ : /^(pokemon|minecraft|super-mario|kirby|stardew-valley)\/[a-z0-9-]+$/;
+        if (typeof entry.slug !== 'string' || !slugFormat.test(entry.slug) || typeof entry.description !== 'string' || !entry.description.trim()) throw new Error(`Invalid editorial content: ${entry.id}`);
+        if (original) {
+            if (typeof entry.version !== 'string' || !/^Original .+ design v[1-9]\d*$/.test(entry.version)) throw new Error(`Missing original design version: ${entry.id}`);
+            if (entry.reference) throw new Error(`Original design must not claim a character reference: ${entry.id}`);
+        } else {
+            if (!entry.slug.startsWith('pokemon/') && !entry.reference) throw new Error(`Missing specific reference version: ${entry.id}`);
+            if (entry.reference && ['version', 'label', 'description'].some((field) => typeof entry.reference[field] !== 'string' || !entry.reference[field].trim())) throw new Error(`Incomplete reference: ${entry.id}`);
+        }
         specs[entry.id] = [entry.slug, entry.description];
         editorial.set(entry.id, entry);
     }
@@ -69,8 +78,29 @@ for (const { input, source } of packs) {
 
 const entries = packs.flatMap(({ input, source }) => source.patterns.map((pattern) => ({ input, source, pattern })));
 const ids = entries.map(({ pattern }) => pattern.id);
-if (ids.length !== 100 || ids.length !== Object.keys(specs).length || new Set(ids).size !== ids.length || ids.some((id) => !specs[id])) {
-    throw new Error(`Expected ${Object.keys(specs).length} unique reviewed patterns across all packs. Review new, duplicate or missing entries before promotion.`);
+// Freeze the published baseline independently of the generated catalog. A missing
+// old pack or a renamed ID/slug must not become valid after a later regeneration.
+const publishedCount = 100;
+const publishedIdentityHash = 'c9e90f50096692a269ac2806cec84d65b09ca67119968f92f6efa047c6e8b240';
+const reviewedAdditions = {
+    'original-soccer-ball': { slug: 'soccer-ball', kind: 'original' },
+};
+const expectedCount = publishedCount + Object.keys(reviewedAdditions).length;
+if (ids.length !== expectedCount || ids.length !== Object.keys(specs).length || new Set(ids).size !== ids.length || ids.some((id) => !Object.hasOwn(specs, id))) {
+    throw new Error(`Expected ${expectedCount} unique reviewed patterns across all packs. Review new, duplicate or missing entries before promotion.`);
+}
+const slugs = ids.map((id) => specs[id][0]);
+if (new Set(slugs).size !== slugs.length) throw new Error('Pattern slugs must be unique across all packs.');
+const publishedIdentities = entries
+    .filter(({ pattern }) => !Object.hasOwn(reviewedAdditions, pattern.id))
+    .map(({ pattern }) => [pattern.id, specs[pattern.id][0], pattern.kind])
+    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+if (publishedIdentities.length !== publishedCount || createHash('sha256').update(JSON.stringify(publishedIdentities)).digest('hex') !== publishedIdentityHash) {
+    throw new Error('The published 100 pattern IDs, slugs and kinds must remain intact.');
+}
+for (const [id, expected] of Object.entries(reviewedAdditions)) {
+    const added = entries.find(({ pattern }) => pattern.id === id);
+    if (!added || specs[id][0] !== expected.slug || added.pattern.kind !== expected.kind) throw new Error(`Unreviewed addition identity: ${id}`);
 }
 // Keep each character collection together, followed by the original scenes.
 entries.sort((a, b) => Number(a.pattern.kind === 'original') - Number(b.pattern.kind === 'original'));
@@ -113,7 +143,8 @@ await mkdir(path.join(root, 'docs'), { recursive: true });
 for (const { input, source, pattern } of entries) {
     const adapted = pattern.kind === 'source-adapted';
     const collectionId = specs[pattern.id][0].includes('/') ? specs[pattern.id][0].split('/')[0] : null;
-    const reference = editorial.get(pattern.id)?.reference ?? referenceDetails(pattern, collectionId);
+    const review = editorial.get(pattern.id);
+    const reference = !adapted && review ? { version: review.version } : review?.reference ?? referenceDetails(pattern, collectionId);
     if (adapted) {
         if (!pattern.source?.sha256 || pattern.fidelity?.silhouetteChanges !== 0 || pattern.fidelity?.colorMerges !== 0 || pattern.fidelity?.interpolated || pattern.fidelity?.redrawn) {
             throw new Error(`Unreviewed fidelity for ${pattern.id}`);
@@ -262,9 +293,11 @@ if (split.status !== 0) throw new Error(split.stderr || split.error?.message || 
 process.stdout.write(split.stdout);
 }
 
+const adaptedCount = provenance.filter(({ kind }) => kind === 'source-adapted').length;
+const originalCount = provenance.filter(({ kind }) => kind === 'original').length;
 const guide = `# Pattern library content maintenance
 
-The ${packs.length} reviewed packs integrate ${patterns.length} local patterns in total: ${patterns.length - 2} game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, and 2 original scenes. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
+The ${packs.length} reviewed packs integrate ${patterns.length} local patterns in total: ${adaptedCount} game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, and ${originalCount} original designs. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
 
 ## Content identity and versions
 
@@ -275,14 +308,14 @@ The ${packs.length} reviewed packs integrate ${patterns.length} local patterns i
 - Super Mario references are sprites from the original Super Mario Bros. or Super Mario Bros. 3, as specified individually in the source records. The existing Super Star source records the Nestopia palette and represents one static color frame. A Nestopia palette label is asserted only where the individual source file history records it. Kirby references are specific Kirby’s Adventure sprites archived by WiKirby. An animation state or game version must not be inferred beyond the source evidence.
 - The Small Luigi file is a documented community palette reconstruction using Mario's native shape and Luigi's game palette; its file history specifies Nestopia. Do not describe this reference as an untouched direct game export. Its source disclosure is retained on the pattern detail page.
 - Perler mapping preserves visible occupied cells and distinct source color regions. It approximates source RGB colors using the repository palette, not physical bead measurements. There is no outline redraw, interpolation or color-region merging.
-- The two original autumn scenes have no named-character association and no franchise collection. They are not substitutes for searches for a specific character.
+- The two original autumn scenes and the original soccer ball have no named-character association and no franchise collection. They are not substitutes for searches for a specific character. The soccer ball uses an original geometric design, recorded as version 1.
 - This is a curated batch, not a search-volume ranking. Existing community signals do not establish demand for every variant or this specific menu-icon version.
 
 ## Source authenticity and publication rights
 
 Authenticity and permission are separate review fields. The references below were checked for identity and file integrity. Public redistribution permission for the ${provenance.filter(({ kind }) => kind === 'source-adapted').length} game-derived patterns is **not confirmed**. Game artwork remains associated with the respective rights holders, including ConcernedApe, the Pokémon rights holders, Mojang/Microsoft, Nintendo and HAL Laboratory. Wiki text licensing or repository software/CC0 text must not be treated as a blanket license for character artwork.
 
-The project owner requested publication of the first 19 patterns (library-v2 and expansion-v3) on 2026-09-22; that release is complete. All later expansion packs remain local content drafts, not covered by that completed deployment. Publication decisions do not confirm third-party redistribution permissions. Keep the source rights status unconfirmed unless supporting permission evidence is obtained. The original scene designs have no third-party character reference.
+The project owner requested publication of the first 19 patterns (library-v2 and expansion-v3) on 2026-09-22, then the expanded 100-pattern library and editor brand-switching fix; those releases are complete. The project owner authorized publication of the original soccer ball on 2026-10-08. Publication decisions do not confirm third-party redistribution permissions. Keep the source rights status unconfirmed unless supporting permission evidence is obtained. The original designs have no third-party character reference.
 
 ## Exact source records
 
@@ -298,9 +331,15 @@ ${provenance.map(({ id, source, kind }) => kind === 'source-adapted'
 
 \`src/lib/patterns/catalog.ts\` holds English page content, stable slugs and compact color counts. The editor imports only \`src/lib/patterns/project-links.ts\`, a small list of trusted local project URLs. Neither module reads artifacts or external data at runtime.
 
-\`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. PDFs are extracted losslessly from the reviewed source packs. The existing 30 downloads retain their content. New downloads use recognizable titles and concise printing instructions. Each page retains its source link and 50 mm print scale. The new color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
+\`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. PDFs are extracted losslessly from the reviewed source packs. The existing 100 downloads retain their content. New downloads use recognizable titles and concise printing instructions. Source-adapted pages retain their source links; every reviewed chart PDF includes a 50 mm print scale. The color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
 
-To regenerate after reviewing a new source pack, run \`node scripts/build-pattern-library.mjs\`. Python with \`pypdf\` is required; set \`PYTHON\` when it is not the default runtime. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22. New packs include \`site-entries.json\` with reviewed stable slugs, descriptions and specific source-version wording. To use other locations, pass all pack directories as arguments. The script verifies the ${patterns.length} expected unique IDs, source hashes, fidelity flags, PDF page order/text and unchanged PDF drawing instructions. It is intentionally not part of the website build: CI and production need only checked-in assets. After generation, run \`npx vitest run src/lib/patterns/catalog.test.ts\` and render the PDF downloads for visual review.
+To regenerate after reviewing a new source pack, run \`node scripts/build-pattern-library.mjs\`. Python with \`pypdf\` is required; set \`PYTHON\` when it is not the default runtime. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22, plus artifacts/pattern-samples/2026-10-08/soccer-ball. New packs include \`site-entries.json\` with reviewed stable slugs and descriptions. Source-adapted designs retain their collection slug and specific reference-version requirements. Original designs use a single-segment slug and an explicit \`version\`, such as \`Original soccer ball design v1\`, without a third-party \`reference\`. To use other locations, pass all pack directories as arguments. The script verifies ${patterns.length} unique IDs and slugs, a fixed fingerprint of the published 100 IDs/slugs/kinds, the explicitly reviewed additions, source hashes, fidelity flags, PDF page order/text and unchanged PDF drawing instructions. Do not replace the published fingerprint with one calculated from the generated catalog; a missing old pack must fail validation. Future additions require review and an explicit addition to the builder's reviewed list. It is intentionally not part of the website build: CI and production need only checked-in assets. After generation, run \`npx vitest run src/lib/patterns/catalog.test.ts\`, compare all existing catalog entries and asset hashes, and render the new PDF downloads for visual review.
+
+## Editor brand switching
+
+Library previews and downloads use Perler Midi by default. In the editor, applying a different brand while keeping pegboard settings unchanged remaps the current edited grid to the closest enabled colors in that brand. It preserves bead positions and transparency without resampling or dithering; similar source colors may map to the same target color. Saved projects and editor exports use the selected brand.
+
+Existing hand edits remain in the converted grid, but pixel undo history starts again because its old patches contain the previous brand's colors. Loading failures leave the current pattern intact, and opening another project cancels pending conversions. Changing pegboard dimensions retains the separate rebuild behavior and confirmation.
 
 ## Physical assembly notes
 
@@ -308,7 +347,7 @@ All designs use one 29 × 29 MIDI board. Motif dimensions are recorded separatel
 
 ## Deferred and retired designs
 
-The first six unverified named concepts remain retired. Stardrop (interpolated reference), Strawberry Seeds (native grid not confirmed) and Prismatic Shard (38 native colors, pending a larger palette review) are excluded. Charizard is also deferred: its verified Gen V motif is 30 × 22 and must not be squeezed into a 29-column board. Do not recreate uncertain pixels to fill the collection. New collections should be added only when they contain useful reviewed content; the two original scenes do not yet require a separate collection landing page.
+The first six unverified named concepts remain retired. Stardrop (interpolated reference), Strawberry Seeds (native grid not confirmed) and Prismatic Shard (38 native colors, pending a larger palette review) are excluded. Charizard is also deferred: its verified Gen V motif is 30 × 22 and must not be squeezed into a 29-column board. Do not recreate uncertain pixels to fill the collection. New collections should be added only when they contain useful reviewed content; the three original designs do not yet require a separate collection landing page.
 `;
 await writeFile(path.join(root, 'docs/pattern-library-content.md'), guide);
 console.log(`Prepared ${patterns.length} catalog entries and local asset sets.`);
