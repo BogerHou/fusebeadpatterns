@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Script } from 'node:vm';
+import { inflateSync } from 'node:zlib';
 import ts from 'typescript';
 import { createElement, type ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -133,7 +134,7 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
 }
 
 describe('pixel grid initial user experience', () => {
-    it('keeps the English default at 16 square with grid enabled and the existing export choices', () => {
+    it('keeps the English drawing defaults while exposing image conversion outside the folded settings', () => {
         const html = renderToStaticMarkup(createElement(workspace()));
         expect(html).toContain('16 × 16 pixels');
         expect(html).toContain('Canvas &amp; image settings');
@@ -141,9 +142,15 @@ describe('pixel grid initial user experience', () => {
         expect(html).toMatch(/id="pixel-show-grid"[^>]*checked=""/);
         expect(html).toContain('Save original-size PNG');
         expect(html).toContain('Save enlarged grid PNG');
-        expect(html).not.toContain('pixel-color-limit');
-        expect(html).not.toContain('pixel-export-scale');
-        expect(html.indexOf('<details')).toBeLessThan(html.indexOf('id="pixel-image-file"'));
+        expect(html).toContain('New 16 × 16');
+        expect(html).toContain('New 32 × 32');
+        expect(html).toContain('New 24 × 40');
+        expect(html).toContain('pixel-color-limit');
+        expect(html).toContain('pixel-export-scale');
+        expect(html).toMatch(/value="original" selected=""/);
+        expect(html).toContain('Download PNG without grid');
+        expect(html.indexOf('id="pixel-image-file"')).toBeLessThan(html.indexOf('<details'));
+        expect(html).not.toMatch(/<details[^>]*open=/);
     });
 
     it('renders the French converter upload outside disclosure with 64 square, original colors and 8x PNG', () => {
@@ -203,7 +210,8 @@ function content(value: unknown): string {
 function invoke(node: TestNode, property: string, event?: unknown) {
     return (node.props[property] as (value?: unknown) => unknown)(event);
 }
-function interactiveWorkspace() {
+function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' } = { locale: 'fr', experience: 'converter' }) {
+    const text = copy[props.locale ?? 'en'];
     const slots: unknown[] = [], mountEffects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
     let slot = 0, first = true, tree: unknown;
     const callbacks: (() => void)[] = [];
@@ -236,8 +244,8 @@ function interactiveWorkspace() {
         window: browser, document, Blob, Uint8ClampedArray,
         createImageBitmap: async () => ({ width: source.width, height: source.height, close() {} }),
         URL: { createObjectURL: (blob: Blob) => { const key = `blob:${blobs.size}`; blobs.set(key, blob); return key; }, revokeObjectURL: (key: string) => blobs.delete(key) },
-    }) as (props: { locale: 'fr'; experience: 'converter' }) => unknown;
-    function render() { slot = 0; tree = Component({ locale: 'fr', experience: 'converter' }); if (first) { first = false; for (const effect of mountEffects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); } } }
+    }) as (props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' }) => unknown;
+    function render() { slot = 0; tree = Component(props); if (first) { first = false; for (const effect of mountEffects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); } } }
     render();
     const find = (predicate: (node: TestNode) => boolean) => { const node = nodes(tree).find(predicate); if (!node) throw new Error('Expected control not found'); return node; };
     const byId = (id: string) => find(node => node.props.id === id);
@@ -252,12 +260,24 @@ function interactiveWorkspace() {
             invoke(byId('pixel-image-file'), 'onChange', { currentTarget: { files: [file], value: 'source.png' } });
             await new Promise(resolve => setImmediate(resolve)); render();
         },
+        loadProject: async (contents: string) => {
+            const file = { name: 'saved.pixel-grid.json', size: Buffer.byteLength(contents), text: async () => contents };
+            invoke(byId('pixel-project-file'), 'onChange', { currentTarget: { files: [file], value: file.name } });
+            await new Promise(resolve => setImmediate(resolve)); render();
+        },
+        download: async (label: string) => {
+            const previous = downloads.length;
+            invoke(button(label), 'onClick');
+            await vi.waitFor(() => expect(downloads.length).toBe(previous + 1));
+            render();
+            return downloads[previous];
+        },
         paint: () => {
             const canvas = find(node => node.type === 'canvas');
             invoke(canvas, 'onKeyDown', { key: 'Enter', ctrlKey: false, metaKey: false, altKey: false, preventDefault() {} }); render();
         },
         currentProject: async () => {
-            invoke(button(copy.fr.saveProject), 'onClick'); render();
+            invoke(button(text.saveProject), 'onClick'); render();
             return core.parseProject(await downloads[downloads.length - 1].blob.text());
         },
         unmount: () => { for (const cleanup of cleanups) cleanup(); },
@@ -300,6 +320,120 @@ describe('converter operation boundaries', () => {
         expect(await ui.currentProject()).toEqual(core.createGrid(128, 128));
         ui.click(copy.fr.undo);
         expect(await ui.currentProject()).toEqual(core.createGrid(64, 64));
+        ui.unmount();
+    });
+});
+
+// Decode the downloaded Blob independently so the component must export the
+// current drawing and selected scale, not just call a working encoder.
+async function downloadedPixels(blob: Blob) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    expect([...bytes.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+    const view = new DataView(bytes.buffer), chunks: Uint8Array[] = [];
+    let width = 0, height = 0;
+    for (let offset = 8; offset < bytes.length;) {
+        const size = view.getUint32(offset);
+        const kind = Buffer.from(bytes.subarray(offset + 4, offset + 8)).toString('ascii');
+        if (kind === 'IHDR') { width = view.getUint32(offset + 8); height = view.getUint32(offset + 12); }
+        if (kind === 'IDAT') chunks.push(bytes.subarray(offset + 8, offset + 8 + size));
+        offset += size + 12;
+    }
+    const scanlines = inflateSync(Buffer.concat(chunks)), pixels = new Uint8ClampedArray(width * height * 4);
+    const stride = width * 4 + 1;
+    expect(scanlines.length).toBe(stride * height);
+    for (let y = 0; y < height; y++) {
+        expect(scanlines[y * stride]).toBe(0);
+        pixels.set(scanlines.subarray(y * stride + 1, (y + 1) * stride), y * width * 4);
+    }
+    return { width, height, pixels };
+}
+
+describe('English drawing and image conversion share one preserved workspace', () => {
+    it('imports original colors at 16 square, then reduces only on request with exact Undo and Redo', async () => {
+        const ui = interactiveWorkspace({});
+        await ui.loadImage();
+        const original = await ui.currentProject();
+        expect(original).toEqual(core.resizeImage(ui.source, 16, 16, 'fit'));
+        expect(conversion.countVisibleColors(original)).toBeGreaterThan(8);
+        ui.change('pixel-color-limit', '8');
+        expect(await ui.currentProject()).toEqual(original);
+        ui.click(copy.en.reduceCurrent);
+        const reduced = await ui.currentProject();
+        expect(conversion.countVisibleColors(reduced)).toBeLessThanOrEqual(8);
+        ui.click(copy.en.undo);
+        expect(await ui.currentProject()).toEqual(original);
+        ui.click(copy.en.redo);
+        expect(await ui.currentProject()).toEqual(reduced);
+        ui.unmount();
+    });
+
+    it('reconverts from the source while preserving edited pixels and dimensions in history', async () => {
+        const ui = interactiveWorkspace({});
+        await ui.loadImage(); ui.paint();
+        const edited = await ui.currentProject();
+        ui.change('pixel-color-limit', '16');
+        ui.change('pixel-width', '17'); ui.change('pixel-height', '31');
+        expect(await ui.currentProject()).toEqual(edited);
+        ui.click(copy.en.reconvert);
+        const expected = conversion.reducePixelGridColors(core.resizeImage(ui.source, 17, 31, 'fit'), 16);
+        expect(await ui.currentProject()).toEqual(expected);
+        ui.click(copy.en.undo);
+        expect(await ui.currentProject()).toEqual(edited);
+        ui.change('pixel-color-limit', 'original');
+        ui.click(copy.en.detailButton(32));
+        expect(await ui.currentProject()).toEqual(core.resizeImage(ui.source, 32, 32, 'fit'));
+        ui.click(copy.en.undo);
+        expect(await ui.currentProject()).toEqual(edited);
+        ui.unmount();
+    });
+
+    it('keeps ordinary resizing and blank-canvas operations independent of the selected color cap', async () => {
+        const ui = interactiveWorkspace({});
+        await ui.loadImage();
+        const original = await ui.currentProject();
+        ui.change('pixel-color-limit', '8');
+        ui.change('pixel-width', '24'); ui.change('pixel-height', '40');
+        ui.click(copy.en.resizeDrawing);
+        const resized = await ui.currentProject();
+        expect(resized).toEqual(core.resizeImage(original, 24, 40, 'fit'));
+        expect(conversion.countVisibleColors(resized)).toBeGreaterThan(8);
+        ui.click(copy.en.newSize(24, 40));
+        expect(await ui.currentProject()).toEqual(core.createGrid(24, 40));
+        ui.click(copy.en.undo);
+        expect(await ui.currentProject()).toEqual(resized);
+        ui.click(copy.en.undo);
+        expect(await ui.currentProject()).toEqual(original);
+        ui.unmount();
+    });
+
+    it('exports the old RGBA project as original and enlarged PNG without changing pixels or project format', async () => {
+        const ui = interactiveWorkspace({});
+        const contents = readFileSync(new URL('./fixtures/rgba-16x16.pixel-grid.json', import.meta.url), 'utf8');
+        const original = core.parseProject(contents);
+        await ui.loadProject(contents);
+        ui.change('pixel-color-limit', '8');
+        ui.change('pixel-export-scale', '4');
+        expect(ui.button(copy.en.reconvert).props.disabled).toBe(true);
+        const originalFile = await ui.download(copy.en.saveOriginal);
+        expect(originalFile.name).toBe('pixel-16x16.png');
+        expect(await downloadedPixels(originalFile.blob)).toEqual(original);
+        const enlargedFile = await ui.download(copy.en.saveScaled);
+        expect(enlargedFile.name).toBe('pixel-16x16-4x.png');
+        const enlarged = await downloadedPixels(enlargedFile.blob);
+        expect([enlarged.width, enlarged.height]).toEqual([64, 64]);
+        for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+            const source = (Math.floor(y / 4) * 16 + Math.floor(x / 4)) * 4;
+            expect(enlarged.pixels.slice((y * 64 + x) * 4, (y * 64 + x) * 4 + 4)).toEqual(original.pixels.slice(source, source + 4));
+        }
+        expect(await ui.currentProject()).toEqual(original);
+        const saved = await ui.downloads.at(-1)!.blob.text();
+        expect(Object.keys(JSON.parse(saved))).toEqual(['format', 'version', 'width', 'height', 'pixels']);
+        for (const locale of ['fr', 'ja'] as const) {
+            const translated = interactiveWorkspace({ locale, experience: 'converter' });
+            await translated.loadProject(saved);
+            expect(await translated.currentProject()).toEqual(original);
+            translated.unmount();
+        }
         ui.unmount();
     });
 });

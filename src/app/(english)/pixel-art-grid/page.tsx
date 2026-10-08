@@ -36,8 +36,8 @@ export default function PixelArtGridPage() {
                 <div className="mb-8">
                     <h1 className="page-heading">Pixel Art Grid Maker</h1>
                     <p className="mt-4 max-w-[65ch] text-base leading-7 text-[#59685d]">
-                        Start with a blank grid or an image. Draw individual pixels,
-                        then save a transparent PNG and editable project.
+                        Start with a blank grid or convert a photo to pixel art. Keep the original colors
+                        or choose a smaller palette, edit individual pixels, then save a PNG and editable project.
                     </p>
                     <p className="mt-3 text-sm">
                         <a href="/fr/image-en-pixel-art" lang="fr" hrefLang="fr" className="text-link text-accent">Français : convertir une image en pixel art</a>
@@ -47,14 +47,21 @@ export default function PixelArtGridPage() {
                 <section aria-labelledby="pixel-grid-help" className="mt-10 max-w-[75ch] border-t border-[#d9ded5] pt-8 text-base leading-7 text-[#59685d]">
                     <h2 id="pixel-grid-help" className="font-display text-2xl font-semibold tracking-[-0.025em] text-[#243e36]">From a grid to a finished image</h2>
                     <ol className="mt-4 list-decimal space-y-3 pl-5">
-                        <li>Choose a width and height from 1 to 128 pixels. Start blank, or import a static PNG, JPEG, or WebP image.</li>
+                        <li>Choose a width and height from 1 to 128 pixels. Start blank, or import a static PNG, JPEG, or WebP image. The image buttons let you compare 32, 64 and 128 pixels of detail.</li>
+                        <li>Keep the original colors, or choose a maximum of 8, 16, 32 or 64 colors in Canvas &amp; image settings. Apply the limit to your drawing or reconvert the original image. Fewer colors can remove small details; Undo restores the previous drawing.</li>
                         <li>Use Brush and Eraser to edit individual cells. Zoom in for small details, use Pan to move around, and Undo to reverse a whole stroke.</li>
-                        <li>Download the original-size PNG for your finished image. Save a project too if you want to reopen your pixels later.</li>
+                        <li>Download the original-size PNG, or choose an integer enlargement for a larger image without grid lines. Save a project too if you want to reopen your pixels later.</li>
                     </ol>
                     <p className="mt-5">
                         Each cell becomes one pixel in the original-size PNG. Transparent cells stay transparent;
                         the separate Grid PNG adds visible grid lines at a larger size.
-                        Image import resizes your source without automatically reducing its colors.
+                        Image import keeps the sampled colors unless you choose a color limit.
+                        Enlargement makes each pixel a crisp square; it adds no detail and does not remove the background.
+                    </p>
+                    <p className="mt-5">
+                        Reconvert uses the original image and replaces your edits; Undo brings them back.
+                        Your project stores the current pixels and transparency, but not the original image,
+                        color-limit choice or undo history. Images are processed on your device.
                     </p>
                     <p className="mt-5">
                         Need bead colors and a printable pattern?{' '}

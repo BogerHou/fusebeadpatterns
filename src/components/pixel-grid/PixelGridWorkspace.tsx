@@ -347,8 +347,8 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             const source = fromSource ? sourceRef.current : gridRef.current;
             if (!source) return;
             const resized = resizeImage(source, target.width, target.height, mode);
-            const next = converter && fromSource ? reducePixelGridColors(resized, colorLimit) : resized;
-            commit(next, converter && fromSource ? text.converted(next.width, next.height, countVisibleColors(next)) : text.resized(fromSource, target.width, target.height, mode));
+            const next = fromSource ? reducePixelGridColors(resized, colorLimit) : resized;
+            commit(next, fromSource ? text.converted(next.width, next.height, countVisibleColors(next)) : text.resized(false, target.width, target.height, mode));
         });
     }
 
@@ -414,7 +414,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 context.drawImage(bitmap, 0, 0);
                 const source: SourceImage = { width: bitmap.width, height: bitmap.height, pixels: context.getImageData(0, 0, bitmap.width, bitmap.height).data, name: file.name };
                 const resized = resizeImage(source, target.width, target.height, mode);
-                const next = converter ? reducePixelGridColors(resized, colorLimit) : resized;
+                const next = reducePixelGridColors(resized, colorLimit);
                 commit(next, text.imported(file.name, source.width, source.height, target.width, target.height, mode));
                 sourceRef.current = source;
                 setSourceInfo({ name: source.name, width: source.width, height: source.height });
@@ -485,24 +485,24 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     const imageImport = (
-        <section className={`${styles.panel} ${converter ? styles.converterImport : ''}`} aria-labelledby="pixel-import-title">
-            <h2 id="pixel-import-title">{converter ? text.converterTitle : text.importTitle}</h2>
+        <section className={`${styles.panel} ${styles.converterImport}`} aria-labelledby="pixel-import-title">
+            <h2 id="pixel-import-title">{text.converterTitle}</h2>
             <label htmlFor="pixel-image-file">{text.chooseImage}<input ref={imageFileRef} hidden={locale !== 'en'} id="pixel-image-file" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importImage(file); }} /></label>
             {locale !== 'en' && <button className={styles.spaced} type="button" disabled={busy} onClick={() => imageFileRef.current?.click()} aria-describedby="pixel-import-title">{text.chooseFile}</button>}
-            <p className={styles.hint}>{converter ? text.converterImportHelp : text.importHelp}</p>
-            {converter && <div className={styles.detailChoices}>
+            <p className={styles.hint}>{text.converterImportHelp}</p>
+            <div className={styles.detailChoices}>
                 <p>{text.detail}</p>
                 <div className={styles.buttons}>{[32, 64, 128].map(side => <button type="button" key={side} disabled={busy} onClick={() => detailSize(side)}>{text.detailButton(side)}</button>)}</div>
                 <p className={styles.hint}>{text.detailHelp}</p>
-            </div>}
-            <button className={styles.spaced} type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{converter ? text.reconvert : text.reapply}</button>
-            <p className={styles.hint}>{sourceInfo ? (converter ? text.converterLastImage : text.lastImage)(sourceInfo.name, sourceInfo.width, sourceInfo.height) : converter ? text.converterNoImage : text.noImage}</p>
+            </div>
+            <button className={styles.spaced} type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button>
+            <p className={styles.hint}>{sourceInfo ? text.converterLastImage(sourceInfo.name, sourceInfo.width, sourceInfo.height) : text.converterNoImage}</p>
         </section>
     );
 
     return (
         <div className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
-            {converter && imageImport}
+            {imageImport}
             <details className={styles.settingsDisclosure} open={settingsExpanded ?? isWideViewport}>
                 <summary onClick={event => { event.preventDefault(); setSettingsExpanded(!(settingsExpanded ?? isWideViewport)); }}>{text.settings}</summary>
             <aside className={styles.settings} aria-label={text.settingsAria}>
@@ -518,18 +518,18 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                     <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy} onClick={() => resize()}>{text.resizeDrawing}</button><button type="button" disabled={busy} onClick={() => newCanvas()}>{text.newBlank}</button></div>
                     <p className={styles.hint}>{text.sizeHelp}</p>
                 </section>
-                {converter ? <section className={styles.panel} aria-labelledby="pixel-colors-title">
+                <section className={styles.panel} aria-labelledby="pixel-colors-title">
                     <h2 id="pixel-colors-title">{text.colorLimit}</h2>
                     <label htmlFor="pixel-color-limit">{text.colorLimit}<select id="pixel-color-limit" value={colorLimit} disabled={busy} onChange={event => setColorLimit(event.target.value === 'original' ? 'original' : Number(event.target.value) as ColorLimit)}><option value="original">{text.originalColors}</option>{[8, 16, 32, 64].map(value => <option key={value} value={value}>{text.colors(value)}</option>)}</select></label>
                     <p className={styles.hint}>{text.colorHelp}</p>
                     <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button><button type="button" disabled={busy || colorLimit === 'original'} onClick={applyColorLimit}>{text.reduceCurrent}</button></div>
                     <p className={styles.hint}>{text.converterLimitHelp}</p>
-                </section> : imageImport}
+                </section>
             </aside>
             </details>
             <div className={styles.drawingColumn}>
                 <section className={styles.panel} aria-labelledby="pixel-canvas-title">
-                    <div className={styles.heading}><h2 id="pixel-canvas-title">{text.pixels(grid.width, grid.height)}</h2><span>{text.visiblePixels(nontransparent)}{converter ? ` · ${text.visibleColors(countVisibleColors(grid))}` : ''}</span></div>
+                    <div className={styles.heading}><h2 id="pixel-canvas-title">{text.pixels(grid.width, grid.height)}</h2><span>{text.visiblePixels(nontransparent)} · {text.visibleColors(countVisibleColors(grid))}</span></div>
                     <div className={styles.drawingTools} aria-label={text.drawingTools}>
                         {(['brush', 'eraser', 'pan'] as const).map(id => <button type="button" key={id} aria-pressed={tool === id} disabled={busy} onClick={() => action(() => setTool(id))}>{text[id]}</button>)}
                         <button className={styles.historyButton} type="button" aria-label={text.undo} title={text.undo} disabled={busy || !historyState.undo} onClick={() => undo()}><Undo2 size={20} aria-hidden="true" /></button><button className={styles.historyButton} type="button" aria-label={text.redo} title={text.redo} disabled={busy || !historyState.redo} onClick={() => undo(true)}><Redo2 size={20} aria-hidden="true" /></button>
@@ -552,17 +552,17 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
                 <section className={styles.panel} aria-labelledby="pixel-save-title">
                     <div className={styles.heading}><h2 id="pixel-save-title">{text.saveTitle}</h2><span>{dirty ? text.dirty : text.saved}</span></div>
-                    {converter && <div className={styles.scaledExport}>
+                    <div className={styles.scaledExport}>
                         <label htmlFor="pixel-export-scale">{text.exportScale}<select id="pixel-export-scale" value={exportScale} disabled={busy} onChange={event => setExportScale(Number(event.target.value) as 1 | 2 | 4 | 8 | 16)}>{[1, 2, 4, 8, 16].map(value => <option key={value} value={value}>{text.exportDimensions(grid.width, grid.height, value)}</option>)}</select></label>
-                        <button className={styles.primary} type="button" disabled={busy} onClick={saveScaledPng}>{text.saveScaled}</button>
+                        <button className={converter ? styles.primary : undefined} type="button" disabled={busy} onClick={saveScaledPng}>{text.saveScaled}</button>
                         <p className={styles.hint}>{text.scaledHelp}</p>
-                    </div>}
+                    </div>
                     <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={busy} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={busy} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={busy} onClick={saveProject}>{text.saveProject}</button></div>
                     <p className={styles.hint}>{text.exportHelp}</p>
                     <label className={styles.spaced} htmlFor="pixel-project-file">{text.openProject}<input ref={projectFileRef} hidden={locale !== 'en'} id="pixel-project-file" type="file" accept=".json,application/json" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importProject(file); }} /></label>
                     {locale !== 'en' && <button className={styles.spaced} type="button" disabled={busy} onClick={() => projectFileRef.current?.click()} aria-label={text.openProject}>{text.chooseFile}</button>}
                     <p className={styles.hint}>{text.projectHelp}</p>
-                    {converter && <p className={styles.hint}>{text.converterProjectHelp}</p>}
+                    <p className={styles.hint}>{text.converterProjectHelp}</p>
                 </section>
                 <p className={styles.hint}>{text.processingHelp}</p>
             </div>
