@@ -1,0 +1,11 @@
+{
+  "updatedAt": "2026-10-08",
+  "patterns": [
+    { "id": "original-soccer-ball", "name": "Ballon de football" },
+    { "id": "original-friendly-ghost", "name": "Fantôme" },
+    { "id": "original-halloween-bat", "name": "Chauve-souris" },
+    { "id": "original-christmas-tree", "name": "Sapin de Noël" },
+    { "id": "original-snowman", "name": "Bonhomme de neige" },
+    { "id": "original-gingerbread-man", "name": "Bonhomme en pain d’épices" }
+  ]
+}

@@ -75,6 +75,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
         {
+            url: 'https://fusebeadpatterns.art/fr/modeles-perles-a-repasser',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        {
             url: 'https://fusebeadpatterns.art/fr/modeles-perles-a-repasser-noel',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },

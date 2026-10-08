@@ -122,7 +122,7 @@ export default function FrenchChristmasPatternsPage() {
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Puis-je utiliser des perles Hama ?</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
-                                Les références de ces PDFs sont celles de Perler, pas de Hama. Comparez vos couleurs disponibles ou changez la palette dans l’éditeur avant d’exporter une autre fiche. Le <Link href="/guides/perler-to-hama-artkal" hrefLang="en" className="text-link">guide de changement de marque (anglais)</Link> explique cette étape ; l’éditeur et ses exports sont en anglais.
+                                Les références de ces PDFs sont celles de Perler, pas de Hama. Pour une fiche déjà préparée en français, ouvrez les <Link href="/fr/modeles-perles-a-repasser#marque" className="text-link">six modèles de perles à repasser</Link> et choisissez Hama Midi. Vous pouvez aussi comparer vos couleurs disponibles ou changer la palette dans l’éditeur avant d’exporter une autre fiche. Le <Link href="/guides/perler-to-hama-artkal" hrefLang="en" className="text-link">guide de changement de marque (anglais)</Link> explique cette étape ; l’éditeur et ses exports sont en anglais.
                             </p>
                         </details>
                         <details className="py-4">
@@ -135,6 +135,7 @@ export default function FrenchChristmasPatternsPage() {
             <footer className="mt-auto border-t border-line bg-[#edeee7]">
                 <div className="mx-auto max-w-[1248px] px-5 py-8 sm:px-10">
                     <nav aria-label="Autres pages" className="flex flex-wrap gap-x-6">
+                        <Link href="/fr/modeles-perles-a-repasser" className="text-link">Modèles de perles à repasser</Link>
                         <Link href="/patterns" hrefLang="en" className="text-link">Tous les modèles (anglais)</Link>
                         <Link href="/privacy-policy" hrefLang="en" className="text-link">Confidentialité (anglais)</Link>
                         <Link href="/terms-of-service" hrefLang="en" className="text-link">Conditions d’utilisation (anglais)</Link>
