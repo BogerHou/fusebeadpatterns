@@ -50,7 +50,7 @@ async function filesBelow(directory) {
     return files.sort();
 }
 
-function loadCatalog(file, require) {
+function loadCatalog(file, require, imports = {}) {
     if (file.endsWith('.json')) return JSON.parse(readFileSync(file, 'utf8'));
     // The catalog is local, static project data. Transpile it without editing
     // source files or requiring a TS runner / new project dependency.
@@ -61,7 +61,8 @@ function loadCatalog(file, require) {
     }).outputText;
     const catalogModule = { exports: {} };
     const execute = vm.runInThisContext(`(function(require, module, exports) {\n${compiled}\n})`, { filename: file });
-    execute(createRequire(file), catalogModule, catalogModule.exports);
+    const localRequire = createRequire(file);
+    execute((id) => Object.hasOwn(imports, id) ? imports[id] : localRequire(id), catalogModule, catalogModule.exports);
     return catalogModule.exports;
 }
 
@@ -136,17 +137,22 @@ async function main() {
     const { parse } = require('next/dist/compiled/node-html-parser');
     const baseline = await readJson(config.baselineFile);
     if (baseline.version !== 1 || !baseline.data?.pages) throw new Error('Expected a version 1 check-public-pages.mjs snapshot');
-    const { patterns, patternCollections } = loadCatalog(config.catalogFile, require);
+    const catalog = loadCatalog(config.catalogFile, require);
+    const { patterns, patternCollections } = catalog;
     if (!Array.isArray(patterns) || !Array.isArray(patternCollections)) throw new Error('Catalog must export patterns and patternCollections arrays');
+    const { patternTopics } = loadCatalog(path.join(config.projectDir, 'src/lib/patterns/topics.ts'), require, { './catalog': catalog });
+    if (!Array.isArray(patternTopics)) throw new Error('Topics must export a patternTopics array');
     const errors = [];
     const check = (condition, message) => { if (!condition) errors.push(message); };
     // Rollout floor: a missing catalog entry must not silently shrink the check.
     check(patterns.length >= 14, 'Catalog contains fewer than the 14 approved initial patterns');
     check(patternCollections.length >= 2, 'Catalog contains fewer than the 2 approved initial collections');
+    check(patternTopics.length >= 2, 'Topics contain fewer than the 2 existing curated topics');
     const detailRoutes = patterns.map((pattern) => `/patterns/${pattern.slug}`);
     const collectionRoutes = patternCollections.map((collection) => `/patterns/${collection.slug}`);
-    const newRoutes = ['/patterns', ...collectionRoutes, ...detailRoutes];
-    check(new Set(newRoutes).size === newRoutes.length, 'Catalog contains duplicate pattern or collection routes');
+    const topicRoutes = patternTopics.map((topic) => `/patterns/${topic.slug}`);
+    const newRoutes = ['/patterns', ...collectionRoutes, ...detailRoutes, ...topicRoutes];
+    check(new Set(newRoutes).size === newRoutes.length, 'Catalog contains duplicate pattern, collection or topic routes');
     const appDir = path.join(config.buildDir, 'server/app');
     const pages = new Map();
     for (const file of (await filesBelow(appDir)).filter((file) => file.endsWith('.html'))) {
@@ -245,8 +251,22 @@ async function main() {
         }
     }
     const index = pages.get('/patterns');
-    for (const route of [...collectionRoutes, ...detailRoutes]) {
+    for (const route of [...collectionRoutes, ...detailRoutes, ...topicRoutes]) {
         check(index?.links.some((link) => localPath(link.href, origin) === route && compact(link.text) && !/\bnofollow\b/i.test(link.rel)), `/patterns: missing crawlable text link to ${route}`);
+    }
+    for (const topic of patternTopics) {
+        const route = `/patterns/${topic.slug}`;
+        const page = pages.get(route);
+        check(Array.isArray(topic.patternIds) && topic.patternIds.length > 0 && new Set(topic.patternIds).size === topic.patternIds.length, `${route}: topic must select distinct patterns`);
+        check(page?.headings.some((heading) => heading.tag === 'h1' && heading.text === topic.title), `${route}: H1 must match the reviewed topic title`);
+        check(page?.metadata.some((meta) => meta.name === 'description' && meta.content === topic.description), `${route}: description must match the reviewed topic`);
+        for (const id of topic.patternIds || []) {
+            const pattern = patterns.find((candidate) => candidate.id === id);
+            check(Boolean(pattern), `${route}: topic references missing pattern ${id}`);
+            if (!pattern) continue;
+            const detail = `/patterns/${pattern.slug}`;
+            check(page?.links.some((link) => localPath(link.href, origin) === detail && compact(link.text) && !/\bnofollow\b/i.test(link.rel)), `${route}: missing crawlable topic detail link to ${detail}`);
+        }
     }
     for (const route of collectionRoutes) {
         for (const detail of detailRoutes.filter((detail) => detail.startsWith(`${route}/`))) {
@@ -273,7 +293,7 @@ async function main() {
         return;
     }
     console.log(`PASS: ${oldPages.length} existing public pages retain their SEO, public copy and internal link targets.`);
-    console.log(`PASS: ${newRoutes.length} new pages (${patterns.length} patterns, ${patternCollections.length} collections, one index) have static HTML, unique titles/H1s, self canonicals, breadcrumbs and crawlable links.`);
+    console.log(`PASS: ${newRoutes.length} library pages (${patterns.length} patterns, ${patternCollections.length} collections, ${patternTopics.length} topics, one index) have static HTML, unique titles/H1s, self canonicals, breadcrumbs and crawlable links.`);
     console.log(`PASS: ${checkedAssets.size} public assets exist; sitemap preserves ${oldSitemap.length} original URLs and includes all new canonical URLs; editor remains noindex.`);
     console.log('Local build evidence only; approved additions are allowed and search rankings are not predicted.');
 }

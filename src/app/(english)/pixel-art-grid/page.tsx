@@ -39,6 +39,9 @@ export default function PixelArtGridPage() {
                         Start with a blank grid or an image. Draw individual pixels,
                         then save a transparent PNG and editable project.
                     </p>
+                    <p className="mt-3 text-sm">
+                        <a href="/fr/image-en-pixel-art" lang="fr" hrefLang="fr" className="text-link text-accent">Français : convertir une image en pixel art</a>
+                    </p>
                 </div>
                 <PixelGridWorkspace />
                 <section aria-labelledby="pixel-grid-help" className="mt-10 max-w-[75ch] border-t border-[#d9ded5] pt-8 text-base leading-7 text-[#59685d]">

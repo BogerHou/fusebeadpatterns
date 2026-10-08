@@ -52,6 +52,7 @@ export default function JapaneseGeneratorPage() {
                     <p className="mt-4 leading-8 text-muted">PDFは29×29マスのプレートごとにA4で分かれ、1マスの間隔は5 mmです。倍率100％（実際のサイズ）で印刷し、50 mmの線と、お手持ちのプレートの間隔を確認してください。PNGは画面で見る図案です。原寸の印刷にはPDFを使ってください。</p>
                     <p className="mt-4 leading-8 text-muted">画面の色と実物のビーズの色は異なる場合があります。色番号は選択したブランドのものです。ミニビーズや丸形プレート用の原寸図案ではありません。仕上げは使用するビーズの説明に従ってください。</p>
                     <p className="mt-4 leading-8 text-muted">完成済みの図案なら<Link href="/ja/patterns" className="text-link">日本語の無料図案一覧</Link>から選べます。より詳しい調整機能は<Link href="/editor" hrefLang="en" prefetch={false} className="text-link">英語版エディター</Link>をご利用ください。</p>
+                    <p className="mt-4 leading-8 text-muted">画像をビーズの配色に合わせず、ドット絵のPNGとして保存したいときは<Link href="/ja/pixel-art-converter" prefetch={false} className="text-link">写真・画像のドット絵変換</Link>をご利用ください。</p>
                 </section>
             </main>
             <footer className="border-t border-line px-6 py-8 text-sm leading-7 text-muted">

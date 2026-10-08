@@ -8903,6 +8903,115 @@ export const patterns: Pattern[] = [
             "pdf": "/patterns/original-halloween-bat/pattern.pdf"
         },
         "updatedAt": "2026-10-08"
+    },
+    {
+        "id": "original-snowman",
+        "slug": "snowman",
+        "title": "Snowman",
+        "collectionId": null,
+        "version": "Original snowman design v1",
+        "description": "A flat white snowman with a black top hat, red scarf, orange carrot nose and two dark buttons. Download the free printable PDF or open the editable pattern.",
+        "beads": 351,
+        "colorCount": 4,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 21,
+        "motifHeight": 25,
+        "palette": [
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 247
+            },
+            {
+                "symbol": "K",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 56
+            },
+            {
+                "symbol": "R",
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "count": 43
+            },
+            {
+                "symbol": "O",
+                "ref": "80-19004",
+                "name": "Orange",
+                "hex": "#eb7b31",
+                "count": 5
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-snowman/preview.png",
+            "grid": "/patterns/original-snowman/grid.png",
+            "pixels": "/patterns/original-snowman/pixels.png",
+            "project": "/patterns/original-snowman/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-snowman/pattern.pdf"
+        },
+        "updatedAt": "2026-10-08"
+    },
+    {
+        "id": "original-gingerbread-man",
+        "slug": "gingerbread-man",
+        "title": "Gingerbread Man",
+        "collectionId": null,
+        "version": "Original gingerbread man design v1",
+        "description": "A flat gingerbread person with a round head, broad arms and legs, white icing details and two red buttons. Download the free printable PDF or open the editable pattern.",
+        "beads": 327,
+        "colorCount": 3,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 23,
+        "motifHeight": 25,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-15250",
+                "name": "Gingerbread",
+                "hex": "#7e5446",
+                "count": 264
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 51
+            },
+            {
+                "symbol": "R",
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "count": 12
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-gingerbread-man/preview.png",
+            "grid": "/patterns/original-gingerbread-man/grid.png",
+            "pixels": "/patterns/original-gingerbread-man/pixels.png",
+            "project": "/patterns/original-gingerbread-man/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-gingerbread-man/pattern.pdf"
+        },
+        "updatedAt": "2026-10-08"
     }
 ];
 

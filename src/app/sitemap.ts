@@ -21,6 +21,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 0.7,
         },
         {
+            url: 'https://fusebeadpatterns.art/fr/image-en-pixel-art',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+            changeFrequency: 'monthly',
+            priority: 0.7,
+        },
+        {
             url: 'https://fusebeadpatterns.art/about',
             lastModified: new Date('2026-09-24T00:00:00.000Z'),
             changeFrequency: 'monthly',
@@ -63,6 +69,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
         {
+            url: 'https://fusebeadpatterns.art/fr/modeles-perles-a-repasser-noel',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        {
             url: 'https://fusebeadpatterns.art/ja/patterns',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
@@ -72,6 +82,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         {
             url: 'https://fusebeadpatterns.art/ja/guides/photo-to-perler-bead-pattern',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        {
+            url: 'https://fusebeadpatterns.art/ja/pixel-art-converter',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
         ...patternCollections.map((collection) => ({

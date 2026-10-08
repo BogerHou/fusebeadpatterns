@@ -1,0 +1,19 @@
+{
+  "patterns": [
+    {
+      "id": "original-christmas-tree",
+      "name": "Sapin de Noël",
+      "description": "Un sapin vert décoré, sur une grille carrée de 29 × 29 cases."
+    },
+    {
+      "id": "original-snowman",
+      "name": "Bonhomme de neige",
+      "description": "Un bonhomme de neige avec un chapeau noir et une écharpe rouge."
+    },
+    {
+      "id": "original-gingerbread-man",
+      "name": "Bonhomme en pain d’épices",
+      "description": "Un bonhomme marron au glaçage blanc et aux boutons rouges."
+    }
+  ]
+}
