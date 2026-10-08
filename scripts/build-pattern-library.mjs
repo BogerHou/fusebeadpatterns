@@ -264,14 +264,18 @@ export function getLibraryProject(id: string): LibraryProject | undefined {
 `);
 
 // Extract existing PDF pages without redrawing the grid, changing its scale,
-// replacing fonts or rasterizing. Retain the original study numbering.
+// replacing fonts or rasterizing. Only the explicitly reviewed ghost-cat text
+// correction below replaces internal study labels in its public download.
 for (const { input, source } of packs) {
-// Preserve the file metadata of the two already published packs byte for byte.
+// Preserve legacy file metadata except the reviewed correction below.
 const legacyPdfMetadata = source.patterns.some(({ id }) => id === 'sdv-blue-chicken' || id === 'pokemon-charmander-gen5');
-const split = spawnSync(process.env.PYTHON || 'python3', ['-c', `
-import json, pathlib, sys
+const split = spawnSync(process.env.PYTHON || 'python3', ['-B', '-c', `
+import importlib.util, json, pathlib, sys
 from pypdf import PdfReader, PdfWriter
-source, output, ids, subject = sys.argv[1:]
+source, output, ids, subject, labels_script = sys.argv[1:]
+spec = importlib.util.spec_from_file_location('pattern_pdf_labels', labels_script)
+labels = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(labels)
 ids = json.loads(ids)
 reader = PdfReader(source)
 if len(reader.pages) != len(ids):
@@ -283,6 +287,8 @@ for index, entry in enumerate(ids):
         raise ValueError('PDF order/content mismatch for ' + entry['id'])
     writer = PdfWriter()
     writer.add_page(original)
+    expected_contents = labels.clean_reviewed_pdf_page(writer.pages[0], entry['id'])
+    expected_text = writer.pages[0].extract_text()
     # This reviewed addition includes an explicit actual-size print preference.
     # Keep published PDF bytes unchanged by applying it only to the new design.
     if entry['id'] == 'original-halloween-bat':
@@ -290,17 +296,18 @@ for index, entry in enumerate(ids):
             raise ValueError('Reviewed bat PDF must disable automatic print scaling')
         writer.create_viewer_preferences()
         writer.viewer_preferences.print_scaling = '/None'
-    writer.add_metadata({'/Title': entry['title'] + ' Perler Bead Pattern', '/Author': 'Fuse Bead Patterns', '/Subject': subject})
+    public_subject = labels.PUBLIC_SUBJECT if entry['id'] == labels.PATTERN_ID else subject
+    writer.add_metadata({'/Title': entry['title'] + ' Perler Bead Pattern', '/Author': 'Fuse Bead Patterns', '/Subject': public_subject})
     destination = pathlib.Path(output) / entry['id'] / 'pattern.pdf'
     with destination.open('wb') as stream:
         writer.write(stream)
     checked = PdfReader(destination)
-    if len(checked.pages) != 1 or checked.pages[0].extract_text() != text:
+    if len(checked.pages) != 1 or checked.pages[0].extract_text() != expected_text:
         raise ValueError('PDF extraction changed the page')
-    if checked.pages[0].get_contents().get_data() != original.get_contents().get_data():
+    if checked.pages[0].get_contents().get_data() != expected_contents:
         raise ValueError('PDF extraction changed the drawing instructions')
 print('Extracted and verified ' + str(len(ids)) + ' PDF pages')
-`, path.join(input, 'reference-pattern-library.pdf'), path.join(root, 'public/patterns'), JSON.stringify(source.patterns.map(({ id, title, beads }) => ({ id, title, beads }))), legacyPdfMetadata ? 'Single-page extraction from reviewed local pattern study' : 'Free printable Perler bead pattern with color key and actual-size grid'], { encoding: 'utf8' });
+`, path.join(input, 'reference-pattern-library.pdf'), path.join(root, 'public/patterns'), JSON.stringify(source.patterns.map(({ id, title, beads }) => ({ id, title, beads }))), legacyPdfMetadata ? 'Single-page extraction from reviewed local pattern study' : 'Free printable Perler bead pattern with color key and actual-size grid', path.join(root, 'scripts/clean-pattern-pdf-labels.py')], { encoding: 'utf8' });
 if (split.status !== 0) throw new Error(split.stderr || split.error?.message || 'PDF extraction failed; set PYTHON to a runtime with pypdf.');
 process.stdout.write(split.stdout);
 }
@@ -343,9 +350,9 @@ ${provenance.map(({ id, source, kind }) => kind === 'source-adapted'
 
 \`src/lib/patterns/catalog.ts\` holds English page content, stable slugs and compact color counts. The editor imports only \`src/lib/patterns/project-links.ts\`, a small list of trusted local project URLs. Neither module reads artifacts or external data at runtime.
 
-\`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. PDFs are extracted losslessly from the reviewed source packs. The existing 100 downloads retain their content. New downloads use recognizable titles and concise printing instructions. Source-adapted pages retain their source links; every reviewed chart PDF includes a 50 mm print scale. The color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
+\`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. PDF pages preserve their original drawing instructions, except the five reviewed ghost-cat-pumpkin study-label replacements and its Subject metadata. The helper scripts/clean-pattern-pdf-labels.py restricts that correction by ID and content hashes; grid, fonts, color codes and print-scale geometry remain unchanged. New downloads use recognizable titles and concise printing instructions. Source-adapted pages retain their source links; every reviewed chart PDF includes a 50 mm print scale. The color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
 
-To regenerate after reviewing a new source pack, run \`node scripts/build-pattern-library.mjs\`. Python with \`pypdf\` is required; set \`PYTHON\` when it is not the default runtime. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22, plus artifacts/pattern-samples/2026-10-08/soccer-ball, artifacts/pattern-samples/2026-10-08/original-seasonal-v1, artifacts/pattern-samples/2026-10-08/original-halloween-bat-v1 and artifacts/pattern-samples/2026-10-08/original-christmas-v1. New packs include \`site-entries.json\` with reviewed stable slugs and descriptions. Source-adapted designs retain their collection slug and specific reference-version requirements. Original designs use a single-segment slug and an explicit \`version\`, such as \`Original soccer ball design v1\`, without a third-party \`reference\`. To use other locations, pass all pack directories as arguments. The script verifies ${patterns.length} unique IDs and slugs, a fixed fingerprint of the published 100 IDs/slugs/kinds, the explicitly reviewed additions, source hashes, fidelity flags, PDF page order/text and unchanged PDF drawing instructions. Do not replace the published fingerprint with one calculated from the generated catalog; a missing old pack must fail validation. Future additions require review and an explicit addition to the builder's reviewed list. It is intentionally not part of the website build: CI and production need only checked-in assets. After generation, run \`npx vitest run src/lib/patterns/catalog.test.ts\`, compare all existing catalog entries and asset hashes, and render the new PDF downloads for visual review.
+To regenerate after reviewing a new source pack, run \`node scripts/build-pattern-library.mjs\`. Python with \`pypdf\` is required; set \`PYTHON\` when it is not the default runtime. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22, plus artifacts/pattern-samples/2026-10-08/soccer-ball, artifacts/pattern-samples/2026-10-08/original-seasonal-v1, artifacts/pattern-samples/2026-10-08/original-halloween-bat-v1 and artifacts/pattern-samples/2026-10-08/original-christmas-v1. New packs include \`site-entries.json\` with reviewed stable slugs and descriptions. Source-adapted designs retain their collection slug and specific reference-version requirements. Original designs use a single-segment slug and an explicit \`version\`, such as \`Original soccer ball design v1\`, without a third-party \`reference\`. To use other locations, pass all pack directories as arguments. The script verifies ${patterns.length} unique IDs and slugs, a fixed fingerprint of the published 100 IDs/slugs/kinds, the explicitly reviewed additions, source hashes, fidelity flags, PDF page order/text and drawing instructions against the original or explicitly allowlisted corrected content. Do not replace the published fingerprint with one calculated from the generated catalog; a missing old pack must fail validation. Future additions require review and an explicit addition to the builder's reviewed list. It is intentionally not part of the website build: CI and production need only checked-in assets. After generation, run \`npx vitest run src/lib/patterns/catalog.test.ts\`, compare all existing catalog entries and asset hashes, and render the new PDF downloads for visual review.
 
 ## Editor brand switching
 

@@ -81,6 +81,31 @@ export const patternTopics: readonly PatternTopic[] = [
         updatedAt: '2026-10-08',
     },
     {
+        slug: 'halloween',
+        label: 'Halloween patterns',
+        title: 'Halloween Perler Bead Patterns',
+        description: 'Choose a ghost, bat or ghost cat with a pumpkin from three free Halloween Perler bead patterns. Download printable PDFs or edit each single-board design.',
+        intro: 'Find a Halloween design to make on one 29 × 29 midi pegboard: a white ghost, a purple-and-black bat or a ghost cat hugging a pumpkin. Open a picture for its free PDF, grid PNG, color list and editable pattern.',
+        patternIds: [
+            'original-friendly-ghost',
+            'original-halloween-bat',
+            'ghost-cat-pumpkin',
+        ],
+        selectionHeading: 'Choosing your Halloween pattern',
+        selectionNotes: [
+            'For a short color list, choose the ghost with black and white beads or the bat with three colors. The ghost cat and pumpkin use seven colors for the face, pumpkin and shaded details. Check the individual color list against your supplies.',
+            'All three are flat original designs for a single square board. They have not been physically assembled, iron-tested or tested for hanging. These charts do not include stands or instructions for a three-dimensional display.',
+            'The downloads use Perler Midi colors. Print the PDF at 100% / actual size and check its 50 mm scale. Follow the PNG by rows and columns; it is not an actual-size placement template.',
+            'For Hama or Artkal colors, open a pattern in the editor, change the bead brand while keeping the board settings, and export a new chart with the matching color list.',
+        ],
+        relatedLinks: [
+            { href: '/patterns/easy', label: 'More patterns with fewer colors' },
+            { href: '/guides/how-to-iron-perler-beads', label: 'Ironing guide' },
+            { href: '/guides/perler-to-hama-artkal', label: 'Switch bead brands' },
+        ],
+        updatedAt: '2026-10-08',
+    },
+    {
         slug: 'christmas',
         label: 'Christmas patterns',
         title: 'Christmas Perler Bead Patterns',
