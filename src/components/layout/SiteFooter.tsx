@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { guidePages } from '@/app/guides/guide-data';
+import { guidePages } from '@/app/(english)/guides/guide-data';
 
 type SiteFooterSection =
     | 'generator'

@@ -1,18 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter, Manrope } from 'next/font/google';
+import { inter, manrope } from '@/lib/site-fonts';
 import PatternAnalytics from '@/components/analytics/PatternAnalytics';
-import './globals.css';
-
-const inter = Inter({
-    variable: '--font-inter',
-    subsets: ['latin'],
-});
-
-const manrope = Manrope({
-    variable: '--font-display',
-    subsets: ['latin'],
-    display: 'swap',
-});
+import '../globals.css';
 
 export const metadata: Metadata = {
     metadataBase: new URL('https://fusebeadpatterns.art'),

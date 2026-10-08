@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
-import { guidePages } from './guides/guide-data';
+import { guidePages } from './(english)/guides/guide-data';
 import { patterns, patternCollections, getPatternHref } from '@/lib/patterns/catalog';
 import { patternContentUpdatedAt } from '@/lib/patterns/content';
+import { patternTopics } from '@/lib/patterns/topics';
 
 const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
 
@@ -45,7 +46,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         {
             url: 'https://fusebeadpatterns.art/patterns',
-            lastModified: new Date('2026-09-22T00:00:00.000Z'),
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        ...patternTopics.map((topic) => ({
+            url: `https://fusebeadpatterns.art/patterns/${topic.slug}`,
+            lastModified: new Date(topic.updatedAt),
+        })),
+        {
+            url: 'https://fusebeadpatterns.art/ja/patterns',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
         ...patternCollections.map((collection) => ({
             url: `https://fusebeadpatterns.art/patterns/${collection.slug}`,

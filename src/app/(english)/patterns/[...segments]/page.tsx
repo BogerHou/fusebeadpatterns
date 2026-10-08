@@ -6,7 +6,9 @@ import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { PatternGrid, toPatternCard } from '@/components/patterns/PatternCards';
+import PatternTopicPage from '@/components/patterns/PatternTopicPage';
 import { patterns, patternCollections, getPatternBySlug, getCollectionBySlug, getPatternsForCollection, getPatternHref, type Pattern } from '@/lib/patterns/catalog';
+import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib/patterns/topics';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 import { brandGuideHref, getCollectionIntro, getFewestColorsPattern, getPatternIntro } from '@/lib/patterns/content';
 
@@ -19,12 +21,24 @@ function patternPageTitle(pattern: Pattern): string {
 }
 
 export function generateStaticParams() {
-    return [...patternCollections.map((collection) => collection.slug), ...patterns.map((pattern) => pattern.slug)]
+    return [...patternCollections.map((collection) => collection.slug), ...patterns.map((pattern) => pattern.slug), ...patternTopics.map((topic) => topic.slug)]
         .map((slug) => ({ segments: slug.split('/') }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const slug = (await params).segments.join('/');
+    const topic = getPatternTopicBySlug(slug);
+    if (topic) {
+        const title = `${topic.title} | Fuse Bead Patterns`;
+        const previewPattern = getPatternsForTopic(topic)[0];
+        const image = previewPattern.assets.preview;
+        return {
+            title, description: topic.description,
+            alternates: { canonical: `/patterns/${topic.slug}` },
+            openGraph: { title, description: topic.description, url: `${siteUrl}/patterns/${topic.slug}`, type: 'website', images: [{ url: image, width: 580, height: 580, alt: `${getPatternDisplayName(previewPattern)} Perler bead pattern` }] },
+            twitter: { card: 'summary_large_image', title, description: topic.description, images: [image] },
+        };
+    }
     const pattern = getPatternBySlug(slug);
     const collection = getCollectionBySlug(slug);
     if (!pattern && !collection) notFound();
@@ -114,16 +128,17 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
 
 export default async function PatternRoute({ params }: Props) {
     const slug = (await params).segments.join('/');
+    const topic = getPatternTopicBySlug(slug);
     const collection = getCollectionBySlug(slug);
     const pattern = getPatternBySlug(slug);
-    if (!collection && !pattern) notFound();
+    if (!collection && !pattern && !topic) notFound();
     const collectionPatterns = collection ? getPatternsForCollection(collection.id) : [];
     const fewestColors = getFewestColorsPattern(collectionPatterns);
     return (
         <>
             <SiteHeader active="patterns" />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16 sm:pb-24">
-                {pattern ? <PatternDetail pattern={pattern} /> : <>
+                {topic ? <PatternTopicPage topic={topic} /> : pattern ? <PatternDetail pattern={pattern} /> : <>
                     <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Patterns', href: '/patterns' }, { label: collection!.title, href: `/patterns/${collection!.slug}` }]} />
                     <h1 className="page-heading pt-4 sm:pt-8">{collection!.title} Perler Bead Patterns</h1>
                     <p className="mb-10 mt-5 max-w-[65ch] text-base leading-8 text-[#59685d] sm:text-lg">{getCollectionIntro(collection!, collectionPatterns)}</p>
