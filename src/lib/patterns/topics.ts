@@ -30,6 +30,7 @@ export const patternTopics: readonly PatternTopic[] = [
             'original-soccer-ball',
             'original-friendly-ghost',
             'original-christmas-tree',
+            'original-halloween-bat',
         ],
         selectionHeading: 'Choosing your first pattern',
         selectionNotes: [
