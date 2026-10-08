@@ -38,10 +38,10 @@ export default function GuidesPage() {
                         Perler Bead Guides
                     </h1>
                     <p className="mt-5 max-w-[62ch] text-base leading-8 text-[#59685d] sm:text-lg">
-                        Planning notes for photo conversion, pegboard sizing,
-                        mini beads, beginner kits, and storage. Use these
-                        guides when a pattern needs more planning than the
-                        quick generator.
+                        Practical help for photo conversion, pegboard sizing,
+                        mini beads, supplies, and ironing your finished design.
+                        Follow a guide from choosing a pattern to making it
+                        with real beads.
                     </p>
                 </div>
 

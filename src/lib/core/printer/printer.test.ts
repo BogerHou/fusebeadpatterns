@@ -23,13 +23,16 @@ vi.mock('exceljs/dist/exceljs', () => ({
 vi.mock('jspdf', () => ({
     jsPDF: class {
         setFont = vi.fn();
+        deletePage = vi.fn();
         output = outputPdf;
     },
 }));
 
 const pixels = new Uint8ClampedArray([1, 2, 3, 255]);
 const usage = new Map([['P-001', 1]]);
-const project = {} as Project;
+const project = {
+    boardConfiguration: { nbBoardWidth: 1, nbBoardHeight: 1 },
+} as Project;
 const svg = {
     getAttribute: (name: string) => name === 'width' ? '200' : '100',
 } as SVGElement;
