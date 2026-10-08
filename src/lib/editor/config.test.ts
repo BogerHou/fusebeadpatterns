@@ -7,10 +7,37 @@ import {
     PALETTE_OPTIONS,
     getBoardOption,
     getPaletteOption,
+    getPaletteDisplayLabel,
+    getPaletteNameDisplayLabel,
     parsePaletteCsv,
 } from './config';
 
 describe('editor config', () => {
+    it('corrects the Artkal S display without changing its saved identity or board settings', () => {
+        const option = getPaletteOption('artkal_s');
+
+        expect(option).toMatchObject({
+            id: 'artkal_s',
+            label: 'Artkal S Mini',
+            file: 'artkal_s.csv',
+            prefix: 'AS',
+            boardId: 'mini_artkal',
+        });
+        expect(getPaletteDisplayLabel(option)).toBe('Artkal S (5 mm)');
+        expect(getPaletteNameDisplayLabel('Artkal S Mini')).toBe('Artkal S (5 mm)');
+        expect(getBoardOption(option!.boardId)?.beadsPerRow).toBe(50);
+    });
+
+    it('keeps other brands and custom saved palette names unchanged for display', () => {
+        for (const option of PALETTE_OPTIONS.filter(({ id }) => id !== 'artkal_s')) {
+            expect(getPaletteDisplayLabel(option)).toBe(option.label);
+            expect(getPaletteNameDisplayLabel(option.label)).toBe(option.label);
+        }
+
+        expect(getPaletteNameDisplayLabel('My Artkal S Mini palette')).toBe('My Artkal S Mini palette');
+        expect(getPaletteDisplayLabel(undefined)).toBe('Unknown');
+    });
+
     it('exposes the expected presets', () => {
         expect(PALETTE_OPTIONS.length).toBeGreaterThan(10);
         expect(getPaletteOption('perler')?.label).toContain('Perler');

@@ -5,7 +5,9 @@ import { Palette, PaletteEntry } from '../core/model/palette/palette.model';
 
 export type PaletteOption = {
     id: string;
+    /** Stable name used by saved palettes and enabled-color matching. */
     label: string;
+    displayLabel?: string;
     file: string;
     prefix: string;
     boardId: BoardOptionId;
@@ -111,6 +113,7 @@ export const PALETTE_OPTIONS: PaletteOption[] = [
     {
         id: 'artkal_s',
         label: 'Artkal S Mini',
+        displayLabel: 'Artkal S (5 mm)',
         file: 'artkal_s.csv',
         prefix: 'AS',
         boardId: 'mini_artkal',
@@ -213,6 +216,15 @@ export const EXPORT_OPTIONS: ExportOption[] = [
 
 export function getPaletteOption(id: string): PaletteOption | undefined {
     return PALETTE_OPTIONS.find((option) => option.id === id);
+}
+
+export function getPaletteDisplayLabel(option: PaletteOption | undefined): string {
+    return option?.displayLabel ?? option?.label ?? 'Unknown';
+}
+
+export function getPaletteNameDisplayLabel(name: string): string {
+    const option = PALETTE_OPTIONS.find((candidate) => candidate.label === name);
+    return option?.displayLabel ?? name;
 }
 
 export function getBoardOption(id: BoardOptionId): BoardOption | undefined {

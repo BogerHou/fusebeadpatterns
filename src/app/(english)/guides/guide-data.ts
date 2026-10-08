@@ -2,6 +2,14 @@ export type GuideSection = {
     heading: string;
     body: string[];
     bullets?: string[];
+    table?: {
+        caption: string;
+        headers: string[];
+        rows: Array<{
+            label: string;
+            cells: string[];
+        }>;
+    };
     patternIds?: string[];
     links?: Array<{
         href: string;
@@ -298,11 +306,135 @@ export const guidePages: GuidePage[] = [
             { href: '/patterns/stardew-valley/blue-chicken', label: 'Try the Blue Chicken pattern' },
             { href: '/patterns', label: 'Browse more patterns' },
             { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
+            { href: '/guides/perler-vs-hama-vs-artkal', label: 'Compare bead brands and sizes' },
+        ],
+    },
+    {
+        slug: 'perler-vs-hama-vs-artkal',
+        updatedAt: '2026-10-08',
+        title: 'Perler vs Hama vs Artkal: Sizes, Colors and Mixing',
+        description:
+            'Compare Perler, Hama and Artkal bead sizes, mini and midi ranges, color choices and mixing advice. Choose beads that match your board and pattern.',
+        eyebrow: 'Choosing Beads',
+        intro:
+            'Start with the bead size and pegboard you own, then check the colors your pattern needs. Perler, Hama and Artkal each have distinct ranges, so the series on the bag matters as much as the brand. This guide compares manufacturer specifications and advice; it is not a hands-on melting test.',
+        sections: [
+            {
+                heading: 'Bead sizes at a glance',
+                body: [
+                    'Standard or midi beads and mini beads need different pegboard spacing. Even two ranges called Mini can have different dimensions. Check the exact range on your bead bag and the beads recommended for your board before ordering.',
+                ],
+                table: {
+                    caption: 'Manufacturer specifications for the ranges compared here',
+                    headers: ['Bead range', 'Size', 'Pegboard choice'],
+                    rows: [
+                        {
+                            label: 'Perler standard',
+                            cells: ['5.07 mm high × 4.77 mm wide', 'Use a board specified for standard Perler beads.'],
+                        },
+                        {
+                            label: 'Hama Midi',
+                            cells: ['5 mm diameter × 5 mm high', 'Choose Hama Midi boards or verify the exact fit.'],
+                        },
+                        {
+                            label: 'Artkal S',
+                            cells: ['5 mm midi; hard series', 'Choose a board for the 5 mm range. S is not mini.'],
+                        },
+                        {
+                            label: 'Perler Mini',
+                            cells: ['Separate mini range', 'Perler specifies its Mini boards for Mini beads, not standard beads.'],
+                        },
+                        {
+                            label: 'Hama Mini',
+                            cells: ['2.5 mm diameter × 2.5 mm high', 'Choose a board for Hama Mini.'],
+                        },
+                        {
+                            label: 'Artkal C',
+                            cells: ['2.6 mm mini; hard series', 'Choose a board for Artkal’s 2.6 mm mini range.'],
+                        },
+                    ],
+                },
+                links: [
+                    { href: 'https://perler.com/products/1-000-perler-beads-multi-mix', label: 'Perler standard dimensions' },
+                    { href: 'https://perler.com/products/mini-beads-large-pegboards-2-ct', label: 'Perler Mini board requirements' },
+                    { href: 'https://hama.dk/pages/faq', label: 'Hama size specifications' },
+                    { href: 'https://www.artkalfusebeads.com/blogs/faq/artkal-beads-size', label: 'Artkal size and series guide' },
+                ],
+            },
+            {
+                heading: 'Which range should you choose?',
+                body: [
+                    'For a first project, a matching bead-and-board kit is a straightforward starting point. If you already have supplies, staying with that exact range lets you use your existing boards and sorted colors. Check that you can buy more of the colors you use most.',
+                    'For a small detailed design, consider a mini range with its matching board. A 29 × 29 chart still has 29 bead positions per side with either size; smaller beads make the physical design smaller. More detail requires more chart cells, not just a smaller bead.',
+                ],
+                bullets: [
+                    'Already own Perler standard beads and boards? Compare the missing colors before replacing your supplies.',
+                    'Already own Hama? Confirm whether your kit is Mini, Midi or Maxi before choosing a palette or adding beads.',
+                    'Considering Artkal? Read the series letter: S is 5 mm hard midi, while C is 2.6 mm hard mini. Its soft R and A ranges are different products.',
+                ],
+                links: [
+                    { href: '/guides/mini-perler-beads', label: 'Plan a pattern with mini beads' },
+                    { href: '/guides/perler-bead-kits-and-storage', label: 'Plan a starter kit and storage' },
+                ],
+            },
+            {
+                heading: 'Can you mix Perler, Hama and Artkal beads?',
+                body: [
+                    'Check the exact sizes and series before mixing. In a statement dated March 24, 2017, Artkal describes its upgraded hard S 5 mm and C 2.6 mm beads as compatible with Perler and Hama. It recommends using its soft R 5 mm and A 2.6 mm ranges separately to preserve their flexibility.',
+                    'That is Artkal’s statement about specific upgraded ranges, not a guarantee for every bead or pegboard. Hama lists Mini at 2.5 mm, while Artkal C is 2.6 mm. Do not assume those mini ranges fit the same board or fuse alike just because both are called Mini.',
+                    'Keep unknown mixed beads separate from a finished project. For a combination you have confirmed fits the board, follow the relevant manufacturer’s instructions and try a small patch first. Inspect it after cooling before committing a large pattern to the iron.',
+                ],
+                links: [
+                    { href: 'https://www.artkalfusebeads.com/blogs/faq/which-series-of-artkal-beads-can-work-with-perler-and-hama', label: 'Artkal’s 2017 compatibility statement' },
+                ],
+            },
+            {
+                heading: 'Compare the colors you need, then the cost',
+                body: [
+                    'Make a list from your pattern before comparing brands. Check the exact series, color code and finish, especially for outlines, skin tones and close shades. A color called Red in two ranges is not proof of an identical physical color.',
+                    'Use the manufacturer’s chart to identify a color, then check that it is available in the quantity you need. Hama provides charts for its different bead sizes, and Artkal publishes separate charts for its series. Perler’s bead-bag listings let you check individual colors and availability. A single total color count does not tell you whether a particular shade is available for your project.',
+                    'Compare the delivered cost of those colors, including any new board and shipping. A large mixed tub may still leave you short of one heavily used color; a higher-priced single-color bag may be more useful for that pattern. Prices and local stock change, so compare an actual shopping list.',
+                ],
+                links: [
+                    { href: 'https://perler.com/collections/1-000ct-bead-bags', label: 'Perler bead colors and availability' },
+                    { href: 'https://hama.dk/en/pages/colour-chart', label: 'Hama color charts by bead size' },
+                    { href: 'https://www.artkalfusebeads.com/blogs/artkal-color-chart', label: 'Artkal charts by series' },
+                ],
+            },
+            {
+                heading: 'Use a Perler pattern with Hama or Artkal colors',
+                body: [
+                    'Our library downloads use Perler Midi colors by default. If you own another range, open the pattern in the editor and select that range in Color Brand. Artkal S (5 mm) is the S-series palette; Artkal C is the C-series palette. Keep the board settings unchanged when you only want to replace colors.',
+                    'Apply Changes keeps the bead layout and matches it to enabled digital palette colors. Inspect important details and export a new chart with its color list. This helps you plan supplies, but a screen-color match does not verify physical shade, board fit or melting compatibility.',
+                    'The original library PDF remains the Perler version. A counted chart can be followed cell by cell with another bead size; a page placed under a clear board needs verified physical spacing. Choosing a color brand does not set that spacing.',
+                ],
+                links: [
+                    { href: '/guides/perler-to-hama-artkal', label: 'Follow the palette conversion steps' },
+                    { href: '/guides/perler-bead-pegboards', label: 'Check grid size and print scale' },
+                ],
+            },
+            {
+                heading: 'Test your materials before the full design',
+                body: [
+                    'Use the ironing instructions for your exact range. Perler advises a dry iron at a medium setting and a small test patch. Hama gives different settings for Mini, Midi and Maxi and also advises testing because irons vary. A time or heat setting for one range is not a universal setting for all three brands.',
+                    'Have an adult do the ironing, cover the beads with the recommended ironing paper, and keep the iron moving. Let your test cool before inspecting the joins. Once the beads, board and colors are settled, choose a small pattern to make before starting a larger piece.',
+                ],
+                links: [
+                    { href: 'https://perler.com/pages/frequently-asked-questions', label: 'Perler’s ironing advice' },
+                    { href: 'https://hama.dk/en/pages/instructions-1', label: 'Hama’s size-specific instructions' },
+                    { href: '/guides/how-to-iron-perler-beads', label: 'Follow the standard Perler fusing method' },
+                ],
+            },
+        ],
+        relatedLinks: [
+            { href: '/patterns', label: 'Choose a printable pattern' },
+            { href: '/guides/perler-to-hama-artkal', label: 'Convert a pattern to your colors' },
+            { href: '/guides/perler-bead-pegboards', label: 'Plan the board layout' },
         ],
     },
     {
         slug: 'mini-perler-beads',
-        updatedAt: '2026-10-04',
+        updatedAt: '2026-10-08',
         title: 'Mini Perler Beads Guide for Detailed Patterns',
         description:
             'Learn when mini Perler beads make sense, how they compare with midi beads, and how to plan detailed fuse bead patterns.',
@@ -336,13 +468,14 @@ export const guidePages: GuidePage[] = [
                 heading: 'Match the chart to your mini bead colors',
                 body: [
                     'Choose Open in editor on the pattern page, then Open pattern. If you already have a project open, use Save current project before choosing Replace current pattern.',
-                    'In Pattern Setup, or Setup on a phone, set Color Brand to Perler Mini, Hama Mini, or Artkal S Mini to match your beads. Leave Pegboard, Boards Wide, and Boards Tall unchanged to keep the existing digital layout, then choose Apply Changes. These grid settings do not determine which physical pegboard you own.',
+                    'In Pattern Setup, or Setup on a phone, set Color Brand to the range you own, such as Perler Mini, Hama Mini, or Artkal C. Artkal C is a 2.6 mm mini range; Artkal S is a 5 mm midi range. Leave Pegboard, Boards Wide, and Boards Tall unchanged to keep the existing digital layout, then choose Apply Changes. The physical pegboard must match your beads; selecting a color palette does not verify that fit.',
                     'Check the new colors and small details before exporting a new PDF. Several original colors may map to one color in your mini palette. Compare the exported color names and codes with your beads, and use the chart by row and column unless you have verified its physical spacing.',
                     'Changing Pegboard is a separate operation that can rebuild the grid. Use a mini board preset when generating a new pattern that needs that board’s full grid.',
                 ],
                 links: [
                     { href: '/guides/perler-to-hama-artkal', label: 'How palette conversion works' },
                     { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
+                    { href: '/guides/perler-vs-hama-vs-artkal', label: 'Compare mini and midi bead ranges' },
                 ],
             },
             {

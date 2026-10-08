@@ -36,6 +36,8 @@ import {
     BoardOptionId,
     getBoardOption,
     getPaletteOption,
+    getPaletteDisplayLabel,
+    getPaletteNameDisplayLabel,
     parsePaletteCsv,
 } from '@/lib/editor/config';
 import {
@@ -584,6 +586,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [manualPatternRevision, setManualPatternRevision] = useState(0);
 
     const mobileColorButtonRef = useRef<HTMLButtonElement>(null);
+    const mobileColorsNavButtonRef = useRef<HTMLButtonElement>(null);
     const colorPickerDialogRef = useDialogFocus(isColorPickerOpen, () => {
         setColorPickerQuery('');
         setIsColorPickerOpen(false);
@@ -751,9 +754,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         pendingBoardWidth * pendingBoardHeight > 1 ? 's' : ''
     }`;
     const pendingPaletteLabel =
-        getPaletteOption(pendingPrimaryPaletteId)?.label ?? 'Unknown';
+        getPaletteDisplayLabel(getPaletteOption(pendingPrimaryPaletteId));
     const primaryPaletteLabel =
-        getPaletteOption(primaryPaletteId)?.label ?? 'Unknown';
+        getPaletteDisplayLabel(getPaletteOption(primaryPaletteId));
     const compactColorBrandStatus =
         selectedPaletteIds.length > 1
             ? `${selectedPaletteIds.length} palettes • ${enabledColorCount} colors`
@@ -3118,6 +3121,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 return (
                                     <button
                                         key={item.id}
+                                        ref={item.id === 'colors' ? mobileColorsNavButtonRef : undefined}
                                         type="button"
                                         onClick={() =>
                                             toggleEditorMobilePanel(item.id)
@@ -3739,7 +3743,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             key={option.id}
                                                             value={option.id}
                                                         >
-                                                            {option.label}
+                                                            {getPaletteDisplayLabel(option)}
                                                         </option>
                                                     )
                                                 )}
@@ -4074,7 +4078,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             key={option.id}
                                             value={option.id}
                                         >
-                                            {option.label}
+                                            {getPaletteDisplayLabel(option)}
                                         </option>
                                     ))}
                                 </select>
@@ -4593,7 +4597,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             key={option.id}
                                                             value={option.id}
                                                         >
-                                                            {option.label}
+                                                            {getPaletteDisplayLabel(option)}
                                                         </option>
                                                     )
                                                 )}
@@ -4638,7 +4642,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             className="h-4 w-4 shrink-0 accent-[#28614e]"
                                                         />
                                                         <span className="truncate">
-                                                            {option.label}
+                                                            {getPaletteDisplayLabel(option)}
                                                         </span>
                                                     </label>
                                                 );
@@ -5034,7 +5038,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             key={option.id}
                                             value={option.id}
                                         >
-                                            {option.label}
+                                            {getPaletteDisplayLabel(option)}
                                         </option>
                                     ))}
                                 </select>
@@ -5400,160 +5404,6 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         </EditorDialog>
                     )}
 
-                    {isPaletteManagerOpen && (
-                        <EditorDialog
-                            title="Colors"
-                            summary={`${selectedPaletteIds.length} palettes selected • ${enabledColorCount} enabled colors`}
-                            onClose={() => setIsPaletteManagerOpen(false)}
-                        >
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                {PALETTE_OPTIONS.map((option) => {
-                                    const selected =
-                                        selectedPaletteIds.includes(option.id);
-                                    const optionInputId = `palette-option-${getControlToken(option.id)}`;
-
-                                    return (
-                                        <label
-                                            key={option.id}
-                                            htmlFor={optionInputId}
-                                            className={`flex cursor-pointer items-center gap-3 rounded-lg border border-[#d9ded5] px-3 py-2 font-semibold ${
-                                                selected
-                                                    ? 'bg-brand-yellow'
-                                                    : 'bg-white hover:bg-gray-50'
-                                            }`}
-                                        >
-                                            <input
-                                                id={optionInputId}
-                                                name={optionInputId}
-                                                type="checkbox"
-                                                checked={selected}
-                                                onChange={() =>
-                                                    handlePaletteSelection(
-                                                        option.id
-                                                    )
-                                                }
-                                                className="h-5 w-5 accent-[#28614e]"
-                                            />
-                                            <span className="text-sm">
-                                                {option.label}
-                                            </span>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-
-                            <div className="space-y-3">
-                                {activePalettes.map((palette) => {
-                                    const enabledEntries =
-                                        palette.entries.filter(
-                                            (entry) => entry.enabled
-                                        ).length;
-                                    const allEnabled =
-                                        enabledEntries ===
-                                        palette.entries.length;
-                                    const enableAllInputId = `palette-enable-all-${getControlToken(palette.name)}`;
-
-                                    return (
-                                        <div
-                                            key={palette.name}
-                                            className="rounded-lg border border-[#d9ded5] bg-gray-50"
-                                        >
-                                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9ded5] bg-brand-cyan px-3 py-2">
-                                                <div>
-                                                    <div className="font-sans text-lg">
-                                                        {palette.name}
-                                                    </div>
-                                                    <div className="text-xs font-semibold tracking-wide">
-                                                        {enabledEntries} /{' '}
-                                                        {
-                                                            palette.entries
-                                                                .length
-                                                        }{' '}
-                                                        enabled
-                                                    </div>
-                                                </div>
-                                                <label
-                                                    htmlFor={enableAllInputId}
-                                                    className="flex items-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-xs font-semibold"
-                                                >
-                                                    <input
-                                                        id={enableAllInputId}
-                                                        name={enableAllInputId}
-                                                        type="checkbox"
-                                                        checked={allEnabled}
-                                                        onChange={(event) =>
-                                                            updatePalettes(
-                                                                (palettes) =>
-                                                                    togglePaletteGroup(
-                                                                        palettes,
-                                                                        palette.name,
-                                                                        event
-                                                                            .target
-                                                                            .checked
-                                                                    ),
-                                                                true
-                                                            )
-                                                        }
-                                                        className="h-4 w-4 accent-[#28614e]"
-                                                    />
-                                                    Enable All
-                                                </label>
-                                            </div>
-                                            <div className="grid max-h-48 grid-cols-1 gap-2 overflow-auto p-3 sm:grid-cols-2">
-                                                {palette.entries.map(
-                                                    (entry) => (
-                                                        <button
-                                                            key={`${palette.name}-${entry.ref}`}
-                                                            type="button"
-                                                            onClick={() =>
-                                                                updatePalettes(
-                                                                    (
-                                                                        palettes
-                                                                    ) =>
-                                                                        togglePaletteEntry(
-                                                                            palettes,
-                                                                            palette.name,
-                                                                            entry.ref,
-                                                                            !entry.enabled
-                                                                        ),
-                                                                    true
-                                                                )
-                                                            }
-                                                            className={`flex items-center gap-3 rounded-lg border border-[#d9ded5] px-3 py-2 text-left transition-colors ${
-                                                                entry.enabled
-                                                                    ? 'bg-white hover:bg-brand-yellow'
-                                                                    : 'bg-gray-200 text-gray-500'
-                                                            }`}
-                                                        >
-                                                            <span
-                                                                className="h-6 w-6 shrink-0 rounded-full border border-[#d9ded5]"
-                                                                style={{
-                                                                    backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
-                                                                }}
-                                                            />
-                                                            <span className="min-w-0">
-                                                                <span className="block font-sans text-sm leading-none">
-                                                                    {entry.ref}
-                                                                </span>
-                                                                <span className="block truncate text-xs font-semibold">
-                                                                    {
-                                                                        entry.name
-                                                                    }
-                                                                </span>
-                                                            </span>
-                                                        </button>
-                                                    )
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                        </EditorDialog>
-                    )}
-
                 </div>
 
                 <div className="min-h-0 xl:h-full">
@@ -5773,6 +5623,161 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 </>
             )}
 
+            {isPaletteManagerOpen && (
+                <EditorDialog
+                    title="Colors"
+                    summary={`${selectedPaletteIds.length} palettes selected • ${enabledColorCount} enabled colors`}
+                    onClose={() => setIsPaletteManagerOpen(false)}
+                    restoreFocusFallback={isEditorPage ? mobileColorsNavButtonRef : undefined}
+                >
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {PALETTE_OPTIONS.map((option) => {
+                            const selected =
+                                selectedPaletteIds.includes(option.id);
+                            const optionInputId = `palette-option-${getControlToken(option.id)}`;
+
+                            return (
+                                <label
+                                    key={option.id}
+                                    htmlFor={optionInputId}
+                                    className={`flex cursor-pointer items-center gap-3 rounded-lg border border-[#d9ded5] px-3 py-2 font-semibold ${
+                                        selected
+                                            ? 'bg-brand-yellow'
+                                            : 'bg-white hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <input
+                                        id={optionInputId}
+                                        name={optionInputId}
+                                        type="checkbox"
+                                        checked={selected}
+                                        onChange={() =>
+                                            handlePaletteSelection(
+                                                option.id
+                                            )
+                                        }
+                                        className="h-5 w-5 accent-[#28614e]"
+                                    />
+                                    <span className="text-sm">
+                                        {getPaletteDisplayLabel(option)}
+                                    </span>
+                                </label>
+                            );
+                        })}
+                    </div>
+
+                    <div className="space-y-3">
+                        {activePalettes.map((palette) => {
+                            const enabledEntries =
+                                palette.entries.filter(
+                                    (entry) => entry.enabled
+                                ).length;
+                            const allEnabled =
+                                enabledEntries ===
+                                palette.entries.length;
+                            const enableAllInputId = `palette-enable-all-${getControlToken(palette.name)}`;
+
+                            return (
+                                <div
+                                    key={palette.name}
+                                    className="rounded-lg border border-[#d9ded5] bg-gray-50"
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9ded5] bg-brand-cyan px-3 py-2">
+                                        <div>
+                                            <div className="font-sans text-lg">
+                                                {getPaletteNameDisplayLabel(palette.name)}
+                                            </div>
+                                            <div className="text-xs font-semibold tracking-wide">
+                                                {enabledEntries} /{' '}
+                                                {
+                                                    palette.entries
+                                                        .length
+                                                }{' '}
+                                                enabled
+                                            </div>
+                                        </div>
+                                        <label
+                                            htmlFor={enableAllInputId}
+                                            className="flex items-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-xs font-semibold"
+                                        >
+                                            <input
+                                                id={enableAllInputId}
+                                                name={enableAllInputId}
+                                                type="checkbox"
+                                                checked={allEnabled}
+                                                onChange={(event) =>
+                                                    updatePalettes(
+                                                        (palettes) =>
+                                                            togglePaletteGroup(
+                                                                palettes,
+                                                                palette.name,
+                                                                event
+                                                                    .target
+                                                                    .checked
+                                                            ),
+                                                        true
+                                                    )
+                                                }
+                                                className="h-4 w-4 accent-[#28614e]"
+                                            />
+                                            Enable All
+                                        </label>
+                                    </div>
+                                    <div className="grid max-h-48 grid-cols-1 gap-2 overflow-auto p-3 sm:grid-cols-2">
+                                        {palette.entries.map(
+                                            (entry) => (
+                                                <button
+                                                    key={`${palette.name}-${entry.ref}`}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updatePalettes(
+                                                            (
+                                                                palettes
+                                                            ) =>
+                                                                togglePaletteEntry(
+                                                                    palettes,
+                                                                    palette.name,
+                                                                    entry.ref,
+                                                                    !entry.enabled
+                                                                ),
+                                                            true
+                                                        )
+                                                    }
+                                                    className={`flex items-center gap-3 rounded-lg border border-[#d9ded5] px-3 py-2 text-left transition-colors ${
+                                                        entry.enabled
+                                                            ? 'bg-white hover:bg-brand-yellow'
+                                                            : 'bg-gray-200 text-gray-500'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className="h-6 w-6 shrink-0 rounded-full border border-[#d9ded5]"
+                                                        style={{
+                                                            backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
+                                                        }}
+                                                    />
+                                                    <span className="min-w-0">
+                                                        <span className="block font-sans text-sm leading-none">
+                                                            {entry.ref}
+                                                        </span>
+                                                        <span className="block truncate text-xs font-semibold">
+                                                            {
+                                                                entry.name
+                                                            }
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+                </EditorDialog>
+            )}
+
             {isColorPickerOpen && (
                 <div
                     ref={colorPickerDialogRef}
@@ -5831,7 +5836,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }`}
                                             >
                                                 <span className="text-sm font-semibold">
-                                                    {option.label}
+                                                    {getPaletteDisplayLabel(option)}
                                                 </span>
                                                 <span className="text-xs font-semibold text-brutal-black/55">
                                                     {palette?.entries.length ??

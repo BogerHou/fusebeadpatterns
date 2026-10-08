@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+import { getBoardOption, getPaletteOption, parsePaletteCsv } from './config';
+import { mergePaletteEnabledState, togglePaletteEntry } from './palette-state';
 
 import {
     createEditorDraft,
@@ -98,6 +103,49 @@ describe('editor draft pattern helpers', () => {
 });
 
 describe('editor project file helpers', () => {
+    it('reopens a legacy Artkal S project without changing pixels, disabled colors or its 50 × 50 board', async () => {
+        const option = getPaletteOption('artkal_s')!;
+        const csv = await readFile(path.join(process.cwd(), 'public', 'palettes', option.file), 'utf8');
+        const originalPalette = parsePaletteCsv(csv, option);
+        expect(originalPalette.name).toBe('Artkal S Mini');
+        const activePalettes = togglePaletteEntry([originalPalette], 'Artkal S Mini', 'S03', false);
+        const pixels = new Uint8ClampedArray(50 * 50 * 4);
+        for (const [index, ref] of ['S01', 'S02', 'S05', 'S08'].entries()) {
+            const { r, g, b, a } = originalPalette.entries.find((entry) => entry.ref === ref)!.color;
+            pixels.set([r, g, b, a], index * 4);
+        }
+        const legacyDraft = {
+            ...createTestDraft(),
+            selectedPaletteIds: ['artkal_s'],
+            activePalettes,
+            boardId: 'mini_artkal' as const,
+            editedPattern: encodeEditorProjectPattern(pixels, 50, 50),
+        };
+        const legacyFile = JSON.stringify({
+            type: EDITOR_PROJECT_FILE_TYPE,
+            version: 1,
+            savedAt: '2026-01-01T00:00:00.000Z',
+            draft: legacyDraft,
+        });
+        const restored = parseEditorProject(legacyFile)!;
+        expect(restored).toEqual(legacyDraft);
+        expect(restored.activePalettes[0].name).toBe('Artkal S Mini');
+        expect(getBoardOption(restored.boardId)?.value.nbBeadPerRow).toBe(50);
+        expect([restored.boardWidth, restored.boardHeight]).toEqual([1, 1]);
+        expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(pixels);
+
+        const reloaded = mergePaletteEnabledState([parsePaletteCsv(csv, option)], restored.activePalettes);
+        expect(JSON.parse(JSON.stringify(reloaded))).toEqual(restored.activePalettes);
+        expect(reloaded[0].entries.find(({ ref }) => ref === 'S03')?.enabled).toBe(false);
+        expect(reloaded[0].entries.map(({ ref, color, prefix }) => ({ ref, color, prefix })))
+            .toEqual(originalPalette.entries.map(({ ref, color, prefix }) => ({ ref, color, prefix })));
+
+        const savedAgain = serializeEditorProject({ ...restored, activePalettes: reloaded });
+        expect(savedAgain).not.toContain('displayLabel');
+        expect(savedAgain).not.toContain('Artkal S (5 mm)');
+        expect(parseEditorProject(savedAgain)).toEqual(restored);
+    });
+
     it('preserves every pixel in a maximum-size project beyond the session draft limit', () => {
         const width = EDITOR_PROJECT_PATTERN_DIMENSION_MAX;
         const height = EDITOR_PROJECT_PATTERN_DIMENSION_MAX;
