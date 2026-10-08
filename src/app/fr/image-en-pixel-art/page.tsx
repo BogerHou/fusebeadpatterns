@@ -95,6 +95,7 @@ export default function ImageEnPixelArtPage() {
             </main>
             <footer className="border-t border-line bg-[#edeee7] px-5 py-6 text-sm text-muted sm:px-10">
                 <nav aria-label="Informations du site" className="mx-auto flex max-w-[1168px] flex-wrap gap-x-6 gap-y-2">
+                    <Link href="/fr/modeles-perles-a-repasser" prefetch={false} className="text-link">Modèles de perles à repasser</Link>
                     <Link href="/privacy-policy" hrefLang="en" prefetch={false} className="text-link">Confidentialité (en anglais)</Link>
                     <Link href="/terms-of-service" hrefLang="en" prefetch={false} className="text-link">Conditions d’utilisation (en anglais)</Link>
                 </nav>

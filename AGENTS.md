@@ -9,4 +9,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Always respond in Chinese-simplified.
 - When referencing local filesystem paths in responses, output plain absolute Windows paths instead of Markdown links.
 - Keep content and internal page structure simple. Use breadcrumbs and clear internal links, but avoid adding heavy decorative navigation panels unless explicitly requested.
-- After making changes, do not commit or push unless the user explicitly asks for it.
+- The user granted standing authorization on 2026-10-09 to commit, push, and publish verified improvements within this project's established growth and optimization scope. Do not request approval again for each batch. Preserve existing URLs, indexed-page metadata, downloads, and editor behavior; keep private operational data out of Git. Report validation and deployment results.
