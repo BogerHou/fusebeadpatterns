@@ -44,7 +44,7 @@
 @media (max-width: 760px) { .workspace { grid-template-columns: minmax(0, 1fr); } .settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .viewport { height: 54vh; } .workspace input[type='number'], .workspace select { font-size: 1rem; } }
 @media (max-width: 520px) { .settings { grid-template-columns: minmax(0, 1fr); } .paintSettings { gap: 16px; } .panel { padding: 14px; } .viewSettings { gap: 8px; } }
 
-/* Converter-only controls leave the existing English grid layout unchanged. */
+/* Image import stays visible above the optional canvas and color settings. */
 .converterImport { grid-column: 1 / -1; }
 .detailChoices { margin-top: 16px; }
 .detailChoices > p:first-child { font-size: .8125rem; font-weight: 550; margin-bottom: 8px; }
