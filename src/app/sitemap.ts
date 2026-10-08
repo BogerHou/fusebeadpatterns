@@ -53,7 +53,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: new Date(topic.updatedAt),
         })),
         {
+            url: 'https://fusebeadpatterns.art/de/patterns',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        {
             url: 'https://fusebeadpatterns.art/ja/patterns',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+        },
+        {
+            url: 'https://fusebeadpatterns.art/ja',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
         },
         {

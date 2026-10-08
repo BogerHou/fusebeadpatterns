@@ -8750,6 +8750,108 @@ export const patterns: Pattern[] = [
             "pdf": "/patterns/original-soccer-ball/pattern.pdf"
         },
         "updatedAt": "2026-10-08"
+    },
+    {
+        "id": "original-friendly-ghost",
+        "slug": "ghost",
+        "title": "Ghost",
+        "collectionId": null,
+        "version": "Original ghost design v1",
+        "description": "Make a white sheet ghost with black eyes and a small open mouth on one pegboard. Download the free printable PDF or open the editable pattern.",
+        "beads": 311,
+        "colorCount": 2,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 19,
+        "motifHeight": 21,
+        "palette": [
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 293
+            },
+            {
+                "symbol": "K",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 18
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-friendly-ghost/preview.png",
+            "grid": "/patterns/original-friendly-ghost/grid.png",
+            "pixels": "/patterns/original-friendly-ghost/pixels.png",
+            "project": "/patterns/original-friendly-ghost/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-friendly-ghost/pattern.pdf"
+        },
+        "updatedAt": "2026-10-08"
+    },
+    {
+        "id": "original-christmas-tree",
+        "slug": "christmas-tree",
+        "title": "Christmas Tree",
+        "collectionId": null,
+        "version": "Original Christmas tree design v1",
+        "description": "Make a flat green Christmas tree with red and yellow decorations and a brown trunk. Download the free printable PDF or open the editable pattern.",
+        "beads": 287,
+        "colorCount": 4,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 21,
+        "motifHeight": 25,
+        "palette": [
+            {
+                "symbol": "G",
+                "ref": "80-15199",
+                "name": "Shamrock",
+                "hex": "#008f53",
+                "count": 239
+            },
+            {
+                "symbol": "R",
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "count": 12
+            },
+            {
+                "symbol": "Y",
+                "ref": "80-19003",
+                "name": "Yellow",
+                "hex": "#e7ce3e",
+                "count": 16
+            },
+            {
+                "symbol": "B",
+                "ref": "80-19012",
+                "name": "Brown",
+                "hex": "#674c44",
+                "count": 20
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-christmas-tree/preview.png",
+            "grid": "/patterns/original-christmas-tree/grid.png",
+            "pixels": "/patterns/original-christmas-tree/pixels.png",
+            "project": "/patterns/original-christmas-tree/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-christmas-tree/pattern.pdf"
+        },
+        "updatedAt": "2026-10-08"
     }
 ];
 

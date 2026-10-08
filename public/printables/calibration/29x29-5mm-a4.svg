@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210.0mm" height="297.0mm" viewBox="0 0 210.0 297.0" role="img" aria-labelledby="title desc">
+<title id="title">29 x 29 print calibration - A4</title>
+<desc id="desc">Blank 5 mm grid with two 50 mm rulers. Print actual size and measure on paper. Physical pegboard compatibility has not been tested.</desc>
+<rect width="210.0" height="297.0" fill="white"/>
+<text x="17" y="19" font-family="Arial,Helvetica,sans-serif" font-size="2.82222222" font-weight="normal" text-anchor="start" fill="#48584f">FUSE BEAD PATTERNS  /  PRINT CHECK</text>
+<text x="17" y="29" font-family="Arial,Helvetica,sans-serif" font-size="7.05555556" font-weight="bold" text-anchor="start" fill="#172b24">29 x 29 blank practice grid</text>
+<text x="17" y="36" font-family="Arial,Helvetica,sans-serif" font-size="3.17500000" font-weight="normal" text-anchor="start" fill="#48584f">A4  |  210 x 297 mm paper  |  nominal 5 mm cells</text>
+<text x="17" y="43" font-family="Arial,Helvetica,sans-serif" font-size="3.17500000" font-weight="bold" text-anchor="start" fill="#172b24">Print: Actual size / 100%. Turn off Fit, Shrink and borderless enlargement.</text>
+<text x="17" y="48" font-family="Arial,Helvetica,sans-serif" font-size="2.99861111" font-weight="normal" text-anchor="start" fill="#172b24">Use matching paper, portrait orientation and one page per sheet. Prefer the PDF.</text>
+<line id="grid-v-0" x1="28.5" y1="57.0" x2="28.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-0" x1="28.5" y1="57.0" x2="173.5" y2="57.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-v-1" x1="33.5" y1="57.0" x2="33.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-1" x1="28.5" y1="62.0" x2="173.5" y2="62.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-2" x1="38.5" y1="57.0" x2="38.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-2" x1="28.5" y1="67.0" x2="173.5" y2="67.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-3" x1="43.5" y1="57.0" x2="43.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-3" x1="28.5" y1="72.0" x2="173.5" y2="72.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-4" x1="48.5" y1="57.0" x2="48.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-4" x1="28.5" y1="77.0" x2="173.5" y2="77.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-5" x1="53.5" y1="57.0" x2="53.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-5" x1="28.5" y1="82.0" x2="173.5" y2="82.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-v-6" x1="58.5" y1="57.0" x2="58.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-6" x1="28.5" y1="87.0" x2="173.5" y2="87.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-7" x1="63.5" y1="57.0" x2="63.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-7" x1="28.5" y1="92.0" x2="173.5" y2="92.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-8" x1="68.5" y1="57.0" x2="68.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-8" x1="28.5" y1="97.0" x2="173.5" y2="97.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-9" x1="73.5" y1="57.0" x2="73.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-9" x1="28.5" y1="102.0" x2="173.5" y2="102.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-10" x1="78.5" y1="57.0" x2="78.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-10" x1="28.5" y1="107.0" x2="173.5" y2="107.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-v-11" x1="83.5" y1="57.0" x2="83.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-11" x1="28.5" y1="112.0" x2="173.5" y2="112.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-12" x1="88.5" y1="57.0" x2="88.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-12" x1="28.5" y1="117.0" x2="173.5" y2="117.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-13" x1="93.5" y1="57.0" x2="93.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-13" x1="28.5" y1="122.0" x2="173.5" y2="122.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-14" x1="98.5" y1="57.0" x2="98.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-14" x1="28.5" y1="127.0" x2="173.5" y2="127.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-15" x1="103.5" y1="57.0" x2="103.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-15" x1="28.5" y1="132.0" x2="173.5" y2="132.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-v-16" x1="108.5" y1="57.0" x2="108.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-16" x1="28.5" y1="137.0" x2="173.5" y2="137.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-17" x1="113.5" y1="57.0" x2="113.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-17" x1="28.5" y1="142.0" x2="173.5" y2="142.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-18" x1="118.5" y1="57.0" x2="118.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-18" x1="28.5" y1="147.0" x2="173.5" y2="147.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-19" x1="123.5" y1="57.0" x2="123.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-19" x1="28.5" y1="152.0" x2="173.5" y2="152.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-20" x1="128.5" y1="57.0" x2="128.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-20" x1="28.5" y1="157.0" x2="173.5" y2="157.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-v-21" x1="133.5" y1="57.0" x2="133.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-21" x1="28.5" y1="162.0" x2="173.5" y2="162.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-22" x1="138.5" y1="57.0" x2="138.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-22" x1="28.5" y1="167.0" x2="173.5" y2="167.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-23" x1="143.5" y1="57.0" x2="143.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-23" x1="28.5" y1="172.0" x2="173.5" y2="172.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-24" x1="148.5" y1="57.0" x2="148.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-24" x1="28.5" y1="177.0" x2="173.5" y2="177.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-25" x1="153.5" y1="57.0" x2="153.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-25" x1="28.5" y1="182.0" x2="173.5" y2="182.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-v-26" x1="158.5" y1="57.0" x2="158.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-26" x1="28.5" y1="187.0" x2="173.5" y2="187.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-27" x1="163.5" y1="57.0" x2="163.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-27" x1="28.5" y1="192.0" x2="173.5" y2="192.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-28" x1="168.5" y1="57.0" x2="168.5" y2="202.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-h-28" x1="28.5" y1="197.0" x2="173.5" y2="197.0" stroke="#9da9a2" stroke-width="0.1"/>
+<line id="grid-v-29" x1="173.5" y1="57.0" x2="173.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<line id="grid-h-29" x1="28.5" y1="202.0" x2="173.5" y2="202.0" stroke="#48584f" stroke-width="0.25"/>
+<text x="31.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">1</text>
+<text x="26.5" y="60.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">1</text>
+<text x="36.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">2</text>
+<text x="26.5" y="65.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">2</text>
+<text x="41.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">3</text>
+<text x="26.5" y="70.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">3</text>
+<text x="46.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">4</text>
+<text x="26.5" y="75.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">4</text>
+<text x="51.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">5</text>
+<text x="26.5" y="80.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">5</text>
+<text x="56.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">6</text>
+<text x="26.5" y="85.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">6</text>
+<text x="61.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">7</text>
+<text x="26.5" y="90.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">7</text>
+<text x="66.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">8</text>
+<text x="26.5" y="95.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">8</text>
+<text x="71.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">9</text>
+<text x="26.5" y="100.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">9</text>
+<text x="76.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">10</text>
+<text x="26.5" y="105.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">10</text>
+<text x="81.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">11</text>
+<text x="26.5" y="110.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">11</text>
+<text x="86.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">12</text>
+<text x="26.5" y="115.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">12</text>
+<text x="91.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">13</text>
+<text x="26.5" y="120.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">13</text>
+<text x="96.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">14</text>
+<text x="26.5" y="125.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">14</text>
+<text x="101.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">15</text>
+<text x="26.5" y="130.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">15</text>
+<text x="106.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">16</text>
+<text x="26.5" y="135.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">16</text>
+<text x="111.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">17</text>
+<text x="26.5" y="140.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">17</text>
+<text x="116.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">18</text>
+<text x="26.5" y="145.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">18</text>
+<text x="121.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">19</text>
+<text x="26.5" y="150.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">19</text>
+<text x="126.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">20</text>
+<text x="26.5" y="155.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">20</text>
+<text x="131.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">21</text>
+<text x="26.5" y="160.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">21</text>
+<text x="136.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">22</text>
+<text x="26.5" y="165.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">22</text>
+<text x="141.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">23</text>
+<text x="26.5" y="170.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">23</text>
+<text x="146.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">24</text>
+<text x="26.5" y="175.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">24</text>
+<text x="151.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">25</text>
+<text x="26.5" y="180.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">25</text>
+<text x="156.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">26</text>
+<text x="26.5" y="185.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">26</text>
+<text x="161.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">27</text>
+<text x="26.5" y="190.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">27</text>
+<text x="166.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">28</text>
+<text x="26.5" y="195.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">28</text>
+<text x="171.0" y="55.5" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="middle" fill="#48584f">29</text>
+<text x="26.5" y="200.2" font-family="Arial,Helvetica,sans-serif" font-size="1.94027778" font-weight="normal" text-anchor="end" fill="#48584f">29</text>
+<text x="101.0" y="207" font-family="Arial,Helvetica,sans-serif" font-size="2.82222222" font-weight="normal" text-anchor="middle" fill="#48584f">29 cells = 145 mm; first-to-last cell centres = 140 mm.</text>
+<line id="ruler-horizontal-50mm" x1="28.5" y1="219.0" x2="78.5" y2="219.0" stroke="#172b24" stroke-width="0.35"/>
+<line x1="28.5" y1="217.0" x2="28.5" y2="221.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="33.5" y1="217.8" x2="33.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="38.5" y1="217.8" x2="38.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="43.5" y1="217.8" x2="43.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="48.5" y1="217.8" x2="48.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="53.5" y1="217.8" x2="53.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="58.5" y1="217.8" x2="58.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="63.5" y1="217.8" x2="63.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="68.5" y1="217.8" x2="68.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="73.5" y1="217.8" x2="73.5" y2="220.2" stroke="#172b24" stroke-width="0.2"/>
+<line x1="78.5" y1="217.0" x2="78.5" y2="221.0" stroke="#172b24" stroke-width="0.2"/>
+<text x="28.5" y="225" font-family="Arial,Helvetica,sans-serif" font-size="2.46944444" font-weight="normal" text-anchor="middle" fill="#172b24">0</text>
+<text x="78.5" y="225" font-family="Arial,Helvetica,sans-serif" font-size="2.46944444" font-weight="normal" text-anchor="middle" fill="#172b24">50 mm</text>
+<text x="91.5" y="218" font-family="Arial,Helvetica,sans-serif" font-size="2.99861111" font-weight="bold" text-anchor="start" fill="#172b24">Measure both axes on the printed sheet</text>
+<text x="91.5" y="223" font-family="Arial,Helvetica,sans-serif" font-size="2.82222222" font-weight="normal" text-anchor="start" fill="#48584f">with a separate ruler, centre to centre.</text>
+<line id="ruler-vertical-50mm" x1="183.5" y1="105.0" x2="183.5" y2="155.0" stroke="#172b24" stroke-width="0.35"/>
+<line x1="181.5" y1="105.0" x2="185.5" y2="105.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="110.0" x2="184.7" y2="110.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="115.0" x2="184.7" y2="115.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="120.0" x2="184.7" y2="120.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="125.0" x2="184.7" y2="125.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="130.0" x2="184.7" y2="130.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="135.0" x2="184.7" y2="135.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="140.0" x2="184.7" y2="140.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="145.0" x2="184.7" y2="145.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="182.3" y1="150.0" x2="184.7" y2="150.0" stroke="#172b24" stroke-width="0.2"/>
+<line x1="181.5" y1="155.0" x2="185.5" y2="155.0" stroke="#172b24" stroke-width="0.2"/>
+<text x="183.5" y="102.0" font-family="Arial,Helvetica,sans-serif" font-size="2.46944444" font-weight="normal" text-anchor="middle" fill="#172b24">0</text>
+<text x="183.5" y="160.0" font-family="Arial,Helvetica,sans-serif" font-size="2.46944444" font-weight="normal" text-anchor="middle" fill="#172b24">50 mm</text>
+<text x="17" y="231" font-family="Arial,Helvetica,sans-serif" font-size="3.52777778" font-weight="bold" text-anchor="start" fill="#172b24">Before using the grid</text>
+<text x="17" y="237" font-family="Arial,Helvetica,sans-serif" font-size="2.99861111" font-weight="normal" text-anchor="start" fill="#172b24">If either ruler is not 50 mm, check paper size and scaling, then print again.</text>
+<text x="17" y="242" font-family="Arial,Helvetica,sans-serif" font-size="2.99861111" font-weight="normal" text-anchor="start" fill="#172b24">If content is clipped, use a printer that can print this area; do not scale to fit.</text>
+<text x="17" y="247" font-family="Arial,Helvetica,sans-serif" font-size="2.99861111" font-weight="normal" text-anchor="start" fill="#172b24">If both rulers match, compare cell centres with your actual peg spacing in both axes.</text>
+<text x="17" y="252" font-family="Arial,Helvetica,sans-serif" font-size="2.99861111" font-weight="normal" text-anchor="start" fill="#172b24">If pegs do not align, use row/column counting. This is not a universal pegboard template.</text>
+<text x="17" y="257" font-family="Arial,Helvetica,sans-serif" font-size="2.82222222" font-weight="bold" text-anchor="start" fill="#172b24">Digital dimensions checked; physical printing and pegboard fit have not been tested.</text>
+<text x="17" y="281.0" font-family="Arial,Helvetica,sans-serif" font-size="2.46944444" font-weight="normal" text-anchor="start" fill="#48584f">fusebeadpatterns.art  |  Free to print and share for personal, classroom and library use.</text>
+</svg>

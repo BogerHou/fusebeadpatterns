@@ -2042,7 +2042,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     canvas.height,
                     nextPalettes,
                     matchingId,
-                    { signal: controller.signal }
+                    {
+                        signal: controller.signal,
+                        sourcePalettes: currentProject.paletteConfiguration.palettes,
+                    }
                 );
 
                 if (controller.signal.aborted || currentProjectRef.current !== currentProject ||

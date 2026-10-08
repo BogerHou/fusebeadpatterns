@@ -25,6 +25,13 @@ const blackAndWhite = () => palette(
     entry('white', [255, 255, 255])
 );
 
+async function loadPalette(id: string): Promise<Palette> {
+    const option = getPaletteOption(id);
+    if (!option) throw new Error(`Missing palette option: ${id}`);
+    const csv = await readFile(path.join(process.cwd(), 'public', 'palettes', option.file), 'utf8');
+    return parsePaletteCsv(csv, option);
+}
+
 describe('remapPatternPalette', () => {
     it('keeps the grid shape, transparent bytes and every original alpha', async () => {
         const pixels = new Uint8ClampedArray([
@@ -51,6 +58,78 @@ describe('remapPatternPalette', () => {
         const result = await remapPatternPalette(pixels, 4, 2, blackAndWhite(), 'euclidean');
 
         expect(result).toEqual(new Uint8ClampedArray(Array(8).fill([255, 255, 255, 255]).flat()));
+    });
+
+    it.each(['euclidean', 'delta_e_cie94', 'delta_e_cie2000'])(
+        'keeps named black and white across brands even if a different finish has identical RGB (%s)',
+        async (matchingId) => {
+            const sourcePalettes = palette(
+                entry(' Black ', [50, 50, 52]), entry('WHITE', [230, 231, 232])
+            );
+            const pixels = new Uint8ClampedArray([
+                50, 50, 52, 255, 230, 231, 232, 128, 50, 50, 52, 0,
+            ]);
+            const before = pixels.slice();
+            const result = await remapPatternPalette(pixels, 3, 1, palette(
+                entry('Silver', [50, 50, 52]), entry('Pearl', [230, 231, 232]),
+                entry('Black', [20, 19, 21]), entry('White', [229, 236, 241])
+            ), matchingId, { sourcePalettes });
+
+            expect(result).toEqual(new Uint8ClampedArray([
+                20, 19, 21, 255, 229, 236, 241, 128, 50, 50, 52, 0,
+            ]));
+            expect(pixels).toEqual(before);
+        }
+    );
+
+    it.each(['missing', 'unknown RGB', 'conflicting source names'])(
+        'uses distance matching when source metadata is %s', async (kind) => {
+            const sourcePalettes = kind === 'missing' ? undefined : palette(
+                entry('Black', kind === 'unknown RGB' ? [49, 50, 52] : [50, 50, 52]),
+                ...(kind === 'conflicting source names' ? [entry('Silver', [50, 50, 52])] : [])
+            );
+            const result = await remapPatternPalette(
+                new Uint8ClampedArray([50, 50, 52, 255]), 1, 1,
+                palette(entry('Silver', [50, 50, 52]), entry('Black', [20, 19, 21])),
+                'delta_e_cie2000', { sourcePalettes }
+            );
+
+            expect(result).toEqual(new Uint8ClampedArray([50, 50, 52, 255]));
+        }
+    );
+
+    it.each(['Black Rock', 'Metallic Black', 'Glow White', 'Pearlescent White', 'Silver'])(
+        'does not treat %s as ordinary black or white', async (name) => {
+            const result = await remapPatternPalette(
+                new Uint8ClampedArray([50, 50, 52, 255]), 1, 1,
+                palette(entry('Silver', [50, 50, 52]), ...blackAndWhite()[0].entries),
+                'euclidean', { sourcePalettes: palette(entry(name, [50, 50, 52])) }
+            );
+
+            expect(result).toEqual(new Uint8ClampedArray([50, 50, 52, 255]));
+        }
+    );
+
+    it('respects disabled and non-opaque target neutrals while retaining disabled source identity', async () => {
+        const sourceBlack = entry('Black', [50, 50, 52]);
+        sourceBlack.enabled = false;
+        const disabledBlack = entry('Black', [20, 19, 21]);
+        disabledBlack.enabled = false;
+        const result = await remapPatternPalette(
+            new Uint8ClampedArray([50, 50, 52, 255]), 1, 1,
+            palette(disabledBlack, entry('Black', [0, 0, 0], 128), entry('Charcoal', [70, 69, 65])),
+            'euclidean', { sourcePalettes: palette(sourceBlack) }
+        );
+        expect(result).toEqual(new Uint8ClampedArray([70, 69, 65, 255]));
+
+        const enabledTarget = await remapPatternPalette(
+            new Uint8ClampedArray([50, 50, 52, 255]), 1, 1,
+            palette(entry('Silver', [50, 50, 52]), entry('Black', [20, 19, 21])),
+            'euclidean', { sourcePalettes: palette(sourceBlack) }
+        );
+        expect(enabledTarget).toEqual(new Uint8ClampedArray([20, 19, 21, 255]));
+        expect(sourceBlack.enabled).toBe(false);
+        expect(disabledBlack.enabled).toBe(false);
     });
 
     it('ignores a disabled exact match without changing its palette', async () => {
@@ -141,7 +220,10 @@ describe('remapPatternPalette', () => {
             if (when === 'before start') controller.abort();
 
             const pending = remapPatternPalette(
-                pixels, 1, 1, blackAndWhite(), 'euclidean', { signal: controller.signal }
+                pixels, 1, 1, blackAndWhite(), 'euclidean', {
+                    signal: controller.signal,
+                    sourcePalettes: palette(entry('Black', [10, 20, 30])),
+                }
             );
             if (when === 'during conversion') controller.abort();
 
@@ -162,27 +244,75 @@ describe('remapPatternPalette', () => {
         expect(second).not.toBe(first);
     });
 
-    it('snapshots pixels and target entries before the async conversion yields', async () => {
+    it('snapshots pixels and source/target entries before the async conversion yields', async () => {
         const pixels = new Uint8ClampedArray([40, 50, 60, 128, 12, 34, 56, 0]);
-        const target = palette(entry('blue', [20, 40, 210]));
-        const pending = remapPatternPalette(pixels, 2, 1, target, 'euclidean');
+        const target = palette(entry('Black', [20, 19, 21]), entry('Silver', [40, 50, 60]));
+        const sourcePalettes = palette(entry('Black', [40, 50, 60]));
+        const pending = remapPatternPalette(pixels, 2, 1, target, 'euclidean', { sourcePalettes });
 
         pixels.fill(255);
         target[0].entries[0].enabled = false;
         target[0].entries[0].color.r = 255;
+        sourcePalettes[0].entries[0].name = 'Silver';
+        sourcePalettes[0].entries[0].color.r = 255;
 
         expect(await pending).toEqual(new Uint8ClampedArray([
-            20, 40, 210, 128, 12, 34, 56, 0,
+            20, 19, 21, 128, 12, 34, 56, 0,
         ]));
     });
 
+    it.each(['hama', 'artkal_s'])(
+        'preserves every existing %s color, including effect colors, when reapplying its palette',
+        async (id) => {
+            const target = await loadPalette(id);
+            const pixels = new Uint8ClampedArray(target.entries.flatMap(({ color }) =>
+                [color.r, color.g, color.b, color.a]
+            ));
+            for (const matchingId of ['euclidean', 'delta_e_cie94', 'delta_e_cie2000']) {
+                const result = await remapPatternPalette(
+                    pixels, target.entries.length, 1, [target], matchingId, { sourcePalettes: [target] }
+                );
+                expect(result, `${id} / ${matchingId}`).toEqual(pixels);
+            }
+        }
+    );
+
+    it.each(['euclidean', 'delta_e_cie94', 'delta_e_cie2000'])(
+        'converts the soccer project to 283 Hama Black and 218 Hama White beads (%s)',
+        async (matchingId) => {
+            const project = await readFile(path.join(
+                process.cwd(), 'public/patterns/original-soccer-ball/pattern.bead-pattern.json'
+            ), 'utf8');
+            const draft = parseEditorProject(project);
+            if (!draft?.editedPattern) throw new Error('Missing soccer project grid');
+            const pixels = decodeEditorPatternDraft(draft.editedPattern);
+            if (!pixels) throw new Error('Invalid soccer project grid');
+            const target = await loadPalette('hama');
+            const { width, height } = draft.editedPattern;
+            const result = await remapPatternPalette(
+                pixels, width, height, [target], matchingId, { sourcePalettes: draft.activePalettes }
+            );
+
+            expect(computeUsage(result, [target])).toEqual(new Map([['H18', 283], ['H01', 218]]));
+            const black = target.entries.find((color) => color.ref === 'H18')!.color;
+            const white = target.entries.find((color) => color.ref === 'H01')!.color;
+            for (let offset = 0; offset < pixels.length; offset += 4) {
+                if (pixels[offset + 3] === 0) {
+                    expect(result.subarray(offset, offset + 4)).toEqual(pixels.subarray(offset, offset + 4));
+                } else {
+                    const color = pixels[offset] === 50 ? black : white;
+                    expect(result.subarray(offset, offset + 4)).toEqual(
+                        new Uint8ClampedArray([color.r, color.g, color.b, 255])
+                    );
+                }
+            }
+        }
+    );
+
     it('remaps every library project to Hama and Artkal without losing beads', async () => {
-        expect(patterns).toHaveLength(101);
+        expect(patterns).toHaveLength(103);
         const targets = await Promise.all(['hama', 'artkal_a'].map(async (id) => {
-            const option = getPaletteOption(id);
-            if (!option) throw new Error(`Missing palette option: ${id}`);
-            const csv = await readFile(path.join(process.cwd(), 'public', 'palettes', option.file), 'utf8');
-            const target = parsePaletteCsv(csv, option);
+            const target = await loadPalette(id);
             const allowedColors = new Set(target.entries
                 .filter((color) => color.enabled && color.color.a === 255)
                 .map(({ color }) => `${color.r},${color.g},${color.b}`));
@@ -209,7 +339,8 @@ describe('remapPatternPalette', () => {
             for (const { id, target, allowedColors } of targets) {
                 // Each brand starts from the published grid, never the preceding result.
                 const result = await remapPatternPalette(
-                    pixels, width, height, [target], draft.matchingId
+                    pixels, width, height, [target], draft.matchingId,
+                    { sourcePalettes: draft.activePalettes }
                 );
                 const label = `${pattern.id} -> ${id}`;
                 expect(pixels, label).toEqual(before);
