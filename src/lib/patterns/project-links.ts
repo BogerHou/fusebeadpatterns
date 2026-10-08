@@ -1,4 +1,6 @@
 /** Small, local-only asset allowlist for the editor. Does not import catalog data. */
+import { hamaPatterns } from './hama';
+
 export type LibraryProject = { id: string; title: string; projectUrl: string };
 
 const libraryProjects: LibraryProject[] = [
@@ -535,5 +537,8 @@ const libraryProjects: LibraryProject[] = [
 ];
 
 export function getLibraryProject(id: string): LibraryProject | undefined {
-    return libraryProjects.find((project) => project.id === id);
+    const original = libraryProjects.find((project) => project.id === id);
+    if (original) return original;
+    const hama = hamaPatterns.find((pattern) => pattern.projectId === id);
+    return hama ? { id: hama.projectId, title: hama.name + ' — Hama Midi', projectUrl: hama.project } : undefined;
 }

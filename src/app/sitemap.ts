@@ -3,6 +3,7 @@ import { guidePages } from './(english)/guides/guide-data';
 import { patterns, patternCollections, getPatternHref } from '@/lib/patterns/catalog';
 import { patternContentUpdatedAt } from '@/lib/patterns/content';
 import { patternTopics } from '@/lib/patterns/topics';
+import { hamaPatterns, hamaUpdatedAt } from '@/lib/patterns/hama';
 
 const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
 
@@ -64,6 +65,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
             url: `https://fusebeadpatterns.art/patterns/${topic.slug}`,
             lastModified: new Date(topic.updatedAt),
         })),
+        {
+            url: 'https://fusebeadpatterns.art/patterns/hama',
+            lastModified: new Date(hamaUpdatedAt),
+            images: hamaPatterns.map(({ preview }) => `https://fusebeadpatterns.art${preview}`),
+        },
         {
             url: 'https://fusebeadpatterns.art/de/patterns',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),

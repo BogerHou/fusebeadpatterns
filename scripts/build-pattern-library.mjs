@@ -254,12 +254,17 @@ await writeFile(path.join(root, 'src/lib/patterns/catalog.ts'), types
     + `export function getPatternHref(pattern: Pattern): string {\n    return '/patterns/' + pattern.slug;\n}\n`);
 
 await writeFile(path.join(root, 'src/lib/patterns/project-links.ts'), `/** Small, local-only asset allowlist for the editor. Does not import catalog data. */
+import { hamaPatterns } from './hama';
+
 export type LibraryProject = { id: string; title: string; projectUrl: string };
 
 const libraryProjects: LibraryProject[] = ${JSON.stringify(patterns.map(({ id, title, assets }) => ({ id, title, projectUrl: assets.project })), null, 4)};
 
 export function getLibraryProject(id: string): LibraryProject | undefined {
-    return libraryProjects.find((project) => project.id === id);
+    const original = libraryProjects.find((project) => project.id === id);
+    if (original) return original;
+    const hama = hamaPatterns.find((pattern) => pattern.projectId === id);
+    return hama ? { id: hama.projectId, title: hama.name + ' — Hama Midi', projectUrl: hama.project } : undefined;
 }
 `);
 
@@ -363,6 +368,18 @@ Existing hand edits remain in the converted grid, but pixel undo history starts 
 ## Physical assembly notes
 
 All designs use one 29 × 29 MIDI board. Motif dimensions are recorded separately from the board canvas. Junimo has three disconnected parts and requires a backing. One-bead bridges are recorded for the relevant other patterns. No design has been physically assembled or iron-tested. Avoid claims that a pattern is physically validated, guaranteed to hold together or an exact physical color match.
+
+## Hama Midi printable variants
+
+\`src/lib/patterns/hama.json\` selects six existing original designs and explicitly maps their Perler color references to ordinary solid Hama Midi colors. These are brand variants, not six additional original patterns. The published catalog IDs, Perler projects and old downloads remain unchanged. The Hama landing page is \`/patterns/hama\`; each variant uses the editor allowlist ID \`{originalId}-hama\` and isolated files under \`public/patterns-hama/{originalId}/\`.
+
+Run \`python3 scripts/build-hama-patterns.py\` to generate the 580-pixel preview, native 29 × 29 RGBA PNG, editable project, A4 PDF and US Letter PDF for each selection. Use \`--check-only\` to verify the checked-in files and \`--qa-report PATH\` for an optional private report. The script requires Pillow, ReportLab, pypdf and pdfplumber, performs no network requests, and is not part of the production build. Reviewed original RGBA hashes are pinned independently of the catalog; source changes must trigger a new design review rather than an automatic hash replacement.
+
+The mappings preserve the original bead positions, empty-cell RGBA bytes, alpha mask, board settings and bead counts. Projects retain \`sourceMode: blank\` and \`imageSrc: null\`, select \`hama\`, and contain the exact names, RGB values, references, symbols and \`H\` prefix from \`public/palettes/hama.csv\` for the colors used by that design. Each saved palette is the design's color selection, not the complete Hama range. There is no \`allColorReferences\` field. The fixed mapping deliberately avoids automatic matches to translucent, glow, neon or metallic finishes. It preserves White as H01 and Black as H18. Gingerbread uses H76 Nougat; the remaining mapped colors are H03 Yellow, H04 Orange, H05 Red, H07 Purple, H10 Green and H12 Brown.
+
+The manufacturer's [2026 Midi color chart](https://cdn.shopify.com/s/files/1/0726/3771/0492/files/Midi_-_Colour_palette.pdf?v=1777369953), linked from the [official color-chart page](https://hama.dk/en/pages/colour-chart), identifies these as solid colors and uses numeric product color codes. PDFs therefore show \`01\`, \`18\` and other numeric codes; \`H\` is explained as the editor prefix. CSV RGB values remain screen approximations, not manufacturer measurements or guarantees about physical beads. The [Hama FAQ](https://hama.dk/pages/faq) identifies Midi beads as 5 mm; users still need to compare the printed grid with their own pegboard.
+
+Both paper sizes keep one page, a 29 × 29 grid with 5 mm pitch, one matching symbol per occupied cell, color quantities, blank-cell instructions, a 100% / Actual size instruction, \`/PrintScaling /None\`, and independent horizontal and vertical 50 mm rulers. The check verifies all PDF cell coordinates and colors, symbols, material quantities, paper dimensions, rulers, text bounds, project/PNG agreement, and unchanged existing assets. Render all 12 PDFs after meaningful layout changes and inspect them before publication. Digital checks do not establish physical assembly, ironing or universal pegboard fit.
 
 ## Deferred and retired designs
 

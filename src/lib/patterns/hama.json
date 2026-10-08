@@ -1,0 +1,35 @@
+{
+  "updatedAt": "2026-10-08",
+  "patterns": [
+    {
+      "id": "original-soccer-ball",
+      "name": "Football",
+      "colorMap": { "80-19018": "H18", "80-19001": "H01" }
+    },
+    {
+      "id": "original-friendly-ghost",
+      "name": "Ghost",
+      "colorMap": { "80-19001": "H01", "80-19018": "H18" }
+    },
+    {
+      "id": "original-halloween-bat",
+      "name": "Halloween Bat",
+      "colorMap": { "80-19018": "H18", "80-19007": "H07", "80-19001": "H01" }
+    },
+    {
+      "id": "original-christmas-tree",
+      "name": "Christmas Tree",
+      "colorMap": { "80-15199": "H10", "80-19005": "H05", "80-19003": "H03", "80-19012": "H12" }
+    },
+    {
+      "id": "original-snowman",
+      "name": "Snowman",
+      "colorMap": { "80-19001": "H01", "80-19018": "H18", "80-19005": "H05", "80-19004": "H04" }
+    },
+    {
+      "id": "original-gingerbread-man",
+      "name": "Gingerbread Man",
+      "colorMap": { "80-15250": "H76", "80-19001": "H01", "80-19005": "H05" }
+    }
+  ]
+}

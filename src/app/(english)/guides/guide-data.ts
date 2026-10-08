@@ -304,6 +304,7 @@ export const guidePages: GuidePage[] = [
         ],
         relatedLinks: [
             { href: '/patterns/stardew-valley/blue-chicken', label: 'Try the Blue Chicken pattern' },
+            { href: '/patterns/hama', label: 'Download ready-made Hama Midi patterns' },
             { href: '/patterns', label: 'Browse more patterns' },
             { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
             { href: '/guides/perler-vs-hama-vs-artkal', label: 'Compare bead brands and sizes' },
@@ -428,6 +429,7 @@ export const guidePages: GuidePage[] = [
         ],
         relatedLinks: [
             { href: '/patterns', label: 'Choose a printable pattern' },
+            { href: '/patterns/hama', label: 'Free Hama Midi templates' },
             { href: '/guides/perler-to-hama-artkal', label: 'Convert a pattern to your colors' },
             { href: '/guides/perler-bead-pegboards', label: 'Plan the board layout' },
         ],
