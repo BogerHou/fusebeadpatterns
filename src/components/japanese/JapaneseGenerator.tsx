@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { computeUsage, countBeads } from '@/lib/core/utils/utils';
 import { downloadBlob } from '@/lib/core/printer/download';
 import { trackPatternEvent } from '@/lib/analytics';
@@ -13,11 +15,37 @@ import {
     restoreJapaneseProject, serializeJapaneseProject, snapshotJapanesePattern,
     type JapanesePaletteId, type JapanesePattern, type JapaneseSettings,
 } from '@/lib/japanese/generator';
+import {
+    JapaneseLibraryProjectError, loadJapaneseLibraryProject, selectJapaneseLibraryProject,
+} from '@/lib/japanese/library-projects';
 
 type Tool = 'paint' | 'erase' | 'move';
 type Source = { src: string; name: string };
 const fieldClass = 'min-h-11 w-full rounded-md border border-line bg-white px-3 py-2 text-sm';
 const smallButton = 'min-h-11 rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40';
+
+function LibraryPatternSelection({ disabled, hasPattern, onOpen, onSave }: {
+    disabled: boolean;
+    hasPattern: boolean;
+    onOpen: (id: string) => void;
+    onSave: () => void;
+}) {
+    const search = useSearchParams();
+    const selection = selectJapaneseLibraryProject(search.getAll('pattern'));
+    if (selection.kind === 'none') return null;
+    if (selection.kind === 'invalid') return <p role="alert" className="border-l-2 border-[#b5444a] pl-4 text-sm leading-7">
+        この図案リンクは開けません。<Link href="/ja/patterns" className="text-link">日本語の図案一覧</Link>から選び直してください。現在の図案はそのまま残っています。
+    </p>;
+    return <section aria-label="選んだ図案" className="space-y-3 border-y border-line py-5">
+        <h2 className="text-lg font-semibold">選んだ図案：{selection.project.name}</h2>
+        <p className="text-sm leading-7 text-muted">{selection.project.version}。「この図案を開く」を押すと、元のマスと配色を読み込みます。画像からの作り直しは行いません。</p>
+        {hasPattern && <p className="text-sm leading-7 text-muted">現在の図案を残す場合は、先にプロジェクトを保存してください。読み込み後、置き換える前に確認します。</p>}
+        <div className="flex flex-wrap gap-3">
+            {hasPattern && <button type="button" className="button-secondary" disabled={disabled} onClick={onSave}>現在のプロジェクトを保存</button>}
+            <button type="button" className="button-primary" disabled={disabled} onClick={() => onOpen(selection.project.id)}>この図案を開く</button>
+        </div>
+    </section>;
+}
 
 export default function JapaneseGenerator() {
     const [source, setSource] = useState<Source | null>(null);
@@ -166,6 +194,37 @@ export default function JapaneseGenerator() {
         finally { finishRequest(request); }
     }
 
+    async function openLibraryProject(id: string) {
+        if (busy || exporting || exportInProgress.current) return;
+        finishStroke();
+        const request = requests.current.begin(); setBusy('選んだ図案を読み込んでいます…'); setError(null);
+        try {
+            const next = await loadJapaneseLibraryProject(id, request.signal);
+            if (next.imageSrc) await loadJapaneseImage(next.imageSrc, request.signal);
+            if (!requests.current.isCurrent(request)) return;
+            // A query change may keep this component mounted. It selects another
+            // candidate; it must not implicitly approve a previously requested load.
+            const selected = selectJapaneseLibraryProject(new URLSearchParams(window.location.search).getAll('pattern'));
+            if (selected.kind !== 'project' || selected.project.id !== id) {
+                setStatus('選択した図案が変わったため、読み込みを取り消しました。現在の図案は残っています。');
+                return;
+            }
+            if (patternRef.current && !window.confirm('現在の図案を選んだ図案で置き換えますか？現在のマスと取り消し履歴は失われます。残す場合はキャンセルし、「現在のプロジェクトを保存」を押してください。')) {
+                setStatus('図案の置き換えをキャンセルしました。現在の図案はそのまま残っています。');
+                return;
+            }
+            publish(next, true);
+            dirty.current = true;
+            setSettings({ paletteId: next.paletteId, boardWidth: next.boardWidth, boardHeight: next.boardHeight });
+            setSource(next.imageSrc ? { src: next.imageSrc, name: next.fileName } : null);
+            setFileName(next.fileName); setCursor({ x: 0, y: 0 });
+            setColorRef(next.palette.entries.find(entry => next.usage.has(entry.ref))?.ref ?? next.palette.entries[0]?.ref ?? '');
+            setStatus(`${selected.project.name}の図案を開きました。元のマスと空白を保ったまま、ブランドの変更や編集ができます。`);
+        } catch (cause) {
+            if (requests.current.isCurrent(request)) setError(cause instanceof JapaneseLibraryProjectError ? cause.message : japaneseErrorMessage(cause, 'project'));
+        } finally { finishRequest(request); }
+    }
+
     function saveProject() {
         if (!patternRef.current || busy || exporting) return;
         finishStroke();
@@ -271,6 +330,9 @@ export default function JapaneseGenerator() {
 
     return (
         <section aria-label="日本語の図案作成ツール" className="mt-8 space-y-6">
+            <Suspense fallback={null}>
+                <LibraryPatternSelection disabled={disabled} hasPattern={Boolean(pattern)} onOpen={id => void openLibraryProject(id)} onSave={saveProject} />
+            </Suspense>
             <div className="grid items-start gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="space-y-6">
                     <section aria-labelledby="ja-image-title" className="space-y-3">

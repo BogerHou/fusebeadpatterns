@@ -15,6 +15,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 1,
         },
         {
+            url: 'https://fusebeadpatterns.art/pixel-art-grid',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+            changeFrequency: 'monthly',
+            priority: 0.7,
+        },
+        {
             url: 'https://fusebeadpatterns.art/about',
             lastModified: new Date('2026-09-24T00:00:00.000Z'),
             changeFrequency: 'monthly',

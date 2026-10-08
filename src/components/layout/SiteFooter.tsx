@@ -5,6 +5,7 @@ type SiteFooterSection =
     | 'generator'
     | 'patterns'
     | 'editor'
+    | 'pixel-grid'
     | 'guides'
     | 'about'
     | 'privacy'
@@ -21,6 +22,7 @@ type FooterLink = {
     href: string;
     prefetch?: false;
     lang?: string;
+    nativeNavigation?: true;
 };
 
 const footerGroups: Array<{
@@ -32,6 +34,7 @@ const footerGroups: Array<{
         links: [
             { id: 'generator', label: 'Generator', href: '/' },
             { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
+            { id: 'pixel-grid', label: 'Pixel Art Grid', href: '/pixel-art-grid', nativeNavigation: true },
             { label: '日本語で図案を作る', href: '/ja', lang: 'ja', prefetch: false },
             {
                 id: 'editor',
@@ -83,7 +86,13 @@ export default function SiteFooter({
                             <ul>
                                 {group.links.map((link) => (
                                     <li key={link.href}>
-                                        <Link href={link.href} prefetch={link.prefetch} lang={link.lang} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
+                                        {link.nativeNavigation ? (
+                                            // A separate document lets the pixel workspace protect browser Back
+                                            // with beforeunload, as well as its in-page link guard.
+                                            <a href={link.href} aria-current={active === link.id ? 'page' : undefined}>{link.label}</a>
+                                        ) : (
+                                            <Link href={link.href} prefetch={link.prefetch} lang={link.lang} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
