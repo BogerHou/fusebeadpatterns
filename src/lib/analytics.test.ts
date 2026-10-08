@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildPatternEvent, buildPixelGridExportEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackPatternEvent, trackPixelGridExport } from './analytics';
+import { buildBeadLoomExportEvent, buildPatternEvent, buildPixelGridExportEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackBeadLoomExport, trackPatternEvent, trackPixelGridExport } from './analytics';
 
 const download = {
     name: 'pattern_download',
@@ -142,6 +142,80 @@ describe('pixel grid export analytics', () => {
             vi.stubGlobal('window', browser);
             expect(() => trackPixelGridExport({ format: 'project' })).not.toThrow();
             expect(trackPixelGridExport({ format: 'project' })).toBe(false);
+        }
+    });
+});
+
+describe('bead loom export analytics', () => {
+    it('only accepts PDF, PNG and project with the fixed bead loom event and entry point', () => {
+        for (const format of ['pdf', 'png', 'project']) {
+            expect(buildBeadLoomExportEvent({ format })).toEqual({
+                name: 'bead_loom_export', parameters: { entry_point: 'bead_loom', file_format: format },
+            });
+        }
+        for (const format of ['grid_png', 'svg', 'jpg', 'xlsx', '', 'PDF', 'private.pdf', 'https://example.com/private.png']) {
+            expect(buildBeadLoomExportEvent({ format })).toBeNull();
+        }
+        expect(buildPatternEvent({ ...download, name: 'bead_loom_export' })).toBeNull();
+    });
+
+    it('never reads or forwards caller content, dimensions, color information or event overrides', () => {
+        const input = {
+            format: 'png', name: 'pattern_export', entryPoint: 'private-chart', entry_point: 'private-chart',
+            fileName: 'private-client.png', url: 'https://example.com/private.png', columns: 11, rows: 31, cellAspect: 1.5,
+            get title() { throw new Error('Private title must not be read'); },
+            get cells() { throw new Error('Private cells must not be read'); },
+            get pixels() { throw new Error('Private pixels must not be read'); },
+            get image() { throw new Error('Private image must not be read'); },
+            get palette() { throw new Error('Private color names and codes must not be read'); },
+            project: { title: 'private-chart', name: 'private-color', code: 'private-code' },
+        };
+        const expected = { entry_point: 'bead_loom', file_format: 'png' };
+        expect(buildBeadLoomExportEvent(input)).toEqual({ name: 'bead_loom_export', parameters: expected });
+        const gtag = vi.fn();
+        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        expect(trackBeadLoomExport(input)).toBe(true);
+        expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'bead_loom_export', expected);
+    });
+
+    it('sends each allowed format once per call on both production hosts and drops unknown formats', () => {
+        for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
+            const gtag = vi.fn();
+            vi.stubGlobal('window', { location: { hostname }, gtag });
+            for (const format of ['pdf', 'png', 'project']) expect(trackBeadLoomExport({ format })).toBe(true);
+            for (const format of ['private-file.pdf', 'grid_png', 'PDF']) expect(trackBeadLoomExport({ format })).toBe(false);
+            expect(gtag.mock.calls).toEqual(['pdf', 'png', 'project'].map(format => [
+                'event', 'bead_loom_export', { entry_point: 'bead_loom', file_format: format },
+            ]));
+        }
+    });
+
+    it('does not access analytics from the server or any nonproduction host', () => {
+        expect(trackBeadLoomExport({ format: 'pdf' })).toBe(false);
+        const analyticsAccess = vi.fn();
+        for (const hostname of ['localhost', '127.0.0.1', 'fusebeadpatterns-git-preview.vercel.app', 'preview.fusebeadpatterns.art', 'fusebeadpatterns.art.example.com']) {
+            vi.stubGlobal('window', {
+                location: { hostname },
+                get gtag() { analyticsAccess(); throw new Error('Analytics must not be accessed'); },
+            });
+            for (const format of ['pdf', 'png', 'project']) expect(trackBeadLoomExport({ format })).toBe(false);
+        }
+        expect(analyticsAccess).not.toHaveBeenCalled();
+    });
+
+    it('keeps absent, blocked and throwing analytics from affecting the export flow', () => {
+        const unavailable = [
+            { location: { hostname: 'fusebeadpatterns.art' } },
+            { location: { hostname: 'fusebeadpatterns.art' }, gtag: 'not a function' },
+            { location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } },
+            { location: { hostname: 'fusebeadpatterns.art' }, get gtag() { throw new Error('Denied'); } },
+        ];
+        for (const browser of unavailable) {
+            vi.stubGlobal('window', browser);
+            for (const format of ['pdf', 'png', 'project']) {
+                expect(() => trackBeadLoomExport({ format })).not.toThrow();
+                expect(trackBeadLoomExport({ format })).toBe(false);
+            }
         }
     });
 });
