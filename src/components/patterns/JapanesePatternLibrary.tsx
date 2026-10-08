@@ -123,7 +123,7 @@ export default function JapanesePatternLibrary() {
                     PDFは日本語の説明・材料表付きです。画像を押すと図案を拡大表示できます。
                 </p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-                    自分の画像からは、<Link href="/ja" className="text-link">日本語の図案作成ツール</Link>で作れます。詳しい調整は<Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">英語版ツールの使い方ガイド</Link>もご覧ください。
+                    自分の画像からは、<Link href="/ja" className="text-link">日本語の図案作成ツール</Link>で作れます。画像の読み込みから保存までの手順は<Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">日本語の作り方ガイド</Link>をご覧ください。
                 </p>
 
                 <nav aria-label="図案のテーマ" className="mt-5 flex flex-wrap gap-x-6 text-sm font-medium">
