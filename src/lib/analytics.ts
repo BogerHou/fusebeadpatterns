@@ -10,6 +10,7 @@ const ENTRY_POINTS = new Set(['pattern_detail', 'palette_guide', 'collection', '
 const DOWNLOAD_FORMATS = new Set(['pdf', 'grid_png', 'project', 'png']);
 const EXPORT_FORMATS = new Set(['pdf', 'grid_png', 'svg', 'png', 'jpg', 'xlsx']);
 const PIXEL_GRID_EXPORT_FORMATS = new Set(['png', 'grid_png', 'project']);
+const BEAD_LOOM_EXPORT_FORMATS = new Set(['pdf', 'png', 'project']);
 
 export type PatternEventInput = {
     name: string;
@@ -33,6 +34,11 @@ type PixelGridExportInput = { format: string };
 type PixelGridExportEvent = {
     name: 'pixel_grid_export';
     parameters: { entry_point: 'pixel_grid'; file_format: string };
+};
+type BeadLoomExportInput = { format: string };
+type BeadLoomExportEvent = {
+    name: 'bead_loom_export';
+    parameters: { entry_point: 'bead_loom'; file_format: string };
 };
 
 export function isProductionAnalyticsHost(hostname: string): boolean {
@@ -61,7 +67,7 @@ export function buildPatternEvent(input: PatternEventInput): PatternEvent | null
 }
 
 type AnalyticsWindow = Pick<Window, 'location'> & {
-    gtag?: (command: 'event', name: string, parameters: PatternEvent['parameters'] | PixelGridExportEvent['parameters']) => void;
+    gtag?: (command: 'event', name: string, parameters: PatternEvent['parameters'] | PixelGridExportEvent['parameters'] | BeadLoomExportEvent['parameters']) => void;
 };
 
 export function trackPatternEvent(input: PatternEventInput): boolean {
@@ -97,6 +103,31 @@ export function trackPixelGridExport(input: PixelGridExportInput): boolean {
         const analyticsWindow = window as AnalyticsWindow;
         if (typeof analyticsWindow.gtag !== 'function') return false;
         const event = buildPixelGridExportEvent(input);
+        if (!event) return false;
+        analyticsWindow.gtag('event', event.name, event.parameters);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+export function buildBeadLoomExportEvent(input: BeadLoomExportInput): BeadLoomExportEvent | null {
+    const format = input.format;
+    if (!BEAD_LOOM_EXPORT_FORMATS.has(format)) return null;
+    return {
+        name: 'bead_loom_export',
+        parameters: { entry_point: 'bead_loom', file_format: format },
+    };
+}
+
+// Call after download() returns. This measures download initiation, not disk save.
+// Only the fixed format is read; chart content and caller-supplied extras are ignored.
+export function trackBeadLoomExport(input: BeadLoomExportInput): boolean {
+    try {
+        if (typeof window === 'undefined' || !isProductionAnalyticsHost(window.location.hostname)) return false;
+        const analyticsWindow = window as AnalyticsWindow;
+        if (typeof analyticsWindow.gtag !== 'function') return false;
+        const event = buildBeadLoomExportEvent(input);
         if (!event) return false;
         analyticsWindow.gtag('event', event.name, event.parameters);
         return true;

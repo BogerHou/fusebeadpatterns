@@ -6,6 +6,7 @@ type SiteFooterSection =
     | 'patterns'
     | 'editor'
     | 'pixel-grid'
+    | 'bead-loom'
     | 'guides'
     | 'about'
     | 'privacy'
@@ -35,6 +36,7 @@ const footerGroups: Array<{
             { id: 'generator', label: 'Generator', href: '/' },
             { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
             { id: 'pixel-grid', label: 'Pixel Art Grid', href: '/pixel-art-grid', nativeNavigation: true },
+            { id: 'bead-loom', label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker', nativeNavigation: true },
             { label: '日本語で図案を作る', href: '/ja', lang: 'ja', prefetch: false },
             {
                 id: 'editor',
@@ -87,7 +89,7 @@ export default function SiteFooter({
                                 {group.links.map((link) => (
                                     <li key={link.href}>
                                         {link.nativeNavigation ? (
-                                            // A separate document lets the pixel workspace protect browser Back
+                                            // A separate document lets drawing workspaces protect browser Back
                                             // with beforeunload, as well as its in-page link guard.
                                             <a href={link.href} aria-current={active === link.id ? 'page' : undefined}>{link.label}</a>
                                         ) : (

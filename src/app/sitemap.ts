@@ -22,6 +22,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 0.7,
         },
         {
+            url: 'https://fusebeadpatterns.art/bead-loom-pattern-maker',
+            lastModified: new Date('2026-10-08T00:00:00.000Z'),
+            changeFrequency: 'monthly',
+            priority: 0.7,
+        },
+        {
             url: 'https://fusebeadpatterns.art/fr/image-en-pixel-art',
             lastModified: new Date('2026-10-08T00:00:00.000Z'),
             changeFrequency: 'monthly',
