@@ -4,6 +4,8 @@ import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import LoomWorkspace from '@/components/bead-loom/LoomWorkspace';
 import { loomLanguageAlternates } from '@/lib/i18n/metadata';
+import { loomPatternLibraryContent } from '@/lib/bead-loom/pattern-library-content';
+import { localeRoutes } from '@/lib/i18n/routes';
 
 const title = 'Free Bead Loom Pattern Maker — PDF & Row Instructions';
 const description = 'Make a bead loom pattern with your own colors. Draw or convert an image, count beads, and download a lettered A4 or US Letter PDF, chart PNG and editable project.';
@@ -31,6 +33,7 @@ export default function BeadLoomPage() {
             <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker' }]} />
             <h1 className="page-heading">Bead Loom Pattern Maker</h1>
             <p className="mt-4 max-w-[70ch] text-base leading-7 text-[#59685d]">Make a free bead loom pattern with your own colors. Draw or start from an image, then download a lettered PDF, chart PNG and row-by-row instructions. No account needed.</p>
+            <p className="mt-3"><a href={localeRoutes.en.beadLoomPatterns} className="text-link">{loomPatternLibraryContent.en.libraryLink}</a></p>
             <LoomWorkspace />
             <section className="mt-10 max-w-[75ch] border-t border-[#d9ded5] pt-8 text-base leading-7 text-[#59685d]" aria-labelledby="loom-help">
                 <h2 id="loom-help" className="font-display text-2xl font-semibold text-[#243e36]">Plan the chart around your beads</h2>

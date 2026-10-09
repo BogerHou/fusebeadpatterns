@@ -18,12 +18,11 @@ describe('language switcher server output', () => {
         expect(html).not.toContain('cette page n’est pas disponible');
     });
 
-    it('shows a home fallback instead of pretending a selected gallery is translated', () => {
+    it('labels a relevant library fallback instead of pretending a selected download page is translated', () => {
         pathname = '/fr/modeles-perles-a-repasser';
         const html = renderToStaticMarkup(createElement(LanguageSwitcher, { locale: 'fr' }));
-        for (const href of ['/', '/de', '/fr/modeles-perles-a-repasser', '/ja']) expect(html).toContain(`href="${href}"`);
-        expect(html).not.toContain('href="/patterns"');
-        expect(html.match(/Accueil — cette page n’est pas disponible/g)).toHaveLength(3);
+        for (const href of ['/patterns', '/de/patterns', '/fr/modeles-perles-a-repasser', '/ja/patterns']) expect(html).toContain(`href="${href}"`);
+        expect(html.match(/Voir tous les modèles dans cette langue/g)).toHaveLength(3);
         expect(html).toContain('aria-current="true"');
     });
 });

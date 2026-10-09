@@ -9,6 +9,7 @@ import { patternContentUpdatedAt } from '@/lib/patterns/content';
 import { patternTopics } from '@/lib/patterns/topics';
 import { hamaPatterns, hamaUpdatedAt } from '@/lib/patterns/hama';
 import { germanHamaPath, germanHamaPatterns, germanHamaUpdatedAt } from '@/lib/patterns/german-hama';
+import { loomPatterns, loomPatternAssetPath } from '@/lib/bead-loom/patterns';
 
 const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
 
@@ -43,6 +44,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: new Date('2026-10-09T00:00:00.000Z'),
             changeFrequency: 'monthly' as const,
             priority: 0.7,
+        })),
+        ...(['en', 'de', 'fr', 'ja'] as const).map(locale => ({
+            url: `https://fusebeadpatterns.art${localeRoutes[locale].beadLoomPatterns}`,
+            lastModified: new Date('2026-10-09T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
+            priority: 0.7,
+            images: loomPatterns.map(pattern => `https://fusebeadpatterns.art${loomPatternAssetPath(pattern.id, locale, 'preview')}`),
         })),
         {
             url: 'https://fusebeadpatterns.art/fr/image-en-pixel-art',

@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import FrenchPatternDownloads from '@/components/patterns/FrenchPatternDownloads';
 import { frenchPatternChoices } from '@/lib/patterns/french-patterns';
+import { patternLibraryCount } from '@/lib/patterns/library-overview';
 
 const path = '/fr/modeles-perles-a-repasser';
 const title = 'Perles à repasser : 6 modèles gratuits à imprimer';
@@ -46,11 +47,14 @@ export default function FrenchPatternsPage() {
                     <ol className="flex flex-wrap items-center gap-x-2">
                         <li><Link href="/fr" className="inline-flex min-h-10 items-center hover:underline">Accueil</Link></li>
                         <li aria-hidden="true">/</li>
-                        <li aria-current="page">Modèles de perles à repasser</li>
+                        <li><Link href="/fr/patterns" className="inline-flex min-h-10 items-center hover:underline">Tous les modèles</Link></li>
+                        <li aria-hidden="true">/</li>
+                        <li aria-current="page">Six modèles Perler et Hama</li>
                     </ol>
                 </nav>
                 <h1 className="page-heading leading-snug">Modèles de perles à repasser gratuits</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">Choisissez parmi six motifs originaux : un ballon de football, un fantôme, une chauve-souris et trois créations de Noël. Téléchargez un PDF A4 en français ou un projet à modifier, sans compte.</p>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">Cette sélection propose des fichiers Perler Midi et Hama Midi pour les mêmes motifs. Pour voir les personnages et tous les autres dessins, consultez la <Link href="/fr/patterns" className="text-link">collection complète de {patternLibraryCount} modèles</Link>.</p>
                 <FrenchPatternDownloads patterns={frenchPatternChoices} />
                 <section id="imprimer" aria-labelledby="print-heading" className="mt-14 max-w-3xl scroll-mt-6 border-t border-line pt-8">
                     <h2 id="print-heading" className="text-2xl font-semibold leading-relaxed">Imprimer le PDF à la bonne taille</h2>

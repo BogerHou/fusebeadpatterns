@@ -12,8 +12,18 @@
 .brand.brand { min-width: 0; flex-shrink: 1; }
 .brand img { flex-shrink: 0; }
 .headerSwitcher { grid-column: 3; grid-row: 1; }
+.tools { align-self: center; }
+.toolSummary { border-color: transparent; background: transparent; padding: 12px 14px; font-weight: 550; }
+.toolList { left: 0; right: auto; }
+.toolList a { display: flex; width: 100%; }
+.footerSwitcher { margin-left: auto; }
+.footerNote { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 @media (max-width: 1040px) {
     .headerInner.headerInner { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; }
     .navigation.navigation { grid-column: 1 / -1; grid-row: 2; width: 100%; justify-content: flex-start; }
     .headerSwitcher { grid-column: 2; }
+}
+@media (max-width: 640px) {
+    .toolSummary { padding: 12px 8px; font-size: .75rem; }
+    .toolList { width: min(260px, calc(100vw - 120px)); }
 }

@@ -4,6 +4,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import LoomWorkspace from './LoomWorkspace';
 import { loomPageContent, type LocalizedLoomLocale } from '@/lib/bead-loom/page-content';
 import { localeRoutes } from '@/lib/i18n/routes';
+import { loomPatternLibraryContent } from '@/lib/bead-loom/pattern-library-content';
 
 export default function LocalizedLoomPage({ locale }: { locale: LocalizedLoomLocale }) {
     const copy = loomPageContent[locale];
@@ -15,6 +16,7 @@ export default function LocalizedLoomPage({ locale }: { locale: LocalizedLoomLoc
             <Breadcrumbs label={breadcrumbLabel} items={[{ label: home, href: localeRoutes[locale].home }, { label: copy.heading, href: localeRoutes[locale].beadLoom }]} />
             <h1 className="page-heading">{copy.heading}</h1>
             <p className="mt-4 max-w-[70ch] text-base leading-7 text-muted">{copy.introduction}</p>
+            <p className="mt-3"><a href={localeRoutes[locale].beadLoomPatterns} className="text-link">{loomPatternLibraryContent[locale].libraryLink}</a></p>
             <LoomWorkspace locale={locale} />
             <section className="mt-10 max-w-[75ch] border-t border-line pt-8 text-base leading-7 text-muted" aria-labelledby="loom-help">
                 <h2 id="loom-help" className="font-display text-2xl font-semibold text-ink">{copy.helpHeading}</h2>

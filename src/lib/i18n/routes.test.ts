@@ -17,8 +17,25 @@ describe('site language routes', () => {
     });
 
     it('keeps curated download selections separate from full libraries', () => {
-        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'de')).toEqual({ href: '/de', isFallback: true });
+        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'de')).toEqual({ href: '/de/patterns', isFallback: true, fallback: 'patterns' });
+        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'fr', { hash: '#downloads' })).toEqual({ href: '/fr/modeles-perles-a-repasser#downloads', isFallback: false });
+        for (const locale of ['en', 'de', 'ja'] as const) {
+            expect(getLocaleDestination('/fr/modeles-perles-a-repasser', locale, { search: '?brand=hama', hash: '#downloads' }))
+                .toEqual({ href: localeRoutes[locale].patterns, isFallback: true, fallback: 'patterns' });
+        }
+        expect(localizedRouteGroups.some(group => Object.values(group).includes('/fr/modeles-perles-a-repasser'))).toBe(false);
         expect(getLocaleDestination('/fr/modeles-perles-a-repasser-noel', 'ja')).toEqual({ href: '/ja/patterns/christmas', isFallback: false });
+    });
+
+    it('switches loom pattern libraries to the same design in each language', () => {
+        for (const source of SITE_LOCALES) {
+            for (const destination of SITE_LOCALES) {
+                expect(getLocaleDestination(localeRoutes[source].beadLoomPatterns, destination, { hash: '#heart-band' })).toEqual({
+                    href: `${localeRoutes[destination].beadLoomPatterns}#heart-band`,
+                    isFallback: false,
+                });
+            }
+        }
     });
 
     it('keeps untranslated pages in the current language and labels other targets as a home fallback', () => {

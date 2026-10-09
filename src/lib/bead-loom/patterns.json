@@ -1,0 +1,397 @@
+{
+  "format": "bead-loom-pattern-library",
+  "version": 1,
+  "libraryPaths": {
+    "en": "/free-bead-loom-patterns",
+    "de": "/de/perlenwebmuster",
+    "fr": "/fr/modeles-metier-a-perles",
+    "ja": "/ja/bead-loom-patterns"
+  },
+  "makerPaths": {
+    "en": "/bead-loom-pattern-maker",
+    "de": "/de/perlenwebmuster-generator",
+    "fr": "/fr/generateur-motif-metier-a-perles",
+    "ja": "/ja/bead-loom-pattern-maker"
+  },
+  "patterns": [
+    {
+      "id": "heart-band",
+      "titles": {
+        "en": "Heart band",
+        "de": "Herzband",
+        "fr": "Bande à cœurs",
+        "ja": "ハートの帯"
+      },
+      "descriptions": {
+        "en": "Five raspberry hearts with midnight borders.",
+        "de": "Fünf himbeerrote Herzen mit dunkelblauen Rändern.",
+        "fr": "Cinq cœurs framboise bordés de bleu nuit.",
+        "ja": "ラズベリー色のハート5個と濃紺の縁。"
+      },
+      "columns": 11,
+      "rows": 61,
+      "cellAspect": 1,
+      "startCorner": "bottom-left",
+      "serpentine": true,
+      "backgroundSymbol": "A",
+      "palette": [
+        {
+          "id": "color-a",
+          "symbol": "A",
+          "hex": "#F5EFE3",
+          "labels": {
+            "en": "Ivory",
+            "de": "Elfenbein",
+            "fr": "Ivoire",
+            "ja": "アイボリー"
+          }
+        },
+        {
+          "id": "color-b",
+          "symbol": "B",
+          "hex": "#C63858",
+          "labels": {
+            "en": "Raspberry",
+            "de": "Himbeere",
+            "fr": "Framboise",
+            "ja": "ラズベリー"
+          }
+        },
+        {
+          "id": "color-c",
+          "symbol": "C",
+          "hex": "#233C50",
+          "labels": {
+            "en": "Midnight blue",
+            "de": "Dunkelblau",
+            "fr": "Bleu nuit",
+            "ja": "濃紺"
+          }
+        }
+      ],
+      "symbolRows": [
+        "CCCCCCCCCCC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAABBABBAAC",
+        "CABBBBBBBAC",
+        "CABBBBBBBAC",
+        "CAABBBBBAAC",
+        "CAAABBBAAAC",
+        "CAAAABAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAABBABBAAC",
+        "CABBBBBBBAC",
+        "CABBBBBBBAC",
+        "CAABBBBBAAC",
+        "CAAABBBAAAC",
+        "CAAAABAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAABBABBAAC",
+        "CABBBBBBBAC",
+        "CABBBBBBBAC",
+        "CAABBBBBAAC",
+        "CAAABBBAAAC",
+        "CAAAABAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAABBABBAAC",
+        "CABBBBBBBAC",
+        "CABBBBBBBAC",
+        "CAABBBBBAAC",
+        "CAAABBBAAAC",
+        "CAAAABAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAABBABBAAC",
+        "CABBBBBBBAC",
+        "CABBBBBBBAC",
+        "CAABBBBBAAC",
+        "CAAABBBAAAC",
+        "CAAAABAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CAAAAAAAAAC",
+        "CCCCCCCCCCC"
+      ]
+    },
+    {
+      "id": "chevron-band",
+      "titles": {
+        "en": "Chevron band",
+        "de": "Zickzackband",
+        "fr": "Bande à chevrons",
+        "ja": "シェブロンの帯"
+      },
+      "descriptions": {
+        "en": "Repeating chevrons in midnight blue, teal and amber.",
+        "de": "Wiederholte Zickzackstreifen in Dunkelblau, Petrol und Bernstein.",
+        "fr": "Chevrons répétés en bleu nuit, bleu canard et ambre.",
+        "ja": "濃紺・ティール・琥珀色のシェブロン模様。"
+      },
+      "columns": 11,
+      "rows": 61,
+      "cellAspect": 1,
+      "startCorner": "bottom-left",
+      "serpentine": true,
+      "backgroundSymbol": "A",
+      "palette": [
+        {
+          "id": "color-a",
+          "symbol": "A",
+          "hex": "#F5EFE3",
+          "labels": {
+            "en": "Ivory",
+            "de": "Elfenbein",
+            "fr": "Ivoire",
+            "ja": "アイボリー"
+          }
+        },
+        {
+          "id": "color-b",
+          "symbol": "B",
+          "hex": "#233C50",
+          "labels": {
+            "en": "Midnight blue",
+            "de": "Dunkelblau",
+            "fr": "Bleu nuit",
+            "ja": "濃紺"
+          }
+        },
+        {
+          "id": "color-c",
+          "symbol": "C",
+          "hex": "#267C78",
+          "labels": {
+            "en": "Teal",
+            "de": "Petrol",
+            "fr": "Bleu canard",
+            "ja": "ティール"
+          }
+        },
+        {
+          "id": "color-d",
+          "symbol": "D",
+          "hex": "#D9A540",
+          "labels": {
+            "en": "Amber",
+            "de": "Bernstein",
+            "fr": "Ambre",
+            "ja": "琥珀色"
+          }
+        }
+      ],
+      "symbolRows": [
+        "AAAAABAAAAA",
+        "AAAABBBAAAA",
+        "AAABBCBBAAA",
+        "AABBCCCBBAA",
+        "ABBCCDCCBBA",
+        "BBCCDADCCBB",
+        "BCCDAAADCCB",
+        "CCDAAAAADCC",
+        "CDAAAAAAADC",
+        "DAAAAAAAAAD",
+        "AAAAAAAAAAA",
+        "AAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABBBAAAA",
+        "AAABBCBBAAA",
+        "AABBCCCBBAA",
+        "ABBCCDCCBBA",
+        "BBCCDADCCBB",
+        "BCCDAAADCCB",
+        "CCDAAAAADCC",
+        "CDAAAAAAADC",
+        "DAAAAAAAAAD",
+        "AAAAAAAAAAA",
+        "AAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABBBAAAA",
+        "AAABBCBBAAA",
+        "AABBCCCBBAA",
+        "ABBCCDCCBBA",
+        "BBCCDADCCBB",
+        "BCCDAAADCCB",
+        "CCDAAAAADCC",
+        "CDAAAAAAADC",
+        "DAAAAAAAAAD",
+        "AAAAAAAAAAA",
+        "AAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABBBAAAA",
+        "AAABBCBBAAA",
+        "AABBCCCBBAA",
+        "ABBCCDCCBBA",
+        "BBCCDADCCBB",
+        "BCCDAAADCCB",
+        "CCDAAAAADCC",
+        "CDAAAAAAADC",
+        "DAAAAAAAAAD",
+        "AAAAAAAAAAA",
+        "AAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABBBAAAA",
+        "AAABBCBBAAA",
+        "AABBCCCBBAA",
+        "ABBCCDCCBBA",
+        "BBCCDADCCBB",
+        "BCCDAAADCCB",
+        "CCDAAAAADCC",
+        "CDAAAAAAADC",
+        "DAAAAAAAAAD",
+        "AAAAAAAAAAA",
+        "AAAAAAAAAAA",
+        "AAAAABAAAAA"
+      ]
+    },
+    {
+      "id": "diamond-band",
+      "titles": {
+        "en": "Diamond band",
+        "de": "Rautenband",
+        "fr": "Bande à losanges",
+        "ja": "菱形の帯"
+      },
+      "descriptions": {
+        "en": "Nested diamonds with sage outlines and copper centers.",
+        "de": "Verschachtelte Rauten mit salbeigrünen Konturen und kupferfarbenen Zentren.",
+        "fr": "Losanges imbriqués aux contours vert sauge et aux centres cuivrés.",
+        "ja": "セージ色の輪郭と銅色の中心を持つ入れ子の菱形。"
+      },
+      "columns": 11,
+      "rows": 61,
+      "cellAspect": 1,
+      "startCorner": "bottom-left",
+      "serpentine": true,
+      "backgroundSymbol": "A",
+      "palette": [
+        {
+          "id": "color-a",
+          "symbol": "A",
+          "hex": "#F5EFE3",
+          "labels": {
+            "en": "Ivory",
+            "de": "Elfenbein",
+            "fr": "Ivoire",
+            "ja": "アイボリー"
+          }
+        },
+        {
+          "id": "color-b",
+          "symbol": "B",
+          "hex": "#3F5571",
+          "labels": {
+            "en": "Slate blue",
+            "de": "Schieferblau",
+            "fr": "Bleu ardoise",
+            "ja": "スレートブルー"
+          }
+        },
+        {
+          "id": "color-c",
+          "symbol": "C",
+          "hex": "#84946B",
+          "labels": {
+            "en": "Sage",
+            "de": "Salbei",
+            "fr": "Sauge",
+            "ja": "セージ"
+          }
+        },
+        {
+          "id": "color-d",
+          "symbol": "D",
+          "hex": "#C36B45",
+          "labels": {
+            "en": "Copper",
+            "de": "Kupfer",
+            "fr": "Cuivre",
+            "ja": "銅色"
+          }
+        }
+      ],
+      "symbolRows": [
+        "DAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABABAAAA",
+        "AAABACABAAA",
+        "AABACACABAA",
+        "ABACADACABA",
+        "BACADDDACAB",
+        "ABACADACABA",
+        "AABACACABAA",
+        "AAABACABAAA",
+        "AAAABABAAAA",
+        "AAAAABAAAAA",
+        "DAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABABAAAA",
+        "AAABACABAAA",
+        "AABACACABAA",
+        "ABACADACABA",
+        "BACADDDACAB",
+        "ABACADACABA",
+        "AABACACABAA",
+        "AAABACABAAA",
+        "AAAABABAAAA",
+        "AAAAABAAAAA",
+        "DAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABABAAAA",
+        "AAABACABAAA",
+        "AABACACABAA",
+        "ABACADACABA",
+        "BACADDDACAB",
+        "ABACADACABA",
+        "AABACACABAA",
+        "AAABACABAAA",
+        "AAAABABAAAA",
+        "AAAAABAAAAA",
+        "DAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABABAAAA",
+        "AAABACABAAA",
+        "AABACACABAA",
+        "ABACADACABA",
+        "BACADDDACAB",
+        "ABACADACABA",
+        "AABACACABAA",
+        "AAABACABAAA",
+        "AAAABABAAAA",
+        "AAAAABAAAAA",
+        "DAAAAAAAAAA",
+        "AAAAABAAAAA",
+        "AAAABABAAAA",
+        "AAABACABAAA",
+        "AABACACABAA",
+        "ABACADACABA",
+        "BACADDDACAB",
+        "ABACADACABA",
+        "AABACACABAA",
+        "AAABACABAAA",
+        "AAAABABAAAA",
+        "AAAAABAAAAA",
+        "DAAAAAAAAAA"
+      ]
+    }
+  ]
+}
