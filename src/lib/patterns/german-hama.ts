@@ -16,6 +16,7 @@ export const germanHamaPatterns = selection.patterns.map(({ id, name }) => {
         preview: hama.preview,
         pixels: `/patterns-hama/${id}/pixels.png`,
         pdf: `/patterns-de-hama/${id}/pattern.pdf`,
+        pdfLetter: `/patterns-de-hama/${id}/pattern-letter.pdf`,
         project: hama.project,
         editor: `/de/editor?pattern=${encodeURIComponent(hama.projectId)}`,
     };

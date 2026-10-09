@@ -30,11 +30,11 @@ export function LocalizedHamaDownloads({ locale }: { locale: HamaDownloadLocale 
                 </a>
                 <div className="flex flex-wrap gap-x-4">
                     <a href={pattern.pdf} hrefLang={locale} download={`${pattern.id}-hama-${locale}-a4.pdf`} className="text-link" aria-label={copy.pdfLabel(pattern.name)} data-pattern-event="pattern_download" data-pattern-format="pdf" {...tracking}>{copy.pdf}</a>
-                    <Link href={pattern.editor} prefetch={false} className="text-link" aria-label={copy.editLabel(pattern.name)} data-pattern-event="pattern_editor_open" {...tracking}>{copy.edit}</Link>
+                    <a href={pattern.pdfLetter} hrefLang={locale} download={`${pattern.id}-hama-${locale}-letter.pdf`} className="text-link" aria-label={copy.letterLabel(pattern.name)} data-pattern-event="pattern_download" data-pattern-format="pdf" {...tracking}>{copy.letterPdf}</a>
                 </div>
                 <div className="flex flex-wrap gap-x-4 text-xs text-muted">
-                    <a href={pattern.pdfLetter} hrefLang="en" download={`${pattern.id}-hama-letter.pdf`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-accent" aria-label={copy.letterLabel(pattern.name)} data-pattern-event="pattern_download" data-pattern-format="pdf" {...tracking}>{copy.letterPdf}</a>
                     <a href={pattern.pixels} download={`${pattern.id}-hama-pixels.png`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-accent" aria-label={copy.pixelsLabel(pattern.name)} data-pattern-event="pattern_download" data-pattern-format="png" {...tracking}>{copy.pixels}</a>
+                    <Link href={pattern.editor} prefetch={false} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-accent" aria-label={copy.editLabel(pattern.name)} data-pattern-event="pattern_editor_open" {...tracking}>{copy.edit}</Link>
                 </div>
                 <div className="flex flex-wrap gap-x-4 text-xs text-muted">
                     <a href={pattern.project} download={`${pattern.id}-hama.bead-pattern.json`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-accent" aria-label={copy.projectLabel(pattern.name)} data-pattern-event="pattern_download" data-pattern-format="project" {...tracking}>{copy.project}</a>

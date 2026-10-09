@@ -9,9 +9,10 @@ export default function GermanHamaDownloads({ patterns }: { patterns: GermanHama
                 {patterns.map(pattern => {
                     const tracking = { 'data-pattern-id': pattern.projectId, 'data-pattern-palette': pattern.brand, 'data-pattern-entry': 'patterns' };
                     const pdfLabel = `${pattern.name}: deutsches Hama-Midi-PDF im A4-Format herunterladen`;
+                    const letterLabel = `${pattern.name}: deutsches Hama-Midi-PDF im US-Letter-Format herunterladen`;
                     return (
                         <article key={pattern.id} id={pattern.id} className="pattern-card scroll-mt-6" data-pattern-card={pattern.projectId} aria-labelledby={`${pattern.id}-title`}>
-                            <a href={pattern.pdf} download={`${pattern.id}-hama-de-a4.pdf`} className="block rounded-[10px]" aria-label={pdfLabel}
+                            <a href={pattern.pdf} hrefLang="de" download={`${pattern.id}-hama-de-a4.pdf`} className="block rounded-[10px]" aria-label={pdfLabel}
                                 data-pattern-event="pattern_download" data-pattern-format="pdf" {...tracking}>
                                 <div className="pattern-art">
                                     <Image src={pattern.preview} alt={`${pattern.name} als Hama-Midi-Bügelperlen-Vorlage`} width={580} height={580} unoptimized />
@@ -19,8 +20,10 @@ export default function GermanHamaDownloads({ patterns }: { patterns: GermanHama
                             </a>
                             <div className="pattern-card-title"><h3 id={`${pattern.id}-title`}>{pattern.name}</h3></div>
                             <div className="flex flex-wrap gap-x-4">
-                                <a href={pattern.pdf} download={`${pattern.id}-hama-de-a4.pdf`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent" aria-label={pdfLabel}
+                                <a href={pattern.pdf} hrefLang="de" download={`${pattern.id}-hama-de-a4.pdf`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent" aria-label={pdfLabel}
                                     data-pattern-event="pattern_download" data-pattern-format="pdf" {...tracking}>PDF A4 (Deutsch)<span aria-hidden="true">↓</span></a>
+                                <a href={pattern.pdfLetter} hrefLang="de" download={`${pattern.id}-hama-de-letter.pdf`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent" aria-label={letterLabel}
+                                    data-pattern-event="pattern_download" data-pattern-format="pdf" {...tracking}>PDF US Letter (Deutsch)<span aria-hidden="true">↓</span></a>
                                 <a href={pattern.pixels} download={`${pattern.id}-hama-pixels.png`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
                                     aria-label={`${pattern.name}: Hama-Pixelbild mit 29 mal 29 Pixeln herunterladen`} data-pattern-event="pattern_download" data-pattern-format="png" {...tracking}>Pixel-PNG</a>
                             </div>

@@ -42,7 +42,7 @@ export default function PatternsPage() {
                     <Link href="/patterns/hama" className="underline underline-offset-4">Hama patterns</Link>
                     <Link prefetch={false} href="/ja/patterns" lang="ja" hrefLang="ja" className="underline underline-offset-4">日本語の図案</Link>
                     <Link prefetch={false} href="/de/patterns" lang="de" hrefLang="de" className="underline underline-offset-4">Deutsche Vorlagen</Link>
-                    <a href="/fr/modeles-perles-a-repasser" lang="fr" hrefLang="fr" className="underline underline-offset-4">Modèles en français</a>
+                    <Link prefetch={false} href="/fr/patterns" lang="fr" hrefLang="fr" className="underline underline-offset-4">Modèles en français</Link>
                     <a href="/fr/modeles-perles-a-repasser-noel" lang="fr" hrefLang="fr" className="underline underline-offset-4">Noël en perles (français)</a>
                 </div>
                 <nav aria-label="Pattern collections" className="collection-nav">
