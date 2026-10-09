@@ -66,7 +66,7 @@ describe('localized guides and source preservation', () => {
             const guide = getLocalizedGuide(slug, locale)!;
             const links = [...guide.relatedLinks, ...guide.sections.flatMap(section => section.links ?? [])];
             for (const link of links) {
-                if (link.href.startsWith('https://') || link.href.startsWith('/printables/') || link.href.startsWith('/guides/photo-to-pattern/')) continue;
+                if (link.href.startsWith('https://') || link.href.startsWith('/printables/') || link.href.startsWith('/guides/photo-to-pattern/') || link.href.startsWith('/guides/mini-perler-beads/ghost-mini/')) continue;
                 expect(link.href === `/${locale}` || link.href === `/${locale}#generator` || link.href.startsWith(`/${locale}/`)).toBe(true);
             }
         }

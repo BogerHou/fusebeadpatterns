@@ -396,6 +396,7 @@ await writeExclusive(path.join(outputRoot, 'src/lib/patterns/project-links.ts'),
 import type { SiteLocale } from '../i18n/locales';
 import { getLocalizedSubjectName } from './localized-content';
 import { hamaPatterns } from './hama';
+import { getMiniLibraryProject } from './mini';
 
 export type LibraryProject = { id: string; title: string; projectUrl: string };
 
@@ -404,6 +405,8 @@ const libraryProjects: LibraryProject[] = ${JSON.stringify(patterns.map(({ id, t
 export function getLibraryProject(id: string, locale: SiteLocale = 'en'): LibraryProject | undefined {
     const original = libraryProjects.find((project) => project.id === id);
     if (original) return locale === 'en' ? original : { ...original, title: getLocalizedSubjectName(original, locale) };
+    const mini = getMiniLibraryProject(id, locale);
+    if (mini) return mini;
     const hama = hamaPatterns.find((pattern) => pattern.projectId === id);
     if (!hama) return undefined;
     const base = libraryProjects.find(project => project.id === hama.id);

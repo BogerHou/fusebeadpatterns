@@ -4,6 +4,22 @@ import type { GuideSection } from '@/app/(english)/guides/guide-data';
 import GuidePatternGallery from '@/app/(english)/guides/GuidePatternGallery';
 import type { SiteLocale } from '@/lib/i18n/locales';
 
+function GuideFigure({ figure, compact = false }: { figure: NonNullable<GuideSection['figure']>; compact?: boolean }) {
+    return <figure className={compact ? 'mb-6 max-w-xs' : 'mt-7'}>
+        <Image
+            src={figure.src}
+            alt={figure.alt}
+            width={figure.width}
+            height={figure.height}
+            unoptimized
+            className="h-auto w-full rounded-lg border border-[#d9ded5]"
+        />
+        <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
+            {figure.caption}
+        </figcaption>
+    </figure>;
+}
+
 export default function GuideSections({ sections, locale = 'en', id }: { sections: GuideSection[]; locale?: SiteLocale; id?: string }) {
     return (
         <div id={id} className="mt-10 scroll-mt-6 space-y-10 sm:mt-14 sm:space-y-14">
@@ -12,6 +28,7 @@ export default function GuideSections({ sections, locale = 'en', id }: { section
                     <h2 className="section-heading mb-4">
                         {section.heading}
                     </h2>
+                    {section.figure && section.figureFirst ? <GuideFigure figure={section.figure} compact /> : null}
                     <div className="max-w-[70ch] space-y-5 text-base leading-8 text-[#43564d] sm:text-lg sm:leading-8">
                         {section.body.map((paragraph) => (
                             <p key={paragraph}>{paragraph}</p>
@@ -103,21 +120,7 @@ export default function GuideSections({ sections, locale = 'en', id }: { section
                             ))}
                         </ul>
                     ) : null}
-                    {section.figure ? (
-                        <figure className="mt-7">
-                            <Image
-                                src={section.figure.src}
-                                alt={section.figure.alt}
-                                width={section.figure.width}
-                                height={section.figure.height}
-                                unoptimized
-                                className="h-auto w-full rounded-lg border border-[#d9ded5]"
-                            />
-                            <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
-                                {section.figure.caption}
-                            </figcaption>
-                        </figure>
-                    ) : null}
+                    {section.figure && !section.figureFirst ? <GuideFigure figure={section.figure} /> : null}
                 </section>
             ))}
         </div>

@@ -1,6 +1,7 @@
 import { getGuideBySlug, guidePages, type GuidePage } from '../../app/(english)/guides/guide-data';
 import { getPatternBySlug } from '../patterns/catalog';
 import { getLocalizedPatternName } from '../patterns/localized-content';
+import { miniGhostAssetRoot, miniGhostProjectId } from '../patterns/mini';
 import { siteNavigation, type SiteLocale } from '../i18n/locales';
 import { localeRoutes } from '../i18n/routes';
 import { germanGuides } from './de';
@@ -35,6 +36,7 @@ const sourceLabels: Record<string, [string, string, string]> = {
     'https://creativecommons.org/publicdomain/zero/1.0/': ['Lizenz: CC0 1.0', 'Licence : CC0 1.0', 'CC0 1.0ライセンス'],
     'https://perler.com/products/1-000-perler-beads-multi-mix': ['Perler: Standardmaße', 'Perler : dimensions standard', 'Perler：標準サイズの仕様'],
     'https://perler.com/products/mini-beads-large-pegboards-2-ct': ['Perler: Mini-Steckplatten', 'Perler : plaques Mini', 'Perler：Mini用プレート'],
+    'https://perler.com/blogs/projects/football-silhouettes': ['Perler: Mini-Farben White und Black', 'Perler : couleurs Mini White et Black', 'Perler：MiniのWhiteとBlackの使用例'],
     'https://hama.dk/pages/faq': ['Hama: Größenangaben', 'Hama : dimensions des perles', 'Hama：各サイズの仕様'],
     'https://www.artkalfusebeads.com/blogs/faq/artkal-beads-size': ['Artkal: Größen und Serien', 'Artkal : tailles et séries', 'Artkal：サイズとシリーズ'],
     'https://www.artkalfusebeads.com/blogs/faq/which-series-of-artkal-beads-can-work-with-perler-and-hama': ['Artkal: Kompatibilitätserklärung von 2017', 'Artkal : déclaration de compatibilité de 2017', 'Artkal：2017年の互換性についての案内'],
@@ -70,9 +72,24 @@ const specialLabels: Record<string, [string, string, string]> = {
     '/printables/calibration/29x29-5mm-us-letter.svg': ['Bearbeitbares US-Letter-Raster – SVG', 'Grille US Letter modifiable – SVG', '編集用US Letter図案 — SVG'],
 };
 
+const miniGhostLinkLabels: Record<string, [string, string, string]> = {
+    [`${miniGhostAssetRoot}/pattern-a4.pdf`]: ['Geist — Perler Mini: A4-Zählvorlage', 'Fantôme — Perler Mini : PDF de référence A4', 'ゴースト — Perler Mini：A4参考PDF'],
+    [`${miniGhostAssetRoot}/pattern-letter.pdf`]: ['Geist — Perler Mini: US-Letter-Zählvorlage', 'Fantôme — Perler Mini : PDF de référence US Letter', 'ゴースト — Perler Mini：US Letter参考PDF'],
+    [`${miniGhostAssetRoot}/grid.png`]: ['Geist — Perler Mini: Raster-PNG', 'Fantôme — Perler Mini : grille PNG', 'ゴースト — Perler Mini：マス目付きPNG'],
+    [`${miniGhostAssetRoot}/pattern.bead-pattern.json`]: ['Geist — Perler Mini: Projekt speichern', 'Enregistrer le projet Fantôme — Perler Mini', 'ゴースト — Perler Mini：プロジェクトを保存'],
+    [`/editor?pattern=${miniGhostProjectId}`]: ['Geist — Perler Mini im deutschen Editor öffnen', 'Ouvrir Fantôme — Perler Mini dans l’éditeur en français', 'ゴースト — Perler Miniを日本語エディターで開く'],
+};
+
 export function localizeGuideLink<T extends { href: string; label: string }>(link: T, locale: GuideLocale): T {
     const index = { de: 0, fr: 1, ja: 2 }[locale];
     const english = (label: string) => `${label} (${siteNavigation[locale].english})`;
+    const miniLabel = miniGhostLinkLabels[link.href]?.[index];
+    if (miniLabel) {
+        const href = link.href === `/editor?pattern=${miniGhostProjectId}`
+            ? `${localeRoutes[locale].editor}?pattern=${miniGhostProjectId}`
+            : link.href.endsWith('.pdf') ? link.href.replace(`${miniGhostAssetRoot}/`, `${miniGhostAssetRoot}/${locale}/`) : link.href;
+        return { ...link, href, label: miniLabel };
+    }
     if (link.href === '/#generator') return { ...link, href: `${localeRoutes[locale].home}#generator`, label: siteNavigation[locale].generator };
     if (link.href === '/editor') return { ...link, href: localeRoutes[locale].editor, label: siteNavigation[locale].editor };
     if (link.href === '/') return { ...link, href: localeRoutes[locale].home, label: siteNavigation[locale].generator };
