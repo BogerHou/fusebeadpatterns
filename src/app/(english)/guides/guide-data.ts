@@ -30,6 +30,7 @@ export type GuideSection = {
         width: number;
         height: number;
     };
+    figureFirst?: boolean;
 };
 
 export type GuidePage = {
@@ -444,6 +445,29 @@ export const guidePages: GuidePage[] = [
         intro:
             'Mini beads are useful when you want more detail in a smaller physical project. They do not change how the image is converted, but they do change the real-world scale of the finished pattern.',
         sections: [
+            {
+                heading: 'Download a Ghost chart prepared for Perler Mini',
+                body: [
+                    'Make our original Ghost with 311 Perler Mini beads in White (W) and Black (B). Read the 29 × 29 counting chart by rows and columns; blank squares stay empty. W and B are chart symbols, not purchasing codes. Choose an A4 or US Letter PDF, or the grid PNG.',
+                    'The editable project centers the same design on a 57 × 57 grid with 14 empty rows and columns on each side: chart coordinates 1–29 become project coordinates 15–43. Save your current work before opening it. Use a physical Mini pegboard matching your beads. These files are counting references, not actual-size placement templates. The design has not been physically assembled or iron-tested.',
+                ],
+                figureFirst: true,
+                figure: {
+                    src: '/guides/mini-perler-beads/ghost-mini/preview.png',
+                    alt: 'Original Ghost in White and Black Perler Mini colors.',
+                    caption: 'Preview of the same 311-bead Ghost in two colors. In the counting chart, W marks White and B marks Black; unmarked cells stay empty.',
+                    width: 580,
+                    height: 580,
+                },
+                links: [
+                    { href: '/guides/mini-perler-beads/ghost-mini/pattern-a4.pdf', label: 'Ghost — Perler Mini reference PDF (A4)', download: true },
+                    { href: '/guides/mini-perler-beads/ghost-mini/pattern-letter.pdf', label: 'Ghost — Perler Mini reference PDF (US Letter)', download: true },
+                    { href: '/guides/mini-perler-beads/ghost-mini/grid.png', label: 'Ghost — Perler Mini counting grid PNG', download: true },
+                    { href: '/guides/mini-perler-beads/ghost-mini/pattern.bead-pattern.json', label: 'Save Ghost — Perler Mini project', download: true },
+                    { href: '/editor?pattern=original-friendly-ghost-perler-mini', label: 'Open Ghost — Perler Mini in the editor' },
+                    { href: 'https://perler.com/blogs/projects/football-silhouettes', label: 'Perler: Mini White and Black colors' },
+                ],
+            },
             {
                 heading: 'Six small Perler bead patterns to download',
                 body: [

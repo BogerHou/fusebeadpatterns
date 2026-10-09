@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "test": "vitest",
-    "test:run": "vitest run && node --test scripts/smoke-production.test.mjs scripts/build-pattern-library.test.mjs",
+    "test:run": "vitest run && node --test scripts/smoke-production.test.mjs scripts/build-pattern-library.test.mjs scripts/generate-mini-ghost-sourcepack.test.mjs",
     "verify": "npm run test:run && npm run typecheck && npm run lint && npm run build",
     "audit:prod": "npm audit --registry=https://registry.npmjs.org --omit=dev",
     "audit:all": "npm audit --registry=https://registry.npmjs.org --include=dev",
