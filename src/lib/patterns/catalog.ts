@@ -15,7 +15,7 @@ export type Pattern = {
     palette: Array<{ symbol: string; ref: string; name: string; hex: string; count: number }>;
     notes: string[];
     source: null | { label: string; url: string; description: string };
-    assets: { preview: string; grid: string; pixels: string; project: string; pdf: string };
+    assets: { preview: string; grid: string; pixels: string; project: string; pdf: string; pdfLetter?: string };
     updatedAt: string;
 };
 
@@ -9012,6 +9012,58 @@ export const patterns: Pattern[] = [
             "pdf": "/patterns/original-gingerbread-man/pattern.pdf"
         },
         "updatedAt": "2026-10-08"
+    },
+    {
+        "id": "original-santa-hat",
+        "slug": "santa-hat",
+        "title": "Santa Hat",
+        "collectionId": null,
+        "version": "Original Santa hat design v1",
+        "description": "Make an original red Santa hat with a white brim and pom-pom using 332 Perler Midi beads in three colors. Download a printable pattern or open the editable grid.",
+        "beads": 332,
+        "colorCount": 3,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 26,
+        "motifHeight": 21,
+        "palette": [
+            {
+                "symbol": "R",
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "count": 225
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 84
+            },
+            {
+                "symbol": "S",
+                "ref": "80-15181",
+                "name": "Light Grey",
+                "hex": "#b3bab8",
+                "count": 23
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-santa-hat/preview.png",
+            "grid": "/patterns/original-santa-hat/grid.png",
+            "pixels": "/patterns/original-santa-hat/pixels.png",
+            "project": "/patterns/original-santa-hat/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-santa-hat/pattern.pdf",
+            "pdfLetter": "/patterns/original-santa-hat/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-09"
     }
 ];
 

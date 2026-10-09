@@ -59,8 +59,10 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
     const collection = patternCollections.find((item) => item.id === pattern.collectionId);
     const href = getPatternHref(pattern);
     const christmasTopic = getPatternTopicBySlug('christmas');
-    const hasChristmasTopic = christmasTopic?.patternIds.includes(pattern.id);
-    const related = patterns.filter((item) => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
+    const hasChristmasTopic = christmasTopic?.patternIds.includes(pattern.id) || christmasTopic?.additionalPatternIds?.includes(pattern.id);
+    const related = pattern.id === 'original-santa-hat'
+        ? patterns.filter(item => christmasTopic?.patternIds.includes(item.id))
+        : patterns.filter((item) => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
     const structuredData = {
         '@context': 'https://schema.org', '@type': 'WebPage',
         name: patternPageTitle(pattern), description: pattern.description, url: `${siteUrl}${href}`,
@@ -85,10 +87,12 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                             ].map(([label, value]) => <div key={label}><dt className="text-[#59685d]">{label}</dt><dd className="mt-1.5 font-semibold text-[#243e36]">{value}</dd></div>)}
                         </dl>
                         <div className="flex flex-wrap gap-3">
-                            <a href={pattern.assets.pdf} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="pdf" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="button-primary">Download PDF</a>
+                            <a href={pattern.assets.pdf} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="pdf" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="button-primary">{pattern.assets.pdfLetter ? 'Download A4 PDF' : 'Download PDF'}</a>
+                            {pattern.assets.pdfLetter && <a href={pattern.assets.pdfLetter} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="pdf" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="button-secondary">Download US Letter PDF</a>}
                             <a href={pattern.assets.grid} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="grid_png" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="button-secondary">Download grid PNG</a>
                         </div>
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Print at 100% / actual size. Check the PDF&apos;s 50 mm scale before using it as a placement guide.</p>
+                        {pattern.assets.pdfLetter && <p className="mt-2 text-sm leading-6 text-[#59685d]">Choose A4 or US Letter to match your paper.</p>}
                         <Link href={`/editor?pattern=${pattern.id}`} prefetch={false} data-pattern-event="pattern_editor_open" data-pattern-id={pattern.id} data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="text-link mt-5 inline-flex min-h-11 items-center">Open in editor <span aria-hidden="true" className="ml-2">→</span></Link>
                         <p className="text-sm leading-6 text-[#59685d]">Adjust individual beads or colors, then save your own version. These downloads use Perler colors. For Hama or Artkal, change the color brand in the editor and export a new pattern. <Link href={brandGuideHref} className="text-link">How to switch bead brands</Link>.</p>
                         <PatternShare key={href} url={`${siteUrl}${href}`} title={patternPageTitle(pattern)} />

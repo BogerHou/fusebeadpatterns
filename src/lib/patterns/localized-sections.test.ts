@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { patternCollections, getPatternsForCollection } from './catalog';
-import { patternTopics, getPatternsForTopic } from './topics';
+import { patternTopics, getPatternsForTopic, getAdditionalPatternsForTopic } from './topics';
 import { patternSectionSlugs, patternSectionRouteGroups, getPatternSectionHref } from './section-routes';
 import { getLocalizedPatternSection } from './localized-sections';
 import { patternLanguageAlternates } from '../i18n/metadata';
@@ -22,6 +22,7 @@ describe('localized collection and topic continuity', () => {
             for (const topic of patternTopics) {
                 const section = getLocalizedPatternSection(topic.slug, locale)!;
                 expect(section.patterns).toEqual(getPatternsForTopic(topic));
+                expect(section.additionalPatterns).toEqual(getAdditionalPatternsForTopic(topic));
                 expect(section.notes).toHaveLength(topic.selectionNotes.length);
                 expect(section.intro).not.toEqual(topic.intro);
                 expect(section.relatedLinks).toHaveLength(topic.relatedLinks.length);
@@ -38,6 +39,7 @@ describe('localized collection and topic continuity', () => {
     it('keeps the old French Christmas URL as the sole canonical language destination', () => {
         const topic = patternTopics.find(topic => topic.slug === 'christmas')!;
         expect(frenchChristmas.patterns.map(pattern => pattern.id)).toEqual([...topic.patternIds]);
+        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat']);
         expect(getPatternSectionHref('christmas', 'fr')).toBe('/fr/modeles-perles-a-repasser-noel');
         expect(patternLanguageAlternates('christmas').fr).toBe('https://fusebeadpatterns.art/fr/modeles-perles-a-repasser-noel');
         for (const locale of ['en', ...locales] as const) {

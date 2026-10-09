@@ -7,7 +7,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import { patterns, type Pattern } from '@/lib/patterns/catalog';
 import { getLocalizedPatternTitle, getLocalizedPatternName, getLocalizedPatternIntro, localizePatternNote, type PatternLocale } from '@/lib/patterns/localized-content';
 import { localizedPatternUi } from '@/lib/patterns/localized-ui';
-import { getLocalizedPatternPdf } from '@/lib/patterns/localized-download';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from '@/lib/patterns/localized-download';
 import { localizePatternSourceDescription } from '@/lib/patterns/localized-sources';
 import { patternTopics } from '@/lib/patterns/topics';
 import { getPatternSectionHref, type PatternSectionSlug } from '@/lib/patterns/section-routes';
@@ -34,9 +34,12 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
     const title = getLocalizedPatternTitle(pattern, locale);
     const href = `/${locale}/patterns/${pattern.slug}`;
     const pdf = getLocalizedPatternPdf(pattern, locale);
-    const related = patterns.filter(item => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
+    const letterPdf = getLocalizedPatternLetterPdf(pattern, locale);
+    const related = pattern.id === 'original-santa-hat'
+        ? patterns.filter(item => patternTopics.find(topic => topic.slug === 'christmas')?.patternIds.includes(item.id))
+        : patterns.filter(item => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
     const collection = pattern.collectionId ? { label: sectionLabels[locale][pattern.collectionId as PatternSectionSlug], href: getPatternSectionHref(pattern.collectionId, locale) } : null;
-    const topics = patternTopics.filter(topic => topic.patternIds.includes(pattern.id));
+    const topics = patternTopics.filter(topic => topic.patternIds.includes(pattern.id) || topic.additionalPatternIds?.includes(pattern.id));
     const tracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': pattern.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'pattern_detail' };
     const structuredData = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description: getLocalizedPatternIntro(pattern, locale), url: `${siteUrl}${href}`, inLanguage: locale, primaryImageOfPage: `${siteUrl}${pattern.assets.preview}` };
     return <>
@@ -54,10 +57,12 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                             {[[copy.design, `${pattern.motifWidth} × ${pattern.motifHeight}`], [copy.board, `${pattern.gridWidth} × ${pattern.gridHeight} MIDI`], [copy.beads, pattern.beads], [copy.colors, pattern.colorCount]].map(([label, value]) => <div key={label}><dt className="text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}
                         </dl>
                         <div className="flex flex-wrap gap-3">
-                            <a href={pdf.href} hrefLang={pdf.language} download {...tracking} data-pattern-format="pdf" className="button-primary">{pdf.language === locale ? copy.pdf : copy.englishPdf}</a>
+                            <a href={pdf.href} hrefLang={pdf.language} download {...tracking} data-pattern-format="pdf" className="button-primary">{letterPdf ? copy.a4Pdf : pdf.language === locale ? copy.pdf : copy.englishPdf}</a>
+                            {letterPdf && <a href={letterPdf.href} hrefLang={letterPdf.language} download {...tracking} data-pattern-format="pdf" className="button-secondary">{copy.letterPdf}</a>}
                             <a href={pattern.assets.grid} download {...tracking} data-pattern-format="grid_png" className="button-secondary">{copy.grid}</a>
                         </div>
                         <p className="mt-3 text-sm leading-7 text-muted">{copy.print}</p>
+                        {letterPdf && <p className="mt-2 text-sm leading-7 text-muted">{copy.paperHelp}</p>}
                         <Link href={`/${locale}/editor?pattern=${encodeURIComponent(pattern.id)}`} prefetch={false} {...tracking} data-pattern-event="pattern_editor_open" className="text-link mt-4">{copy.edit} →</Link>
                         <p className="mt-2 text-sm leading-7 text-muted">{copy.brand}</p>
                         <PatternShare locale={locale} url={`${siteUrl}${href}`} title={title} />

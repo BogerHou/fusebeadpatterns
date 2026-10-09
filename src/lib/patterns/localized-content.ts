@@ -53,6 +53,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Halloween Bat': ['Halloween-Fledermaus', 'Chauve-souris d’Halloween', 'ハロウィンのコウモリ'],
     Snowman: ['Schneemann', 'Bonhomme de neige', '雪だるま'],
     'Gingerbread Man': ['Lebkuchenmann', 'Bonhomme en pain d’épices', 'ジンジャーブレッドマン'],
+    'Santa Hat': ['Weihnachtsmütze', 'Bonnet de Noël', 'サンタの帽子'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {

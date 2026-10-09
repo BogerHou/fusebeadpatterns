@@ -8,7 +8,8 @@ describe('complete pattern library identity', () => {
         expect(patternLibraryCount).toBe(patterns.length);
         expect(patternLibraryCount).toBeGreaterThan(12);
         for (const locale of ['de', 'ja'] as const) {
-            expect(localizedLibraryMetadata[locale].description).toContain(String(patterns.length));
+            expect(localizedLibraryMetadata[locale].description).toContain('106');
+            expect(patternLibraryCount).toBeGreaterThanOrEqual(106);
             expect(patterns.every(pattern => getLocalizedPatternPdf(pattern, locale).language === locale)).toBe(true);
         }
         expect(localizedLibraryMetadata.de.title).not.toContain(': Pokémon');

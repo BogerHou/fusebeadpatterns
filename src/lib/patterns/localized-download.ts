@@ -6,3 +6,9 @@ import type { PatternLocale } from './localized-content';
 export function getLocalizedPatternPdf(pattern: Pattern, locale: PatternLocale) {
     return { href: `/patterns-${locale}/${pattern.id}/pattern.pdf`, language: locale };
 }
+
+// A Letter link is available only when the reviewed pattern actually has one.
+export function getLocalizedPatternLetterPdf(pattern: Pattern, locale: PatternLocale) {
+    if (!pattern.assets.pdfLetter) return undefined;
+    return { href: `/patterns-${locale}/${pattern.id}/pattern-letter.pdf`, language: locale };
+}

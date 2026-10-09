@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
-import { getPatternsForTopic, type PatternTopic } from '@/lib/patterns/topics';
+import { getPatternsForTopic, getAdditionalPatternsForTopic, type PatternTopic } from '@/lib/patterns/topics';
 import { PatternGrid, toPatternCard } from './PatternCards';
 
 export default function PatternTopicPage({ topic }: { topic: PatternTopic }) {
     const selectedPatterns = getPatternsForTopic(topic);
+    const additionalPatterns = getAdditionalPatternsForTopic(topic);
 
     return (
         <>
@@ -16,6 +17,10 @@ export default function PatternTopicPage({ topic }: { topic: PatternTopic }) {
             <h1 className="page-heading pt-4 sm:pt-8">{topic.title}</h1>
             <p className="mb-10 mt-5 max-w-[65ch] text-base leading-8 text-[#59685d] sm:text-lg">{topic.intro}</p>
             <PatternGrid patterns={selectedPatterns.map(toPatternCard)} />
+            {additionalPatterns.length > 0 && <section className="mt-12 border-t border-line pt-8" aria-labelledby="additional-patterns-heading">
+                <h2 id="additional-patterns-heading" className="section-heading mb-6">More Christmas patterns</h2>
+                <PatternGrid patterns={additionalPatterns.map(toPatternCard)} />
+            </section>}
             <section className="mt-14 max-w-[70ch] border-t border-[#d9ded5] pt-8" aria-labelledby="choosing-pattern-heading">
                 <h2 id="choosing-pattern-heading" className="section-heading">{topic.selectionHeading}</h2>
                 {topic.selectionNotes.map((note) => <p key={note} className="mt-4 leading-8 text-[#43564d]">{note}</p>)}
