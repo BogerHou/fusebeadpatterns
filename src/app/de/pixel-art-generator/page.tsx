@@ -4,6 +4,7 @@ import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
+import PixelConversionExamples from '@/components/pixel-grid/PixelConversionExamples';
 import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
 
 const title = 'Pixel-Art-Generator — Bild in Pixel-Art umwandeln | Fuse Bead Patterns';
@@ -40,6 +41,7 @@ export default function GermanPixelArtPage() {
                 </p>
             </div>
             <PixelGridWorkspace locale="de" experience="converter" />
+            <PixelConversionExamples locale="de" />
             <section aria-labelledby="conversion-help" className="mt-10 max-w-[75ch] border-t border-line pt-8 text-base leading-7 text-muted">
                 <h2 id="conversion-help" className="font-display text-2xl font-semibold tracking-[-0.025em] text-ink">Vom Bild zur PNG-Datei</h2>
                 <p className="mt-4">

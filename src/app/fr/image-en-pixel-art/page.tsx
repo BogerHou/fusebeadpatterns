@@ -4,6 +4,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
+import PixelConversionExamples from '@/components/pixel-grid/PixelConversionExamples';
 
 const title = 'Convertir une image en pixel art | Fuse Bead Patterns';
 const description = 'Transformez une image en pixel art gratuitement dans votre navigateur. Choisissez la taille et les couleurs, retouchez les pixels et téléchargez un PNG.';
@@ -56,6 +57,7 @@ export default function ImageEnPixelArtPage() {
                     </p>
                 </div>
                 <PixelGridWorkspace locale="fr" experience="converter" />
+                <PixelConversionExamples locale="fr" />
                 <section aria-labelledby="conversion-help" className="mt-10 max-w-[75ch] border-t border-line pt-8 text-base leading-7 text-muted">
                     <h2 id="conversion-help" className="font-display text-2xl font-semibold tracking-[-0.025em] text-ink">De l’image au fichier PNG</h2>
                     <p className="mt-4">

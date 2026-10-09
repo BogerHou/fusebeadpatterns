@@ -110,6 +110,15 @@ const nextConfig: NextConfig = {
                     }],
                 })),
             ),
+            ...['rocket', 'cat'].flatMap((id) =>
+                ['32-original', '64-original', '64-16-colors'].map((variant) => ({
+                    source: `/guides/pixel-art-examples/${id}-${variant}.pixel-grid.json`,
+                    headers: [{
+                        key: 'Content-Disposition',
+                        value: `attachment; filename="${id}-${variant}.pixel-grid.json"`,
+                    }],
+                })),
+            ),
         ];
     },
     reactCompiler: true,

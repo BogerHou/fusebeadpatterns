@@ -37,7 +37,7 @@ export const localizedHomeCopy = {
         start: 'Créer un modèle', browse: 'Voir les modèles gratuits',
         free: 'Gratuit · Sans inscription', workspace: 'Votre espace de création', flow: 'Importer → Ajuster → Créer',
         preview: 'Modèle de fantôme en perles à repasser', previewNote: 'Aperçu numérique d’un de nos modèles',
-        previewLink: 'Voir les modèles à télécharger', previewHref: '/fr/modeles-perles-a-repasser',
+        previewLink: 'Voir 6 modèles à télécharger en Perler et Hama', previewHref: '/fr/modeles-perles-a-repasser',
         patternsHeading: 'Commencer avec un modèle prêt à utiliser',
         patternsText: 'Téléchargez un modèle ou ouvrez-le dans l’éditeur pour le personnaliser. La page de téléchargement indique la marque de perles et la langue du fichier à imprimer.',
         patternsHref: '/fr/patterns',

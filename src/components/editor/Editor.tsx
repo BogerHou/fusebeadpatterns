@@ -3257,8 +3257,8 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
                 isEditorDraftReady ? (
                 <div inert={isLibraryPatternLoading} className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden rounded-lg border border-[#d9ded5] bg-brutal-bg text-brutal-black sm:border sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
                     <div className="col-span-full min-w-0 border-b border-[#d9ded5] bg-white sm:border-b">
-                        <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[232px_minmax(0,1fr)_312px]">
-                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3 xl:col-span-2">
+                        <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[minmax(0,1fr)_max-content]">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3">
                             <Link
                                 href={localHome}
                                 aria-label={t("Back to generator")}
@@ -3272,7 +3272,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
                             </h1>
                             <LanguageSwitcher locale={locale} className="editor-language-switcher" />
                         </div>
-                        <div className="flex h-full shrink-0 items-center xl:col-start-3 xl:min-w-0 xl:justify-end xl:border-l xl:border-[#d9ded5]">
+                        <div className="flex h-full shrink-0 items-center xl:col-start-2 xl:min-w-0 xl:justify-end xl:whitespace-nowrap xl:border-l xl:border-[#d9ded5] xl:[&>*]:shrink-0">
                             {hasEditablePattern ? (
                                 <>
                                     <div className="hidden h-full items-center gap-1 border-l border-brutal-black/20 px-2 md:flex">
