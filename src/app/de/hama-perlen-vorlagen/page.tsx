@@ -64,20 +64,20 @@ export default function GermanHamaPatternsPage() {
                 </nav>
                 <h1 className="page-heading leading-snug">Kostenlose Hama-Perlen-Vorlagen</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
-                    Sechs eigene Motive für Hama Midi: Fußball, Geist, Fledermaus, Weihnachtsbaum, Schneemann und Lebkuchenmann. Lade dein deutsches A4-PDF mit Symbolraster und Hama-Farbnummern direkt herunter. Ohne Anmeldung.
+                    Sechs eigene Motive für Hama Midi: Fußball, Geist, Fledermaus, Weihnachtsbaum, Schneemann und Lebkuchenmann. Lade dein deutsches PDF im A4- oder US-Letter-Format mit Symbolraster und Hama-Farbnummern direkt herunter. Ohne Anmeldung.
                 </p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
                     Jedes Motiv passt auf ein Raster mit 29 × 29 Feldern. Die Druckvorlagen sind für Midi-Perlen mit 5 mm vorgesehen. Prüfe den Ausdruck an deiner Steckplatte, bevor du ihn als Unterlage verwendest.
                 </p>
                 <GermanHamaDownloads patterns={germanHamaPatterns} />
                 <p className="mt-6 max-w-3xl text-sm leading-7 text-muted">
-                    Zum Ausdrucken nutze das PDF. Das Pixel-PNG ist ein Bild mit 29 × 29 Pixeln ohne Rasterlinien oder Farbliste. Das Projekt enthält das bearbeitbare Motiv und seine Hama-Palette.
+                    Die PDFs im A4- und US-Letter-Format sind beide auf Deutsch. Zum Ausdrucken nutze das Format, das zu deinem Papier passt. Das Pixel-PNG ist ein Bild mit 29 × 29 Pixeln ohne Rasterlinien oder Farbliste. Das Projekt enthält das bearbeitbare Motiv und seine Hama-Palette.
                 </p>
                 <section id="drucken" aria-labelledby="print-heading" className="mt-14 max-w-3xl scroll-mt-6 border-t border-line pt-8">
                     <h2 id="print-heading" className="text-2xl font-semibold leading-relaxed">Hama-Vorlagen in der richtigen Größe drucken</h2>
                     <ol className="mt-5 list-decimal space-y-3 pl-6 leading-8 text-muted">
-                        <li>Lade das deutsche A4-PDF herunter. Es enthält das Symbolraster und die benötigte Anzahl jeder Hama-Farbe.</li>
-                        <li>Wähle A4 und 100 % oder „Tatsächliche Größe“. Schalte „An Seite anpassen“ aus.</li>
+                        <li>Lade das deutsche PDF passend zu deinem Papier herunter: A4 oder US Letter. Beide enthalten das Symbolraster und die benötigte Anzahl jeder Hama-Farbe.</li>
+                        <li>Wähle dasselbe Papierformat wie im PDF und 100 % oder „Tatsächliche Größe“. Schalte „An Seite anpassen“ aus.</li>
                         <li>Miss beide 50-mm-Kontrolllinien auf dem Ausdruck: waagerecht und senkrecht. Vergleiche das Raster mit 5 mm Abstand zusätzlich mit deiner Steckplatte.</li>
                         <li>Leere Felder bleiben frei. Ein weißes Feld mit Symbol braucht eine weiße Perle. Folge den Symbolen und Hama-Farbnummern in der Liste.</li>
                     </ol>
