@@ -7,9 +7,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getPatternById } from '@/lib/patterns/catalog';
 import germanPatterns from '@/lib/patterns/german.json';
+import PatternQuickDownloads from '@/components/patterns/PatternQuickDownloads';
+import { localizedLibraryMetadata, patternLibraryCount } from '@/lib/patterns/library-overview';
 
-const title = 'Kostenlose Bügelperlen-Vorlagen: Pokémon als PDF | Fuse Bead Patterns';
-const description = '8 Pokémon-Bügelperlen-Vorlagen kostenlos herunterladen: Pikachu, Evoli und mehr. Deutsche A4-PDFs mit Farbnummern und Druckanleitung, ohne Anmeldung.';
+const { title, description } = localizedLibraryMetadata.de;
 const preview = '/patterns/pokemon-pikachu-gen5/preview.png';
 
 export const metadata: Metadata = {
@@ -34,20 +35,21 @@ export default function GermanPatternsPage() {
                     <ol className="flex flex-wrap items-center gap-x-2">
                         <li><Link href="/de" className="inline-flex min-h-10 items-center hover:underline">Startseite</Link></li>
                         <li aria-hidden="true">/</li>
-                        <li aria-current="page">Deutsche Vorlagen</li>
+                        <li aria-current="page">Alle Vorlagen</li>
                     </ol>
                 </nav>
                 <h1 className="page-heading leading-snug">Kostenlose Bügelperlen-Vorlagen</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
-                    Durchsuche alle Motive: Jede Detailseite bietet ein deutsches PDF und den deutschen Editor zum Bearbeiten. Weiter unten findest du außerdem acht Pokémon-Vorlagen zum direkten Herunterladen. Ohne Anmeldung.
+                    Wähle aus {patternLibraryCount} kostenlosen Motiven. Suche nach einer Figur oder filtere nach einem Thema. Jede Detailseite bietet ein deutsches PDF, die Farben und den deutschen Editor zum Bearbeiten.
                 </p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
                     Du suchst Hama-Farbnummern? Hier findest du <Link href="/de/hama-perlen-vorlagen" className="text-link">sechs Hama-Midi-Vorlagen als deutsche PDFs</Link>, darunter Fußball, Halloween- und Weihnachtsmotive.
                 </p>
-                <p className="mt-5"><a href="#vorlagen" className="text-link">Auswahl mit deutschen PDFs ↓</a></p>
                 <LocalizedPatternCatalog locale="de" />
-                <section id="vorlagen" aria-labelledby="pokemon-heading" className="mt-9">
+                <PatternQuickDownloads id="vorlagen" summary={`PDF-Schnellzugriff: ${germanPatterns.patterns.length} Pokémon-Vorlagen`}>
+                <section aria-labelledby="pokemon-heading">
                     <h2 id="pokemon-heading" className="mb-6 text-xl font-semibold leading-relaxed sm:text-2xl">Pokémon-Vorlagen zum Ausdrucken</h2>
+                    <p className="mb-6 max-w-3xl text-sm leading-7 text-muted">Diese Auswahl bietet direkte Downloads mit Perler-Midi-Farbnummern. Alle anderen Motive findest du in der Sammlung oben; dort öffnet jedes Bild seine Detailseite mit PDF und Editor.</p>
                     <div className="pattern-grid">
                         {germanPatterns.patterns.map(({ id, name }) => {
                             const pattern = getPatternById(id);
@@ -85,8 +87,10 @@ export default function GermanPatternsPage() {
                         })}
                     </div>
                 </section>
+                </PatternQuickDownloads>
                 <section id="drucken" aria-labelledby="print-heading" className="mt-14 border-t border-line pt-8">
                     <h2 id="print-heading" className="text-2xl font-semibold leading-relaxed">So druckst du deine Vorlage</h2>
+                    <p className="mt-3"><a href="#vorlagen" className="text-link">Auswahl mit deutschen PDFs öffnen</a></p>
                     <ol className="mt-5 max-w-3xl list-decimal space-y-3 pl-6 leading-8 text-muted">
                         <li>Speichere das deutsche PDF. Für die Ansicht am Bildschirm eignet sich auch das PNG mit Raster.</li>
                         <li>Wähle A4 und 100 % oder „Tatsächliche Größe“. Schalte „An Seite anpassen“ aus.</li>
@@ -102,7 +106,7 @@ export default function GermanPatternsPage() {
                     <div className="mt-5 divide-y divide-line border-y border-line">
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Sind die Vorlagen kostenlos?</summary>
-                            <p className="mt-2 pb-2 leading-8 text-muted">Ja. Alle acht PDFs und Rasterbilder auf dieser Seite kannst du kostenlos und ohne Konto herunterladen.</p>
+                            <p className="mt-2 pb-2 leading-8 text-muted">Ja. Alle {patternLibraryCount} Vorlagen bieten ein kostenloses PDF und ein Rasterbild auf ihrer Detailseite. Für die Pokémon-Auswahl im PDF-Schnellzugriff sind die Dateien auch direkt auf dieser Seite verfügbar. Du brauchst kein Konto.</p>
                         </details>
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Kann ich Hama-Perlen verwenden?</summary>

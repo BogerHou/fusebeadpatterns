@@ -3,6 +3,8 @@ import { getGuideSummaries } from '@/lib/guides/localized';
 import { guidePages } from '@/app/(english)/guides/guide-data';
 import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
+import LanguageSwitcher from './LanguageSwitcher';
+import styles from './LanguageSwitcher.module.css';
 
 type SiteFooterSection =
     | 'generator'
@@ -41,7 +43,6 @@ const footerGroups: Array<{
             { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
             { id: 'pixel-grid', label: 'Pixel Art Grid', href: '/pixel-art-grid', nativeNavigation: true },
             { id: 'bead-loom', label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker', nativeNavigation: true },
-            { label: '日本語で図案を作る', href: '/ja', lang: 'ja', prefetch: false },
             {
                 id: 'editor',
                 label: 'Advanced Editor',
@@ -138,8 +139,9 @@ export default function SiteFooter({
                     ))}
                 </div>
             </div>
-            <div className="footer-note">
-                &copy; {COPYRIGHT_YEAR} Fuse Bead Patterns. {copy.copyright}
+            <div className={`footer-note ${styles.footerNote}`}>
+                <span>&copy; {COPYRIGHT_YEAR} Fuse Bead Patterns. {copy.copyright}</span>
+                <LanguageSwitcher locale={locale} className={styles.footerSwitcher} />
             </div>
         </footer>
     );

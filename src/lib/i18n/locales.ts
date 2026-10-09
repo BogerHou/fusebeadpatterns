@@ -13,6 +13,7 @@ export const siteNavigation = {
     en: {
         skip: 'Skip to content', main: 'Main navigation', language: 'Language',
         fallback: 'Home — this page is not available',
+        collectionFallback: 'Browse all patterns in this language', tools: 'Tools', beadGenerator: 'Photo to bead pattern',
         generator: 'Generator', patterns: 'Patterns', editor: 'Editor', guides: 'Guides', about: 'About',
         make: 'Make', learn: 'Learn', site: 'Site', browse: 'Browse Patterns', advancedEditor: 'Advanced Editor',
         allGuides: 'All Guides', pixelGrid: 'Pixel Art Grid', beadLoom: 'Bead Loom Pattern Maker',
@@ -23,6 +24,7 @@ export const siteNavigation = {
     de: {
         skip: 'Zum Inhalt', main: 'Hauptnavigation', language: 'Sprache',
         fallback: 'Startseite — diese Seite ist nicht verfügbar',
+        collectionFallback: 'Alle Vorlagen in dieser Sprache ansehen', tools: 'Werkzeuge', beadGenerator: 'Bild in Bügelperlen umwandeln',
         generator: 'Generator', patterns: 'Vorlagen', editor: 'Editor', guides: 'Anleitungen', about: 'Über uns',
         make: 'Gestalten', learn: 'Anleitungen', site: 'Website', browse: 'Vorlagen ansehen', advancedEditor: 'Vorlagen bearbeiten',
         allGuides: 'Alle Anleitungen', pixelGrid: 'Pixelraster', beadLoom: 'Vorlagen für den Perlenwebrahmen',
@@ -33,6 +35,7 @@ export const siteNavigation = {
     fr: {
         skip: 'Aller au contenu', main: 'Navigation principale', language: 'Langue',
         fallback: 'Accueil — cette page n’est pas disponible',
+        collectionFallback: 'Voir tous les modèles dans cette langue', tools: 'Outils', beadGenerator: 'Image en modèle de perles',
         generator: 'Générateur', patterns: 'Modèles', editor: 'Éditeur', guides: 'Guides', about: 'À propos',
         make: 'Créer', learn: 'Apprendre', site: 'Site', browse: 'Voir les modèles', advancedEditor: 'Modifier un modèle',
         allGuides: 'Tous les guides', pixelGrid: 'Grille de pixel art', beadLoom: 'Modèles pour métier à perles',
@@ -43,6 +46,7 @@ export const siteNavigation = {
     ja: {
         skip: '本文へ移動', main: 'メインナビゲーション', language: '言語',
         fallback: 'ホーム — このページの翻訳はありません',
+        collectionFallback: 'この言語の図案一覧を見る', tools: 'ツール', beadGenerator: '画像からビーズ図案を作る',
         generator: '図案を作る', patterns: '図案一覧', editor: 'エディター', guides: '使い方', about: 'サイトについて',
         make: '作る', learn: '使い方', site: 'サイト情報', browse: '図案を見る', advancedEditor: '図案を編集する',
         allGuides: 'ガイド一覧', pixelGrid: 'ピクセルアート変換', beadLoom: 'ビーズ織りの図案作成',

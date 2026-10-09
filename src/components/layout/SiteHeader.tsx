@@ -1,8 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
 import LanguageSwitcher from './LanguageSwitcher';
+import ToolMenu from './ToolMenu';
 import styles from './LanguageSwitcher.module.css';
 
 type SiteHeaderSection = 'generator' | 'patterns' | 'editor' | 'guides' | 'about';
@@ -40,9 +42,12 @@ export default function SiteHeader({ active, locale = 'en' }: SiteHeaderProps) {
                 </Link>
                 <nav className={`site-nav ${styles.navigation}`} aria-label={copy.main}>
                     {navItems.map((item) => (
-                        <Link key={item.id} href={item.href} hrefLang={item.hrefLang} prefetch={item.prefetch} aria-label={item.label} aria-current={item.id === active ? 'page' : undefined}>
-                            {item.label}
-                        </Link>
+                        <Fragment key={item.id}>
+                            <Link href={item.href} hrefLang={item.hrefLang} prefetch={item.prefetch} aria-label={item.label} aria-current={item.id === active ? 'page' : undefined}>
+                                {item.label}
+                            </Link>
+                            {item.id === 'generator' ? <ToolMenu locale={locale} /> : null}
+                        </Fragment>
                     ))}
                 </nav>
                 <LanguageSwitcher locale={locale} className={styles.headerSwitcher} />

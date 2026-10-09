@@ -17,7 +17,13 @@ describe('site language routes', () => {
     });
 
     it('keeps curated download selections separate from full libraries', () => {
-        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'de')).toEqual({ href: '/de', isFallback: true });
+        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'de')).toEqual({ href: '/de/patterns', isFallback: true, fallback: 'patterns' });
+        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'fr', { hash: '#downloads' })).toEqual({ href: '/fr/modeles-perles-a-repasser#downloads', isFallback: false });
+        for (const locale of ['en', 'de', 'ja'] as const) {
+            expect(getLocaleDestination('/fr/modeles-perles-a-repasser', locale, { search: '?brand=hama', hash: '#downloads' }))
+                .toEqual({ href: localeRoutes[locale].patterns, isFallback: true, fallback: 'patterns' });
+        }
+        expect(localizedRouteGroups.some(group => Object.values(group).includes('/fr/modeles-perles-a-repasser'))).toBe(false);
         expect(getLocaleDestination('/fr/modeles-perles-a-repasser-noel', 'ja')).toEqual({ href: '/ja/patterns/christmas', isFallback: false });
     });
 

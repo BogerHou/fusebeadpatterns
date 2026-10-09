@@ -38,7 +38,7 @@ export function getLocaleFromPath(pathname: string): SiteLocale {
     return isSiteLocale(segment) ? segment : 'en';
 }
 
-export type LocaleDestination = { href: string; isFallback: boolean };
+export type LocaleDestination = { href: string; isFallback: boolean; fallback?: 'patterns' };
 
 export function getLocaleDestination(
     pathname: string,
@@ -52,7 +52,14 @@ export function getLocaleDestination(
     const group = localizedRouteGroups.find(routes => Object.values(routes).includes(currentPath));
     const destination = group?.[locale] ?? (getLocaleFromPath(currentPath) === locale ? currentPath : undefined);
 
-    if (!destination) return { href: localeRoutes[locale].home, isFallback: true };
+    if (!destination) {
+        // A selected download page is not a translation of the full library.
+        // Give visitors a relevant, explicitly labelled next step instead.
+        if (currentPath === '/fr/modeles-perles-a-repasser') {
+            return { href: localeRoutes[locale].patterns, isFallback: true, fallback: 'patterns' };
+        }
+        return { href: localeRoutes[locale].home, isFallback: true };
+    }
     const query = search ? (search.startsWith('?') ? search : `?${search}`) : '';
     const fragment = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
     return { href: `${destination}${query}${fragment}`, isFallback: false };

@@ -66,7 +66,7 @@ export default function LanguageSwitcher({ locale = 'en', className = '' }: { lo
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.open = false;
         }}>
             <summary ref={summaryRef} className={styles.summary} aria-label={`${copy.language}: ${localeNames[locale]}`}>
-                <span aria-hidden="true">{locale.toUpperCase()}</span>
+                <span lang={locale} aria-hidden="true">{localeNames[locale]}</span>
                 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="m1 1 4 4 4-4" stroke="currentColor" strokeWidth="1.5" /></svg>
             </summary>
             <ul className={styles.menu} aria-label={copy.language}>
@@ -76,7 +76,7 @@ export default function LanguageSwitcher({ locale = 'en', className = '' }: { lo
                         <li key={targetLocale}>
                             <a href={target.href} hrefLang={targetLocale} data-locale-navigation className={styles.option} aria-current={targetLocale === locale ? 'true' : undefined} onClick={event => navigate(event, targetLocale)}>
                                 <span lang={targetLocale}>{localeNames[targetLocale]}</span>
-                                {target.isFallback ? <span className={styles.fallback}>{copy.fallback}</span> : null}
+                                {target.isFallback ? <span className={styles.fallback}>{target.fallback === 'patterns' ? copy.collectionFallback : copy.fallback}</span> : null}
                             </a>
                         </li>
                     );

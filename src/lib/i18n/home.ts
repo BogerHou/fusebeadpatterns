@@ -86,3 +86,98 @@ export const localizedHomeCopy = {
     stepsHeading: string; steps: string[][]; helpHeading: string; help: string;
     editor: string; learn: string; learnHref: string;
 }>;
+
+export const localizedHomeSections = {
+    de: {
+        stepsEyebrow: 'Eine Perle nach der anderen', ideasEyebrow: 'Platz für deine Ideen', ideasHeading: 'Ideen für Bügelperlen-Projekte',
+        ideas: [
+            ['Sprites aus Spielen', 'Pixelbilder mit klaren Formen eignen sich gut für Bügelperlen. Probiere einfache Figuren, Gegenstände, Symbole oder eigene Pixelkunst mit deutlich getrennten Farben.'],
+            ['Porträts und Figuren', 'Teste mit einem Haustierfoto, einer gezeichneten Figur oder einem eigenen Charakter, ob das Motiv auch im Perlenraster noch gut erkennbar ist.'],
+            ['Vorlagen zum Ausdrucken', 'Ein gedrucktes Raster hilft dir beim Zählen der Perlen, beim Teilen einer Vorlage und beim Nachlegen ohne Bildschirm.'],
+            ['Retro-Pixelkunst', '8-Bit- und 16-Bit-Motive lassen sich gut auf Steckplatten übertragen. Kleine Platten reichen für Symbole; ganze Szenen brauchen mehr Platz.'],
+            ['Kleine Bastelprojekte', 'Verkleinere ein Motiv für Schlüsselanhänger, Ohrringe, Baumschmuck oder Magnete. Prüfe bei kleinen Projekten, ob wichtige Details erhalten bleiben.'],
+            ['Von Hand nachbessern', 'Öffne den Editor, wenn die Vorschau schon fast passt, aber Gesicht, Kontur oder Hintergrund noch einzelne Korrekturen brauchen.'],
+        ],
+        guidesEyebrow: 'Vor dem ersten Motiv', guidesHeading: 'Anleitungen für dein nächstes Projekt',
+        guidesIntro: 'Der Generator führt dich direkt zum Muster. Diese Anleitungen helfen bei Steckplatten, Mini-Perlen, Einsteiger-Sets und der Nachbearbeitung von Fotos.', guidesLink: 'Alle Anleitungen ansehen',
+        featuresEyebrow: 'Vom ersten Pixel zur fertigen Vorlage', featuresHeading: 'Was du mit dem Generator machen kannst',
+        features: [
+            ['Perlenfarben auswählen', 'Wähle vor dem Umwandeln eine Farbpalette, damit das Muster Farben verwendet, die du nachlegen kannst. Der Generator enthält Paletten für Perler, Hama und Artkal.'],
+            ['Passende Farben finden', 'Der Generator vergleicht die Bildfarben mit den verfügbaren Perlenfarben und ordnet ihnen ähnliche Farben zu. Prüfe anschließend, ob Konturen und Details erkennbar bleiben.'],
+            ['Im passenden Format speichern', 'Exportiere dein Muster als PDF, Bild, SVG, Tabelle oder Rastervorschau, um es auszudrucken, nachzulegen oder zu teilen.'],
+            ['Weichere Farbübergänge', 'Nutze die weiche Schattierung für Fotos mit Farbverläufen. Für klare Sprites, Symbole und einfache Motive kannst du sie ausschalten.'],
+            ['Einzelne Perlen bearbeiten', 'Im Editor kannst du malen, Flächen füllen, löschen, Farben aufnehmen, zoomen und Änderungen rückgängig machen.'],
+        ],
+        faqEyebrow: 'Gut zu wissen', faqHeading: 'Häufige Fragen',
+        faqs: [
+            { question: 'Was sind Bügelperlen?', answer: 'Bügelperlen sind kleine Kunststoffperlen, die auf einer Steckplatte zu einem Motiv angeordnet werden. Lege anschließend Bügelpapier darüber und verbinde sie mit Wärme. Beachte dabei die Anleitung deiner Perlenmarke.' },
+            { question: 'Ist der Bügelperlen-Generator kostenlos?', answer: 'Ja. Du kannst kostenlos ein Bild hochladen, die Vorlage ansehen, die Größe anpassen und das Ergebnis direkt im Browser exportieren. Ein Konto ist nicht nötig.' },
+            { question: 'Was brauche ich für den Einstieg?', answer: 'Ein Einsteiger-Set enthält meist Perlen in verschiedenen Farben, eine quadratische Steckplatte, Bügelpapier und eine Pinzette. Sobald du mehr Farben sammelst, sind Sortierboxen hilfreich.' },
+            { question: 'Kann ich damit auch Vorlagen für Mini-Perlen erstellen?', answer: 'Ja. Wähle eine Einstellung für Mini-Perlen, wenn das fertige Motiv kleiner werden soll. Das eignet sich etwa für Schlüsselanhänger, Ohrringe oder kleine Pixelbilder. Verwende eine dazu passende Mini-Steckplatte.' },
+            { question: 'Kann ich das erzeugte Muster von Hand bearbeiten?', answer: 'Ja. Erstelle ein Muster auf der Startseite und öffne danach den Editor. Dort kannst du malen, füllen, löschen, Farben aufnehmen, Änderungen zurücknehmen, das Projekt speichern und die fertige Vorlage exportieren.' },
+        ],
+    },
+    fr: {
+        stepsEyebrow: 'Une perle à la fois', ideasEyebrow: 'Place à vos idées', ideasHeading: 'Idées de créations en perles à repasser',
+        ideas: [
+            ['Sprites de jeux vidéo', 'Les images en pixels aux formes nettes se prêtent bien aux perles à repasser. Essayez des personnages, objets, icônes simples ou vos propres dessins avec des couleurs bien distinctes.'],
+            ['Portraits et personnages', 'Testez une photo d’animal, un portrait dessiné ou un personnage original pour vérifier si le sujet reste reconnaissable une fois converti en grille de perles.'],
+            ['Modèles à imprimer', 'Une grille imprimée vous aide à compter les perles, à partager un modèle ou à suivre le motif loin de l’écran.'],
+            ['Pixel art rétro', 'Les dessins de style 8 bits ou 16 bits se transposent naturellement sur une plaque. Utilisez de petites plaques pour les icônes et davantage de place pour les scènes.'],
+            ['Petits objets', 'Réduisez un motif pour un porte-clés, des boucles d’oreilles, une décoration ou un aimant. Vérifiez que les détails importants restent lisibles à cette taille.'],
+            ['Retouches à la main', 'Ouvrez l’éditeur quand l’aperçu est presque satisfaisant, mais qu’un visage, un contour ou un fond demande encore quelques corrections.'],
+        ],
+        guidesEyebrow: 'Quelques repères utiles', guidesHeading: 'Préparer votre prochaine création',
+        guidesIntro: 'Le générateur vous mène directement au modèle. Ces guides vous aident à choisir les plaques, les perles Mini, le matériel de départ et les retouches nécessaires pour une photo.', guidesLink: 'Voir tous les guides',
+        featuresEyebrow: 'Du premier pixel au modèle terminé', featuresHeading: 'Ce que vous pouvez faire',
+        features: [
+            ['Choisir les couleurs de perles', 'Sélectionnez une palette avant la conversion pour utiliser des couleurs que vous pouvez reproduire avec vos perles. Le générateur propose des palettes Perler, Hama et Artkal.'],
+            ['Trouver les couleurs proches', 'Le générateur compare votre image aux couleurs de perles disponibles et choisit des teintes proches. Vérifiez ensuite que les contours et les détails restent lisibles.'],
+            ['Exporter au bon format', 'Téléchargez un PDF, une image, un SVG, un tableau ou une grille pour imprimer, réaliser ou partager votre modèle.'],
+            ['Adoucir les dégradés', 'Activez les nuances douces pour une photo qui demande des transitions de couleur. Désactivez-les pour des sprites, icônes et motifs aux contours plus nets.'],
+            ['Retoucher les perles', 'Dans l’éditeur, vous pouvez peindre, remplir, effacer, prélever une couleur, zoomer et annuler les modifications.'],
+        ],
+        faqEyebrow: 'Bon à savoir', faqHeading: 'Questions fréquentes',
+        faqs: [
+            { question: 'Que sont les perles à repasser ?', answer: 'Ce sont de petites perles en plastique que l’on dispose sur une plaque pour former un motif. On les couvre ensuite de papier à repasser et on les assemble par la chaleur. Suivez les instructions de votre marque de perles.' },
+            { question: 'Le générateur de modèles est-il gratuit ?', answer: 'Oui. Vous pouvez importer une image, consulter l’aperçu, ajuster les dimensions et exporter le résultat gratuitement dans votre navigateur. Aucun compte n’est nécessaire.' },
+            { question: 'Quel matériel faut-il pour commencer ?', answer: 'Un kit de départ comprend généralement des perles de plusieurs couleurs, une plaque carrée, du papier à repasser et une pince. Des boîtes de rangement deviennent utiles quand vous avez davantage de couleurs.' },
+            { question: 'Puis-je créer des modèles pour les perles Mini ?', answer: 'Oui. Choisissez un réglage pour les perles Mini pour obtenir une création plus petite, par exemple un porte-clés, des boucles d’oreilles ou un petit motif en pixels. Utilisez une plaque adaptée aux perles Mini.' },
+            { question: 'Puis-je modifier le modèle à la main ?', answer: 'Oui. Créez un modèle sur la page d’accueil, puis ouvrez l’éditeur pour peindre, remplir, effacer, prélever des couleurs, annuler des changements, enregistrer le projet et exporter le modèle final.' },
+        ],
+    },
+    ja: {
+        stepsEyebrow: 'ひと粒ずつ形にする', ideasEyebrow: '作りたいものを見つける', ideasHeading: 'アイロンビーズで作れるもの',
+        ideas: [
+            ['ゲームのドット絵', '輪郭がはっきりしたドット絵は、ビーズの図案にしやすい題材です。シンプルなキャラクターやアイテム、アイコン、自分で描いたドット絵で試してみましょう。'],
+            ['写真やキャラクター', 'ペットの写真、イラスト風の肖像、オリジナルキャラクターなどを読み込み、ビーズのマスに置き換えても形が伝わるか確認できます。'],
+            ['印刷して使う図案', '図案を印刷すると、ビーズを数えたり、人に渡したり、画面を見ずに並べたりできます。'],
+            ['レトロなピクセルアート', '8ビットや16ビット風の絵は、ビーズの配置に向いています。アイコンは小さなプレート、背景のある場面は大きな図案で試しましょう。'],
+            ['小さな雑貨', '図案を小さくして、キーホルダー、イヤリング、飾り、マグネットなどに。縮小したときに大切な形が残っているか確認しましょう。'],
+            ['マスごとの手直し', 'プレビューがほぼ完成していても、顔や輪郭、背景を調整したいときはエディターでビーズをひとつずつ修正できます。'],
+        ],
+        guidesEyebrow: '作る前に知っておきたいこと', guidesHeading: '次の作業に役立つガイド',
+        guidesIntro: '作成ツールで図案を作りながら、必要に応じてガイドを確認できます。プレートの選び方、ミニビーズ、道具の準備、写真の修正方法をまとめています。', guidesLink: 'すべてのガイドを見る',
+        featuresEyebrow: '最初のピクセルから完成した図案まで', featuresHeading: '作成ツールでできること',
+        features: [
+            ['ビーズの配色を選ぶ', '画像を変換する前に配色を選ぶと、実際に使えるビーズの色で図案を作れます。Perler・Hama・Artkalのパレットを用意しています。'],
+            ['近いビーズの色に置き換える', '画像の色と選んだビーズの色を比較し、近い色に自動で置き換えます。プレビューで輪郭や細部が伝わるか確認しましょう。'],
+            ['用途に合わせて保存する', 'PDF、画像、SVG、表計算ファイル、マス目付きの画像を書き出し、印刷や制作、共有に使えます。'],
+            ['色の変化をなめらかにする', '写真の色の移り変わりを表したいときは、なめらかな陰影の設定を使えます。ドット絵やシンプルな図柄ではオフにすると輪郭がすっきりします。'],
+            ['ビーズを手動で修正する', 'エディターで色を塗る、塗りつぶす、消す、色を拾う、拡大する、変更を取り消すといった操作ができます。'],
+        ],
+        faqEyebrow: 'よくある疑問', faqHeading: 'よくある質問',
+        faqs: [
+            { question: 'アイロンビーズとは何ですか？', answer: '小さなプラスチック製のビーズをプレートの突起に並べ、図柄を作る工作材料です。並べ終えたらアイロンペーパーをかぶせ、熱でビーズを接着します。仕上げは使うビーズの説明書に従ってください。' },
+            { question: '図案作成ツールは無料ですか？', answer: 'はい。画像の読み込み、プレビュー、サイズ調整、図案の保存を無料で使えます。ブラウザー内で動作し、アカウントの登録は不要です。' },
+            { question: '初めて作るときは何が必要ですか？', answer: 'ビーズ、四角いプレート、アイロンペーパー、ピンセットがあると始められます。色が増えてきたら、仕分け用のケースがあると便利です。' },
+            { question: 'ミニビーズ用の図案も作れますか？', answer: 'はい。ミニビーズ用の設定を選ぶと、同じマス数でも完成品を小さくできます。キーホルダーやイヤリング、小さなドット絵などに使う場合は、対応するミニ用プレートも用意してください。' },
+            { question: '作成した図案を手動で修正できますか？', answer: 'はい。ホームで図案を作ったらエディターを開き、色を塗る、塗りつぶす、消す、色を拾う、変更を取り消すなどの操作ができます。続き用のプロジェクトや完成した図案も保存できます。' },
+        ],
+    },
+} satisfies Record<TranslatedLocale, {
+    stepsEyebrow: string; ideasEyebrow: string; ideasHeading: string; ideas: [string, string][];
+    guidesEyebrow: string; guidesHeading: string; guidesIntro: string; guidesLink: string;
+    featuresEyebrow: string; featuresHeading: string; features: [string, string][];
+    faqEyebrow: string; faqHeading: string; faqs: { question: string; answer: string }[];
+}>;
