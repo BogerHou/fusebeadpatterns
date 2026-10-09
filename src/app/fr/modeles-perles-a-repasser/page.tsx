@@ -52,7 +52,7 @@ export default function FrenchPatternsPage() {
                         <li aria-current="page">Six modèles Perler et Hama</li>
                     </ol>
                 </nav>
-                <h1 className="page-heading leading-snug">Modèles de perles à repasser gratuits</h1>
+                <h1 className="page-heading leading-snug">Six modèles gratuits de perles à repasser : Perler et Hama</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">Choisissez parmi six motifs originaux : un ballon de football, un fantôme, une chauve-souris et trois créations de Noël. Téléchargez un PDF A4 en français ou un projet à modifier, sans compte.</p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">Cette sélection propose des fichiers Perler Midi et Hama Midi pour les mêmes motifs. Pour voir les personnages et tous les autres dessins, consultez la <Link href="/fr/patterns" className="text-link">collection complète de {patternLibraryCount} modèles</Link>.</p>
                 <FrenchPatternDownloads patterns={frenchPatternChoices} />

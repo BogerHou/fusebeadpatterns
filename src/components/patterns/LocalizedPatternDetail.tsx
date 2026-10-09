@@ -8,6 +8,7 @@ import { patterns, type Pattern } from '@/lib/patterns/catalog';
 import { getLocalizedPatternTitle, getLocalizedPatternName, getLocalizedPatternIntro, localizePatternNote, type PatternLocale } from '@/lib/patterns/localized-content';
 import { localizedPatternUi } from '@/lib/patterns/localized-ui';
 import { getLocalizedPatternPdf } from '@/lib/patterns/localized-download';
+import { localizePatternSourceDescription } from '@/lib/patterns/localized-sources';
 import { patternTopics } from '@/lib/patterns/topics';
 import { getPatternSectionHref, type PatternSectionSlug } from '@/lib/patterns/section-routes';
 import { sectionLabels, sectionUi } from '@/lib/patterns/section-messages';
@@ -85,7 +86,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                 </section>
                 <details className="mt-8 border-t border-line pt-5 text-sm leading-7 text-muted">
                     <summary className="min-h-11 cursor-pointer font-semibold">{pattern.source ? copy.reference : copy.original}</summary>
-                    {pattern.source ? <div className="mt-3 max-w-3xl"><p lang="en">{pattern.source.description}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link">{copy.source}: <span lang="en">{pattern.source.label}</span></a></div> : <p>{copy.originalText}</p>}
+                    {pattern.source ? <div className="mt-3 max-w-3xl"><p lang={locale}>{localizePatternSourceDescription(pattern.source.description, locale)}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link">{copy.source}: <span lang="en">{pattern.source.label}</span></a></div> : <p>{copy.originalText}</p>}
                     <div className="mt-3 flex flex-wrap gap-x-6"><a href={pattern.assets.project} download {...tracking} data-pattern-format="project" className="text-link">{copy.project}</a><a href={pattern.assets.pixels} download {...tracking} data-pattern-format="png" className="text-link">{copy.pixels}</a></div>
                 </details>
             </article>

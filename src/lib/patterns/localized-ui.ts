@@ -6,7 +6,7 @@ export const localizedPatternUi = {
   brand:'Diese Vorlage verwendet Perler Midi. Für Hama oder Artkal öffne den Editor, ändere die Marke und exportiere eine neue Farbliste. Wähle dort den PDF-Maßstab ausdrücklich aus.',
   chart:'Vorlagenraster', chartAlt:'Raster mit Zeilen, Spalten und Farbsymbolen', chartHelp:'Leere Felder bleiben ohne Perle. Eine weiße Perle mit Symbol gehört zum Motiv. Klicke auf das Raster für die volle Größe.',
   materials:'Farben und Mengen', symbol:'Symbol', color:'Perler-Farbname und Nummer', total:'Gesamt', colorHelp:'Die Farbnamen folgen der englischen Perler-Palette. Bildschirm- und Druckfarben können von echten Perlen abweichen.',
-  make:'Hinweise zum Basteln', reference:'Referenz und Originalhinweise (Englisch)', original:'Eigenes Motiv', originalText:'Ein eigenes flaches Motiv auf einem Perlenraster. Es stellt keine benannte Spiel- oder Animefigur dar.', source:'Referenz ansehen',
+  make:'Hinweise zum Basteln', reference:'Referenz und Originalhinweise', original:'Eigenes Motiv', originalText:'Ein eigenes flaches Motiv auf einem Perlenraster. Es stellt keine benannte Spiel- oder Animefigur dar.', source:'Referenz ansehen',
   project:'Bearbeitbares Projekt speichern', pixels:'Pixelbild speichern', related:'Weitere Motive', downloads:'Auswahl mit deutschen PDF-Dateien',
  },
  fr: {
@@ -16,7 +16,7 @@ export const localizedPatternUi = {
   brand:'Ce modèle utilise des couleurs Perler Midi. Pour Hama ou Artkal, ouvrez l’éditeur, changez de marque et exportez une nouvelle liste de couleurs. Choisissez explicitement l’échelle du PDF.',
   chart:'Grille du modèle', chartAlt:'Grille avec lignes, colonnes et symboles de couleur', chartHelp:'Les cases vides restent sans perle. Une case blanche avec un symbole fait partie du motif. Cliquez sur la grille pour l’afficher en grand.',
   materials:'Couleurs et quantités', symbol:'Symbole', color:'Nom et référence Perler', total:'Total', colorHelp:'Les noms suivent la palette Perler en anglais. Les couleurs à l’écran et sur papier peuvent différer des perles réelles.',
-  make:'Conseils de réalisation', reference:'Référence et indications originales (anglais)', original:'Motif original', originalText:'Un motif plat original sur une grille de perles. Il ne représente pas un personnage nommé de jeu ou d’anime.', source:'Voir la référence',
+  make:'Conseils de réalisation', reference:'Référence et indications originales', original:'Motif original', originalText:'Un motif plat original sur une grille de perles. Il ne représente pas un personnage nommé de jeu ou d’anime.', source:'Voir la référence',
   project:'Enregistrer le projet modifiable', pixels:'Enregistrer l’image pixel', related:'D’autres modèles', downloads:'Sélection avec PDF en français',
  },
  ja: {
@@ -26,7 +26,7 @@ export const localizedPatternUi = {
   brand:'Perler Midiの配色です。Hama・Artkalを使う場合はエディターでブランドを変更し、新しい色表を書き出してください。PDFの印刷サイズも選択します。',
   chart:'図案のマス目', chartAlt:'行・列番号と色の記号を付けた図案', chartHelp:'空白のマスにはビーズを置きません。記号のある白いマスは白ビーズです。図案を押すと大きく表示できます。',
   materials:'色と必要な個数', symbol:'記号', color:'Perlerの色名・色番号', total:'合計', colorHelp:'色名はPerlerの英語パレット表記です。画面や印刷の色は実物のビーズと異なる場合があります。',
-  make:'制作時の確認事項', reference:'参照画像・元の説明（英語）', original:'オリジナル図案', originalText:'ビーズのマス目で作った平面のオリジナル図案です。特定のゲーム・アニメキャラクターではありません。', source:'参照元を見る',
+  make:'制作時の確認事項', reference:'参照画像・元の説明', original:'オリジナル図案', originalText:'ビーズのマス目で作った平面のオリジナル図案です。特定のゲーム・アニメキャラクターではありません。', source:'参照元を見る',
   project:'編集用プロジェクトを保存', pixels:'ピクセル画像を保存', related:'ほかの図案', downloads:'日本語PDF付きの図案',
  },
 };
