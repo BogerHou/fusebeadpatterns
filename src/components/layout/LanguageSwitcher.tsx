@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react';
+import { useContext, useEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { SITE_LOCALES, localeNames, siteNavigation, type SiteLocale } from '../../lib/i18n/locales';
 import { getLocaleDestination, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '../../lib/i18n/routes';
 import { PATTERN_FILTER_CHANGE_EVENT } from '../../lib/patterns/browser-state';
 import styles from './LanguageSwitcher.module.css';
+import { LanguagePathnameContext } from './LanguagePathnameContext';
 
 function subscribeToLocation(callback: () => void) {
     window.addEventListener('popstate', callback);
@@ -22,7 +23,8 @@ const readLocationSuffix = () => window.location.search + window.location.hash;
 const serverLocationSuffix = () => '';
 
 export default function LanguageSwitcher({ locale = 'en', className = '' }: { locale?: SiteLocale; className?: string }) {
-    const pathname = usePathname() ?? '/';
+    const routerPathname = usePathname();
+    const pathname = useContext(LanguagePathnameContext) ?? routerPathname ?? '/';
     const suffix = useSyncExternalStore(subscribeToLocation, readLocationSuffix, serverLocationSuffix);
     const hashIndex = suffix.indexOf('#');
     const search = hashIndex < 0 ? suffix : suffix.slice(0, hashIndex);
