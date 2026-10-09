@@ -54,6 +54,8 @@ const subjects: Record<string, [string, string, string]> = {
     Snowman: ['Schneemann', 'Bonhomme de neige', '雪だるま'],
     'Gingerbread Man': ['Lebkuchenmann', 'Bonhomme en pain d’épices', 'ジンジャーブレッドマン'],
     'Santa Hat': ['Weihnachtsmütze', 'Bonnet de Noël', 'サンタの帽子'],
+    'Christmas Stocking': ['Weihnachtsstrumpf', 'Chaussette de Noël', 'クリスマスの靴下'],
+    Snowflake: ['Schneeflocke', 'Flocon de neige', '雪の結晶'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -87,6 +89,7 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'Fine one-bead snowflake branches need gentle handling. Consider mounting the finished piece on a backing.': ['Die feinen Zweige der Schneeflocke sind nur eine Perle breit. Behandle sie vorsichtig und erwäge, das fertige Motiv auf einer Trägerplatte zu befestigen.', 'Les branches fines du flocon font une perle de large. Manipulez-les avec soin et envisagez de fixer la pièce terminée sur un support.', '雪の結晶の枝はビーズ一個幅の細い部分があります。慎重に扱い、完成後は台紙などに固定することも検討してください。'],
     'Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.': ['Verwende eine Midi-Steckplatte mit 29 × 29 Feldern. Leere Felder bleiben ohne Perle.', 'Utilisez une plaque Midi de 29 × 29 cases. Les cases vides restent sans perle.', '29×29マスのミディ用プレートを1枚使います。空白のマスにはビーズを置きません。'],
     'Print the PDF at 100% / Actual size and check its 50 mm scale line before use.': ['Drucke das PDF mit 100 % / tatsächlicher Größe und prüfe vor der Nutzung die 50-mm-Messlinie.', 'Imprimez le PDF à 100 % / taille réelle et vérifiez le repère de 50 mm avant utilisation.', 'PDFを100％・実際のサイズで印刷し、使用前に50 mmの目盛りを確認してください。'],
     'This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate.': ['Dieses Motiv wurde nicht mit echten Perlen gebaut oder bügelgetestet. Die Perler-Farben am Bildschirm sind Näherungen.', 'Ce motif n’a pas été assemblé avec des perles réelles ni testé au fer. Les couleurs Perler à l’écran sont approximatives.', '実物のビーズでの組み立て・アイロン仕上げは検証していません。画面上のPerlerの色は目安です。'],

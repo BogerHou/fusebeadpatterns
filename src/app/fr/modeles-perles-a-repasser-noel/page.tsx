@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getPatternById } from '@/lib/patterns/catalog';
 import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from '@/lib/patterns/localized-download';
+import { getLocalizedPatternName, localizePatternNote } from '@/lib/patterns/localized-content';
 import selection from '@/lib/patterns/french-christmas.json';
 
 const path = '/fr/modeles-perles-a-repasser-noel';
@@ -51,6 +52,11 @@ export default function FrenchChristmasPatternsPage() {
     const santaHatPdf = getLocalizedPatternPdf(santaHat, 'fr');
     const santaHatLetterPdf = getLocalizedPatternLetterPdf(santaHat, 'fr');
     const santaHatTracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': santaHat.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'patterns', 'data-pattern-format': 'pdf' };
+    const winterPatterns = ['original-christmas-stocking', 'original-snowflake'].map(id => {
+        const pattern = getPatternById(id);
+        if (!pattern) throw new Error(`Additional French Christmas pattern is missing: ${id}`);
+        return pattern;
+    });
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
@@ -127,6 +133,29 @@ export default function FrenchChristmasPatternsPage() {
                             </div>
                         </div>
                     </article>
+                </section>
+                <section id="autres-motifs" aria-labelledby="winter-patterns-heading" className="mt-12 max-w-3xl border-t border-line pt-8">
+                    <h2 id="winter-patterns-heading" className="section-heading mb-6">Deux autres motifs pour Noël</h2>
+                    <div className="space-y-8">
+                        {winterPatterns.map(pattern => {
+                            const name = getLocalizedPatternName(pattern, 'fr');
+                            const pdf = getLocalizedPatternPdf(pattern, 'fr');
+                            const letterPdf = getLocalizedPatternLetterPdf(pattern, 'fr');
+                            const tracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': pattern.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'patterns', 'data-pattern-format': 'pdf' };
+                            return <article key={pattern.id} id={pattern.id} data-pattern-card={pattern.id} aria-labelledby={`${pattern.id}-title`}>
+                                <h3 id={`${pattern.id}-title`} className="text-xl font-semibold"><Link href={`/fr/patterns/${pattern.slug}`} hrefLang="fr" className="text-link">{name}</Link></h3>
+                                <p className="mt-3 text-sm leading-7 text-muted">{pattern.beads} perles en {pattern.colorCount} couleurs Perler Midi, sur une plaque de {pattern.gridWidth} × {pattern.gridHeight} cases.</p>
+                                {pattern.id === 'original-snowflake' && <p className="mt-2 text-sm leading-7 text-muted">{localizePatternNote(pattern.notes[0], 'fr')}</p>}
+                                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                                    <a href={pdf.href} hrefLang="fr" download {...tracking} className="text-link">PDF A4 (français) ↓</a>
+                                    {letterPdf && <a href={letterPdf.href} hrefLang="fr" download {...tracking} className="text-link">PDF US Letter (français) ↓</a>}
+                                    <Link href={`/fr/patterns/${pattern.slug}`} hrefLang="fr" className="text-link">Détails et couleurs</Link>
+                                    <Link href={`/fr/editor?pattern=${pattern.id}`} prefetch={false} data-pattern-event="pattern_editor_open" data-pattern-id={pattern.id} data-pattern-palette="perler" data-pattern-entry="patterns" className="text-link">Modifier</Link>
+                                </div>
+                            </article>;
+                        })}
+                    </div>
+                    <p className="mt-5 text-sm leading-7 text-muted">Choisissez A4 ou US Letter selon votre papier. Imprimez à 100 % / taille réelle et vérifiez les repères de 50 mm sur votre plaque. Ces motifs n’ont pas été assemblés ni testés au fer ou en suspension.</p>
                 </section>
                 <section aria-labelledby="making-heading" className="mt-12 max-w-3xl border-t border-line pt-8">
                     <h2 id="making-heading" className="section-heading">{topicMessages.fr.christmas.heading}</h2>

@@ -11,7 +11,7 @@ const asset = (url: string) => readFileSync(`public${url}`);
 
 describe('Mini guide project allowlist', () => {
     it('retains every existing original and Hama project while adding one named Mini variant', () => {
-        expect(patterns).toHaveLength(107);
+        expect(patterns).toHaveLength(109);
         expect(patterns.some(pattern => pattern.id === miniGhostProjectId)).toBe(false);
         for (const pattern of patterns) expect(getLibraryProject(pattern.id)).toEqual({ id: pattern.id, title: pattern.title, projectUrl: pattern.assets.project });
         for (const pattern of hamaPatterns) expect(getLibraryProject(pattern.projectId)).toEqual({ id: pattern.projectId, title: `${pattern.name} — Hama Midi`, projectUrl: pattern.project });

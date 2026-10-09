@@ -50,7 +50,7 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 107, fr: 107, ja: 107 });
+        expect(counts).toEqual({ de: 109, fr: 109, ja: 109 });
     });
     it('names the Santa Hat consistently across native details and editor imports', () => {
         const pattern = patterns.find(pattern => pattern.id === 'original-santa-hat')!;
@@ -60,6 +60,23 @@ describe('full localized pattern coverage', () => {
             expect(getLocalizedPatternName(pattern, locale)).toBe(names[locale]);
             expect(getLibraryProject(pattern.id, locale)).toMatchObject({ title: names[locale], projectUrl: pattern.assets.project });
         }
+    });
+    it('keeps both winter subjects and their requested projects across native editor imports', () => {
+        const subjects = {
+            'original-christmas-stocking': { de: 'Weihnachtsstrumpf', fr: 'Chaussette de Noël', ja: 'クリスマスの靴下' },
+            'original-snowflake': { de: 'Schneeflocke', fr: 'Flocon de neige', ja: '雪の結晶' },
+        };
+        for (const [id, names] of Object.entries(subjects)) {
+            const pattern = patterns.find(pattern => pattern.id === id)!;
+            expect(pattern).toBeDefined();
+            for (const locale of locales) {
+                expect(getLocalizedPatternName(pattern, locale)).toBe(names[locale]);
+                expect(getLibraryProject(id, locale)).toMatchObject({ id, title: names[locale], projectUrl: pattern.assets.project });
+            }
+        }
+        const snowflake = patterns.find(pattern => pattern.id === 'original-snowflake')!;
+        expect(snowflake.notes[0]).toContain('one-bead');
+        expect(snowflake.notes[0]).not.toContain('row ');
     });
     it('shows localized import names without changing the requested project or brand', () => {
         expect(getLibraryProject('pokemon-gengar-gen5', 'ja')).toMatchObject({ id: 'pokemon-gengar-gen5', title: 'ゲンガー', projectUrl: '/patterns/pokemon-gengar-gen5/pattern.bead-pattern.json' });

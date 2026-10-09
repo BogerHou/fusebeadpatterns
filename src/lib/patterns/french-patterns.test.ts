@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { createElement } from 'react';
+import { Script } from 'node:vm';
+import { createElement, type ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import FrenchPatternDownloads from '../../components/patterns/FrenchPatternDownloads';
 import { getPatternLinkEvent } from '../analytics';
@@ -11,10 +14,45 @@ import selection from './french-patterns.json';
 import christmas from './french-christmas.json';
 import hama from './hama.json';
 import { getLibraryProject } from './project-links';
+import { getPatternById } from './catalog';
+import { getLocalizedPatternName, localizePatternNote } from './localized-content';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from './localized-download';
+import { patternLanguageAlternates } from '../i18n/metadata';
+import { topicMessages } from './section-messages';
 
 const ids = ['original-soccer-ball', 'original-friendly-ghost', 'original-halloween-bat', 'original-christmas-tree', 'original-snowman', 'original-gingerbread-man'];
 const brands: FrenchPatternBrand[] = ['perler', 'hama'];
 const publicFile = (url: string) => path.join(process.cwd(), 'public', url);
+
+function frenchChristmasPage() {
+    // Execute the actual page and real catalog/download helpers. Only the Next
+    // wrappers and shared navigation chrome are fixtures for this server render.
+    const require = createRequire(import.meta.url);
+    const source = readFileSync(path.join(process.cwd(), 'src/app/fr/modeles-perles-a-repasser-noel/page.tsx'), 'utf8');
+    const code = ts.transpileModule(source, { compilerOptions: {
+        module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
+        jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true,
+    } }).outputText;
+    const exports: Record<string, unknown> = {};
+    const defaultModule = (component: unknown) => ({ __esModule: true, default: component });
+    new Script(code).runInNewContext({ exports, require: (id: string) => {
+        if (id === 'react/jsx-runtime') return require(id);
+        if (id === 'next/link') return defaultModule(({ children, prefetch, ...props }: Record<string, unknown>) => {
+            void prefetch;
+            return createElement('a', props, children as string);
+        });
+        if (id === 'next/image') return defaultModule(({ src, alt, width, height }: Record<string, unknown>) => createElement('img', { src, alt, width, height }));
+        if (['@/components/patterns/PatternSectionNav', '@/components/layout/SiteHeader', '@/components/layout/SiteFooter'].includes(id)) return defaultModule((): null => null);
+        if (id === '@/lib/i18n/metadata') return { patternLanguageAlternates };
+        if (id === '@/lib/patterns/section-messages') return { topicMessages };
+        if (id === '@/lib/patterns/catalog') return { getPatternById };
+        if (id === '@/lib/patterns/localized-download') return { getLocalizedPatternPdf, getLocalizedPatternLetterPdf };
+        if (id === '@/lib/patterns/localized-content') return { getLocalizedPatternName, localizePatternNote };
+        if (id === '@/lib/patterns/french-christmas.json') return defaultModule(christmas);
+        throw new Error(`Unexpected French Christmas page import: ${id}`);
+    } });
+    return exports as { default: ComponentType; metadata: { title: string; description: string; alternates: { canonical: string; languages: unknown } } };
+}
 
 describe('French original pattern downloads', () => {
     it('lists only the six reviewed originals, in the Hama order, with unchanged Christmas names', () => {
@@ -86,6 +124,40 @@ describe('French original pattern downloads', () => {
                 expect(anchor).toContain('data-pattern-palette="perler"');
                 expect(anchor).toContain('data-pattern-entry="patterns"');
             }
+        }
+    });
+
+    it('renders both winter additions on the real French Christmas page while retaining its original three-item identity', () => {
+        const page = frenchChristmasPage();
+        const html = renderToStaticMarkup(createElement(page.default));
+        const canonical = '/fr/modeles-perles-a-repasser-noel';
+        expect(page.metadata.title).toBe('Perles à repasser de Noël : 3 modèles gratuits en PDF');
+        expect(page.metadata.description).toBe('Sapin, bonhomme de neige et pain d’épices : 3 modèles de Noël en perles à repasser. PDF A4 en français, grilles PNG et couleurs Perler, sans compte.');
+        expect(page.metadata.alternates).toEqual({ canonical, languages: patternLanguageAlternates('christmas') });
+        const schema = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]);
+        expect(schema.mainEntity.numberOfItems).toBe(3);
+        expect(schema.mainEntity.itemListElement.map((item: { url: string }) => item.url)).toEqual(christmas.patterns.map(pattern => `https://fusebeadpatterns.art${canonical}#${pattern.id}`));
+        expect(html.match(/data-pattern-card="([^"]+)"/g)).toHaveLength(6);
+        expect(html.indexOf('id="autre-modele"')).toBeLessThan(html.indexOf('id="autres-motifs"'));
+        expect(html).toContain('id="santa-hat-title"');
+        expect(html).toContain('Bonnet de Noël');
+        for (const id of ['original-christmas-stocking', 'original-snowflake']) {
+            const pattern = getPatternById(id)!;
+            const article = html.match(new RegExp(`<article[^>]*id="${id}"[\\s\\S]*?<\\/article>`))![0];
+            expect(article).toContain(getLocalizedPatternName(pattern, 'fr'));
+            expect(article).toContain(`${pattern.beads} perles en ${pattern.colorCount} couleurs Perler Midi`);
+            expect(article).toContain(`href="/fr/patterns/${pattern.slug}"`);
+            expect(article).toContain(`href="/fr/editor?pattern=${id}"`);
+            const anchors = [...article.matchAll(/<a\b([^>]*)>/g)].map(match => match[1]);
+            for (const pdf of [getLocalizedPatternPdf(pattern, 'fr'), getLocalizedPatternLetterPdf(pattern, 'fr')!]) {
+                const anchor = anchors.find(value => value.includes(`href="${pdf.href}"`))!;
+                expect(anchor).toContain('hrefLang="fr"');
+                expect(anchor).toContain('download=""');
+                expect(anchor).toContain(`data-pattern-id="${id}"`);
+                expect(anchor).toContain('data-pattern-palette="perler"');
+                expect(readFileSync(publicFile(pdf.href)).subarray(0, 5).toString()).toBe('%PDF-');
+            }
+            if (id === 'original-snowflake') expect(article).toContain(localizePatternNote(pattern.notes[0], 'fr'));
         }
     });
 });

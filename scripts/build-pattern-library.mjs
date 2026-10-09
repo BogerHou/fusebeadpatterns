@@ -3,8 +3,8 @@
  * Never fetches images or reads search-performance exports. Run only after the
  * source pack has passed its fidelity and PDF review; see the content guide.
  * Requires Python with pypdf for lossless extraction of individual PDF pages.
- * Writing requires --promote-id original-santa-hat --output-root NEW_DIRECTORY.
- * --check-only reviews complete manifests without opening or writing any PDF.
+ * Writing requires explicit --promote-id selections and --output-root NEW_DIRECTORY.
+ * Santa preflight does not read PDFs; winter preflight also rejects pending PDFs.
  */
 import { createHash } from 'node:crypto';
 import { constants as fsConstants } from 'node:fs';
@@ -21,30 +21,53 @@ const publishedCatalogCount = 106;
 // It is independent of the input manifests and must not be refreshed to accept drift.
 const publishedCatalogHash = '50e6158feef88d3280a786f8dbb51569542e635bb47d3073c55649d422bdb68b';
 const defaultInputs = ['artifacts/pattern-samples/2026-09-22/library-v2', 'artifacts/pattern-samples/2026-09-22/expansion-v3', 'artifacts/pattern-samples/2026-09-22/expansion-v4', 'artifacts/pattern-samples/2026-09-22/expansion-v5', 'artifacts/pattern-samples/2026-09-22/expansion-v6-pokemon', 'artifacts/pattern-samples/2026-09-22/expansion-v7-minecraft', 'artifacts/pattern-samples/2026-09-22/expansion-v8-classics', 'artifacts/pattern-samples/2026-10-08/soccer-ball', 'artifacts/pattern-samples/2026-10-08/original-seasonal-v1', 'artifacts/pattern-samples/2026-10-08/original-halloween-bat-v1', 'artifacts/pattern-samples/2026-10-08/original-christmas-v1', 'artifacts/pattern-samples/2026-10-09/original-santa-hat-v1'];
+const winterInputs = [...defaultInputs, 'artifacts/pattern-samples/2026-10-09/original-winter-v1'];
+const winterAdditions = {
+    'original-christmas-stocking': { slug: 'christmas-stocking', title: 'Christmas Stocking', kind: 'original', version: 'Original Christmas stocking design v1' },
+    'original-snowflake': { slug: 'snowflake', title: 'Snowflake', kind: 'original', version: 'Original six-branch snowflake design v1' },
+};
+const winterPublishedCatalogCount = 107;
+// Complete d80fd8b arrays, including Santa Hat's Letter asset and property order.
+// This separate lock must never be refreshed from a generated winter candidate.
+const winterPublishedCatalogHash = '822460c093675e3abd384f664035a93107c9d5672bf6e90f015159fcbe73592c';
+const pdfPapers = [
+    { input: 'reference-pattern-library.pdf', output: 'pattern.pdf', width: 210 * 72 / 25.4, height: 297 * 72 / 25.4, label: 'A4' },
+    { input: 'reference-pattern-library-us-letter.pdf', output: 'pattern-letter.pdf', width: 612, height: 792, label: 'US Letter' },
+];
 
 export function parsePromotionOptions(args, projectRoot = root) {
-    const options = { inputs: [], checkOnly: false };
+    const options = { inputs: [], ids: [], checkOnly: false };
     for (let index = 0; index < args.length; index++) {
         const argument = args[index];
         if (argument === '--check-only') {
             if (options.checkOnly) throw new Error('Duplicate --check-only');
             options.checkOnly = true;
         } else if (argument === '--promote-id' || argument === '--output-root') {
-            const key = argument === '--promote-id' ? 'id' : 'outputRoot';
-            if (options[key]) throw new Error(`Duplicate ${argument}`);
             const value = args[++index];
             if (!value || value.startsWith('--')) throw new Error(`Missing value for ${argument}`);
-            options[key] = value;
+            if (argument === '--promote-id') {
+                if (options.ids.includes(value)) throw new Error(`Duplicate --promote-id: ${value}`);
+                options.ids.push(value);
+            } else {
+                if (options.outputRoot) throw new Error('Duplicate --output-root');
+                options.outputRoot = value;
+            }
         } else if (argument.startsWith('--')) throw new Error(`Unknown option: ${argument}`);
         else options.inputs.push(path.resolve(projectRoot, argument));
     }
-    if (options.id !== promotedId) throw new Error(`Explicit --promote-id ${promotedId} is required; published IDs cannot be regenerated.`);
+    if (!options.ids.length || options.ids.some(id => id !== promotedId && !Object.hasOwn(winterAdditions, id))) {
+        throw new Error(`Explicit --promote-id ${promotedId}, original-christmas-stocking or original-snowflake is required; published IDs cannot be regenerated.`);
+    }
+    if (options.ids.includes(promotedId) && options.ids.length !== 1) throw new Error('Santa Hat and winter promotion modes cannot be mixed.');
+    options.winter = options.ids[0] !== promotedId;
+    if (options.winter) options.ids.sort((a, b) => Object.keys(winterAdditions).indexOf(a) - Object.keys(winterAdditions).indexOf(b));
+    options.id = options.ids.length === 1 ? options.ids[0] : undefined;
     if (!options.checkOnly && !options.outputRoot) throw new Error('Writing requires --output-root pointing to a new staging directory.');
     if (options.outputRoot) {
         options.outputRoot = path.resolve(projectRoot, options.outputRoot);
         if (options.outputRoot === path.resolve(projectRoot)) throw new Error('Output must use a new staging directory, not the project root.');
     }
-    if (!options.inputs.length) options.inputs = defaultInputs.map(directory => path.resolve(projectRoot, directory));
+    if (!options.inputs.length) options.inputs = (options.winter ? winterInputs : defaultInputs).map(directory => path.resolve(projectRoot, directory));
     return options;
 }
 
@@ -94,6 +117,62 @@ export function assertRecordedPromotionPreserved(catalog, patterns) {
     }
 }
 
+function assertFrozenWinterBaseline(published) {
+    const hash = createHash('sha256').update(JSON.stringify(published)).digest('hex');
+    if (published.patterns.length !== winterPublishedCatalogCount || hash !== winterPublishedCatalogHash) {
+        throw new Error('The complete published d80fd8b 107 catalog baseline changed; do not replace its independent lock.');
+    }
+}
+
+function assertWinterSelection(ids) {
+    if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length || ids.some(id => !Object.hasOwn(winterAdditions, id))) {
+        throw new Error('Winter promotion requires unique explicit reviewed winter IDs.');
+    }
+}
+
+export function winterPublishedCatalogBaseline(catalog) {
+    const recorded = catalog.patterns.filter(pattern => Object.hasOwn(winterAdditions, pattern.id));
+    if (new Set(recorded.map(pattern => pattern.id)).size !== recorded.length || catalog.patterns.length !== winterPublishedCatalogCount + recorded.length) {
+        throw new Error('Expected the frozen 107 catalog plus at most one entry for each reviewed winter ID.');
+    }
+    const published = { collections: catalog.collections, patterns: catalog.patterns.filter(pattern => !Object.hasOwn(winterAdditions, pattern.id)) };
+    assertFrozenWinterBaseline(published);
+    return published;
+}
+
+export function assembleWinterPromotion(current, collections, reconstructed, ids) {
+    assertWinterSelection(ids);
+    const published = winterPublishedCatalogBaseline(current);
+    if (!isDeepStrictEqual(collections, published.collections) || new Set(reconstructed.map(pattern => pattern.id)).size !== reconstructed.length) {
+        throw new Error('Winter reconstruction must retain the complete published collections and unique IDs.');
+    }
+    const byId = new Map(reconstructed.map(pattern => [pattern.id, pattern]));
+    // Rebuild every recorded object from its source, keeping all published order.
+    // Unselected, unpublished winter designs are reviewed but never promoted.
+    const patterns = current.patterns.map(pattern => byId.get(pattern.id));
+    if (!isDeepStrictEqual(patterns, current.patterns) || JSON.stringify(patterns) !== JSON.stringify(current.patterns)) throw new Error('The complete published 107 catalog and every recorded winter entry must remain unchanged, including fields and order.');
+    for (const id of ids) {
+        if (!byId.has(id)) throw new Error(`Missing selected winter reconstruction: ${id}`);
+        if (!current.patterns.some(pattern => pattern.id === id)) patterns.push(byId.get(id));
+    }
+    assertFrozenWinterBaseline({ collections, patterns: patterns.filter(pattern => !Object.hasOwn(winterAdditions, pattern.id)) });
+    return patterns;
+}
+
+export async function assertWinterPackPdfReady(input, source) {
+    if (source.state !== 'private-reviewed-original-sourcepack' || !Array.isArray(source.pendingPdfFiles) || source.pendingPdfFiles.length) {
+        throw new Error('Winter sourcepack PDFs are pending review; check-only is not approval and promotion is blocked.');
+    }
+    for (const { input: file } of pdfPapers) {
+        if (!Array.isArray(source.reviewedPdfFiles) || !source.reviewedPdfFiles.includes(file)) throw new Error(`Winter sourcepack has no reviewed PDF record: ${file}`);
+        let bytes;
+        try { bytes = await readFile(path.join(input, file)); } catch (error) {
+            throw new Error(`Missing reviewed winter PDF: ${file}`, { cause: error });
+        }
+        if (!bytes.subarray(0, 5).equals(Buffer.from('%PDF-'))) throw new Error(`Invalid reviewed winter PDF: ${file}`);
+    }
+}
+
 export function validateOriginalPerlerProject(pattern, project) {
     if (pattern.id !== promotedId || pattern.kind !== 'original' || pattern.title !== 'Santa Hat') {
         throw new Error('The selected addition must be the reviewed original Santa Hat.');
@@ -106,9 +185,116 @@ export function validateOriginalPerlerProject(pattern, project) {
     }
 }
 
-export function selectedPdfPages(source, id = promotedId) {
+export function validateWinterOriginalPerlerProject(pattern, project, perlerRows) {
+    const expected = winterAdditions[pattern.id];
+    if (!expected || pattern.kind !== 'original' || pattern.title !== expected.title || pattern.version !== expected.version || pattern.source !== null || pattern.slug !== expected.slug) {
+        throw new Error('Winter additions must retain their exact original identities, titles and null source.');
+    }
+    const draft = project.draft;
+    if (project.type !== 'bead-pattern-project-v1' || project.version !== 1 || draft?.version !== 1
+        || !isDeepStrictEqual(draft.selectedPaletteIds, ['perler']) || draft.boardId !== 'midi'
+        || draft.boardWidth !== 1 || draft.boardHeight !== 1 || draft.sourceMode !== 'blank' || draft.imageSrc !== null
+        || draft.fileName !== pattern.id || draft.pdfScaleMode !== 'midi-5mm') {
+        throw new Error('Winter designs must use an original Perler Midi project on one board.');
+    }
+    if (pattern.width !== 29 || pattern.height !== 29 || !Array.isArray(pattern.rows) || pattern.rows.length !== 29
+        || pattern.rows.some(row => typeof row !== 'string' || row.length !== 29) || !pattern.palette || typeof pattern.palette !== 'object') {
+        throw new Error('Winter original rows must define exactly a 29 × 29 board.');
+    }
+    const colours = Object.entries(pattern.palette);
+    if (!colours.length || colours.length > 15 || colours.length !== pattern.colorCount || new Set(colours.map(([, colour]) => colour.ref)).size !== colours.length) {
+        throw new Error('Winter original palette must use unique reviewed Perler colours.');
+    }
+    const perler = new Map(perlerRows.map(row => [row[0], row]));
+    const pixels = Buffer.alloc(29 * 29 * 4);
+    const counts = new Map();
+    const occupied = [];
+    pattern.rows.forEach((row, y) => [...row].forEach((symbol, x) => {
+        if (symbol === '.') return;
+        const colour = pattern.palette[symbol];
+        if (!colour || symbol !== colour.symbol) throw new Error(`Unknown winter row symbol: ${symbol}`);
+        const offset = (y * 29 + x) * 4;
+        if (!Array.isArray(colour.rgb) || colour.rgb.length !== 3) throw new Error('Winter colours require reviewed RGB values.');
+        pixels.set([...colour.rgb, 255], offset);
+        counts.set(symbol, (counts.get(symbol) ?? 0) + 1);
+        occupied.push([x, y]);
+    }));
+    for (const [symbol, colour] of colours) {
+        const canonical = perler.get(colour.ref);
+        const rgb = canonical?.slice(3, 6).map(Number);
+        if (symbol === '.' || symbol.length !== 1 || !canonical || canonical[1] !== colour.name || !isDeepStrictEqual(rgb, colour.rgb)
+            || colour.hex !== '#' + rgb.map(value => value.toString(16).padStart(2, '0')).join('') || counts.get(symbol) !== colour.count) {
+            throw new Error(`Winter palette or row count changed: ${symbol}`);
+        }
+    }
+    if (!occupied.length || occupied.length !== pattern.beads) throw new Error('Winter bead totals must match the original rows.');
+    const occupiedKeys = new Set(occupied.map(([x, y]) => y * 29 + x));
+    function componentCount(removed) {
+        const remaining = new Set(occupiedKeys);
+        remaining.delete(removed);
+        let count = 0;
+        while (remaining.size) {
+            count++;
+            const pending = [remaining.values().next().value];
+            remaining.delete(pending[0]);
+            while (pending.length) {
+                const key = pending.pop(), x = key % 29;
+                for (const neighbour of [x > 0 ? key - 1 : -1, x < 28 ? key + 1 : -1, key - 29, key + 29]) {
+                    if (remaining.delete(neighbour)) pending.push(neighbour);
+                }
+            }
+        }
+        return count;
+    }
+    const components = componentCount();
+    const weakBridges = occupied.filter(([x, y]) => componentCount(y * 29 + x) > 1).map(([x, y]) => ({ row: y + 1, column: x + 1 }));
+    if (pattern.components !== components || pattern.requiresBacking !== (components > 1) || !isDeepStrictEqual(pattern.weakBridges, weakBridges)) {
+        throw new Error('Winter shape notes must match the four-neighbour original grid; digital topology is not physical strength.');
+    }
+    const xs = occupied.map(([x]) => x), ys = occupied.map(([, y]) => y);
+    if (!isDeepStrictEqual(pattern.bounds, { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs) + 1, height: Math.max(...ys) - Math.min(...ys) + 1 })) {
+        throw new Error('Winter motif bounds must match the original rows.');
+    }
+    const edited = draft.editedPattern;
+    if (edited?.width !== 29 || edited.height !== 29 || edited.byteLength !== pixels.length || typeof edited.data !== 'string'
+        || Buffer.from(edited.data, 'base64').toString('base64') !== edited.data || !Buffer.from(edited.data, 'base64').equals(pixels)) {
+        throw new Error('Winter project pixels must exactly match the original rows, including blank cells.');
+    }
+    const expectedPalette = colours.map(([, colour]) => ({ name: colour.name, ref: colour.ref, symbol: colour.symbol, prefix: 'P', enabled: true, color: { r: colour.rgb[0], g: colour.rgb[1], b: colour.rgb[2], a: 255 } }));
+    if (!isDeepStrictEqual(draft.activePalettes, [{ name: 'Perler Midi', entries: expectedPalette }])) throw new Error('Winter project palette must exactly match its Perler row colours.');
+}
+
+export function selectedPdfPages(source, selection = promotedId) {
+    const ids = Array.isArray(selection) ? selection : [selection];
     return source.patterns.map(({ id, title, beads }, index) => ({ id, title, beads, index }))
-        .filter(entry => entry.id === id);
+        .filter(entry => ids.includes(entry.id))
+        .map(entry => Object.hasOwn(winterAdditions, entry.id) ? { ...entry, detailUrl: `https://fusebeadpatterns.art/patterns/${winterAdditions[entry.id].slug}` } : entry);
+}
+
+export function selectedPromotionEntries(entries, ids) {
+    if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length
+        || ids.some(id => id !== promotedId && !Object.hasOwn(winterAdditions, id))
+        || (ids.includes(promotedId) && ids.length !== 1)) {
+        throw new Error('Only explicitly reviewed additions can have their resources staged.');
+    }
+    const selected = entries.filter(({ pattern }) => ids.includes(pattern.id));
+    if (selected.length !== ids.length || new Set(selected.map(({ pattern }) => pattern.id)).size !== ids.length) {
+        throw new Error('Every selected addition must have exactly one source asset set.');
+    }
+    return selected;
+}
+
+export async function stageSelectedAssets(entries, ids, outputRoot) {
+    for (const { input, pattern } of selectedPromotionEntries(entries, ids)) {
+        const directory = path.join(outputRoot, 'public/patterns', pattern.id);
+        for (const [from, to] of [
+            [`previews/${pattern.id}.png`, 'preview.png'],
+            [`charts/${pattern.id}.png`, 'grid.png'],
+            [`charts/${pattern.id}.svg`, 'grid.svg'],
+            [`pixels/${pattern.id}.png`, 'pixels.png'],
+            [`projects/${pattern.id}.bead-pattern.json`, 'pattern.bead-pattern.json'],
+        ]) await copyExclusive(path.join(input, from), path.join(directory, to));
+    }
 }
 
 export async function createPromotionOutputRoot(destination) {
@@ -130,13 +316,20 @@ export async function main(args = process.argv.slice(2)) {
 const options = parsePromotionOptions(args);
 const inputs = options.inputs;
 const outputRoot = options.outputRoot;
-if (inputs.length !== defaultInputs.length) throw new Error('Expected all 12 sourcepack directories, including the 11 published packs and Santa Hat.');
+const requiredInputs = options.winter ? winterInputs : defaultInputs;
+if (inputs.length !== requiredInputs.length) throw new Error(`Expected all ${requiredInputs.length} sourcepack directories, including the 11 published packs, Santa Hat${options.winter ? ' and the reviewed winter pack' : ''}.`);
 const currentCatalog = parsePublishedCatalog(await readFile(path.join(root, 'src/lib/patterns/catalog.ts'), 'utf8'));
-const published = publishedCatalogBaseline(currentCatalog);
+const published = options.winter ? winterPublishedCatalogBaseline(currentCatalog) : publishedCatalogBaseline(currentCatalog);
 const packs = [];
 for (const directory of inputs) {
     const input = path.resolve(root, directory);
     packs.push({ input, source: JSON.parse(await readFile(path.join(input, 'manifest.json'), 'utf8')) });
+}
+if (options.winter) {
+    const winterPack = packs.at(-1);
+    if (!isDeepStrictEqual(winterPack.source.patterns.map(({ id }) => id), Object.keys(winterAdditions))) {
+        throw new Error('The thirteenth pack must contain exactly the two reviewed winter originals in their recorded order.');
+    }
 }
 const specs = {
     'sdv-blue-chicken': ['stardew-valley/blue-chicken', 'Stardew Valley Blue Chicken with blue feathers and a curled tail. Download the printable pattern or open it in the editor.'],
@@ -211,6 +404,7 @@ const reviewedAdditions = {
     'original-snowman': { slug: 'snowman', kind: 'original' },
     'original-gingerbread-man': { slug: 'gingerbread-man', kind: 'original' },
     'original-santa-hat': { slug: 'santa-hat', kind: 'original', title: 'Santa Hat' },
+    ...(options.winter ? winterAdditions : {}),
 };
 const expectedCount = publishedCount + Object.keys(reviewedAdditions).length;
 if (ids.length !== expectedCount || ids.length !== Object.keys(specs).length || new Set(ids).size !== ids.length || ids.some((id) => !Object.hasOwn(specs, id))) {
@@ -229,6 +423,8 @@ for (const [id, expected] of Object.entries(reviewedAdditions)) {
     const added = entries.find(({ pattern }) => pattern.id === id);
     if (!added || specs[id][0] !== expected.slug || added.pattern.kind !== expected.kind) throw new Error(`Unreviewed addition identity: ${id}`);
     if (expected.title && added.pattern.title !== expected.title) throw new Error(`Unreviewed addition title: ${id}`);
+    if (expected.version && (added.pattern.version !== expected.version || editorial.get(id)?.version !== expected.version
+        || editorial.get(id)?.title !== expected.title || editorial.get(id)?.kind !== expected.kind)) throw new Error(`Unreviewed original editorial identity: ${id}`);
 }
 // Keep each character collection together, followed by the original scenes.
 entries.sort((a, b) => Number(a.pattern.kind === 'original') - Number(b.pattern.kind === 'original'));
@@ -262,17 +458,19 @@ function referenceDetails(pattern, collectionId) {
     return { version: 'Original scene' };
 }
 
-const patterns = [];
+let patterns = [];
 const provenance = [];
+const perlerRows = options.winter ? (await readFile(path.join(root, 'public/palettes/perler.csv'), 'utf8')).trim().split(/\r?\n/).map(row => row.split(',')) : undefined;
 
 for (const { input, source, pattern } of entries) {
     const adapted = pattern.kind === 'source-adapted';
     const collectionId = specs[pattern.id][0].includes('/') ? specs[pattern.id][0].split('/')[0] : null;
     const review = editorial.get(pattern.id);
     const reference = !adapted && review ? { version: review.version } : review?.reference ?? referenceDetails(pattern, collectionId);
-    if (pattern.id === options.id) {
+    if (pattern.id === promotedId || Object.hasOwn(winterAdditions, pattern.id)) {
         const project = JSON.parse(await readFile(path.join(input, 'projects', `${pattern.id}.bead-pattern.json`), 'utf8'));
-        validateOriginalPerlerProject(pattern, project);
+        if (pattern.id === promotedId) validateOriginalPerlerProject(pattern, project);
+        else validateWinterOriginalPerlerProject(pattern, project, perlerRows);
     }
     if (adapted) {
         if (!pattern.source?.sha256 || pattern.fidelity?.silhouetteChanges !== 0 || pattern.fidelity?.colorMerges !== 0 || pattern.fidelity?.interpolated || pattern.fidelity?.redrawn) {
@@ -298,7 +496,9 @@ for (const { input, source, pattern } of entries) {
             ? 'The body and feet form three separate parts. Mount them on a backing; do not try to lift this version as one piece.'
             : `This design has ${pattern.components} separate parts. Mount them on a backing; do not try to lift this version as one piece.`);
     } else if (pattern.weakBridges.length) {
-        notes.unshift(`Thin one-bead connections at ${pattern.weakBridges.map(({ row, column }) => `row ${row}, column ${column}`).join('; ')}. Handle these areas carefully and consider a backing.`);
+        notes.unshift(pattern.id === 'original-snowflake'
+            ? 'Fine one-bead snowflake branches need gentle handling. Consider mounting the finished piece on a backing.'
+            : `Thin one-bead connections at ${pattern.weakBridges.map(({ row, column }) => `row ${row}, column ${column}`).join('; ')}. Handle these areas carefully and consider a backing.`);
     }
     if (adapted) {
         notes.push('The reference outline and separate color regions are preserved. Bead colors approximate the reference rather than matching it exactly.');
@@ -326,34 +526,31 @@ for (const { input, source, pattern } of entries) {
             description: reference.description,
         } : null,
         assets: { preview: `${base}/preview.png`, grid: `${base}/grid.png`, pixels: `${base}/pixels.png`, project: `${base}/pattern.bead-pattern.json`, pdf: `${base}/pattern.pdf`,
-            ...(pattern.id === options.id ? { pdfLetter: `${base}/pattern-letter.pdf` } : {}) },
+            ...(pattern.id === promotedId || Object.hasOwn(winterAdditions, pattern.id) ? { pdfLetter: `${base}/pattern-letter.pdf` } : {}) },
         updatedAt: source.createdAt,
     };
     patterns.push(entry);
     provenance.push({ id: pattern.id, source: pattern.source, kind: pattern.kind });
 }
 
-// All 107 sourcepack entries and all old source hashes are reviewed before any
+// All sourcepack entries and all old source hashes are reviewed before any
 // output. The existing catalog is a comparison baseline, never a source bypass.
-assertPublishedCatalogPreserved(published, collections, patterns, options.id);
-assertRecordedPromotionPreserved(currentCatalog, patterns);
+if (options.winter) {
+    patterns = assembleWinterPromotion(currentCatalog, collections, patterns, options.ids);
+    await assertWinterPackPdfReady(packs.at(-1).input, packs.at(-1).source);
+} else {
+    assertPublishedCatalogPreserved(published, collections, patterns, options.id);
+    assertRecordedPromotionPreserved(currentCatalog, patterns);
+}
+const selectedEntries = selectedPromotionEntries(entries, options.ids);
 if (options.checkOnly) {
-    console.log(`Validated ${patterns.length} sourcepack entries; preserved all ${publishedCatalogCount} published entries. No assets or PDFs written.`);
+    console.log(`Validated ${entries.length} sourcepack entries; retained ${patterns.length} catalog entries and the frozen ${published.patterns.length} baseline. No assets or PDFs written; preflight is not PDF acceptance.`);
     return;
 }
 // Refuse even an existing empty output root. Failed runs can be inspected, but
 // cannot silently reuse partial staging files or overwrite a published asset.
 await createPromotionOutputRoot(outputRoot);
-for (const { input, pattern } of entries.filter(({ pattern }) => pattern.id === options.id)) {
-    const directory = path.join(outputRoot, 'public/patterns', pattern.id);
-    for (const [from, to] of [
-        [`previews/${pattern.id}.png`, 'preview.png'],
-        [`charts/${pattern.id}.png`, 'grid.png'],
-        [`charts/${pattern.id}.svg`, 'grid.svg'],
-        [`pixels/${pattern.id}.png`, 'pixels.png'],
-        [`projects/${pattern.id}.bead-pattern.json`, 'pattern.bead-pattern.json'],
-    ]) await copyExclusive(path.join(input, from), path.join(directory, to));
-}
+await stageSelectedAssets(selectedEntries, options.ids, outputRoot);
 
 const types = `/** Reviewed pattern content. Regenerate with scripts/build-pattern-library.mjs. */
 export type Pattern = {
@@ -418,14 +615,11 @@ export function getLibraryProject(id: string, locale: SiteLocale = 'en'): Librar
 // Extract only the selected reviewed addition, preserving source page indices.
 // All published PDF packs are skipped before opening a PDF or invoking Python.
 for (const { input, source } of packs) {
-const pages = selectedPdfPages(source, options.id);
+const pages = selectedPdfPages(source, options.ids);
 if (!pages.length) continue; // Never open or re-extract a published pack's PDF.
 // Preserve legacy file metadata except the reviewed correction below.
 const legacyPdfMetadata = source.patterns.some(({ id }) => id === 'sdv-blue-chicken' || id === 'pokemon-charmander-gen5');
-for (const paper of [
-    { input: 'reference-pattern-library.pdf', output: 'pattern.pdf', width: 210 * 72 / 25.4, height: 297 * 72 / 25.4, label: 'A4' },
-    { input: 'reference-pattern-library-us-letter.pdf', output: 'pattern-letter.pdf', width: 612, height: 792, label: 'US Letter' },
-]) {
+for (const paper of pdfPapers) {
 const split = spawnSync(process.env.PYTHON || 'python3', ['-B', '-c', `
 import importlib.util, json, pathlib, sys
 from pypdf import PdfReader, PdfWriter
@@ -441,7 +635,7 @@ if len(reader.pages) != int(page_count):
     raise ValueError('PDF page count does not match the reviewed manifest')
 source_language = reader.root_object.get('/Lang')
 if source_language != 'en-US':
-    raise ValueError('Reviewed Santa Hat PDF must retain its en-US document language')
+    raise ValueError('Reviewed new PDF must retain its en-US document language')
 def page_links(page):
     links = []
     for reference in page.get('/Annots', []):
@@ -458,8 +652,8 @@ for entry in ids:
     if entry['title'] not in text or str(entry['beads']) + ' beads' not in text:
         raise ValueError('PDF order/content mismatch for ' + entry['id'])
     expected_links = page_links(original)
-    if [link[0] for link in expected_links] != ['https://fusebeadpatterns.art/patterns/santa-hat']:
-        raise ValueError('Reviewed Santa Hat PDF must link to its detail URL')
+    if [link[0] for link in expected_links] != [entry.get('detailUrl', 'https://fusebeadpatterns.art/patterns/santa-hat')]:
+        raise ValueError('Reviewed new PDF must link to its detail URL')
     writer = PdfWriter()
     writer.add_page(original)
     writer.root_object[NameObject('/Lang')] = TextStringObject(source_language)
@@ -467,7 +661,7 @@ for entry in ids:
     expected_text = writer.pages[0].extract_text()
     # This reviewed addition includes an explicit actual-size print preference.
     # Keep published PDF bytes unchanged by applying it only to the new design.
-    if entry['id'] in ('original-halloween-bat', 'original-santa-hat'):
+    if entry['id'] in ('original-halloween-bat', 'original-santa-hat', 'original-christmas-stocking', 'original-snowflake'):
         if reader.trailer['/Root'].get('/ViewerPreferences', {}).get('/PrintScaling') != '/None':
             raise ValueError('Reviewed new PDF must disable automatic print scaling')
         writer.root_object[NameObject('/ViewerPreferences')] = reader.root_object['/ViewerPreferences'].clone(writer)
@@ -492,8 +686,9 @@ process.stdout.write(split.stdout);
 }
 }
 
-const adaptedCount = provenance.filter(({ kind }) => kind === 'source-adapted').length;
-const originalCount = provenance.filter(({ kind }) => kind === 'original').length;
+const publishedProvenance = provenance.filter(({ id }) => patterns.some(pattern => pattern.id === id));
+const adaptedCount = publishedProvenance.filter(({ kind }) => kind === 'source-adapted').length;
+const originalCount = publishedProvenance.filter(({ kind }) => kind === 'original').length;
 const guide = `# Pattern library content maintenance
 
 The ${packs.length} reviewed packs integrate ${patterns.length} local patterns in total: ${adaptedCount} game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, and ${originalCount} original designs. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
@@ -522,7 +717,7 @@ Retrieved on 2026-09-22. Hashes cover the reference PNG used before bead-grid pr
 
 | Pattern ID | Reference file | SHA-256 | Rights status |
 | --- | --- | --- | --- |
-${provenance.map(({ id, source, kind }) => kind === 'source-adapted'
+${publishedProvenance.map(({ id, source, kind }) => kind === 'source-adapted'
     ? `| ${id} | ${source.isComposite ? source.layers.map((layer) => `[${layer.role} PNG](${layer.imageUrl}), SHA-256 \`${layer.sha256}\``).join('; ') : `[recorded PNG](${source.imageUrl})`} | \`${source.sha256}\`${source.isComposite ? ' (composite input)' : ''} | Public redistribution unconfirmed |`
     : `| ${id} | Original grid drawing; no third-party character reference | Not applicable | Original design; no third-party character reference |`).join('\n')}
 
@@ -530,13 +725,23 @@ ${provenance.map(({ id, source, kind }) => kind === 'source-adapted'
 
 \`src/lib/patterns/catalog.ts\` holds English page content, stable slugs and compact color counts. The editor imports only \`src/lib/patterns/project-links.ts\`, a small list of trusted local project URLs. Neither module reads artifacts or external data at runtime.
 
-\`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. The new Santa Hat additionally has \`pattern-letter.pdf\`, exposed only through its optional \`assets.pdfLetter\`. Its reviewed pack must provide \`reference-pattern-library.pdf\` (A4) and \`reference-pattern-library-us-letter.pdf\` (US Letter); both require \`/PrintScaling /None\` and must retain their paper dimensions and original drawing instructions on extraction. Previously published PDFs are neither opened nor rewritten by this incremental promotion. The existing five reviewed ghost-cat-pumpkin study-label replacements and Subject metadata remain in its unchanged public download; the helper scripts/clean-pattern-pdf-labels.py restricts that historical correction by ID and content hashes. New downloads use recognizable titles and concise printing instructions. Source-adapted pages retain their source links; every reviewed chart PDF includes a 50 mm print scale. The color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
+\`public/patterns/{id}/\` contains the reviewed preview PNG, symbol grid PNG/SVG, 29 × 29 pixel PNG, editable project and single-page PDF. Images and projects are copied without pixel changes. The new Santa Hat and the two reviewed winter additions each have \`pattern-letter.pdf\`, exposed only through its optional \`assets.pdfLetter\`. Its reviewed pack must provide \`reference-pattern-library.pdf\` (A4) and \`reference-pattern-library-us-letter.pdf\` (US Letter); both require \`/PrintScaling /None\` and must retain their paper dimensions and original drawing instructions on extraction. Previously published PDFs are neither opened nor rewritten by this incremental promotion. The existing five reviewed ghost-cat-pumpkin study-label replacements and Subject metadata remain in its unchanged public download; the helper scripts/clean-pattern-pdf-labels.py restricts that historical correction by ID and content hashes. New downloads use recognizable titles and concise printing instructions. Source-adapted pages retain their source links; every reviewed chart PDF includes a 50 mm print scale. The color key supports up to 15 distinct colors without changing the 5 mm grid pitch. Before public release, any editorial PDF changes need a separate render review while preserving grid scale and cell content.
 
-To stage this reviewed addition, run \`node scripts/build-pattern-library.mjs --promote-id original-santa-hat --output-root /tmp/fusebead-santa-promotion-unique\`. The output root must not exist, including as an empty directory; its parent must already exist. The script exclusively creates the full 107-entry catalog, editor project allowlist and maintenance guide in that staging root, but copies and extracts only the selected Santa Hat asset set. Review the staged results before moving the three generated text files and the new Santa Hat public directory into the project. The builder never writes to the project's existing catalog or public directory. Repeated generation requires a different new output root and must exactly match any already recorded 107-entry catalog, including the Santa Hat entry.
+In the historical Santa Hat mode, stage that reviewed addition with \`node scripts/build-pattern-library.mjs --promote-id original-santa-hat --output-root /tmp/fusebead-santa-promotion-unique\`. The output root must not exist, including as an empty directory; its parent must already exist. The script exclusively creates the full 107-entry catalog, editor project allowlist and maintenance guide in that staging root, but copies and extracts only the selected Santa Hat asset set. Review the staged results before moving the three generated text files and the new Santa Hat public directory into the project. The builder never writes to the project's existing catalog or public directory. Repeated generation requires a different new output root and must exactly match any already recorded 107-entry catalog, including the Santa Hat entry.
 
 The complete 12 sourcepack directories are required. The default inputs are the ignored library-v2, expansion-v3, expansion-v4, expansion-v5, expansion-v6-pokemon, expansion-v7-minecraft and expansion-v8-classics packs under artifacts/pattern-samples/2026-09-22, the soccer-ball, original-seasonal-v1, original-halloween-bat-v1 and original-christmas-v1 packs under artifacts/pattern-samples/2026-10-08, and artifacts/pattern-samples/2026-10-09/original-santa-hat-v1. To use packs in the main checkout from a worktree, supply all 12 absolute pack paths as positional arguments. New packs include \`site-entries.json\` with reviewed stable slugs and descriptions. Source-adapted designs retain their collection slug and specific reference-version requirements. Original designs use a single-segment slug and an explicit \`version\`, such as \`Original Santa hat design v1\`, without a third-party \`reference\`; Santa Hat must retain its original Perler Midi project on one board.
 
 Use \`--promote-id original-santa-hat --check-only\` with the same complete inputs for a read-only sourcepack and catalog preflight. It checks no PDF and is not PDF acceptance. Writing requires Python with \`pypdf\`; set \`PYTHON\` when it is not the default runtime. The script verifies ${patterns.length} unique IDs/slugs, the original independent fingerprint of the published 100 IDs/slugs/kinds, the explicitly reviewed additions, all old source hashes and fidelity flags, and a separate frozen hash of the complete fe3ed49 106-entry catalog and collections. Removing the explicitly recorded Santa Hat from a 107-entry catalog must still reproduce that independent 106-entry hash; a generated result is never allowed to redefine it. Existing entries and their order must be deeply equal after reconstruction from the complete packs. Neither lock may be refreshed to accept a missing old pack or changed old content. New PDFs retain source page indices and are extracted only after sourcepack and catalog checks. All output files use exclusive creation, so collisions fail. Future additions require review and explicit new invariants. This generator is intentionally not part of the website build: CI and production need only checked-in assets. After staging, run \`node --test scripts/build-pattern-library.test.mjs\` and the relevant catalog/download tests, compare all existing asset hashes, and render the new PDF downloads for visual review. The generator does not create or refresh fonts, and PDF authoring and final visual acceptance are separate steps.
+
+## Incremental winter promotion
+
+Winter mode requires the same 12 read-only packs plus \`artifacts/pattern-samples/2026-10-09/original-winter-v1\` as the thirteenth input. Supply all 13 absolute sourcepack paths when running from a worktree. The new pack contains exactly \`original-christmas-stocking\` and \`original-snowflake\`, each with its recorded title, version, null third-party source, 29 × 29 original rows and matching Perler Midi project on one board. Its project pixels, bead totals, motif bounds, palette and material quantities must match those rows and the repository Perler palette. No new sourcepack can bypass the previous authenticity, source-hash or fidelity gates.
+
+Select one design with \`--promote-id original-christmas-stocking\` or \`--promote-id original-snowflake\`; select both with both arguments. Writing also requires \`--output-root NEW_DIRECTORY\`, created exclusively. Only selected previews, grids, pixel PNGs, projects and English A4/US Letter PDF pages are staged. Previously published 107 asset sets and an unselected winter asset set are never copied or regenerated. The route list and editor allowlist retain every published entry, including the existing Mini and Hama lookup helpers. Localized PDF authoring remains a separate reviewed step.
+
+Winter mode freezes the entire independently recorded d80fd8b 107-entry catalog and collections with SHA-256 \`822460c093675e3abd384f664035a93107c9d5672bf6e90f015159fcbe73592c\`, including Santa Hat's optional Letter URL and JSON field order. This lock is distinct from the historical Santa mode's frozen 106-entry lock, which remains unchanged. Removing only the two explicitly reviewed winter IDs from a later 108/109-entry catalog must recover the exact original 107 fingerprint; every already recorded winter entry must also match its reconstructed source object in full. Publishing stocking alone and later selecting snowflake therefore preserves the existing stocking catalog entry without staging its assets. Repeat staging uses a new output root and must retain the same catalog objects and order. Neither lock may be refreshed from a generated candidate.
+
+Winter \`--check-only\` refuses a pack whose PDF state or pending list has not been reviewed, whose A4/US Letter bundles are absent, or whose reviewed files do not have PDF headers. This preflight is not PDF acceptance. Actual staging also verifies each selected PDF's page index, recognizable title, bead total, detail-page link, en-US document language, paper geometry, print-scaling preference and unchanged extracted drawing stream. PDF authoring, cell/scale checks, rendering and visual acceptance must be completed independently before release; do not copy an old PDF or clear a pending state to manufacture an approval.
 
 ## Editor brand switching
 
@@ -565,7 +770,7 @@ Both paper sizes keep one page, a 29 × 29 grid with 5 mm pitch, one matching sy
 The first six unverified named concepts remain retired. Stardrop (interpolated reference), Strawberry Seeds (native grid not confirmed) and Prismatic Shard (38 native colors, pending a larger palette review) are excluded. Charizard is also deferred: its verified Gen V motif is 30 × 22 and must not be squeezed into a 29-column board. Do not recreate uncertain pixels to fill the collection. New collections should be added only when they contain useful reviewed content; the original designs do not yet require a separate collection landing page.
 `;
 await writeExclusive(path.join(outputRoot, 'docs/pattern-library-content.md'), guide);
-console.log(`Prepared ${patterns.length} catalog entries and only ${options.id} assets in ${outputRoot}; all ${publishedCatalogCount} published catalog entries preserved.`);
+console.log(`Prepared ${patterns.length} catalog entries and only ${options.ids.join(', ')} assets in ${outputRoot}; the frozen ${published.patterns.length} baseline and all recorded entries are preserved.`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
