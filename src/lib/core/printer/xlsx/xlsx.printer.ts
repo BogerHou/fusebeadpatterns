@@ -4,6 +4,8 @@ import { Printer } from '../printer';
 import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
 import { ColorToHex } from '../../model/color/hex.model';
+import type { SiteLocale } from '../../../i18n/locales';
+import { exportMessages, type PrinterOptions } from '../messages';
 import {
     createPaletteEntryColorMap,
     createPaletteEntryRefMap,
@@ -49,8 +51,8 @@ export class XlsxPrinter implements Printer {
         return 'XLSX (Beta)';
     }
 
-    pattern(workbook: Excel.Workbook, reducedColor: Uint8ClampedArray, project: Project) {
-        const worksheet = workbook.addWorksheet('Pattern');
+    pattern(workbook: Excel.Workbook, reducedColor: Uint8ClampedArray, project: Project, locale: SiteLocale = 'en') {
+        const worksheet = workbook.addWorksheet(exportMessages(locale).pattern);
 
         // define all cells
         const height =
@@ -150,16 +152,26 @@ export class XlsxPrinter implements Printer {
         worksheet.properties.defaultColWidth = 40 / 7.025;
     }
 
-    usage(workbook: Excel.Workbook, usage: Map<string, number>, project: Project) {
-        const worksheet = workbook.addWorksheet('Inventory');
+    usage(workbook: Excel.Workbook, usage: Map<string, number>, project: Project, locale: SiteLocale = 'en') {
+        const copy = exportMessages(locale);
+        const worksheet = workbook.addWorksheet(copy.inventory);
         const paletteEntriesByRef = createPaletteEntryRefMap(
             project.paletteConfiguration.palettes
         );
 
-        let y = 0;
+        let y = locale === 'en' ? 0 : 1;
         const refIdx = 1;
         const symbolIdx = project.exportConfiguration.useSymbols ? 2 : -1;
         const countIdx = project.exportConfiguration.useSymbols ? 3 : 2;
+        if (locale !== 'en') {
+            const header = worksheet.getRow(1);
+            header.getCell(refIdx).value = copy.reference;
+            if (symbolIdx > 0) header.getCell(symbolIdx).value = copy.symbol;
+            header.getCell(countIdx).value = copy.count;
+            header.font = { bold: true };
+            header.alignment = alignment;
+            worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+        }
 
         Array.from(usage.entries())
             .sort(([, v1], [, v2]) => v2 - v1)
@@ -214,19 +226,20 @@ export class XlsxPrinter implements Printer {
             });
 
         worksheet.properties.defaultRowHeight = 40;
-        worksheet.properties.defaultColWidth = 40 / 7.025;
+        worksheet.properties.defaultColWidth = locale === 'en' ? 40 / 7.025 : 22;
     }
 
     async print(
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
-        filename: string
+        filename: string,
+        { locale = 'en' }: PrinterOptions = {}
     ): Promise<void> {
         const workbook = new Excel.Workbook();
 
-        this.pattern(workbook, reducedColor, project);
-        this.usage(workbook, usage, project);
+        this.pattern(workbook, reducedColor, project, locale);
+        this.usage(workbook, usage, project, locale);
 
         const buffer = await workbook.xlsx.writeBuffer();
         downloadBlob(

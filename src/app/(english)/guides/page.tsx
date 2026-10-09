@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { guideLanguageAlternates } from '@/lib/guides/routes';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
         'Practical guides for making Perler bead patterns, choosing pegboards, planning mini bead projects, and organizing fuse bead supplies.',
     alternates: {
         canonical: '/guides',
+        languages: guideLanguageAlternates(),
     },
     openGraph: {
         title: 'Perler Bead Guides | Fuse Bead Patterns',

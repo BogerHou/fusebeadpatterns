@@ -7,6 +7,10 @@ import './MonoFont';
 import { Printer } from './../printer';
 import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
+import type { SiteLocale } from '../../../i18n/locales';
+import type { PdfScaleMode } from '../../../editor/pdf-scale';
+import { boardPosition, exportMessages, type PrinterOptions } from '../messages';
+import { JAPANESE_EXPORT_FONT_NAME, loadJapaneseExportFont, registerJapaneseExportFont } from './japanese-font';
 import {
     createPaletteEntryColorMap,
     createPaletteEntryRefMap,
@@ -14,6 +18,20 @@ import {
     getPaletteEntryColorKey,
     getPaletteEntryFromRefMap,
 } from '../../utils/utils';
+
+/** A board's cell count alone is not evidence of physical bead spacing. */
+export function isMidiActualSizeProject(project: Project): boolean {
+    const confirmedMidiNames = new Set(['Perler Midi', 'Hama Midi', 'Artkal S Mini', 'Artkal S (5 mm)']);
+    const palettes = project.paletteConfiguration.palettes;
+    return project.boardConfiguration.board.nbBeadPerRow === 29 &&
+        palettes.length > 0 && palettes.every((palette) => confirmedMidiNames.has(palette.name));
+}
+
+function labelFont(doc: jsPDF, locale: SiteLocale, size: number): void {
+    doc.setFont(locale === 'ja' ? JAPANESE_EXPORT_FONT_NAME : 'helvetica', 'normal');
+    doc.setFontSize(size);
+    doc.setTextColor(0, 0, 0);
+}
 
 class Rect {
     x: number;
@@ -47,18 +65,34 @@ export class PdfPrinter implements Printer {
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
-        filename: string
+        filename: string,
+        { locale = 'en', pdfScaleMode = 'fit-page' }: PrinterOptions = {}
     ): Promise<void> {
+        if (pdfScaleMode !== 'fit-page' && pdfScaleMode !== 'midi-5mm') {
+            throw new Error(exportMessages(locale).scaleUnsupported);
+        }
+        if (pdfScaleMode === 'midi-5mm' && !isMidiActualSizeProject(project)) {
+            throw new Error(exportMessages(locale).midiSizeUnsupported);
+        }
         const height = 297;
         const width = 210;
         const margin = 5;
 
         const doc: jsPDF = new jsPDF();
+        if (locale === 'ja') {
+            registerJapaneseExportFont(doc, await loadJapaneseExportFont());
+        }
+        if (locale !== 'en' || pdfScaleMode === 'midi-5mm') {
+            const copy = exportMessages(locale);
+            // jsPDF supports Japanese as "ja"; "ja-JP" is silently ignored.
+            doc.setLanguage(({ en: 'en', de: 'de-DE', fr: 'fr-FR', ja: 'ja' } as const)[locale]);
+            doc.setProperties({ title: copy.title, subject: copy.inventory, author: 'Fuse Bead Patterns' });
+        }
         doc.setFont('MonoFont');
 
-        this.boardMapping(doc, project, margin, width, height);
-        this.usage(doc, usage, width, height, margin, project);
-        this.beadMapping(doc, project, reducedColor, width, height, margin);
+        this.boardMapping(doc, project, margin, width, height, locale, pdfScaleMode);
+        this.usage(doc, usage, width, height, margin, project, locale, pdfScaleMode);
+        this.beadMapping(doc, project, reducedColor, width, height, margin, locale, pdfScaleMode);
         if (
             project.boardConfiguration.nbBoardWidth === 1 &&
             project.boardConfiguration.nbBoardHeight === 1
@@ -68,7 +102,7 @@ export class PdfPrinter implements Printer {
         }
         const blob = doc.output('blob');
         if (!(blob instanceof Blob)) {
-            throw new Error('The PDF could not be generated.');
+            throw new Error(exportMessages(locale).pdfFailed);
         }
         downloadBlob(blob, `${filename}.pdf`);
     }
@@ -78,7 +112,9 @@ export class PdfPrinter implements Printer {
         project: Project,
         margin: number,
         width: number,
-        height: number
+        height: number,
+        locale: SiteLocale = 'en',
+        pdfScaleMode: PdfScaleMode = 'fit-page'
     ) {
         const boardSize = Math.min(
             (width - margin * 2) / project.boardConfiguration.nbBoardHeight,
@@ -90,6 +126,12 @@ export class PdfPrinter implements Printer {
             (height - boardSize * project.boardConfiguration.nbBoardHeight) / 2;
         const fontSize = 12;
 
+        if (locale !== 'en' || pdfScaleMode === 'midi-5mm') {
+            const copy = exportMessages(locale);
+            labelFont(doc, locale, 14);
+            doc.text(`${copy.boards} / ${copy.row} - ${copy.column}`, width / 2, 15, { align: 'center' });
+            doc.setFont('MonoFont');
+        }
         doc.setFontSize(fontSize);
         for (let y = 0; y < project.boardConfiguration.nbBoardHeight; y++) {
             for (let x = 0; x < project.boardConfiguration.nbBoardWidth; x++) {
@@ -107,7 +149,7 @@ export class PdfPrinter implements Printer {
                 );
 
                 const txtContainer = container.scale(0.5);
-                const text = `${y} - ${x}`;
+                const text = locale === 'en' && pdfScaleMode === 'fit-page' ? `${y} - ${x}` : `${y + 1} - ${x + 1}`;
                 doc.setFontSize(this.biggestFontSize(text, txtContainer));
                 doc.text(
                     text,
@@ -129,7 +171,9 @@ export class PdfPrinter implements Printer {
         width: number,
         height: number,
         margin: number,
-        project: Project
+        project: Project,
+        locale: SiteLocale = 'en',
+        pdfScaleMode: PdfScaleMode = 'fit-page'
     ) {
         const usagePerPage = 30;
 
@@ -146,7 +190,9 @@ export class PdfPrinter implements Printer {
         const symbolWidth = project.exportConfiguration.useSymbols ? 50 : 0;
         const usageWidth = 50;
 
-        const heightWithMargins = height - 2 * margin;
+        const showLabels = locale !== 'en' || pdfScaleMode === 'midi-5mm';
+        const headerHeight = showLabels ? 22 : 0;
+        const heightWithMargins = height - 2 * margin - headerHeight;
         const rowHeight = heightWithMargins / usagePerPage;
 
         _.chunk(
@@ -156,7 +202,17 @@ export class PdfPrinter implements Printer {
             doc.addPage();
             const usageSheetWidthOffset =
                 (width - refWidth - usageWidth - symbolWidth) / 2;
-            const usageSheetHeightOffset = margin;
+            const usageSheetHeightOffset = margin + headerHeight;
+            if (showLabels) {
+                const copy = exportMessages(locale);
+                labelFont(doc, locale, 14);
+                doc.text(copy.inventory, width / 2, 13, { align: 'center' });
+                labelFont(doc, locale, 8);
+                doc.text(copy.reference, usageSheetWidthOffset + refWidth / 2, 23, { align: 'center' });
+                if (symbolWidth) doc.text(copy.symbol, usageSheetWidthOffset + refWidth + symbolWidth / 2, 23, { align: 'center' });
+                doc.text(copy.count, usageSheetWidthOffset + refWidth + symbolWidth + usageWidth / 2, 23, { align: 'center' });
+                doc.setFont('MonoFont');
+            }
 
             // ref column
             Array.from(entries).forEach(([k], idx) => {
@@ -297,11 +353,14 @@ export class PdfPrinter implements Printer {
         reducedColor: Uint8ClampedArray,
         width: number,
         height: number,
-        margin: number
+        margin: number,
+        locale: SiteLocale = 'en',
+        pdfScaleMode: PdfScaleMode = 'fit-page'
     ) {
-        const beadSize =
-            (width - margin * 2) /
-            project.boardConfiguration.board.nbBeadPerRow;
+        const actualMidi = pdfScaleMode === 'midi-5mm';
+        const beadSize = actualMidi ? 5 :
+            (width - margin * 2) / project.boardConfiguration.board.nbBeadPerRow;
+        const beadLeft = actualMidi ? (width - 29 * beadSize) / 2 : margin;
         const beadSheetOffset =
             (height -
                 beadSize * project.boardConfiguration.board.nbBeadPerRow) /
@@ -316,7 +375,9 @@ export class PdfPrinter implements Printer {
             for (let j = 0; j < project.boardConfiguration.nbBoardWidth; j++) {
                 doc.addPage();
                 doc.setFontSize(24);
-                let text = `${i} - ${j}`;
+                const showLabels = locale !== 'en' || actualMidi;
+                let text = showLabels ? boardPosition(locale, i, j) : `${i} - ${j}`;
+                if (showLabels) labelFont(doc, locale, 14);
                 const textWidth =
                     (doc.getStringUnitWidth(text) *
                         doc.getFontSize()) /
@@ -325,6 +386,19 @@ export class PdfPrinter implements Printer {
                     (doc.internal.pageSize.width - textWidth) / 2;
                 doc.setTextColor(0, 0, 0);
                 doc.text(text, textOffset, margin * 2);
+                if (showLabels) {
+                    const copy = exportMessages(locale);
+                    labelFont(doc, locale, 7);
+                    doc.text(copy.caution, 15, 252);
+                    doc.text(copy.printing, 15, 258);
+                    doc.text(actualMidi ? copy.pitch : copy.scaled, 15, 264);
+                    doc.setDrawColor(0, 0, 0);
+                    doc.line(15, 274, 65, 274);
+                    doc.line(15, 272, 15, 276);
+                    doc.line(65, 272, 65, 276);
+                    doc.text('50 mm', 70, 275);
+                    doc.setFont('MonoFont');
+                }
 
                 for (
                     let y = 0;
@@ -337,7 +411,7 @@ export class PdfPrinter implements Printer {
                         x++
                     ) {
                         doc.rect(
-                            x * beadSize + margin,
+                            x * beadSize + beadLeft,
                             y * beadSize + beadSheetOffset,
                             beadSize,
                             beadSize
@@ -363,7 +437,7 @@ export class PdfPrinter implements Printer {
                                 paletteEntry.color.b
                             );
                             const container = new Rect(
-                                x * beadSize + margin,
+                                x * beadSize + beadLeft,
                                 y * beadSize + beadSheetOffset,
                                 beadSize,
                                 beadSize
@@ -403,9 +477,9 @@ export class PdfPrinter implements Printer {
                             );
                         } else {
                             doc.line(
-                                x * beadSize + margin,
+                                x * beadSize + beadLeft,
                                 y * beadSize + beadSheetOffset,
-                                x * beadSize + margin + beadSize,
+                                x * beadSize + beadLeft + beadSize,
                                 y * beadSize + beadSheetOffset + beadSize
                             );
                         }

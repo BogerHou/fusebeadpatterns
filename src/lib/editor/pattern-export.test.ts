@@ -8,6 +8,31 @@ import {
 } from './pattern-export';
 
 describe('editor pattern export helpers', () => {
+    it.each(['de', 'fr', 'ja'] as const)('forwards %s to the complete printer without changing project data', async (locale) => {
+        const print = vi.fn(async () => undefined);
+        class TestPrinter implements Printer {
+            name = () => 'Test';
+            print = print;
+        }
+        const reducedColor = new Uint8ClampedArray([1, 2, 3, 255]);
+        const beadsUsage = new Map([['any-brand', 1]]);
+        const project = {} as Project;
+        await exportEditorPattern({ exportId: 'pdf', locale, reducedColor, beadsUsage, project, fileName: 'test', exportGridPng: () => undefined, printerLoaders: { pdf: async () => TestPrinter } });
+        expect(print).toHaveBeenCalledWith(reducedColor, beadsUsage, project, 'test', { locale });
+    });
+    it.each(['en', 'de', 'fr', 'ja'] as const)('forwards explicit 5 mm printing in %s', async (locale) => {
+        const print = vi.fn(async () => undefined);
+        class TestPrinter implements Printer {
+            name = () => 'Test';
+            print = print;
+        }
+        const reducedColor = new Uint8ClampedArray([1, 2, 3, 255]);
+        const beadsUsage = new Map([['H01', 1]]);
+        const project = {} as Project;
+        await exportEditorPattern({ exportId: 'pdf', locale, pdfScaleMode: 'midi-5mm', reducedColor, beadsUsage, project, fileName: 'test', exportGridPng: () => undefined, printerLoaders: { pdf: async () => TestPrinter } });
+        expect(print).toHaveBeenCalledWith(reducedColor, beadsUsage, project, 'test', { locale, pdfScaleMode: 'midi-5mm' });
+    });
+
     it('loads the requested printer and forwards export data', async () => {
         const reducedColor = new Uint8ClampedArray([1, 2, 3, 255]);
         const beadsUsage = new Map([['P-001', 1]]);

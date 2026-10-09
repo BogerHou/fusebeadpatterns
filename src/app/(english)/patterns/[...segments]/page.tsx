@@ -1,3 +1,4 @@
+import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const image = previewPattern.assets.preview;
         return {
             title, description: topic.description,
-            alternates: { canonical: `/patterns/${topic.slug}` },
+            alternates: { canonical: `/patterns/${topic.slug}`, languages: patternLanguageAlternates(topic.slug) },
             openGraph: { title, description: topic.description, url: `${siteUrl}/patterns/${topic.slug}`, type: 'website', images: [{ url: image, width: 580, height: 580, alt: `${getPatternDisplayName(previewPattern)} Perler bead pattern` }] },
             twitter: { card: 'summary_large_image', title, description: topic.description, images: [image] },
         };
@@ -48,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const image = pattern?.assets.preview ?? getPatternsForCollection(collection!.id)[0].assets.preview;
     return {
         title, description,
-        alternates: { canonical: `/patterns/${slug}` },
+        alternates: { canonical: `/patterns/${slug}`, languages: patternLanguageAlternates(slug) },
         openGraph: { title, description, url: `${siteUrl}/patterns/${slug}`, type: 'website', images: [{ url: image, width: 580, height: 580, alt: `${pattern ? getPatternDisplayName(pattern) : collection!.title} Perler bead pattern` }] },
         twitter: { card: 'summary_large_image', title, description, images: [image] },
     };

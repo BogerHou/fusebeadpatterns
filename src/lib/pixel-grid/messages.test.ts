@@ -9,11 +9,32 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as core from './core';
 import * as conversion from './conversion';
 import * as messages from './messages';
+import * as localeNavigation from './locale-navigation';
+import type { PixelLocaleStore } from './locale-storage';
+import * as localeRoutes from '../i18n/routes';
 import { PixelGridError, PIXEL_GRID_ERROR_MESSAGES, type PixelGridErrorCode } from './errors';
 
-const { PIXEL_GRID_MESSAGES: copy, FRENCH_PIXEL_GRID_ERRORS, JAPANESE_PIXEL_GRID_ERRORS, pixelGridErrorMessage, PixelGridUiError } = messages;
+const { PIXEL_GRID_MESSAGES: copy, GERMAN_PIXEL_GRID_ERRORS, FRENCH_PIXEL_GRID_ERRORS, JAPANESE_PIXEL_GRID_ERRORS, pixelGridErrorMessage, PixelGridUiError } = messages;
 
 describe('pixel grid localization', () => {
+    it('localizes German validation and browser failures without exposing arbitrary errors', () => {
+        expect(Object.keys(GERMAN_PIXEL_GRID_ERRORS).sort()).toEqual(Object.keys(PIXEL_GRID_ERROR_MESSAGES).sort());
+        for (const code of Object.keys(PIXEL_GRID_ERROR_MESSAGES) as PixelGridErrorCode[]) {
+            const error = new PixelGridError(code);
+            expect(pixelGridErrorMessage(error, 'de')).toBe(GERMAN_PIXEL_GRID_ERRORS[code]);
+            expect(pixelGridErrorMessage(error, 'de')).not.toBe(error.message);
+            expect(pixelGridErrorMessage(error, 'de')).not.toBe(copy.de.unknownError);
+        }
+        for (const code of Object.keys(copy.en.uiErrors) as (keyof typeof copy.en.uiErrors)[]) {
+            expect(pixelGridErrorMessage(new PixelGridUiError(code), 'de')).toBe(copy.de.uiErrors[code]);
+            expect(copy.de.uiErrors[code]).not.toBe(copy.en.uiErrors[code]);
+        }
+        for (const error of [new Error('/private/photo.png'), new TypeError('Decoder details'), 'SECRET', null]) {
+            expect(pixelGridErrorMessage(error, 'de')).toBe(copy.de.unknownError);
+        }
+        expect(copy.de.visiblePixels(16384)).toBe('16.384 nicht transparente Pixel');
+        expect(copy.de.exportDimensions(128, 64, 16)).toBe('2.048 × 1.024 Pixel (16×)');
+    });
     it('translates every stable validation code while retaining each original English error', () => {
         expect(Object.keys(FRENCH_PIXEL_GRID_ERRORS).sort()).toEqual(Object.keys(PIXEL_GRID_ERROR_MESSAGES).sort());
         for (const code of Object.keys(PIXEL_GRID_ERROR_MESSAGES) as PixelGridErrorCode[]) {
@@ -126,6 +147,8 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/pixel-grid/core') return core;
         if (id === '@/lib/pixel-grid/conversion') return conversion;
         if (id === '@/lib/pixel-grid/messages') return messages;
+        if (id === '@/lib/pixel-grid/locale-navigation') return localeNavigation;
+        if (id === '@/lib/i18n/routes') return localeRoutes;
         if (id === '@/lib/analytics') return { trackPixelGridExport: () => false };
         if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_target, name) => String(name) }) };
         return require(id);
@@ -134,6 +157,18 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
 }
 
 describe('pixel grid initial user experience', () => {
+    it('renders a complete German converter with localized controls and independent file inputs', () => {
+        const html = renderToStaticMarkup(createElement(workspace(), { locale: 'de', experience: 'converter' }));
+        expect(html).toContain('lang="de"');
+        expect(html).toContain('64 × 64 Pixel');
+        expect(html.indexOf('id="pixel-image-file"')).toBeLessThan(html.indexOf('<details'));
+        expect(html.match(/<input[^>]*id="pixel-image-file"[^>]*>/)?.[0]).toContain('hidden=""');
+        expect(html).toContain('Originalbild neu umwandeln');
+        expect(html).toContain('PNG ohne Raster herunterladen');
+        expect(html).toContain('aria-label="Rückgängig"');
+        expect(html).toContain('aria-label="Gespeichertes Pixel-Grid-Projekt öffnen"');
+        expect(html).not.toContain('Choose file');
+    });
     it('keeps the English drawing defaults while exposing image conversion outside the folded settings', () => {
         const html = renderToStaticMarkup(createElement(workspace()));
         expect(html).toContain('16 × 16 pixels');
@@ -210,7 +245,7 @@ function content(value: unknown): string {
 function invoke(node: TestNode, property: string, event?: unknown) {
     return (node.props[property] as (value?: unknown) => unknown)(event);
 }
-function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' } = { locale: 'fr', experience: 'converter' }) {
+function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' } = { locale: 'fr', experience: 'converter' }, runtime: { storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>; largeStore?: PixelLocaleStore } = {}) {
     const text = copy[props.locale ?? 'en'];
     const slots: unknown[] = [], mountEffects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
     let slot = 0, first = true, tree: unknown;
@@ -220,9 +255,29 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     const source = { width: 64, height: 32, pixels: new Uint8ClampedArray(64 * 32 * 4) };
     for (let i = 0; i < 64 * 32; i++) source.pixels.set([(i & 15) * 16, ((i >> 4) & 15) * 16, (i * 17) & 255, 255], i * 4);
     const context = { drawImage() {}, getImageData: () => ({ data: source.pixels.slice() }) };
-    const browser = { addEventListener() {}, removeEventListener() {}, clearTimeout() {}, setTimeout: (callback: () => void) => { callbacks.push(callback); return callbacks.length; } };
+    const browserListeners = new Map<string, Set<(event: Event) => void>>(), documentListeners = new Map<string, Set<(event: Event) => void>>();
+    const register = (map: typeof browserListeners, name: string, callback: (event: Event) => void) => { if (!map.has(name)) map.set(name, new Set()); map.get(name)!.add(callback); };
+    const stored = new Map<string, string>();
+    const storage = runtime.storage ?? { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => { stored.set(key, value); }, removeItem: (key: string) => { stored.delete(key); } };
+    const paths = { en: '/pixel-art-grid', de: '/de/pixel-art-generator', fr: '/fr/image-en-pixel-art', ja: '/ja/pixel-art-converter' };
+    let confirmations = 0;
+    const assignments: string[] = [];
+    const location = { href: `https://fusebeadpatterns.art${paths[props.locale ?? 'en']}`, origin: 'https://fusebeadpatterns.art', pathname: paths[props.locale ?? 'en'], search: '', assign(href: string) { assignments.push(href); } };
+    const browser = {
+        location, sessionStorage: storage, confirm: () => { confirmations++; return false; },
+        addEventListener: (name: string, callback: (event: Event) => void) => register(browserListeners, name, callback),
+        removeEventListener: (name: string, callback: (event: Event) => void) => browserListeners.get(name)?.delete(callback),
+        clearTimeout() {}, setTimeout: (callback: () => void) => { callbacks.push(callback); return callbacks.length; },
+    };
+    class Anchor {
+        target = '';
+        constructor(public href: string, private marked: boolean) {}
+        closest() { return this; }
+        hasAttribute(name: string) { return name === 'data-locale-navigation' && this.marked; }
+    }
     const document = {
-        addEventListener() {}, removeEventListener() {}, body: { append() {} },
+        addEventListener: (name: string, callback: (event: Event) => void) => register(documentListeners, name, callback),
+        removeEventListener: (name: string, callback: (event: Event) => void) => documentListeners.get(name)?.delete(callback), body: { append() {} },
         createElement: (kind: string) => kind === 'canvas' ? { width: 0, height: 0, getContext: () => context } : {
             href: '', download: '', remove() {},
             click(this: { href: string; download: string }) { downloads.push({ name: this.download, blob: blobs.get(this.href)! }); },
@@ -237,21 +292,47 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         },
         useRef: (initial: unknown) => { const index = slot++; if (first) slots[index] = { current: initial }; return slots[index]; },
         useCallback: (callback: unknown) => callback,
+        useEffectEvent: (callback: (...args: unknown[]) => unknown) => {
+            const index = slot++; slots[index] = callback;
+            return (...args: unknown[]) => (slots[index] as typeof callback)(...args);
+        },
         useEffect: (effect: () => void | (() => void)) => { if (first) mountEffects.push(effect); },
         useSyncExternalStore: () => false,
     };
-    const Component = workspace({ react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@/lib/analytics': { trackPixelGridExport: (event: unknown) => { events.push(event); return false; } } }, {
-        window: browser, document, Blob, Uint8ClampedArray,
+    const transfer = { ...localeNavigation,
+        saveLargePixelLocaleSnapshot: (snapshot: localeNavigation.PixelLocaleSnapshot, href: string, area: typeof storage) => localeNavigation.saveLargePixelLocaleSnapshot(snapshot, href, area, runtime.largeStore),
+        consumeLargePixelLocaleSnapshot: (href: string, area: typeof storage) => localeNavigation.consumeLargePixelLocaleSnapshot(href, area, runtime.largeStore),
+    };
+    const Component = workspace({ react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@/lib/pixel-grid/locale-navigation': transfer, '@/lib/analytics': { trackPixelGridExport: (event: unknown) => { events.push(event); return false; } } }, {
+        window: browser, document, Blob, Uint8ClampedArray, location, Element: Anchor, HTMLAnchorElement: Anchor,
         createImageBitmap: async () => ({ width: source.width, height: source.height, close() {} }),
-        URL: { createObjectURL: (blob: Blob) => { const key = `blob:${blobs.size}`; blobs.set(key, blob); return key; }, revokeObjectURL: (key: string) => blobs.delete(key) },
+        URL: class extends URL {
+            static createObjectURL(blob: Blob) { const key = `blob:${blobs.size}`; blobs.set(key, blob); return key; }
+            static revokeObjectURL(key: string) { blobs.delete(key); }
+        },
     }) as (props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' }) => unknown;
     function render() { slot = 0; tree = Component(props); if (first) { first = false; for (const effect of mountEffects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); } } }
-    render();
+    render(); render();
     const find = (predicate: (node: TestNode) => boolean) => { const node = nodes(tree).find(predicate); if (!node) throw new Error('Expected control not found'); return node; };
     const byId = (id: string) => find(node => node.props.id === id);
     const button = (label: string) => find(node => node.type === 'button' && (content(node) === label || node.props['aria-label'] === label));
     return {
-        source, byId, button, render, downloads, events,
+        source, byId, button, render, downloads, events, storage, assignments,
+        settle: async () => { await new Promise(resolve => setImmediate(resolve)); render(); },
+        switchLanguage: (href: string, marked = true) => {
+            const event = { detail: { href }, target: new Anchor(new URL(href, location.href).href, marked), defaultPrevented: false, button: 0, preventDefault() { this.defaultPrevented = true; }, stopImmediatePropagation() {} };
+            for (const callback of documentListeners.get('click') ?? []) callback(event as unknown as Event);
+            if (!event.defaultPrevented) for (const callback of browserListeners.get(localeRoutes.LOCALE_NAVIGATION_EVENT) ?? []) callback(event as unknown as Event);
+            render();
+            return { blocked: event.defaultPrevented, confirmations };
+        },
+        status: () => content(tree),
+        unload: () => {
+            const event = { defaultPrevented: false, returnValue: undefined as string | undefined, preventDefault() { this.defaultPrevented = true; } };
+            for (const callback of browserListeners.get('beforeunload') ?? []) callback(event as unknown as Event);
+            return event.defaultPrevented;
+        },
+        canvas: () => find(node => node.type === 'canvas'),
         click: (label: string) => { invoke(button(label), 'onClick'); render(); },
         change: (id: string, value: string) => { invoke(byId(id), 'onChange', { target: { value } }); render(); },
         loadImage: async () => {
@@ -320,6 +401,174 @@ describe('converter operation boundaries', () => {
         expect(await ui.currentProject()).toEqual(core.createGrid(128, 128));
         ui.click(copy.fr.undo);
         expect(await ui.currentProject()).toEqual(core.createGrid(64, 64));
+        ui.unmount();
+    });
+});
+
+describe('language navigation through the actual workspace handlers', () => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('protects a failed large restore in %s until its localized retry recovers the full workspace', async locale => {
+        const small = new Map<string, string>(), records = new Map<string, string>();
+        const storage = { getItem: (key: string) => small.get(key) ?? null, removeItem: (key: string) => { small.delete(key); }, setItem: (key: string, value: string) => {
+            if (value.length > 1024) throw new Error('QuotaExceededError'); small.set(key, value);
+        } };
+        let readAttempts = 0, completeRetry: () => void;
+        const retryRead = new Promise<void>(resolve => { completeRetry = resolve; });
+        const largeStore: PixelLocaleStore = {
+            async put(key, raw) { records.set(key, raw); },
+            async take(key) {
+                if (++readAttempts === 1) throw new Error('Temporary transaction timeout');
+                await retryRead;
+                const raw = records.get(key) ?? null; records.delete(key); return raw;
+            },
+            async remove(key) { records.delete(key); },
+        };
+        const first = interactiveWorkspace({ locale: 'fr', experience: 'converter' }, { storage, largeStore });
+        await first.loadImage(); const original = await first.currentProject(); first.paint();
+        const edited = core.createGrid(original.width, original.height, original.pixels);
+        core.paintLine(edited, [0, 0], [0, 0], [240, 106, 69, 255]);
+        first.change('pixel-width', '17'); first.change('pixel-height', '31'); first.change('pixel-image-mode', 'crop');
+        first.change('pixel-color-limit', '16'); first.change('pixel-export-scale', '4'); first.change('pixel-alpha', '53');
+        const destination = localeRoutes.localeRoutes[locale].pixelGrid!;
+        expect(first.switchLanguage(destination).blocked).toBe(true);
+        await first.settle();
+        const pointer = storage.getItem(localeNavigation.PIXEL_LOCALE_STORAGE_KEY), raw = [...records.values()][0];
+        const target = interactiveWorkspace({ locale, experience: locale === 'en' ? 'grid' : 'converter' }, { storage, largeStore });
+        const text = copy[locale];
+        await target.settle();
+        expect(target.status()).toContain(text.languageRestoreFailed);
+        expect(target.button(text.languageRetry).props.disabled).toBe(false);
+        expect(target.byId('pixel-grid-workspace').props['aria-busy']).toBe(false);
+        expect(target.button(text.saveProject).props.disabled).toBe(true);
+        expect(target.byId('pixel-width').props.disabled).toBe(true);
+        expect(target.canvas().props.inert).toBe(true);
+        target.paint(); target.click(text.newBlank); target.click(text.saveProject); target.click(text.saveScaled);
+        expect(target.downloads).toEqual([]);
+        expect(target.events).toEqual([]);
+        expect(target.unload()).toBe(true);
+        expect(target.switchLanguage('/ja/pixel-art-converter')).toEqual({ blocked: true, confirmations: 0 });
+        expect(target.switchLanguage('/de')).toEqual({ blocked: true, confirmations: 0 });
+        expect(storage.getItem(localeNavigation.PIXEL_LOCALE_STORAGE_KEY)).toBe(pointer);
+        expect([...records.values()]).toEqual([raw]);
+        const workingGet = storage.getItem;
+        storage.getItem = () => { throw new Error('Temporary session access failure'); };
+        target.click(text.languageRetry); await target.settle();
+        expect(target.status()).toContain(text.languageRestoreFailed);
+        expect(target.button(text.languageRetry).props.disabled).toBe(false);
+        expect(target.button(text.saveProject).props.disabled).toBe(true);
+        expect(readAttempts).toBe(1);
+        expect([...records.values()]).toEqual([raw]);
+        storage.getItem = workingGet;
+        target.click(text.languageRetry);
+        expect(target.button(text.languageRetry).props.disabled).toBe(true);
+        expect(target.status()).toContain(text.languageRestoring);
+        expect(readAttempts).toBe(2);
+        completeRetry!(); await target.settle();
+        expect(target.status()).toContain(text.languageRestored);
+        expect(target.status()).toContain(text.dirty);
+        expect(target.canvas().props.inert).toBe(false);
+        expect(target.byId('pixel-width').props.value).toBe('17');
+        expect(target.byId('pixel-height').props.value).toBe('31');
+        expect(target.byId('pixel-image-mode').props.value).toBe('crop');
+        expect(target.byId('pixel-color-limit').props.value).toBe(16);
+        expect(target.byId('pixel-export-scale').props.value).toBe(4);
+        expect(target.byId('pixel-alpha').props.value).toBe(53);
+        expect(await target.currentProject()).toEqual(edited);
+        target.click(text.undo); expect(await target.currentProject()).toEqual(original);
+        target.click(text.redo); expect(await target.currentProject()).toEqual(edited);
+        target.change('pixel-width', '17'); target.change('pixel-height', '31');
+        target.click(text.reconvert);
+        expect(await target.currentProject()).toEqual(conversion.reducePixelGridColors(core.resizeImage(first.source, 17, 31, 'crop'), 16));
+        expect(records.size).toBe(0); expect(small.size).toBe(0);
+        first.unmount(); target.unmount();
+    });
+
+    it('waits for bulk storage before navigation, then restores source, edits and history in German', async () => {
+        const small = new Map<string, string>(), records = new Map<string, string>();
+        const storage = { getItem: (key: string) => small.get(key) ?? null, removeItem: (key: string) => { small.delete(key); }, setItem: (key: string, value: string) => {
+            if (value.length > 1024) throw new Error('QuotaExceededError'); small.set(key, value);
+        } };
+        let completeWrite: () => void;
+        const pending = new Promise<void>(resolve => { completeWrite = resolve; });
+        const largeStore: PixelLocaleStore = {
+            async put(key, raw) { await pending; records.set(key, raw); },
+            async take(key) { const raw = records.get(key) ?? null; records.delete(key); return raw; },
+            async remove(key) { records.delete(key); },
+        };
+        const first = interactiveWorkspace({ locale: 'fr', experience: 'converter' }, { storage, largeStore });
+        await first.loadImage(); const original = await first.currentProject(); first.paint();
+        first.change('pixel-width', '17'); first.change('pixel-height', '31');
+        expect(first.switchLanguage('/de/pixel-art-generator')).toEqual({ blocked: true, confirmations: 0 });
+        expect(first.status()).toContain(copy.fr.languageSaving);
+        expect(first.assignments).toEqual([]);
+        expect(first.button(copy.fr.saveProject).props.disabled).toBe(true);
+        expect(first.switchLanguage('/ja/pixel-art-converter').blocked).toBe(true);
+        completeWrite!(); await first.settle();
+        expect(first.assignments).toEqual(['/de/pixel-art-generator']);
+        const target = interactiveWorkspace({ locale: 'de', experience: 'converter' }, { storage, largeStore });
+        await target.settle();
+        expect(target.status()).toContain(copy.de.languageRestored);
+        expect(target.status()).toContain(copy.de.dirty);
+        expect(target.byId('pixel-width').props.value).toBe('17');
+        expect(target.byId('pixel-height').props.value).toBe('31');
+        expect(target.button(copy.de.reconvert).props.disabled).toBe(false);
+        target.click(copy.de.undo); expect(await target.currentProject()).toEqual(original);
+        target.click(copy.de.redo); expect((await target.currentProject()).pixels).not.toEqual(original.pixels);
+        expect(records.size).toBe(0); expect(small.size).toBe(0);
+        first.unmount(); target.unmount();
+    });
+
+    it.each([['fr', 'ja'], ['fr', 'de'], ['de', 'ja'], ['de', 'en']] as const)('keeps edited pixels, pending settings and source/history across %s → %s', async (from, to) => {
+        const first = interactiveWorkspace({ locale: from, experience: 'converter' });
+        const destination = localeRoutes.localeRoutes[to].pixelGrid!;
+        const targetCopy = copy[to];
+        await first.loadImage();
+        const saved = await first.currentProject();
+        first.paint();
+        first.change('pixel-width', '17'); first.change('pixel-height', '31');
+        first.change('pixel-color-limit', '16'); first.change('pixel-export-scale', '4');
+        first.change('pixel-zoom', '24'); first.change('pixel-alpha', '53');
+        expect(first.switchLanguage(destination)).toEqual({ blocked: false, confirmations: 0 });
+        const target = interactiveWorkspace({ locale: to, experience: to === 'en' ? 'grid' : 'converter' }, { storage: first.storage });
+        expect(target.byId('pixel-width').props.value).toBe('17');
+        expect(target.byId('pixel-height').props.value).toBe('31');
+        expect(target.byId('pixel-color-limit').props.value).toBe(16);
+        expect(target.byId('pixel-export-scale').props.value).toBe(4);
+        expect(target.byId('pixel-zoom').props.value).toBe('24');
+        expect(target.byId('pixel-alpha').props.value).toBe(53);
+        expect(target.status()).toContain(targetCopy.dirty);
+        expect(target.button(targetCopy.reconvert).props.disabled).toBe(false);
+        target.click(targetCopy.undo);
+        expect(await target.currentProject()).toEqual(saved);
+        target.click(targetCopy.redo);
+        const edited = await target.currentProject();
+        expect(edited.pixels).not.toEqual(saved.pixels);
+        target.change('pixel-width', '17'); target.change('pixel-height', '31');
+        target.click(targetCopy.reconvert);
+        expect(await target.currentProject()).toEqual(conversion.reducePixelGridColors(core.resizeImage(first.source, 17, 31, 'fit'), 16));
+        target.click(targetCopy.undo);
+        expect(await target.currentProject()).toEqual(edited);
+        first.unmount(); target.unmount();
+    });
+
+    it('blocks quota failures and in-flight work, while navigation to a home page retains the normal leave confirmation', async () => {
+        const ui = interactiveWorkspace();
+        const pending = ui.loadImage();
+        expect(ui.switchLanguage('/ja/pixel-art-converter').blocked).toBe(true);
+        expect(ui.status()).toContain(copy.fr.languageBusy);
+        await pending;
+        const original = await ui.currentProject(); ui.paint();
+        const edited = await ui.currentProject();
+        ui.paint();
+        ui.storage.setItem = () => { throw new Error('QuotaExceededError'); };
+        expect(ui.switchLanguage('/ja/pixel-art-converter')).toEqual({ blocked: true, confirmations: 0 });
+        await ui.settle();
+        expect(ui.status()).toContain(copy.fr.languageFailed);
+        expect(await ui.currentProject()).toEqual(edited);
+        ui.click(copy.fr.undo);
+        expect(await ui.currentProject()).toEqual(original);
+        ui.paint();
+        expect(ui.switchLanguage('/de')).toEqual({ blocked: true, confirmations: 1 });
+        expect(ui.switchLanguage('/ja/pixel-art-converter', false)).toEqual({ blocked: true, confirmations: 2 });
         ui.unmount();
     });
 });
@@ -428,7 +677,7 @@ describe('English drawing and image conversion share one preserved workspace', (
         expect(await ui.currentProject()).toEqual(original);
         const saved = await ui.downloads.at(-1)!.blob.text();
         expect(Object.keys(JSON.parse(saved))).toEqual(['format', 'version', 'width', 'height', 'pixels']);
-        for (const locale of ['fr', 'ja'] as const) {
+        for (const locale of ['de', 'fr', 'ja'] as const) {
             const translated = interactiveWorkspace({ locale, experience: 'converter' });
             await translated.loadProject(saved);
             expect(await translated.currentProject()).toEqual(original);

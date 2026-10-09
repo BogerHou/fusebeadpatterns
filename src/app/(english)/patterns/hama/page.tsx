@@ -6,6 +6,7 @@ import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { getPatternById, getPatternHref } from '@/lib/patterns/catalog';
 import { hamaPatterns } from '@/lib/patterns/hama';
+import { hamaLanguageAlternates } from '@/lib/i18n/metadata';
 
 const title = 'Free Hama Bead Patterns: Printable Midi Templates | Fuse Bead Patterns';
 const description = 'Download six free Hama Midi bead patterns with Hama colour numbers. A4 and US Letter PDFs, plus editable projects for a football, ghost, bat and Christmas designs.';
@@ -14,7 +15,7 @@ const url = 'https://fusebeadpatterns.art/patterns/hama';
 
 export const metadata: Metadata = {
     title, description,
-    alternates: { canonical: '/patterns/hama' },
+    alternates: { canonical: '/patterns/hama', languages: hamaLanguageAlternates },
     openGraph: { title, description, url, type: 'website', images: [{ url: preview, width: 580, height: 580, alt: 'Ghost Hama Midi bead pattern' }] },
     twitter: { card: 'summary_large_image', title, description, images: [preview] },
 };

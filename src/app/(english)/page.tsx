@@ -1,4 +1,6 @@
 import React from 'react';
+import type { Metadata } from 'next';
+import { homeLanguageAlternates } from '@/lib/i18n/metadata';
 import Link from 'next/link';
 import Editor from '@/components/editor/Editor';
 import { guidePages } from './guides/guide-data';
@@ -9,6 +11,10 @@ import PatternStudy from '@/components/patterns/PatternStudy';
 import '../home.css';
 
 const siteUrl = 'https://fusebeadpatterns.art';
+
+export const metadata: Metadata = {
+    alternates: { canonical: '/', languages: homeLanguageAlternates },
+};
 
 const faqs = [
     {

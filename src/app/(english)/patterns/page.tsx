@@ -1,3 +1,4 @@
+import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
@@ -14,7 +15,7 @@ const preview = '/patterns/sdv-blue-chicken/preview.png';
 
 export const metadata: Metadata = {
     title, description,
-    alternates: { canonical: '/patterns' },
+    alternates: { canonical: '/patterns', languages: patternLanguageAlternates() },
     openGraph: { title, description, url: 'https://fusebeadpatterns.art/patterns', type: 'website', images: [{ url: preview, width: 580, height: 580, alt: 'Stardew Valley Blue Chicken Perler bead pattern' }] },
     twitter: { card: 'summary_large_image', title, description, images: [preview] },
 };
@@ -39,8 +40,8 @@ export default function PatternsPage() {
                         <Link key={topic.slug} href={`/patterns/${topic.slug}`} className="underline underline-offset-4">{topic.label}</Link>
                     ))}
                     <Link href="/patterns/hama" className="underline underline-offset-4">Hama patterns</Link>
-                    <a href="/ja/patterns" lang="ja" hrefLang="ja" className="underline underline-offset-4">日本語の図案</a>
-                    <a href="/de/patterns" lang="de" hrefLang="de" className="underline underline-offset-4">Deutsche Vorlagen</a>
+                    <Link prefetch={false} href="/ja/patterns" lang="ja" hrefLang="ja" className="underline underline-offset-4">日本語の図案</Link>
+                    <Link prefetch={false} href="/de/patterns" lang="de" hrefLang="de" className="underline underline-offset-4">Deutsche Vorlagen</Link>
                     <a href="/fr/modeles-perles-a-repasser" lang="fr" hrefLang="fr" className="underline underline-offset-4">Modèles en français</a>
                     <a href="/fr/modeles-perles-a-repasser-noel" lang="fr" hrefLang="fr" className="underline underline-offset-4">Noël en perles (français)</a>
                 </div>

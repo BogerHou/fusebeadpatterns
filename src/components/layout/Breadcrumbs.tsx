@@ -9,13 +9,14 @@ export type BreadcrumbItem = {
 
 type BreadcrumbsProps = {
     items: BreadcrumbItem[];
+    label?: string;
 };
 
 function toAbsoluteUrl(href: string): string {
     return href.startsWith('http') ? href : `${siteUrl}${href}`;
 }
 
-export default function Breadcrumbs({ items }: BreadcrumbsProps) {
+export default function Breadcrumbs({ items, label = 'Breadcrumb' }: BreadcrumbsProps) {
     const structuredData = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -36,7 +37,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
                 }}
             />
             <nav
-                aria-label="Breadcrumb"
+                aria-label={label}
                 className="mb-6 w-full text-xs font-medium text-muted"
             >
                 <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 sm:gap-2">

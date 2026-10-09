@@ -1,0 +1,11 @@
+{
+  "updatedAt": "2026-10-09",
+  "patterns": [
+    { "id": "original-soccer-ball", "name": "Fußball" },
+    { "id": "original-friendly-ghost", "name": "Geist" },
+    { "id": "original-halloween-bat", "name": "Fledermaus" },
+    { "id": "original-christmas-tree", "name": "Weihnachtsbaum" },
+    { "id": "original-snowman", "name": "Schneemann" },
+    { "id": "original-gingerbread-man", "name": "Lebkuchenmann" }
+  ]
+}

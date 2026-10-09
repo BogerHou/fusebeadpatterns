@@ -1,4 +1,6 @@
 /** Small, local-only asset allowlist for the editor. Does not import catalog data. */
+import type { SiteLocale } from '../i18n/locales';
+import { getLocalizedSubjectName } from './localized-content';
 import { hamaPatterns } from './hama';
 
 export type LibraryProject = { id: string; title: string; projectUrl: string };
@@ -536,9 +538,12 @@ const libraryProjects: LibraryProject[] = [
     }
 ];
 
-export function getLibraryProject(id: string): LibraryProject | undefined {
+export function getLibraryProject(id: string, locale: SiteLocale = 'en'): LibraryProject | undefined {
     const original = libraryProjects.find((project) => project.id === id);
-    if (original) return original;
+    if (original) return locale === 'en' ? original : { ...original, title: getLocalizedSubjectName(original, locale) };
     const hama = hamaPatterns.find((pattern) => pattern.projectId === id);
-    return hama ? { id: hama.projectId, title: hama.name + ' — Hama Midi', projectUrl: hama.project } : undefined;
+    if (!hama) return undefined;
+    const base = libraryProjects.find(project => project.id === hama.id);
+    const name = locale !== 'en' && base ? getLocalizedSubjectName(base, locale) : hama.name;
+    return { id: hama.projectId, title: name + ' — Hama Midi', projectUrl: hama.project };
 }

@@ -1,15 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Pattern } from '@/lib/patterns/catalog';
+import { getPatternSearchAliases } from '@/lib/patterns/localized-content';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 
 export type PatternCardData = Pick<Pattern,
     'id' | 'slug' | 'title' | 'collectionId' | 'description'
-> & { preview: string };
+> & { preview: string; href?: string; alt?: string; searchAliases?: string };
 
 export function toPatternCard(pattern: Pattern): PatternCardData {
     const { id, slug, collectionId, description } = pattern;
-    return { id, slug, title: getPatternDisplayName(pattern), collectionId, description, preview: pattern.assets.preview };
+    return { id, slug, title: getPatternDisplayName(pattern), collectionId, description, preview: pattern.assets.preview, searchAliases: getPatternSearchAliases(pattern) };
 }
 
 export function PatternGrid({ patterns, headingLevel = 2 }: { patterns: PatternCardData[]; headingLevel?: 2 | 3 }) {
@@ -18,11 +19,11 @@ export function PatternGrid({ patterns, headingLevel = 2 }: { patterns: PatternC
         <div className="pattern-grid">
             {patterns.map((pattern) => (
                 <article key={pattern.id} className="pattern-card" data-pattern-card={pattern.id}>
-                    <Link href={`/patterns/${pattern.slug}`} prefetch={false} className="pattern-card-link">
+                    <Link href={pattern.href ?? `/patterns/${pattern.slug}`} prefetch={false} className="pattern-card-link">
                         <div className="pattern-art">
                         <Image
                             src={pattern.preview}
-                            alt={`${pattern.title} Perler bead pattern`}
+                            alt={pattern.alt ?? `${pattern.title} Perler bead pattern`}
                             width={580}
                             height={580}
                             unoptimized

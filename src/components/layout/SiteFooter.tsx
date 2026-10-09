@@ -1,5 +1,8 @@
 import Link from 'next/link';
+import { getGuideSummaries } from '@/lib/guides/localized';
 import { guidePages } from '@/app/(english)/guides/guide-data';
+import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
+import { localeRoutes } from '@/lib/i18n/routes';
 
 type SiteFooterSection =
     | 'generator'
@@ -15,6 +18,7 @@ type SiteFooterSection =
 type SiteFooterProps = {
     active?: SiteFooterSection;
     description?: string;
+    locale?: SiteLocale;
 };
 
 type FooterLink = {
@@ -72,17 +76,49 @@ const COPYRIGHT_YEAR = 2026;
 
 export default function SiteFooter({
     active,
-    description = 'Turn photos into printable perler bead patterns, then adjust the size, clean up beads, and export the result from your browser.',
+    description,
+    locale = 'en',
 }: SiteFooterProps) {
+    const copy = siteNavigation[locale];
+    const routes = localeRoutes[locale];
+    const englishLabel = (label: string) => `${label} (${copy.english})`;
+    const groups: Array<{ title: string; links: FooterLink[] }> = locale === 'en' ? footerGroups : [
+        {
+            title: copy.make,
+            links: [
+                { id: 'generator', label: copy.generator, href: routes.home },
+                { id: 'patterns', label: copy.browse, href: routes.patterns },
+                { id: 'editor', label: copy.advancedEditor, href: routes.editor, prefetch: false },
+                { id: 'pixel-grid', label: routes.pixelGrid ? copy.pixelGrid : englishLabel(copy.pixelGrid), href: routes.pixelGrid ?? '/pixel-art-grid', lang: routes.pixelGrid ? locale : 'en', nativeNavigation: true },
+                { id: 'bead-loom', label: copy.beadLoom, href: routes.beadLoom, lang: locale, nativeNavigation: true },
+            ] as FooterLink[],
+        },
+        {
+            title: copy.learn,
+            links: [
+                { id: 'guides', label: copy.allGuides, href: routes.guides, lang: locale },
+                ...getGuideSummaries(locale).map(guide => ({ id: `guide-${guide.slug}`, label: guide.language === locale ? guide.title : englishLabel(guide.title), href: guide.href, lang: guide.language })),
+            ],
+        },
+        {
+            title: copy.site,
+            links: [
+                { id: 'about', label: copy.about, href: routes.about, lang: locale },
+                { id: 'privacy', label: copy.privacy, href: routes.privacy, lang: locale },
+                { id: 'terms', label: copy.terms, href: routes.terms, lang: locale },
+                { label: copy.contact, href: 'mailto:contact@fusebeadpatterns.art' },
+            ],
+        },
+    ];
     return (
         <footer className="site-footer mt-auto">
             <div className="site-footer-inner">
                 <div>
                     <h2>Fuse Bead Patterns.</h2>
-                    <p>{description}</p>
+                    <p>{description ?? copy.description}</p>
                 </div>
                 <div className="footer-nav">
-                    {footerGroups.map((group) => (
+                    {groups.map((group) => (
                         <nav key={group.title} aria-label={group.title}>
                             <h3>{group.title}</h3>
                             <ul>
@@ -91,9 +127,9 @@ export default function SiteFooter({
                                         {link.nativeNavigation ? (
                                             // A separate document lets drawing workspaces protect browser Back
                                             // with beforeunload, as well as its in-page link guard.
-                                            <a href={link.href} aria-current={active === link.id ? 'page' : undefined}>{link.label}</a>
+                                            <a href={link.href} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</a>
                                         ) : (
-                                            <Link href={link.href} prefetch={link.prefetch} lang={link.lang} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
+                                            <Link href={link.href} prefetch={link.prefetch} lang={locale === 'en' ? link.lang : undefined} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
                                         )}
                                     </li>
                                 ))}
@@ -103,7 +139,7 @@ export default function SiteFooter({
                 </div>
             </div>
             <div className="footer-note">
-                &copy; {COPYRIGHT_YEAR} Fuse Bead Patterns. All rights reserved. Not affiliated with any bead brand mentioned.
+                &copy; {COPYRIGHT_YEAR} Fuse Bead Patterns. {copy.copyright}
             </div>
         </footer>
     );

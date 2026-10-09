@@ -1,22 +1,25 @@
 import { downloadBlob } from './download';
+import { exportMessages, type PrinterOptions } from './messages';
 
 type RasterMimeType = 'image/png' | 'image/jpeg';
 
 export async function downloadRasterSvg(
     svg: SVGElement,
     mimeType: RasterMimeType,
-    filename: string
+    filename: string,
+    { locale = 'en' }: PrinterOptions = {}
 ): Promise<void> {
+    const copy = exportMessages(locale);
     const canvas = document.createElement('canvas');
     canvas.width = Number(svg.getAttribute('width') ?? 0);
     canvas.height = Number(svg.getAttribute('height') ?? 0);
     const context = canvas.getContext('2d');
 
     if (!context) {
-        throw new Error('Canvas 2D context is unavailable.');
+        throw new Error(copy.canvasUnavailable);
     }
     if (canvas.width <= 0 || canvas.height <= 0) {
-        throw new Error('The exported image must have a positive size.');
+        throw new Error(copy.imageDimensions);
     }
 
     const data = new XMLSerializer().serializeToString(svg);
@@ -27,7 +30,7 @@ export async function downloadRasterSvg(
     const blob = await new Promise<Blob>((resolve, reject) => {
         let settled = false;
         const timeout = setTimeout(() => {
-            fail(new Error('Image export timed out. Try a smaller pattern.'));
+            fail(new Error(copy.imageTimedOut));
         }, 60_000);
 
         function cleanup(): boolean {
@@ -53,7 +56,7 @@ export async function downloadRasterSvg(
                 context.drawImage(image, 0, 0);
                 canvas.toBlob((result) => {
                     if (!result) {
-                        fail(new Error('The image could not be encoded. Try a smaller pattern.'));
+                        fail(new Error(copy.imageEncodingFailed));
                     } else if (cleanup()) {
                         resolve(result);
                     }
@@ -63,7 +66,7 @@ export async function downloadRasterSvg(
             }
         };
         image.onerror = () => {
-            fail(new Error('The pattern image could not be loaded for export.'));
+            fail(new Error(copy.imageLoadFailed));
         };
 
         try {

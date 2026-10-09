@@ -1,5 +1,7 @@
+import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
+import SiteHeader from '@/components/layout/SiteHeader';
+import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
 
@@ -10,7 +12,7 @@ const pageUrl = 'https://fusebeadpatterns.art/fr/image-en-pixel-art';
 export const metadata: Metadata = {
     title,
     description,
-    alternates: { canonical: pageUrl },
+    alternates: { canonical: pageUrl, languages: pixelLanguageAlternates },
     openGraph: {
         title,
         description,
@@ -37,22 +39,11 @@ export default function ImageEnPixelArtPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
-            <header className="site-header">
-                <a href="#main-content" className="skip-link">Aller au contenu</a>
-                <div className="site-header-inner">
-                    <div className="site-brand">
-                        <Image src="/logo.png" alt="" width={36} height={36} sizes="36px" preload />
-                        <span className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
-                    </div>
-                    <nav className="site-nav" aria-label="Navigation principale">
-                        <Link href="/pixel-art-grid" hrefLang="en" prefetch={false}>Grille de dessin (en anglais)</Link>
-                    </nav>
-                </div>
-            </header>
+            <SiteHeader locale="fr" />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1">
                 <nav aria-label="Fil d’Ariane" className="mb-6 text-sm text-muted">
                     <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <li><Link href="/" hrefLang="en" prefetch={false} className="text-link">Accueil (en anglais)</Link></li>
+                        <li><Link href="/fr" prefetch={false} className="text-link">Accueil</Link></li>
                         <li aria-hidden="true">/</li>
                         <li aria-current="page">Image en pixel art</li>
                     </ol>
@@ -89,17 +80,11 @@ export default function ImageEnPixelArtPage() {
                     </p>
                     <p className="mt-5">
                         Pour créer un modèle avec des couleurs de perles, ouvrez le{' '}
-                        <Link href="/#generator" hrefLang="en" prefetch={false} className="text-link text-accent">générateur de modèles de perles (en anglais)</Link>.
+                        <Link href="/fr#generator" prefetch={false} className="text-link text-accent">générateur de modèles de perles</Link>.
                     </p>
                 </section>
             </main>
-            <footer className="border-t border-line bg-[#edeee7] px-5 py-6 text-sm text-muted sm:px-10">
-                <nav aria-label="Informations du site" className="mx-auto flex max-w-[1168px] flex-wrap gap-x-6 gap-y-2">
-                    <Link href="/fr/modeles-perles-a-repasser" prefetch={false} className="text-link">Modèles de perles à repasser</Link>
-                    <Link href="/privacy-policy" hrefLang="en" prefetch={false} className="text-link">Confidentialité (en anglais)</Link>
-                    <Link href="/terms-of-service" hrefLang="en" prefetch={false} className="text-link">Conditions d’utilisation (en anglais)</Link>
-                </nav>
-            </footer>
+            <SiteFooter locale="fr" />
         </>
     );
 }

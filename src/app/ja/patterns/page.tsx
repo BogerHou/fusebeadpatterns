@@ -1,3 +1,4 @@
+import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import type { Metadata } from 'next';
 import JapanesePatternLibrary from '@/components/patterns/JapanesePatternLibrary';
 
@@ -8,7 +9,7 @@ const preview = '/patterns/pokemon-pikachu-gen5/preview.png';
 export const metadata: Metadata = {
     title,
     description,
-    alternates: { canonical: '/ja/patterns' },
+    alternates: { canonical: '/ja/patterns', languages: patternLanguageAlternates() },
     openGraph: {
         title, description, locale: 'ja_JP', type: 'website',
         url: 'https://fusebeadpatterns.art/ja/patterns',

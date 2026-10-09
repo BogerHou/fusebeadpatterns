@@ -92,6 +92,7 @@ export function gridsEqual(first: RgbaSource, second: RgbaSource): boolean {
 function cloneGrid(grid: RgbaSource): PixelGrid { return createGrid(grid.width, grid.height, grid.pixels); }
 
 /** Whole-operation history also restores dimensions; undo + redo share one bounded budget. */
+export type GridHistorySnapshot = { undo: PixelGrid[]; redo: PixelGrid[] };
 export class GridHistory {
     private readonly maxSteps: number;
     private readonly undoStates: PixelGrid[];
@@ -105,6 +106,15 @@ export class GridHistory {
     get canUndo() { return this.undoStates.length > 0; }
     get canRedo() { return this.redoStates.length > 0; }
     get retainedSteps() { return this.undoStates.length + this.redoStates.length; }
+    snapshot(): GridHistorySnapshot {
+        return { undo: this.undoStates.map(cloneGrid), redo: this.redoStates.map(cloneGrid) };
+    }
+    restore(snapshot: GridHistorySnapshot): void {
+        if (snapshot.undo.length + snapshot.redo.length > this.maxSteps) throw new PixelGridError('INVALID_HISTORY_LIMIT');
+        const undo = snapshot.undo.map(cloneGrid), redo = snapshot.redo.map(cloneGrid);
+        this.undoStates.splice(0, this.undoStates.length, ...undo);
+        this.redoStates.splice(0, this.redoStates.length, ...redo);
+    }
     push(before: RgbaSource, after: RgbaSource): boolean {
         if (gridsEqual(before, after)) return false;
         this.undoStates.push(cloneGrid(before));

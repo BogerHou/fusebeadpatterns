@@ -2,12 +2,14 @@ import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
+import { sitePageLanguageAlternates } from '@/lib/site-pages/routes';
 
 export const metadata = {
     title: 'About Fuse Bead Patterns',
     description: 'Learn about Fuse Bead Patterns, a free browser-based Perler bead pattern generator for turning photos into printable fuse bead patterns.',
     alternates: {
         canonical: '/about',
+        languages: sitePageLanguageAlternates('about'),
     },
 };
 

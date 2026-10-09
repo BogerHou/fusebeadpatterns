@@ -1,12 +1,14 @@
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
+import { sitePageLanguageAlternates } from '@/lib/site-pages/routes';
 
 export const metadata = {
     title: 'Privacy Policy | Fuse Bead Patterns',
     description: 'Privacy Policy for Fuse Bead Patterns. Learn how we protect your data while image processing runs locally in your browser.',
     alternates: {
         canonical: '/privacy-policy',
+        languages: sitePageLanguageAlternates('privacy-policy'),
     },
 };
 

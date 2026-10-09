@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { getCounts, getRowInstructions, rowNumberAt, validateChart, type LoomChart } from './core';
 import { loomSymbolInk } from './contrast';
+import { LOOM_EXPORT_MESSAGES, type LoomExportLocale } from './export-messages';
 
 export type LoomPaper = 'a4' | 'letter';
 
@@ -11,10 +12,6 @@ const PAPER = {
 const MARGIN = 36;
 const INK = '#202d2a';
 const RULE = '#8c9892';
-const NOTICE = [
-    'Screen and printed colors are approximate. Custom palettes are not official color matches.',
-    'Chart for reading, not actual size. Cell proportions are a visual guide, not physical weave dimensions.',
-] as const;
 
 export interface LoomPdfTile {
     x0: number;
@@ -47,16 +44,21 @@ export interface LoomInstructionItem {
     y: number;
     height: number;
     direction: 'left-to-right' | 'right-to-left';
+    headingLines: string[];
     lines: string[];
 }
 
 export interface LoomPdfPlan {
     paper: LoomPaper;
+    locale: LoomExportLocale;
     width: number;
     height: number;
     titleLines: string[];
     contentTop: number;
     contentBottom: number;
+    keyNoticeLines: string[];
+    tileNoticeLines: string[];
+    instructionNoticeLines: string[];
     tiles: LoomPdfTile[];
     legendPages: LoomLegendItem[][];
     instructionPages: LoomInstructionItem[][];
@@ -102,15 +104,26 @@ function wrapRuns(runs: { symbol: string; count: number }[], width: number): str
 }
 
 /** Layout only: safe to test in Node without creating a PDF or using a canvas. */
-export function planLoomPdf(chart: LoomChart, paper: LoomPaper): LoomPdfPlan {
+export function planLoomPdf(chart: LoomChart, paper: LoomPaper, locale: LoomExportLocale = 'en'): LoomPdfPlan {
     validateChart(chart);
     if (!Object.hasOwn(PAPER, paper)) throw new Error('Choose A4 or US Letter paper.');
     const { width, height } = PAPER[paper];
-    const titleLines = wrapLoomLabel(chart.title || 'Untitled bead loom chart', width - MARGIN * 2, 15);
-    const contentTop = 84 + titleLines.length * 19;
+    const messages = LOOM_EXPORT_MESSAGES[locale];
+    const contentWidth = width - MARGIN * 2;
+    const titleLines = wrapLoomLabel(chart.title || messages.untitled, contentWidth, 15);
+    // Reserve the longest section heading before planning any chart cells. English
+    // retains its original geometry; longer translated headings get extra space.
+    const sectionLines = locale === 'en' ? 1 : Math.max(...[
+        messages.overview, messages.keyHeading(999, 999), messages.instructionsHeading(999, 999),
+        messages.tileHeading(999, 999, 100, 100, 400, 400),
+    ].map(text => wrapLoomLabel(text, contentWidth, 11).length));
+    const contentTop = 84 + titleLines.length * 19 + (sectionLines - 1) * 15;
     const contentBottom = height - 61;
+    const keyNoticeLines = locale === 'en' ? [messages.keyNotice] : wrapLoomLabel(messages.keyNotice, contentWidth, 9);
+    const tileNoticeLines = locale === 'en' ? [messages.tileNotice] : wrapLoomLabel(messages.tileNotice, contentWidth, 8);
+    const instructionNoticeLines = locale === 'en' ? [messages.instructionsNotice] : wrapLoomLabel(messages.instructionsNotice, contentWidth, 9);
     const gridLeft = MARGIN + 43;
-    const gridTop = contentTop + 40;
+    const gridTop = contentTop + 40 + (tileNoticeLines.length - 1) * 12;
     // The narrowest side stays at 12 pt, so letters never shrink below 9 pt.
     const cellWidth = 12 * Math.max(1, chart.cellAspect);
     const cellHeight = 12 * Math.max(1, 1 / chart.cellAspect);
@@ -129,17 +142,18 @@ export function planLoomPdf(chart: LoomChart, paper: LoomPaper): LoomPdfPlan {
     }
 
     const legendPages: LoomLegendItem[][] = [[]];
-    let y = contentTop + 31;
+    const legendTop = contentTop + 31 + (keyNoticeLines.length - 1) * 13;
+    let y = legendTop;
     for (const color of getCounts(chart)) {
         const lines = [
-            ...wrapLoomLabel(`Name: ${color.name}`, width - MARGIN * 2 - 56, 10),
-            ...wrapLoomLabel(`Code: ${color.code}`, width - MARGIN * 2 - 56, 10),
-            `HEX ${color.hex} | ${color.count} beads`,
+            ...wrapLoomLabel(`${messages.name}: ${color.name}`, contentWidth - 56, 10),
+            ...wrapLoomLabel(`${messages.code}: ${color.code}`, contentWidth - 56, 10),
+            messages.count(color.hex, color.count),
         ];
         const itemHeight = lines.length * 14 + 14;
         if (y + itemHeight > contentBottom && legendPages.at(-1)!.length) {
             legendPages.push([]);
-            y = contentTop + 31;
+            y = legendTop;
         }
         legendPages.at(-1)!.push({ colorId: color.id, symbol: color.symbol, hex: color.hex,
             count: color.count, lines, y, height: itemHeight });
@@ -147,18 +161,21 @@ export function planLoomPdf(chart: LoomChart, paper: LoomPaper): LoomPdfPlan {
     }
 
     const instructionPages: LoomInstructionItem[][] = [[]];
-    y = contentTop + 35;
+    const instructionTop = contentTop + 35 + (instructionNoticeLines.length - 1) * 13;
+    y = instructionTop;
     for (const row of getRowInstructions(chart)) {
         const lines = wrapRuns(row.runs, width - MARGIN * 2);
-        const itemHeight = 18 + lines.length * 13 + 13;
+        const heading = messages.rowHeading(row.rowNumber, row.direction, chart.columns);
+        const headingLines = locale === 'en' ? [heading] : wrapLoomLabel(heading, contentWidth, 10);
+        const itemHeight = 18 + (headingLines.length - 1) * 14 + lines.length * 13 + 13;
         if (y + itemHeight > contentBottom && instructionPages.at(-1)!.length) {
             instructionPages.push([]);
-            y = contentTop + 35;
+            y = instructionTop;
         }
-        instructionPages.at(-1)!.push({ rowNumber: row.rowNumber, direction: row.direction, lines, y, height: itemHeight });
+        instructionPages.at(-1)!.push({ rowNumber: row.rowNumber, direction: row.direction, headingLines, lines, y, height: itemHeight });
         y += itemHeight;
     }
-    return { paper, width, height, titleLines, contentTop, contentBottom, tiles, legendPages, instructionPages,
+    return { paper, locale, width, height, titleLines, contentTop, contentBottom, keyNoticeLines, tileNoticeLines, instructionNoticeLines, tiles, legendPages, instructionPages,
         pageCount: 1 + legendPages.length + tiles.length + instructionPages.length };
 }
 
@@ -186,53 +203,73 @@ function canvasContext(canvas: HTMLCanvasElement) {
 }
 
 /** Browser fonts preserve arbitrary Unicode labels without shipping a partial font
- * or silently changing user color codes. Only these labels are rasterized at 3x;
- * all chart cells, letters, numbers, and reading instructions remain vector text.
+ * or silently changing user color codes. Unicode labels are rasterized at 3x;
+ * chart cells, symbols, row/column numbers and color-run instructions stay vector.
  */
-function pdfLabel(doc: jsPDF, lines: string[], x: number, y: number, width: number, size: number, lineHeight: number) {
+function pdfLabel(doc: jsPDF, lines: string[], x: number, y: number, width: number, size: number, lineHeight: number, color = INK) {
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(width * 3);
     canvas.height = Math.ceil(lines.length * lineHeight * 3);
     const ctx = canvasContext(canvas);
     ctx.scale(3, 3);
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, lines.length * lineHeight);
-    ctx.fillStyle = INK; ctx.font = `${size}px Arial, sans-serif`;
+    ctx.fillStyle = color; ctx.font = `${size}px Arial, sans-serif`;
     lines.forEach((line, index) => ctx.fillText(line, 0, size + index * lineHeight));
     doc.addImage(canvas, 'PNG', x, y, width, lines.length * lineHeight, undefined, 'FAST');
     canvas.width = 0; canvas.height = 0;
 }
 
+/** Keep ASCII text searchable/vector; browser fallback fonts render localized
+ * accents and Japanese at their planned, readable size instead of mojibake.
+ */
+function pdfText(doc: jsPDF, lines: string[], x: number, baseline: number, width: number, size: number, lineHeight: number, color = INK) {
+    if (lines.some(line => /[^\x20-\x7e]/.test(line))) {
+        pdfLabel(doc, lines, x, baseline - size, width, size, lineHeight, color);
+    } else {
+        pdfFont(doc, size, color);
+        lines.forEach((line, index) => doc.text(line, x, baseline + index * lineHeight));
+    }
+}
+
 function pdfHeader(doc: jsPDF, plan: LoomPdfPlan, section: string, page: number) {
-    pdfFont(doc, 9, '#596761'); doc.text('FUSE BEAD PATTERNS / BEAD LOOM CHART', MARGIN, 30);
+    const messages = LOOM_EXPORT_MESSAGES[plan.locale];
+    const width = plan.width - MARGIN * 2;
+    pdfText(doc, [messages.brand], MARGIN, 30, width, 9, 12, '#596761');
     pdfLabel(doc, plan.titleLines, MARGIN, 42, plan.width - MARGIN * 2, 15, 19);
-    pdfFont(doc, 11); doc.text(section, MARGIN, plan.contentTop - 8);
+    const sectionLines = plan.locale === 'en' ? [section] : wrapLoomLabel(section, width, 11);
+    pdfText(doc, sectionLines, MARGIN, plan.contentTop - 8 - (sectionLines.length - 1) * 15, width, 11, 15);
     doc.setDrawColor(RULE); doc.setLineWidth(0.5);
     doc.line(MARGIN, plan.contentTop, plan.width - MARGIN, plan.contentTop);
+    const footerSize = plan.locale === 'en' ? 7 : 8;
+    const footerLines = plan.locale === 'en' ? [messages.footer] : wrapLoomLabel(messages.footer, width, footerSize);
+    pdfText(doc, footerLines, MARGIN, plan.height - 36 - (footerLines.length - 1) * 10, width, footerSize, 10, '#596761');
     pdfFont(doc, 7, '#596761');
-    doc.text('Reading chart - not actual size. Custom palette; colors are approximate.', MARGIN, plan.height - 36);
     doc.text('fusebeadpatterns.art', MARGIN, plan.height - 24);
     doc.text(`${page} / ${plan.pageCount}`, plan.width - MARGIN, plan.height - 24, { align: 'right' });
 }
 
 function pdfOverview(doc: jsPDF, chart: LoomChart, plan: LoomPdfPlan) {
-    pdfHeader(doc, plan, 'Overview', 1);
+    const messages = LOOM_EXPORT_MESSAGES[plan.locale];
+    pdfHeader(doc, plan, messages.overview, 1);
     let y = plan.contentTop + 22;
-    pdfFont(doc, 10);
-    doc.text(`${chart.columns} columns x ${chart.rows} rows | ${chart.cells.length} beads | ${chart.palette.length} palette colors`, MARGIN, y);
-    y += 18;
-    doc.text(`Start: ${chart.startCorner} | Rows: ${chart.serpentine ? 'alternating direction' : 'same direction'} | Cell width/height: ${chart.cellAspect}`, MARGIN, y);
-    y += 20;
-    pdfFont(doc, 8);
-    doc.text('Columns always count from the left. Row 1 is at your selected starting edge.', MARGIN, y);
-    y += 14;
-    doc.text('All cells, including the background color, count as beads in this rectangular chart.', MARGIN, y);
-    y += 20;
-    NOTICE.forEach(line => {
-        const wrapped = doc.splitTextToSize(line, plan.width - MARGIN * 2) as string[];
-        doc.text(wrapped, MARGIN, y); y += wrapped.length * 11 + 4;
+    const width = plan.width - MARGIN * 2;
+    const block = (text: string, size: number, lineHeight: number, nextGap: number) => {
+        const lines = plan.locale === 'en' ? [text] : wrapLoomLabel(text, width, size);
+        pdfText(doc, lines, MARGIN, y, width, size, lineHeight);
+        y += (lines.length - 1) * lineHeight + nextGap;
+    };
+    block(messages.overviewSummary(chart), 10, 14, 18);
+    block(messages.overviewSettings(chart), 10, 14, 20);
+    block(messages.columnsNotice, 8, 11, 14);
+    block(messages.backgroundNotice, 8, 11, 20);
+    messages.notices.forEach(line => {
+        pdfFont(doc, 8);
+        const wrapped = plan.locale === 'en' ? doc.splitTextToSize(line, width) as string[] : wrapLoomLabel(line, width, 8);
+        pdfText(doc, wrapped, MARGIN, y, width, 8, 11); y += wrapped.length * 11 + 4;
     });
     y += 15;
-    const maxHeight = plan.contentBottom - y - 27;
+    const captionLines = plan.locale === 'en' ? [messages.previewCaption] : wrapLoomLabel(messages.previewCaption, width, 8);
+    const maxHeight = plan.contentBottom - y - 27 - (captionLines.length - 1) * 11;
     const unit = Math.min((plan.width - MARGIN * 2) / (chart.columns * chart.cellAspect), maxHeight / chart.rows);
     const cellWidth = unit * chart.cellAspect;
     const gridWidth = cellWidth * chart.columns;
@@ -245,10 +282,10 @@ function pdfOverview(doc: jsPDF, chart: LoomChart, plan: LoomPdfPlan) {
         }
     }
     doc.setDrawColor(RULE); doc.rect(left, y, gridWidth, chart.rows * unit);
-    pdfFont(doc, 8); doc.text('Color overview. Use the following chart tiles for symbols and numbered rows.', MARGIN, y + chart.rows * unit + 19);
+    pdfText(doc, captionLines, MARGIN, y + chart.rows * unit + 19, width, 8, 11);
 }
 
-function pdfTile(doc: jsPDF, chart: LoomChart, tile: LoomPdfTile) {
+function pdfTile(doc: jsPDF, chart: LoomChart, tile: LoomPdfTile, locale: LoomExportLocale) {
     const byId = new Map(chart.palette.map(color => [color.id, color]));
     const instructions = new Map(getRowInstructions(chart).map(row => [row.y, row]));
     for (let y = tile.y0; y < tile.y1; y++) {
@@ -265,7 +302,7 @@ function pdfTile(doc: jsPDF, chart: LoomChart, tile: LoomPdfTile) {
     for (let x = 0; x <= tile.x1 - tile.x0; x++) doc.line(tile.left + x * tile.cellWidth, tile.top, tile.left + x * tile.cellWidth, tile.top + tile.height);
     for (let y = 0; y <= tile.y1 - tile.y0; y++) doc.line(tile.left, tile.top + y * tile.cellHeight, tile.left + tile.width, tile.top + y * tile.cellHeight);
     pdfFont(doc, 8);
-    doc.text('Row', MARGIN, tile.top - 9);
+    pdfText(doc, [LOOM_EXPORT_MESSAGES[locale].row], MARGIN, tile.top - 9, tile.left - MARGIN - 7, 8, 11);
     for (let x = tile.x0; x < tile.x1; x++) doc.text(String(x + 1), tile.left + (x - tile.x0 + 0.5) * tile.cellWidth, tile.top - 9, { align: 'center' });
     for (let y = tile.y0; y < tile.y1; y++) {
         const row = instructions.get(y)!;
@@ -274,17 +311,19 @@ function pdfTile(doc: jsPDF, chart: LoomChart, tile: LoomPdfTile) {
     }
 }
 
-export async function exportLoomPdf(input: LoomChart, paper: LoomPaper): Promise<Uint8Array<ArrayBuffer>> {
+export async function exportLoomPdf(input: LoomChart, paper: LoomPaper, locale: LoomExportLocale = 'en'): Promise<Uint8Array<ArrayBuffer>> {
     const chart = snapshot(input);
-    const plan = planLoomPdf(chart, paper);
+    const plan = planLoomPdf(chart, paper, locale);
+    const messages = LOOM_EXPORT_MESSAGES[locale];
+    const width = plan.width - MARGIN * 2;
     await document.fonts.ready;
     const doc = new jsPDF({ unit: 'pt', format: paper, compress: true });
-    doc.setProperties({ title: chart.title || 'Bead loom chart', author: 'Fuse Bead Patterns', subject: 'Bead loom reading chart; not actual size' });
+    doc.setProperties({ title: chart.title || messages.metadataTitle, author: 'Fuse Bead Patterns', subject: messages.metadataSubject });
     pdfOverview(doc, chart, plan);
     let page = 1;
     for (const [index, items] of plan.legendPages.entries()) {
-        doc.addPage(); pdfHeader(doc, plan, `Color key ${index + 1} / ${plan.legendPages.length}`, ++page);
-        pdfFont(doc, 9); doc.text('Symbols stay attached to their colors. Counts include the background color.', MARGIN, plan.contentTop + 19);
+        doc.addPage(); pdfHeader(doc, plan, messages.keyHeading(index + 1, plan.legendPages.length), ++page);
+        pdfText(doc, plan.keyNoticeLines, MARGIN, plan.contentTop + 19, width, 9, 13);
         for (const item of items) {
             setFill(doc, item.hex); doc.setDrawColor(RULE); doc.rect(MARGIN, item.y, 32, 26, 'FD');
             pdfFont(doc, 15, loomSymbolInk(item.hex)); doc.text(item.symbol, MARGIN + 16, item.y + 18, { align: 'center' });
@@ -293,18 +332,17 @@ export async function exportLoomPdf(input: LoomChart, paper: LoomPaper): Promise
     }
     for (const [index, tile] of plan.tiles.entries()) {
         doc.addPage();
-        pdfHeader(doc, plan, `Chart ${index + 1} / ${plan.tiles.length} | Columns ${tile.x0 + 1}-${tile.x1} | Rows ${tile.firstRow}-${tile.lastRow}`, ++page);
-        pdfFont(doc, 8); doc.text('> read left to right    < read right to left    |    Column numbers across the top', MARGIN, plan.contentTop + 13);
-        pdfTile(doc, chart, tile);
+        pdfHeader(doc, plan, messages.tileHeading(index + 1, plan.tiles.length, tile.x0 + 1, tile.x1, tile.firstRow, tile.lastRow), ++page);
+        pdfText(doc, plan.tileNoticeLines, MARGIN, plan.contentTop + 13, width, 8, 12);
+        pdfTile(doc, chart, tile, locale);
     }
     for (const [index, items] of plan.instructionPages.entries()) {
-        doc.addPage(); pdfHeader(doc, plan, `Row instructions ${index + 1} / ${plan.instructionPages.length}`, ++page);
-        pdfFont(doc, 9); doc.text('Read each list in order. Example: 3A  2B = 3 beads of A, then 2 beads of B.', MARGIN, plan.contentTop + 19);
+        doc.addPage(); pdfHeader(doc, plan, messages.instructionsHeading(index + 1, plan.instructionPages.length), ++page);
+        pdfText(doc, plan.instructionNoticeLines, MARGIN, plan.contentTop + 19, width, 9, 13);
         for (const item of items) {
-            pdfFont(doc, 10);
-            doc.text(`Row ${item.rowNumber} | ${item.direction} | columns ${item.direction === 'left-to-right' ? `1 to ${chart.columns}` : `${chart.columns} to 1`}`, MARGIN, item.y + 10);
+            pdfText(doc, item.headingLines, MARGIN, item.y + 10, width, 10, 14);
             pdfFont(doc, 9, INK, 'courier');
-            item.lines.forEach((line, lineIndex) => doc.text(line, MARGIN, item.y + 27 + lineIndex * 13));
+            item.lines.forEach((line, lineIndex) => doc.text(line, MARGIN, item.y + 27 + (item.headingLines.length - 1) * 14 + lineIndex * 13));
         }
     }
     const result = doc.output('arraybuffer');
@@ -312,21 +350,26 @@ export async function exportLoomPdf(input: LoomChart, paper: LoomPaper): Promise
     return new Uint8Array(result);
 }
 
-export async function exportLoomPng(input: LoomChart): Promise<Blob> {
+export async function exportLoomPng(input: LoomChart, locale: LoomExportLocale = 'en'): Promise<Blob> {
     const chart = snapshot(input);
+    const messages = LOOM_EXPORT_MESSAGES[locale];
     await document.fonts.ready;
     const cellWidth = 16 * Math.max(1, chart.cellAspect);
     const cellHeight = 16 * Math.max(1, 1 / chart.cellAspect);
     const left = 73, margin = 28;
     const width = Math.max(780, left + chart.columns * cellWidth + margin);
-    const titleLines = wrapLoomLabel(chart.title || 'Untitled bead loom chart', width - margin * 2, 24);
-    const notices = NOTICE.flatMap(line => wrapLoomLabel(line, width - margin * 2, 13));
-    const gridTop = 118 + titleLines.length * 29 + notices.length * 17;
-    const legendTop = gridTop + chart.rows * cellHeight + 62;
+    const contentWidth = width - margin * 2;
+    const titleLines = wrapLoomLabel(chart.title || messages.untitled, contentWidth, 24);
+    const summaryLines = locale === 'en' ? [messages.pngSummary(chart)] : wrapLoomLabel(messages.pngSummary(chart), contentWidth, 14);
+    const directionLines = locale === 'en' ? [messages.pngDirections(chart)] : wrapLoomLabel(messages.pngDirections(chart), contentWidth, 13);
+    const notices = messages.notices.flatMap(line => wrapLoomLabel(line, contentWidth, 13));
+    const keyLines = locale === 'en' ? [messages.pngKey] : wrapLoomLabel(messages.pngKey, contentWidth, 18);
+    const gridTop = 118 + titleLines.length * 29 + notices.length * 17 + (summaryLines.length - 1) * 21 + (directionLines.length - 1) * 17;
+    const legendTop = gridTop + chart.rows * cellHeight + 62 + (keyLines.length - 1) * 22;
     const legend = getCounts(chart).map(color => ({ ...color, lines: [
-        ...wrapLoomLabel(`Name: ${color.name}`, width - margin * 2 - 56, 14),
-        ...wrapLoomLabel(`Code: ${color.code}`, width - margin * 2 - 56, 14),
-        `HEX ${color.hex} | ${color.count} beads`,
+        ...wrapLoomLabel(`${messages.name}: ${color.name}`, contentWidth - 56, 14),
+        ...wrapLoomLabel(`${messages.code}: ${color.code}`, contentWidth - 56, 14),
+        messages.count(color.hex, color.count),
     ] }));
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -334,13 +377,15 @@ export async function exportLoomPng(input: LoomChart): Promise<Blob> {
     const ctx = canvasContext(canvas);
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = INK; ctx.font = '12px Arial, sans-serif';
-    ctx.fillText('FUSE BEAD PATTERNS / BEAD LOOM CHART', margin, 25);
+    ctx.fillText(messages.brand, margin, 25);
     ctx.font = '24px Arial, sans-serif'; titleLines.forEach((line, index) => ctx.fillText(line, margin, 60 + index * 29));
     let textY = 68 + titleLines.length * 29;
     ctx.font = '14px Arial, sans-serif';
-    ctx.fillText(`${chart.columns} columns x ${chart.rows} rows | ${chart.cells.length} beads | Start: ${chart.startCorner}`, margin, textY);
-    ctx.font = '13px Arial, sans-serif'; textY += 21;
-    ctx.fillText(`${chart.serpentine ? 'Alternating row directions' : 'Same direction each row'} | > left to right; < right to left. All cells count as beads.`, margin, textY);
+    summaryLines.forEach((line, index) => ctx.fillText(line, margin, textY + index * 21));
+    textY += summaryLines.length * 21;
+    ctx.font = '13px Arial, sans-serif';
+    directionLines.forEach((line, index) => ctx.fillText(line, margin, textY + index * 17));
+    textY += (directionLines.length - 1) * 17;
     for (const line of notices) { textY += 17; ctx.fillText(line, margin, textY); }
     const byId = new Map(chart.palette.map(color => [color.id, color]));
     const instructions = new Map(getRowInstructions(chart).map(row => [row.y, row]));
@@ -357,6 +402,7 @@ export async function exportLoomPng(input: LoomChart): Promise<Blob> {
     for (let x = 0; x <= chart.columns; x++) { ctx.moveTo(left + x * cellWidth, gridTop); ctx.lineTo(left + x * cellWidth, gridTop + chart.rows * cellHeight); }
     for (let y = 0; y <= chart.rows; y++) { ctx.moveTo(left, gridTop + y * cellHeight); ctx.lineTo(left + chart.columns * cellWidth, gridTop + y * cellHeight); }
     ctx.stroke(); ctx.fillStyle = INK; ctx.font = '10px Arial, sans-serif';
+    if (locale !== 'en') { ctx.textAlign = 'left'; ctx.fillText(messages.row, margin, gridTop - 10); ctx.textAlign = 'center'; }
     for (let x = 0; x < chart.columns; x++) ctx.fillText(String(x + 1), left + (x + 0.5) * cellWidth, gridTop - 10);
     ctx.textAlign = 'right';
     for (let y = 0; y < chart.rows; y++) {
@@ -364,7 +410,7 @@ export async function exportLoomPng(input: LoomChart): Promise<Blob> {
         ctx.fillText(`${row.rowNumber} ${row.direction === 'left-to-right' ? '>' : '<'}`, left - 9, gridTop + (y + 0.5) * cellHeight + 3.5);
     }
     ctx.textAlign = 'left'; ctx.font = '18px Arial, sans-serif';
-    ctx.fillText('Color key - counts include the background color', margin, legendTop - 23);
+    keyLines.forEach((line, index) => ctx.fillText(line, margin, legendTop - 23 - (keyLines.length - 1 - index) * 22));
     let y = legendTop;
     for (const color of legend) {
         ctx.fillStyle = color.hex; ctx.fillRect(margin, y, 32, 28);
