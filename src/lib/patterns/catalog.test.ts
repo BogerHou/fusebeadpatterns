@@ -20,7 +20,7 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(106);
+        expect(patterns).toHaveLength(107);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -68,6 +68,7 @@ describe('pattern library content integrity', () => {
                     'original-halloween-bat': 'Original Halloween bat design v1',
                     'original-snowman': 'Original snowman design v1',
                     'original-gingerbread-man': 'Original gingerbread man design v1',
+                    'original-santa-hat': 'Original Santa hat design v1',
                 };
                 expect(originalVersions[pattern.id]).toBeDefined();
                 expect(pattern.version).toBe(originalVersions[pattern.id]);

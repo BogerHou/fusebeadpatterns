@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getPatternById } from '@/lib/patterns/catalog';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from '@/lib/patterns/localized-download';
 import selection from '@/lib/patterns/french-christmas.json';
 
 const path = '/fr/modeles-perles-a-repasser-noel';
@@ -45,6 +46,11 @@ const structuredData = {
 };
 
 export default function FrenchChristmasPatternsPage() {
+    const santaHat = getPatternById('original-santa-hat');
+    if (!santaHat) throw new Error('Additional French Christmas pattern is missing: original-santa-hat');
+    const santaHatPdf = getLocalizedPatternPdf(santaHat, 'fr');
+    const santaHatLetterPdf = getLocalizedPatternLetterPdf(santaHat, 'fr');
+    const santaHatTracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': santaHat.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'patterns', 'data-pattern-format': 'pdf' };
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
@@ -97,6 +103,30 @@ export default function FrenchChristmasPatternsPage() {
                             </article>
                         ))}
                     </div>
+                </section>
+                <section id="autre-modele" aria-labelledby="additional-model-heading" className="mt-12 border-t border-line pt-8">
+                    <h2 id="additional-model-heading" className="section-heading mb-6">Un autre modèle de Noël</h2>
+                    <article id={santaHat.id} className="max-w-3xl scroll-mt-6" data-pattern-card={santaHat.id} aria-labelledby="santa-hat-title">
+                        <div className="grid items-start gap-6 sm:grid-cols-2">
+                            <Link href={`/fr/patterns/${santaHat.slug}`} className="pattern-art block" aria-label="Bonnet de Noël : voir la grille et les détails">
+                                <Image src={santaHat.assets.preview} alt="Bonnet de Noël en perles à repasser" width={580} height={580} unoptimized />
+                            </Link>
+                            <div>
+                                <h3 id="santa-hat-title" className="text-xl font-semibold">Bonnet de Noël</h3>
+                                <p className="mt-3 text-sm leading-7 text-muted">Un bonnet rouge bordé de blanc, avec un pompon. Ce nouveau motif original utilise {santaHat.beads} perles et {santaHat.colorCount} couleurs Perler Midi sur une plaque de {santaHat.gridWidth} × {santaHat.gridHeight} cases.</p>
+                                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                                    <a href={santaHatPdf.href} hrefLang="fr" download {...santaHatTracking} className="text-link">PDF A4 (français) ↓</a>
+                                    {santaHatLetterPdf && <a href={santaHatLetterPdf.href} hrefLang="fr" download {...santaHatTracking} className="text-link">PDF US Letter (français) ↓</a>}
+                                    <a href={santaHat.assets.grid} download {...santaHatTracking} data-pattern-format="grid_png" className="text-link">Grille PNG ↓</a>
+                                </div>
+                                <p className="mt-3 text-sm leading-7 text-muted">Choisissez le PDF adapté à votre papier. Imprimez à 100 % / taille réelle et vérifiez le repère de 50 mm. Ce motif plat n’a pas été assemblé ni testé au fer ou en suspension.</p>
+                                <div className="mt-3 flex flex-wrap gap-x-5">
+                                    <Link href={`/fr/patterns/${santaHat.slug}`} hrefLang="fr" className="text-link">Détails et couleurs</Link>
+                                    <Link href={`/fr/editor?pattern=${santaHat.id}`} prefetch={false} data-pattern-event="pattern_editor_open" data-pattern-id={santaHat.id} data-pattern-palette="perler" data-pattern-entry="patterns" className="text-link">Modifier</Link>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
                 </section>
                 <section aria-labelledby="making-heading" className="mt-12 max-w-3xl border-t border-line pt-8">
                     <h2 id="making-heading" className="section-heading">{topicMessages.fr.christmas.heading}</h2>

@@ -50,7 +50,16 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 106, fr: 106, ja: 106 });
+        expect(counts).toEqual({ de: 107, fr: 107, ja: 107 });
+    });
+    it('names the Santa Hat consistently across native details and editor imports', () => {
+        const pattern = patterns.find(pattern => pattern.id === 'original-santa-hat')!;
+        expect(pattern).toBeDefined();
+        const names = { de: 'Weihnachtsmütze', fr: 'Bonnet de Noël', ja: 'サンタの帽子' };
+        for (const locale of locales) {
+            expect(getLocalizedPatternName(pattern, locale)).toBe(names[locale]);
+            expect(getLibraryProject(pattern.id, locale)).toMatchObject({ title: names[locale], projectUrl: pattern.assets.project });
+        }
     });
     it('shows localized import names without changing the requested project or brand', () => {
         expect(getLibraryProject('pokemon-gengar-gen5', 'ja')).toMatchObject({ id: 'pokemon-gengar-gen5', title: 'ゲンガー', projectUrl: '/patterns/pokemon-gengar-gen5/pattern.bead-pattern.json' });

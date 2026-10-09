@@ -1,6 +1,6 @@
 import { guideHref } from '../guides/routes';
 import { getCollectionBySlug, getPatternsForCollection, type Pattern } from './catalog';
-import { getPatternTopicBySlug, getPatternsForTopic } from './topics';
+import { getPatternTopicBySlug, getPatternsForTopic, getAdditionalPatternsForTopic } from './topics';
 import { getFewestColorsPattern } from './content';
 import { getLocalizedPatternName, type PatternLocale } from './localized-content';
 import { collectionSubjects, sectionLabels, sectionUi, topicMessages } from './section-messages';
@@ -9,6 +9,7 @@ import { getPatternSectionHref, type PatternSectionSlug } from './section-routes
 export type LocalizedPatternSection = {
     slug: string; href: string; label: string; title: string; description: string; intro: string;
     heading: string; notes: readonly string[]; patterns: Pattern[]; fewest?: Pattern;
+    additionalPatterns?: Pattern[];
     relatedLinks: Array<{ href: string; label: string; language: string }>;
 };
 const guideLabels: Record<PatternLocale, Record<string, string>> = {
@@ -26,6 +27,7 @@ export function getLocalizedPatternSection(slug: string, locale: PatternLocale):
         if (!copy) throw new Error(`Missing ${locale} topic: ${slug}`);
         return {
             slug, href: getPatternSectionHref(slug, locale), ...copy, patterns: getPatternsForTopic(topic),
+            additionalPatterns: getAdditionalPatternsForTopic(topic),
             relatedLinks: topic.relatedLinks.map(link => {
                 const relatedTopic = getPatternTopicBySlug(link.href.replace('/patterns/', ''));
                 if (relatedTopic) return { href: getPatternSectionHref(relatedTopic.slug, locale), label: sectionLabels[locale][relatedTopic.slug as PatternSectionSlug], language: locale };

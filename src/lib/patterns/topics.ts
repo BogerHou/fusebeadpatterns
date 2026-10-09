@@ -7,6 +7,7 @@ export type PatternTopic = {
     description: string;
     intro: string;
     patternIds: readonly string[];
+    additionalPatternIds?: readonly string[];
     selectionHeading: string;
     selectionNotes: readonly string[];
     relatedLinks: ReadonlyArray<{ href: string; label: string }>;
@@ -116,6 +117,7 @@ export const patternTopics: readonly PatternTopic[] = [
             'original-snowman',
             'original-gingerbread-man',
         ],
+        additionalPatternIds: ['original-santa-hat'],
         selectionHeading: 'Making your Christmas pattern',
         selectionNotes: [
             'The downloads use Perler Midi colors and a single 29 × 29 board. The gingerbread man uses three colors; the tree and snowman use four. Check the individual color list before gathering beads.',
@@ -140,6 +142,14 @@ export function getPatternsForTopic(topic: PatternTopic): Pattern[] {
     return topic.patternIds.map((id) => {
         const pattern = getPatternById(id);
         if (!pattern) throw new Error(`Unknown pattern ${id} in topic ${topic.slug}`);
+        return pattern;
+    });
+}
+
+export function getAdditionalPatternsForTopic(topic: PatternTopic): Pattern[] {
+    return (topic.additionalPatternIds ?? []).map((id) => {
+        const pattern = getPatternById(id);
+        if (!pattern) throw new Error(`Unknown additional pattern ${id} in topic ${topic.slug}`);
         return pattern;
     });
 }

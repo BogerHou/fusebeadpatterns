@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseEditorProject } from '../editor/draft';
 import { patternCollections, patterns } from './catalog';
-import { getPatternsForTopic, getPatternTopicBySlug, patternTopics } from './topics';
+import { getPatternsForTopic, getAdditionalPatternsForTopic, getPatternTopicBySlug, patternTopics } from './topics';
 
 describe('curated pattern topics', () => {
     it('adds distinct routes and only links existing, non-duplicated library patterns', () => {
@@ -14,6 +14,9 @@ describe('curated pattern topics', () => {
             expect(topic.patternIds.length).toBeGreaterThan(0);
             expect(new Set(topic.patternIds).size).toBe(topic.patternIds.length);
             expect(getPatternsForTopic(topic).map(({ id }) => id)).toEqual(topic.patternIds);
+            const additional = getAdditionalPatternsForTopic(topic);
+            const allIds = [...topic.patternIds, ...additional.map(pattern => pattern.id)];
+            expect(new Set(allIds).size).toBe(allIds.length);
         }
         expect(getPatternTopicBySlug('missing')).toBeUndefined();
     });
@@ -49,11 +52,12 @@ describe('curated pattern topics', () => {
         }
     });
 
-    it('selects exactly three flat Christmas originals with connected single-board grids', async () => {
+    it('keeps the three published Christmas selections and adds a distinct connected Santa Hat', async () => {
         const topic = getPatternTopicBySlug('christmas')!;
         expect(topic.patternIds).toEqual(['original-christmas-tree', 'original-snowman', 'original-gingerbread-man']);
         expect(topic.title).toBe('Christmas Perler Bead Patterns');
-        for (const pattern of getPatternsForTopic(topic)) {
+        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat']);
+        for (const pattern of [...getPatternsForTopic(topic), ...getAdditionalPatternsForTopic(topic)]) {
             expect(pattern.source).toBeNull();
             expect(pattern.collectionId).toBeNull();
             expect(pattern.version).toMatch(/^Original .+ design v1$/);

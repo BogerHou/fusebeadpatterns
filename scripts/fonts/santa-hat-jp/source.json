@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "weight": 400,
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Santa Hat Japanese",
+  "subsetPurpose": "Original Santa Hat: EN/DE/FR/JA A4 and US Letter labels, symbols and two-axis calibration copy",
+  "subsetSha256": "29b4b857254ae5d5029621d046918508cb3e1dace23ce441e5d81fc401d4290b",
+  "charactersSha256": "ed5898fc9f205266c216880fefba73a0ae164664b1d1cca594f0cc59724e6e5a",
+  "characterCount": 171,
+  "patternCount": 1,
+  "pdfCount": 8,
+  "fonttoolsVersion": "4.60.1"
+}

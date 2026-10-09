@@ -41,6 +41,10 @@ export default function LocalizedPatternSection({ section, locale }: { section: 
             <p className="mt-5 max-w-3xl text-base leading-8 text-muted sm:text-lg">{section.intro}</p>
             <PatternSectionNav locale={locale} current={section.slug} />
             <div className="mt-8"><PatternGrid patterns={section.patterns.map(pattern => toLocalizedPatternCard(pattern, locale))} /></div>
+            {!!section.additionalPatterns?.length && <section className="mt-12 border-t border-line pt-8" aria-labelledby="additional-patterns-heading">
+                <h2 id="additional-patterns-heading" className="section-heading mb-6">{ui.additional}</h2>
+                <PatternGrid patterns={section.additionalPatterns.map(pattern => toLocalizedPatternCard(pattern, locale))} />
+            </section>}
             <section aria-labelledby="choosing-pattern-heading" className="mt-14 max-w-3xl border-t border-line pt-8">
                 <h2 id="choosing-pattern-heading" className="section-heading">{section.heading}</h2>
                 {section.fewest && <p className="mt-4 leading-8 text-muted"><Link href={`/${locale}/patterns/${section.fewest.slug}`} className="text-link">{getLocalizedPatternName(section.fewest, locale)}</Link>{fewestColorsText(section.fewest, locale).slice(getLocalizedPatternName(section.fewest, locale).length)}</p>}

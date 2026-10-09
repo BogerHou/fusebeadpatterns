@@ -2,6 +2,7 @@ export const localizedPatternUi = {
  de: {
   home:'Startseite', library:'Alle Vorlagen', fullTitle:'Alle Bügelperlen-Vorlagen', intro:'Durchsuche die vollständige Sammlung. Jedes Bild führt zum deutschen PDF, zur Farbliste und zum deutschen Editor.',
   design:'Motivgröße', board:'Steckplatte', beads:'Perlen', colors:'Farben', pdf:'PDF herunterladen', englishPdf:'PDF herunterladen (Englisch)', grid:'Raster-PNG herunterladen', edit:'Auf Deutsch bearbeiten und exportieren',
+  a4Pdf:'PDF A4 herunterladen', letterPdf:'PDF US Letter herunterladen', paperHelp:'Wähle A4 oder US Letter passend zu deinem Papier.',
   print:'Drucke das PDF mit 100 % / tatsächlicher Größe. Prüfe die 50-mm-Messlinie, bevor du es unter eine Steckplatte legst. Das Raster-PNG dient zum Abzählen, nicht zum Auflegen in Originalgröße.',
   brand:'Diese Vorlage verwendet Perler Midi. Für Hama oder Artkal öffne den Editor, ändere die Marke und exportiere eine neue Farbliste. Wähle dort den PDF-Maßstab ausdrücklich aus.',
   chart:'Vorlagenraster', chartAlt:'Raster mit Zeilen, Spalten und Farbsymbolen', chartHelp:'Leere Felder bleiben ohne Perle. Eine weiße Perle mit Symbol gehört zum Motiv. Klicke auf das Raster für die volle Größe.',
@@ -12,6 +13,7 @@ export const localizedPatternUi = {
  fr: {
   home:'Accueil', library:'Tous les modèles', fullTitle:'Tous les modèles de perles à repasser', intro:'Parcourez la collection complète. Chaque image mène au PDF en français, à la liste des couleurs et à l’éditeur en français.',
   design:'Taille du motif', board:'Plaque', beads:'Perles', colors:'Couleurs', pdf:'Télécharger le PDF', englishPdf:'Télécharger le PDF (anglais)', grid:'Télécharger la grille PNG', edit:'Modifier et exporter en français',
+  a4Pdf:'Télécharger le PDF A4', letterPdf:'Télécharger le PDF US Letter', paperHelp:'Choisissez A4 ou US Letter selon votre papier.',
   print:'Imprimez le PDF à 100 % / taille réelle. Vérifiez le repère de 50 mm avant de le placer sous une plaque. La grille PNG sert à compter les cases ; ce n’est pas un modèle à taille réelle.',
   brand:'Ce modèle utilise des couleurs Perler Midi. Pour Hama ou Artkal, ouvrez l’éditeur, changez de marque et exportez une nouvelle liste de couleurs. Choisissez explicitement l’échelle du PDF.',
   chart:'Grille du modèle', chartAlt:'Grille avec lignes, colonnes et symboles de couleur', chartHelp:'Les cases vides restent sans perle. Une case blanche avec un symbole fait partie du motif. Cliquez sur la grille pour l’afficher en grand.',
@@ -22,6 +24,7 @@ export const localizedPatternUi = {
  ja: {
   home:'ホーム', library:'すべての図案', fullTitle:'すべてのアイロンビーズ図案', intro:'コレクション全体から図案を探せます。画像を選ぶと、日本語PDF・色番号と数量・日本語エディターを開けます。',
   design:'図柄の大きさ', board:'プレート', beads:'ビーズ数', colors:'色数', pdf:'PDFを保存', englishPdf:'PDFを保存（英語）', grid:'マス目付きPNGを保存', edit:'日本語で編集・書き出し',
+  a4Pdf:'A4 PDFを保存', letterPdf:'US Letter PDFを保存', paperHelp:'用紙に合わせてA4またはUS Letterを選んでください。',
   print:'PDFを100％・実際のサイズで印刷し、プレートに重ねる前に50 mmの目盛りを確認してください。マス目付きPNGは数えて作るための参考図で、原寸印刷用ではありません。',
   brand:'Perler Midiの配色です。Hama・Artkalを使う場合はエディターでブランドを変更し、新しい色表を書き出してください。PDFの印刷サイズも選択します。',
   chart:'図案のマス目', chartAlt:'行・列番号と色の記号を付けた図案', chartHelp:'空白のマスにはビーズを置きません。記号のある白いマスは白ビーズです。図案を押すと大きく表示できます。',
