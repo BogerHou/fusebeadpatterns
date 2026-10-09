@@ -2,6 +2,7 @@ import { LocalizedGuidePage, localizedGuideMetadata } from '@/components/guides/
 import { translatedGuideSlugs } from '@/lib/guides/routes';
 
 type Props = { params: Promise<{ slug: string }> };
+export const dynamicParams = false;
 export function generateStaticParams() { return translatedGuideSlugs.filter(slug => slug !== 'photo-to-perler-bead-pattern').map(slug => ({ slug })); }
 export async function generateMetadata({ params }: Props) { return localizedGuideMetadata('ja', (await params).slug); }
 export default async function Page({ params }: Props) { return <LocalizedGuidePage locale="ja" slug={(await params).slug} />; }

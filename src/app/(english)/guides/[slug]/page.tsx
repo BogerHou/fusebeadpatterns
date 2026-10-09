@@ -14,6 +14,10 @@ type GuideRouteProps = {
     }>;
 };
 
+// Unknown guide slugs use the complete global 404 rather than rendering an
+// unmatched runtime page inside one of the site's independent root layouts.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
     return guidePages.map((guide) => ({
         slug: guide.slug,
