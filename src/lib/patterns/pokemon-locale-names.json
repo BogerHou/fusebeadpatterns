@@ -1,0 +1,278 @@
+{
+  "pokemon-eevee-gen5": {
+    "en": "Eevee",
+    "de": "Evoli",
+    "fr": "Évoli",
+    "ja": "イーブイ"
+  },
+  "pokemon-vaporeon-gen5": {
+    "en": "Vaporeon",
+    "de": "Aquana",
+    "fr": "Aquali",
+    "ja": "シャワーズ"
+  },
+  "pokemon-gengar-gen5": {
+    "en": "Gengar",
+    "de": "Gengar",
+    "fr": "Ectoplasma",
+    "ja": "ゲンガー"
+  },
+  "pokemon-pikachu-gen5": {
+    "en": "Pikachu",
+    "de": "Pikachu",
+    "fr": "Pikachu",
+    "ja": "ピカチュウ"
+  },
+  "pokemon-snorlax-gen5": {
+    "en": "Snorlax",
+    "de": "Relaxo",
+    "fr": "Ronflex",
+    "ja": "カビゴン"
+  },
+  "pokemon-bulbasaur-gen5": {
+    "en": "Bulbasaur",
+    "de": "Bisasam",
+    "fr": "Bulbizarre",
+    "ja": "フシギダネ"
+  },
+  "pokemon-charmander-gen5": {
+    "en": "Charmander",
+    "de": "Glumanda",
+    "fr": "Salamèche",
+    "ja": "ヒトカゲ"
+  },
+  "pokemon-squirtle-gen5": {
+    "en": "Squirtle",
+    "de": "Schiggy",
+    "fr": "Carapuce",
+    "ja": "ゼニガメ"
+  },
+  "pokemon-umbreon-gen5": {
+    "en": "Umbreon",
+    "de": "Nachtara",
+    "fr": "Noctali",
+    "ja": "ブラッキー"
+  },
+  "pokemon-mew-gen5": {
+    "en": "Mew",
+    "de": "Mew",
+    "fr": "Mew",
+    "ja": "ミュウ"
+  },
+  "pokemon-jigglypuff-gen5": {
+    "en": "Jigglypuff",
+    "de": "Pummeluff",
+    "fr": "Rondoudou",
+    "ja": "プリン"
+  },
+  "pokemon-lucario-gen5": {
+    "en": "Lucario",
+    "de": "Lucario",
+    "fr": "Lucario",
+    "ja": "ルカリオ"
+  },
+  "pokemon-gardevoir-gen5": {
+    "en": "Gardevoir",
+    "de": "Guardevoir",
+    "fr": "Gardevoir",
+    "ja": "サーナイト"
+  },
+  "pokemon-dragonite-gen5": {
+    "en": "Dragonite",
+    "de": "Dragoran",
+    "fr": "Dracolosse",
+    "ja": "カイリュー"
+  },
+  "pokemon-gyarados-gen5": {
+    "en": "Gyarados",
+    "de": "Garados",
+    "fr": "Léviator",
+    "ja": "ギャラドス"
+  },
+  "pokemon-psyduck-gen5": {
+    "en": "Psyduck",
+    "de": "Enton",
+    "fr": "Psykokwak",
+    "ja": "コダック"
+  },
+  "pokemon-lapras-gen5": {
+    "en": "Lapras",
+    "de": "Lapras",
+    "fr": "Lokhlass",
+    "ja": "ラプラス"
+  },
+  "pokemon-ditto-gen5": {
+    "en": "Ditto",
+    "de": "Ditto",
+    "fr": "Métamorph",
+    "ja": "メタモン"
+  },
+  "pokemon-espeon-gen5": {
+    "en": "Espeon",
+    "de": "Psiana",
+    "fr": "Mentali",
+    "ja": "エーフィ"
+  },
+  "pokemon-flareon-gen5": {
+    "en": "Flareon",
+    "de": "Flamara",
+    "fr": "Pyroli",
+    "ja": "ブースター"
+  },
+  "pokemon-jolteon-gen5": {
+    "en": "Jolteon",
+    "de": "Blitza",
+    "fr": "Voltali",
+    "ja": "サンダース"
+  },
+  "pokemon-leafeon-gen5": {
+    "en": "Leafeon",
+    "de": "Folipurba",
+    "fr": "Phyllali",
+    "ja": "リーフィア"
+  },
+  "pokemon-glaceon-gen5": {
+    "en": "Glaceon",
+    "de": "Glaziola",
+    "fr": "Givrali",
+    "ja": "グレイシア"
+  },
+  "pokemon-mewtwo-gen5": {
+    "en": "Mewtwo",
+    "de": "Mewtu",
+    "fr": "Mewtwo",
+    "ja": "ミュウツー"
+  },
+  "pokemon-cyndaquil-gen5": {
+    "en": "Cyndaquil",
+    "de": "Feurigel",
+    "fr": "Héricendre",
+    "ja": "ヒノアラシ"
+  },
+  "pokemon-chikorita-gen5": {
+    "en": "Chikorita",
+    "de": "Endivie",
+    "fr": "Germignon",
+    "ja": "チコリータ"
+  },
+  "pokemon-totodile-gen5": {
+    "en": "Totodile",
+    "de": "Karnimani",
+    "fr": "Kaiminus",
+    "ja": "ワニノコ"
+  },
+  "pokemon-treecko-gen5": {
+    "en": "Treecko",
+    "de": "Geckarbor",
+    "fr": "Arcko",
+    "ja": "キモリ"
+  },
+  "pokemon-torchic-gen5": {
+    "en": "Torchic",
+    "de": "Flemmli",
+    "fr": "Poussifeu",
+    "ja": "アチャモ"
+  },
+  "pokemon-mudkip-gen5": {
+    "en": "Mudkip",
+    "de": "Hydropi",
+    "fr": "Gobou",
+    "ja": "ミズゴロウ"
+  },
+  "pokemon-turtwig-gen5": {
+    "en": "Turtwig",
+    "de": "Chelast",
+    "fr": "Tortipouss",
+    "ja": "ナエトル"
+  },
+  "pokemon-chimchar-gen5": {
+    "en": "Chimchar",
+    "de": "Panflam",
+    "fr": "Ouisticram",
+    "ja": "ヒコザル"
+  },
+  "pokemon-piplup-gen5": {
+    "en": "Piplup",
+    "de": "Plinfa",
+    "fr": "Tiplouf",
+    "ja": "ポッチャマ"
+  },
+  "pokemon-snivy-gen5": {
+    "en": "Snivy",
+    "de": "Serpifeu",
+    "fr": "Vipélierre",
+    "ja": "ツタージャ"
+  },
+  "pokemon-tepig-gen5": {
+    "en": "Tepig",
+    "de": "Floink",
+    "fr": "Gruikui",
+    "ja": "ポカブ"
+  },
+  "pokemon-oshawott-gen5": {
+    "en": "Oshawott",
+    "de": "Ottaro",
+    "fr": "Moustillon",
+    "ja": "ミジュマル"
+  },
+  "pokemon-togepi-gen5": {
+    "en": "Togepi",
+    "de": "Togepi",
+    "fr": "Togepi",
+    "ja": "トゲピー"
+  },
+  "pokemon-pichu-gen5": {
+    "en": "Pichu",
+    "de": "Pichu",
+    "fr": "Pichu",
+    "ja": "ピチュー"
+  },
+  "pokemon-wooper-gen5": {
+    "en": "Wooper",
+    "de": "Felino",
+    "fr": "Axoloto",
+    "ja": "ウパー"
+  },
+  "pokemon-slowpoke-gen5": {
+    "en": "Slowpoke",
+    "de": "Flegmon",
+    "fr": "Ramoloss",
+    "ja": "ヤドン"
+  },
+  "pokemon-jirachi-gen5": {
+    "en": "Jirachi",
+    "de": "Jirachi",
+    "fr": "Jirachi",
+    "ja": "ジラーチ"
+  },
+  "pokemon-celebi-gen5": {
+    "en": "Celebi",
+    "de": "Celebi",
+    "fr": "Celebi",
+    "ja": "セレビィ"
+  },
+  "pokemon-victini-gen5": {
+    "en": "Victini",
+    "de": "Victini",
+    "fr": "Victini",
+    "ja": "ビクティニ"
+  },
+  "pokemon-chandelure-gen5": {
+    "en": "Chandelure",
+    "de": "Skelabra",
+    "fr": "Lugulabre",
+    "ja": "シャンデラ"
+  },
+  "pokemon-garchomp-gen5": {
+    "en": "Garchomp",
+    "de": "Knakrack",
+    "fr": "Carchacrok",
+    "ja": "ガブリアス"
+  },
+  "pokemon-zoroark-gen5": {
+    "en": "Zoroark",
+    "de": "Zoroark",
+    "fr": "Zoroark",
+    "ja": "ゾロアーク"
+  }
+}

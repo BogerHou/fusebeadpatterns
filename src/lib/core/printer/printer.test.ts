@@ -6,6 +6,7 @@ import { PdfPrinter } from './pdf/pdf.printer';
 import { PngPrinter } from './png/png.printer';
 import { SvgPrinter } from './svg/svg.printer';
 import { XlsxPrinter } from './xlsx/xlsx.printer';
+import { EXPORT_MESSAGES } from './messages';
 
 const { writeBuffer, outputPdf } = vi.hoisted(() => ({
     writeBuffer: vi.fn<() => Promise<Uint8Array>>(),
@@ -107,6 +108,23 @@ describe.each([
     ['PNG', PngPrinter, 'image/png', 'pattern.png'],
     ['JPEG', JpgPrinter, 'image/jpeg', 'pattern.jpeg'],
 ] as const)('%s printer', (_, Printer, mimeType, filename) => {
+    it.each(['de', 'fr', 'ja'] as const)('uses %s for an image-loading failure and still releases the URL', async (locale) => {
+        const result = new Printer().print(pixels, usage, project, 'pattern', { locale });
+        const rejection = expect(result).rejects.toThrow(EXPORT_MESSAGES[locale].imageLoadFailed);
+        images[0].onerror?.();
+        await rejection;
+        expect(revokeObjectURL).toHaveBeenCalledOnce();
+        expect(anchor.click).not.toHaveBeenCalled();
+    });
+    it.each(['de', 'fr', 'ja'] as const)('forwards %s to SVG while retaining the raster encoding contract', async (locale) => {
+        const result = new Printer().print(pixels, usage, project, 'pattern', { locale });
+        expect(SvgPrinter.prototype.drawSVG).toHaveBeenCalledWith(pixels, usage, project, locale);
+        images[0].onload?.();
+        encoded[0](new Blob(['image'], { type: mimeType }));
+        await result;
+        expect(anchor.download).toBe(filename);
+        expect(toBlob).toHaveBeenCalledWith(expect.any(Function), mimeType);
+    });
     it('waits for image loading and encoding, then downloads and releases both URLs', async () => {
         const completed = vi.fn();
         const result = new Printer().print(pixels, usage, project, 'pattern');

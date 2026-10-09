@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
-import { LIMITS, createChart, validateChart, chartsEqual, getCounts, getRowInstructions, rowNumberAt, paintLine, replaceColor, serializeProject, parseProject, convertImage, type LoomChart } from '@/lib/bead-loom/core';
+import { LIMITS, validateChart, chartsEqual, getCounts, getRowInstructions, rowNumberAt, paintLine, replaceColor, serializeProject, parseProject, convertImage, type LoomChart } from '@/lib/bead-loom/core';
 import { inspectImage, type RgbaSource } from '@/lib/pixel-grid/core';
-import { pixelGridErrorMessage } from '@/lib/pixel-grid/messages';
+import { LOOM_MESSAGES, createLocalizedLoomChart, loomErrorMessage, type LoomLocale } from '@/lib/bead-loom/messages';
+import { LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
+import { LOOM_LOCALE_STORAGE_KEY, consumeLoomLocaleSnapshot, consumeLargeLoomLocaleSnapshot, hasLargeLoomLocaleSnapshot, isLoomLocaleNavigation, saveLoomLocaleSnapshot, saveLargeLoomLocaleSnapshot, type LoomLocaleSnapshot, type LoomZoom } from '@/lib/bead-loom/locale-navigation';
 import { loomSymbolInk } from '@/lib/bead-loom/contrast';
 import { trackBeadLoomExport } from '@/lib/analytics';
 import styles from './LoomWorkspace.module.css';
@@ -42,9 +44,9 @@ function draw(canvas: HTMLCanvasElement, chart: LoomChart, scale: number, cursor
     for (let y = 0; y < chart.rows; y++) if (y % ys === 0 || y === chart.rows - 1) ctx.fillText(String(rowNumberAt(chart, y)), margin - 18, margin + (y + .5) * h);
     if (cursor) { ctx.strokeStyle = '#0a64ca'; ctx.lineWidth = 2; ctx.strokeRect(margin + cursor[0] * w + 1, margin + cursor[1] * h + 1, w - 2, h - 2); }
 }
-function originalExample(): LoomChart {
-    const next = createChart(11, 31);
-    next.title = 'Stepped diamond';
+function originalExample(locale: LoomLocale): LoomChart {
+    const next = createLocalizedLoomChart(locale, 11, 31);
+    next.title = LOOM_MESSAGES[locale].exampleTitle;
     for (let y = 0; y < next.rows; y++) for (let x = 0; x < next.columns; x++) {
         const d = Math.abs(x - 5) + Math.abs(y % 12 - 5);
         next.cells[y * next.columns + x] = next.palette[d < 3 ? 1 : d === 3 ? 2 : d === 5 ? 3 : 0].id;
@@ -53,8 +55,9 @@ function originalExample(): LoomChart {
     return next;
 }
 
-export default function LoomWorkspace() {
-    const [chart, setChart] = useState(() => createChart());
+export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale } = {}) {
+    const text = LOOM_MESSAGES[locale];
+    const [chart, setChart] = useState(() => createLocalizedLoomChart(locale));
     const chartRef = useRef(chart), saved = useRef(chart);
     const history = useRef<{ past: LoomChart[]; future: LoomChart[] }>({ past: [], future: [] });
     const [historyState, setHistoryState] = useState({ undo: false, redo: false });
@@ -63,16 +66,20 @@ export default function LoomWorkspace() {
     const [corner, setCorner] = useState<LoomChart['startCorner']>('bottom-left'), [serpentine, setSerpentine] = useState(true);
     const [selected, setSelected] = useState('color-b'), [tool, setTool] = useState<Tool>('paint');
     const [replaceTarget, setReplaceTarget] = useState('color-a');
-    const [zoom, setZoom] = useState('18'), [focused, setFocused] = useState(false);
+    const [zoom, setZoom] = useState<LoomZoom>('18'), [focused, setFocused] = useState(false);
     const [cursor, setCursor] = useState<Point>([0, 0]), cursorRef = useRef<Point>([0, 0]);
     const [sourceName, setSourceName] = useState(''), source = useRef<RgbaSource | null>(null);
     const [mode, setMode] = useState<'fit' | 'crop' | 'stretch'>('fit');
     const [paper, setPaper] = useState<'a4' | 'letter'>('a4');
     const [busy, setBusy] = useState(false), busyRef = useRef(false);
-    const [status, setStatus] = useState({ text: 'Start with a blank chart, open a project, or try the geometric example.', error: false });
+    const [status, setStatus] = useState({ text: text.ready, error: false });
     const canvas = useRef<HTMLCanvasElement>(null), viewport = useRef<HTMLDivElement>(null);
     const imageInput = useRef<HTMLInputElement>(null), projectInput = useRef<HTMLInputElement>(null);
     const stroke = useRef<Stroke | null>(null), mounted = useRef(false), allowLeave = useRef(false);
+    const localeReady = useRef(false), localeRestore = useRef<LoomLocaleSnapshot | null | undefined>(undefined);
+    const largeLocaleRestore = useRef<Promise<LoomLocaleSnapshot | null> | null>(null);
+    const [busyMessage, setBusyMessage] = useState(text.preparing);
+    const [restoreFailed, setRestoreFailed] = useState(false);
     const downloadUrls = useRef(new Map<string, number>());
     const [viewportWidth, setViewportWidth] = useState(600);
     const scale = zoom === 'fit' ? Math.max(3, Math.min(28, (viewportWidth - margin * 2 - 30) / chart.columns / chart.cellAspect)) : Number(zoom);
@@ -109,20 +116,23 @@ export default function LoomWorkspace() {
         finishStroke(); const checked = validateChart(next); remember(chartRef.current, checked); publish(checked, resetSettings); setStatus({ text: message, error: false });
     }, [finishStroke, remember, publish]);
     const action = useCallback((fn: () => void) => {
-        if (busyRef.current) return;
+        if (busyRef.current || !localeReady.current) return;
         finishStroke();
-        try { fn(); } catch (e) { setStatus({ text: e instanceof Error ? e.message : 'The action could not be completed.', error: true }); }
-    }, [finishStroke]);
+        try { fn(); } catch (e) { setStatus({ text: loomErrorMessage(e, locale, true), error: true }); }
+    }, [finishStroke, locale]);
     const undo = useCallback((redo = false) => action(() => {
         const from = redo ? history.current.future : history.current.past, to = redo ? history.current.past : history.current.future;
         const previous = from.pop();
-        if (previous) { to.push(chartRef.current); publish(previous, true); setStatus({ text: redo ? 'Change restored.' : 'Change undone.', error: false }); }
-    }), [action, publish]);
+        if (previous) { to.push(chartRef.current); publish(previous, true); setStatus({ text: redo ? text.redone : text.undone, error: false }); }
+    }), [action, publish, text.redone, text.undone]);
 
     useEffect(() => {
         const node = canvas.current;
-        if (node) draw(node, chart, scale, focused && tool !== 'pan' ? cursor : undefined);
-    }, [chart, scale, cursor, focused, tool]);
+        if (node) {
+            try { draw(node, chart, scale, focused && tool !== 'pan' ? cursor : undefined); }
+            catch (error) { setStatus({ text: loomErrorMessage(error, locale), error: true }); }
+        }
+    }, [chart, scale, cursor, focused, tool, locale]);
     useEffect(() => {
         const node = viewport.current;
         if (!node) return;
@@ -131,15 +141,17 @@ export default function LoomWorkspace() {
     useEffect(() => {
         mounted.current = true;
         const urls = downloadUrls.current;
-        const unload = (e: BeforeUnloadEvent) => { if (dirtyRef.current && !allowLeave.current) { e.preventDefault(); e.returnValue = ''; } };
+        const unload = (e: BeforeUnloadEvent) => { if ((dirtyRef.current || busyRef.current || !localeReady.current) && !allowLeave.current) { e.preventDefault(); e.returnValue = ''; } };
         const navigate = (e: MouseEvent) => {
-            if (!dirtyRef.current || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            if ((!dirtyRef.current && !busyRef.current && localeReady.current) || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target instanceof Element ? e.target.closest('a[href]') : null;
             if (!(a instanceof HTMLAnchorElement) || a.hasAttribute('download') || a.target === '_blank') return;
             const url = new URL(a.href, location.href);
+            if (a.hasAttribute('data-locale-navigation') && isLoomLocaleNavigation(location.href, url.href)) return;
             if (!['http:', 'https:'].includes(url.protocol) || (url.origin === location.origin && url.pathname === location.pathname && url.search === location.search)) return;
             e.preventDefault(); e.stopImmediatePropagation();
-            if (window.confirm('Leave without saving your bead loom project?')) { allowLeave.current = true; window.location.assign(url.href); }
+            if (busyRef.current) { setStatus({ text: text.languageBusy, error: true }); return; }
+            if (window.confirm(text.leave)) { allowLeave.current = true; window.location.assign(url.href); }
         };
         const keyboard = (e: globalThis.KeyboardEvent) => {
             if (!(e.ctrlKey || e.metaKey) || e.altKey || (e.target instanceof Element && e.target.closest('input,select,textarea,[contenteditable]'))) return;
@@ -155,7 +167,89 @@ export default function LoomWorkspace() {
             document.removeEventListener('click', navigate, true); document.removeEventListener('keydown', keyboard);
             for (const [url, timer] of urls) { window.clearTimeout(timer); URL.revokeObjectURL(url); } urls.clear();
         };
-    }, [finishStroke, undo]);
+    }, [finishStroke, undo, text]);
+
+    const applyLocaleSnapshot = useCallback((snapshot: LoomLocaleSnapshot | null) => {
+        if (snapshot) {
+            chartRef.current = snapshot.chart; saved.current = snapshot.saved; history.current = snapshot.history;
+            source.current = snapshot.source; cursorRef.current = snapshot.cursor;
+            setChart(snapshot.chart); setColumns(snapshot.columns); setRows(snapshot.rows); setAspect(snapshot.aspect);
+            setCorner(snapshot.corner); setSerpentine(snapshot.serpentine); setSelected(snapshot.selected);
+            setReplaceTarget(snapshot.replaceTarget); setTool(snapshot.tool); setZoom(snapshot.zoom);
+            setCursor(snapshot.cursor); setSourceName(snapshot.sourceName); setMode(snapshot.mode); setPaper(snapshot.paper);
+            sync(); setStatus({ text: text.languageRestored, error: false });
+        }
+        localeReady.current = true;
+    }, [sync, text.languageRestored]);
+    const protectLocaleRecovery = useCallback(() => {
+        largeLocaleRestore.current = null;
+        busyRef.current = false; setBusy(false); localeReady.current = false;
+        setRestoreFailed(true); setStatus({ text: text.languageRestoreFailed, error: true });
+    }, [text.languageRestoreFailed]);
+    useEffect(() => {
+        try {
+            if (largeLocaleRestore.current || hasLargeLoomLocaleSnapshot(window.sessionStorage)) {
+                busyRef.current = true; setBusyMessage(text.languageSaving); setBusy(true);
+                largeLocaleRestore.current ??= consumeLargeLoomLocaleSnapshot(window.location.href, window.sessionStorage);
+                void largeLocaleRestore.current.then(snapshot => {
+                    if (!mounted.current) return;
+                    localeRestore.current = snapshot;
+                    busyRef.current = false; setBusy(false);
+                    if (snapshot) { applyLocaleSnapshot(snapshot); setRestoreFailed(false); }
+                    else {
+                        try {
+                            // Only a readable, absent pointer proves there is no
+                            // saved transfer left. Temporary storage failures stay protected.
+                            if (window.sessionStorage.getItem(LOOM_LOCALE_STORAGE_KEY)) {
+                                protectLocaleRecovery();
+                            } else {
+                                applyLocaleSnapshot(null); setStatus({ text: text.languageRestoreUnavailable, error: true });
+                            }
+                        } catch { protectLocaleRecovery(); }
+                    }
+                }, () => {
+                    if (!mounted.current) return;
+                    protectLocaleRecovery();
+                });
+                return;
+            }
+            if (localeRestore.current === undefined) localeRestore.current = consumeLoomLocaleSnapshot(window.location.href, window.sessionStorage);
+        } catch {
+            protectLocaleRecovery();
+            return;
+        }
+        applyLocaleSnapshot(localeRestore.current ?? null);
+    }, [applyLocaleSnapshot, protectLocaleRecovery, text.languageRestoreUnavailable, text.languageSaving]);
+    const handleLocaleNavigation = useEffectEvent((event: Event) => {
+        const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
+        if (!detail?.href || !isLoomLocaleNavigation(window.location.href, detail.href)) return;
+        if (!localeReady.current || busyRef.current) {
+            event.preventDefault(); setStatus({ text: busyRef.current ? text.languageBusy : text.languageRestoreFailed, error: true }); return;
+        }
+        try {
+            finishStroke();
+            const snapshot: LoomLocaleSnapshot = {
+                chart: chartRef.current, saved: saved.current, history: history.current,
+                columns, rows, aspect, corner, serpentine, selected, replaceTarget, tool, zoom,
+                cursor: cursorRef.current, source: source.current, sourceName, mode, paper,
+            };
+            if (saveLoomLocaleSnapshot(snapshot, detail.href, window.sessionStorage)) { allowLeave.current = true; return; }
+            event.preventDefault();
+            void task(async () => {
+                const stored = await saveLargeLoomLocaleSnapshot(snapshot, detail.href, window.sessionStorage);
+                if (!mounted.current) return;
+                if (!stored) { setStatus({ text: text.languageFailed, error: true }); return; }
+                allowLeave.current = true; window.location.assign(detail.href);
+            }, text.languageSaving);
+            return;
+        } catch { /* Storage can be blocked before its methods are available. */ }
+        event.preventDefault(); setStatus({ text: text.languageFailed, error: true });
+    });
+    useEffect(() => {
+        const navigate = (event: Event) => handleLocaleNavigation(event);
+        window.addEventListener(LOCALE_NAVIGATION_EVENT, navigate);
+        return () => window.removeEventListener(LOCALE_NAVIGATION_EVENT, navigate);
+    }, []);
 
     function point(event: PointerEvent<HTMLCanvasElement>): Point | null {
         const rect = event.currentTarget.getBoundingClientRect();
@@ -164,7 +258,7 @@ export default function LoomWorkspace() {
         return x >= 0 && x < chartRef.current.columns && y >= 0 && y < chartRef.current.rows ? [x, y] : null;
     }
     function start(event: PointerEvent<HTMLCanvasElement>) {
-        if (busyRef.current || event.button !== 0 || stroke.current) return;
+        if (busyRef.current || !localeReady.current || event.button !== 0 || stroke.current) return;
         if (tool === 'pan' && viewport.current) {
             stroke.current = { id: event.pointerId, pan: [event.clientX, event.clientY], scroll: [viewport.current.scrollLeft, viewport.current.scrollTop] };
         } else {
@@ -187,7 +281,7 @@ export default function LoomWorkspace() {
         }
     }
     function keyboard(event: KeyboardEvent<HTMLCanvasElement>) {
-        if (busyRef.current || event.ctrlKey || event.metaKey || event.altKey) return;
+        if (busyRef.current || !localeReady.current || event.ctrlKey || event.metaKey || event.altKey) return;
         const delta = moves[event.key];
         if (delta) {
             event.preventDefault();
@@ -200,7 +294,7 @@ export default function LoomWorkspace() {
                 if (py < vb.top + 30 || py > vb.bottom - 30) viewport.current.scrollTop += py - vb.top - viewport.current.clientHeight / 2;
             }
         } else if (['Enter', ' ', 'Delete', 'Backspace'].includes(event.key) && tool !== 'pan') {
-            event.preventDefault(); action(() => commit(paintLine(chartRef.current, cursorRef.current, cursorRef.current, ['Delete', 'Backspace'].includes(event.key) || tool === 'background' ? chartRef.current.backgroundId : selected), 'Bead changed.'));
+            event.preventDefault(); action(() => commit(paintLine(chartRef.current, cursorRef.current, cursorRef.current, ['Delete', 'Backspace'].includes(event.key) || tool === 'background' ? chartRef.current.backgroundId : selected), text.beadChanged));
         }
     }
     function applySettings() {
@@ -209,16 +303,16 @@ export default function LoomWorkspace() {
         const next = validateChart({ ...current, columns: c, rows: r, cellAspect: a, startCorner: corner, serpentine, cells: Array.from({ length: Number.isInteger(c) && Number.isInteger(r) && c > 0 && r > 0 && c * r <= LIMITS.maxCells ? c * r : 0 }, (_, i) => {
             const x = i % c, y = Math.floor(i / c); return x < current.columns && y < current.rows ? current.cells[y * current.columns + x] : current.backgroundId;
         }) });
-        commit(next, 'Chart settings applied. Existing beads stay aligned to the top-left; new spaces use the background color. Reconvert to fit the source image to the new shape.', true);
+        commit(next, text.settingsApplied, true);
     }
     function reset(next: LoomChart) {
-        if (dirtyRef.current && !window.confirm('Replace this chart? Save a project first if you want to keep it.')) return;
-        commit(next, 'Chart ready. Save a project to keep your changes.', true);
+        if (dirtyRef.current && !window.confirm(text.replaceChart)) return;
+        commit(next, text.chartReady, true);
     }
-    async function task(work: () => Promise<void>) {
-        if (busyRef.current) return;
-        finishStroke(); busyRef.current = true; setBusy(true);
-        try { await work(); } catch (e) { if (mounted.current) setStatus({ text: e instanceof Error ? pixelGridErrorMessage(e, 'en') : 'The file could not be processed.', error: true }); }
+    async function task(work: () => Promise<void>, message = text.preparing) {
+        if (busyRef.current || !localeReady.current) return;
+        finishStroke(); busyRef.current = true; setBusyMessage(message); setBusy(true);
+        try { await work(); } catch (e) { if (mounted.current) setStatus({ text: loomErrorMessage(e, locale), error: true }); }
         finally { busyRef.current = false; if (mounted.current) setBusy(false); }
     }
     async function importImage(file: File) {
@@ -231,7 +325,7 @@ export default function LoomWorkspace() {
                 const temp = document.createElement('canvas'); temp.width = bitmap.width; temp.height = bitmap.height;
                 const ctx = temp.getContext('2d'); if (!ctx) throw new Error('Image decoding is unavailable in this browser.');
                 ctx.drawImage(bitmap, 0, 0); const pixels = ctx.getImageData(0, 0, temp.width, temp.height).data;
-                if (mounted.current) { source.current = { width: bitmap.width, height: bitmap.height, pixels }; setSourceName(file.name); setStatus({ text: 'Image loaded. Set the chart shape and palette, then choose Convert image.', error: false }); }
+                if (mounted.current) { source.current = { width: bitmap.width, height: bitmap.height, pixels }; setSourceName(file.name); setStatus({ text: text.imageLoaded, error: false }); }
                 temp.width = temp.height = 0;
             } finally { bitmap.close(); }
         });
@@ -240,9 +334,9 @@ export default function LoomWorkspace() {
         await task(async () => {
             if (file.size > LIMITS.maxProjectBytes) throw new Error('Choose a bead loom project smaller than 1 MB.');
             const next = parseProject(await file.text());
-            if (!mounted.current || (dirtyRef.current && !window.confirm('Replace this chart with the saved project?'))) return;
+            if (!mounted.current || (dirtyRef.current && !window.confirm(text.replaceProject))) return;
             saved.current = next; history.current = { past: [], future: [] }; source.current = null; setSourceName(''); publish(next, true);
-            setStatus({ text: 'Project opened. Beads, colors, proportions and reading settings have been restored.', error: false });
+            setStatus({ text: text.projectOpened, error: false });
         });
     }
     function download(blob: Blob, name: string) {
@@ -256,17 +350,17 @@ export default function LoomWorkspace() {
             if (kind === 'project') blob = new Blob([serializeProject(snapshot)], { type: 'application/json' });
             else {
                 const exporter = await import('@/lib/bead-loom/export');
-                blob = kind === 'pdf' ? new Blob([await exporter.exportLoomPdf(snapshot, paper)], { type: 'application/pdf' }) : await exporter.exportLoomPng(snapshot);
+                blob = kind === 'pdf' ? new Blob([await exporter.exportLoomPdf(snapshot, paper, locale)], { type: 'application/pdf' }) : await exporter.exportLoomPng(snapshot, locale);
             }
             if (!mounted.current) return;
             download(blob, `${base}${kind === 'project' ? '.bead-loom.json' : kind === 'pdf' ? `-${paper}.pdf` : '-chart.png'}`);
             trackBeadLoomExport({ format: kind });
             if (kind === 'project') { saved.current = snapshot; sync(); }
-            setStatus({ text: `${kind === 'project' ? 'Project' : kind.toUpperCase()} download started. Check your browser downloads.${kind === 'project' ? '' : ' Save a project too to keep editing later.'}`, error: false });
+            setStatus({ text: text.exported(kind), error: false });
         });
     }
     function editColor(id: string, key: 'name' | 'code' | 'hex', value: string) {
-        action(() => commit({ ...chartRef.current, palette: chartRef.current.palette.map(c => c.id === id ? { ...c, [key]: value } : c) }, 'Palette updated. The letter symbol is unchanged.'));
+        action(() => commit({ ...chartRef.current, palette: chartRef.current.palette.map(c => c.id === id ? { ...c, [key]: value } : c) }, text.paletteUpdated));
     }
     const counts = getCounts(chart), instructions = getRowInstructions(chart);
     const usedColors = counts.filter(color => color.count).length;
@@ -274,99 +368,100 @@ export default function LoomWorkspace() {
     const activeSymbol = chart.palette.find(c => c.id === chart.cells[cursor[1] * chart.columns + cursor[0]])?.symbol;
     const settingsPending = columns !== String(chart.columns) || rows !== String(chart.rows) || aspect !== String(chart.cellAspect) || corner !== chart.startCorner || serpentine !== chart.serpentine;
 
-    return <div className={styles.workspace} aria-label="Bead loom chart workspace" aria-busy={busy}>
-        <p role="status" className={`${styles.status} ${status.error ? styles.error : ''}`}>{busy ? 'Preparing your file…' : status.text}</p>
-        <fieldset disabled={busy}>
+    return <div className={styles.workspace} lang={locale} aria-label={text.workspace} aria-busy={busy}>
+        <p role="status" className={`${styles.status} ${status.error ? styles.error : ''}`}>{busy ? busyMessage : status.text}</p>
+        {restoreFailed && <button onClick={() => { allowLeave.current = true; window.location.reload(); }}>{text.retryLanguageRestore}</button>}
+        <fieldset disabled={busy || restoreFailed}>
             <div className={styles.layout}>
-                <aside className={styles.settings} aria-label="Chart settings">
+                <aside className={styles.settings} aria-label={text.settings}>
                     <section className={styles.panel} aria-labelledby="loom-size">
-                        <h2 id="loom-size">1. Set the chart</h2>
+                        <h2 id="loom-size">{text.setChart}</h2>
                         <div className={styles.fields}>
                             <div className={styles.pair}>
-                                <label>Beads across<input type="number" min="1" max="100" value={columns} onChange={e => setColumns(e.target.value)} /></label>
-                                <label>Rows<input type="number" min="1" max="400" value={rows} onChange={e => setRows(e.target.value)} /></label>
+                                <label>{text.columns}<input id="loom-columns" type="number" min="1" max="100" value={columns} onChange={e => setColumns(e.target.value)} /></label>
+                                <label>{text.rows}<input id="loom-rows" type="number" min="1" max="400" value={rows} onChange={e => setRows(e.target.value)} /></label>
                             </div>
-                            <label>Bead width ÷ row height<input type="number" min="0.5" max="2" step="0.05" value={aspect} onChange={e => setAspect(e.target.value)} /></label>
-                            <p className={styles.hint}>1 means square. Use 0.5–2 based on your measured bead spacing. This changes chart proportions and image fitting, not the bead count. Maximum 20,000 beads.</p>
-                            <label>Start at<select value={corner} onChange={e => setCorner(e.target.value as LoomChart['startCorner'])}>
-                                <option value="bottom-left">Bottom left</option><option value="bottom-right">Bottom right</option><option value="top-left">Top left</option><option value="top-right">Top right</option>
+                            <label>{text.aspect}<input id="loom-aspect" type="number" min="0.5" max="2" step="0.05" value={aspect} onChange={e => setAspect(e.target.value)} /></label>
+                            <p className={styles.hint}>{text.aspectHelp}</p>
+                            <label>{text.startAt}<select id="loom-corner" value={corner} onChange={e => setCorner(e.target.value as LoomChart['startCorner'])}>
+                                {Object.entries(text.corners).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                             </select></label>
-                            <label className={styles.check}><input type="checkbox" checked={serpentine} onChange={e => setSerpentine(e.target.checked)} />Alternate row direction</label>
-                            <button className={styles.primary} onClick={() => action(applySettings)}>Apply chart settings</button>
-                            {settingsPending && <p className={styles.hint}>Unapplied settings. The visible chart and downloads still use the last applied settings.</p>}
-                            <button onClick={() => action(() => reset({ ...chartRef.current, cells: Array(chartRef.current.columns * chartRef.current.rows).fill(chartRef.current.backgroundId) }))}>Clear to background</button>
-                            <button onClick={() => action(() => reset(originalExample()))}>Try a geometric example</button>
+                            <label className={styles.check}><input id="loom-serpentine" type="checkbox" checked={serpentine} onChange={e => setSerpentine(e.target.checked)} />{text.alternate}</label>
+                            <button className={styles.primary} onClick={() => action(applySettings)}>{text.apply}</button>
+                            {settingsPending && <p className={styles.hint}>{text.pending}</p>}
+                            <button onClick={() => action(() => reset({ ...chartRef.current, cells: Array(chartRef.current.columns * chartRef.current.rows).fill(chartRef.current.backgroundId) }))}>{text.clear}</button>
+                            <button onClick={() => action(() => reset(originalExample(locale)))}>{text.example}</button>
                         </div>
                     </section>
                     <section className={styles.panel} aria-labelledby="loom-image">
-                        <h2 id="loom-image">2. Start from an image</h2>
+                        <h2 id="loom-image">{text.imageHeading}</h2>
                         <div className={styles.fields}>
-                            <button onClick={() => imageInput.current?.click()}>Choose image</button>
-                            <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="Source image" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void importImage(f); }} />
-                            <p className={styles.hint}>{sourceName || 'PNG, JPEG or static WebP. Up to 8 MB and 2048 × 2048 pixels. Processed on your device.'}</p>
-                            <label>Image fit<select value={mode} onChange={e => setMode(e.target.value as typeof mode)}><option value="fit">Fit whole image</option><option value="crop">Crop to fill</option><option value="stretch">Stretch to fill</option></select></label>
-                            <button disabled={!sourceName || settingsPending} onClick={() => action(() => { if (source.current) commit(convertImage(source.current, chartRef.current, mode), 'Image converted using the current palette and bead proportions. Undo restores the previous chart.'); })}>Convert image</button>
-                            <p className={styles.hint}>Conversion replaces the chart. Transparent areas blend onto the background bead color. Set your palette below before converting; every space contains a bead.</p>
-                            <button onClick={() => projectInput.current?.click()}>Open project</button>
-                            <input ref={projectInput} type="file" accept=".json,.bead-loom.json,application/json" hidden aria-label="Bead loom project" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void importProject(f); }} />
+                            <button onClick={() => imageInput.current?.click()}>{text.chooseImage}</button>
+                            <input id="loom-image-file" ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label={text.sourceImage} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void importImage(f); }} />
+                            <p className={styles.hint}>{sourceName || text.imageHelp}</p>
+                            <label>{text.imageFit}<select id="loom-mode" value={mode} onChange={e => setMode(e.target.value as typeof mode)}><option value="fit">{text.fit}</option><option value="crop">{text.crop}</option><option value="stretch">{text.stretch}</option></select></label>
+                            <button disabled={!sourceName || settingsPending} onClick={() => action(() => { if (source.current) commit(convertImage(source.current, chartRef.current, mode), text.imageConverted); })}>{text.convert}</button>
+                            <p className={styles.hint}>{text.conversionHelp}</p>
+                            <button onClick={() => projectInput.current?.click()}>{text.openProject}</button>
+                            <input id="loom-project-file" ref={projectInput} type="file" accept=".json,.bead-loom.json,application/json" hidden aria-label={text.projectFile} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void importProject(f); }} />
                         </div>
                     </section>
                 </aside>
                 <div className={styles.draw}>
                     <section className={styles.panel} aria-labelledby="loom-draw">
-                        <div className={styles.heading}><h2 id="loom-draw">3. Draw the chart</h2><p>{chart.columns} across × {chart.rows} {chart.rows === 1 ? 'row' : 'rows'} · {chart.cells.length.toLocaleString('en-US')} {chart.cells.length === 1 ? 'bead' : 'beads'} · {usedColors} {usedColors === 1 ? 'color' : 'colors'}</p></div>
-                        <label>Chart name<input value={chart.title} maxLength={80} onChange={e => action(() => commit({ ...chartRef.current, title: e.target.value }, 'Chart name updated.'))} /></label>
+                        <div className={styles.heading}><h2 id="loom-draw">{text.drawHeading}</h2><p>{text.summary(chart.columns, chart.rows, chart.cells.length, usedColors)}</p></div>
+                        <label>{text.chartName}<input id="loom-title" value={chart.title} maxLength={80} onChange={e => action(() => commit({ ...chartRef.current, title: e.target.value }, text.nameUpdated))} /></label>
                         <div className={`${styles.toolbar} ${styles.topSpace}`}>
-                            <button aria-pressed={tool === 'paint'} onClick={() => { finishStroke(); setTool('paint'); }}>Paint</button>
-                            <button aria-pressed={tool === 'background'} onClick={() => { finishStroke(); setTool('background'); }}>Background bead</button>
-                            <button aria-pressed={tool === 'pan'} onClick={() => { finishStroke(); setTool('pan'); }}>Pan</button>
-                            <button aria-label="Undo" title="Undo" disabled={!historyState.undo} onClick={() => undo()}><Undo2 size={18} aria-hidden="true" /></button>
-                            <button aria-label="Redo" title="Redo" disabled={!historyState.redo} onClick={() => undo(true)}><Redo2 size={18} aria-hidden="true" /></button>
+                            <button aria-pressed={tool === 'paint'} onClick={() => { finishStroke(); setTool('paint'); }}>{text.paint}</button>
+                            <button aria-pressed={tool === 'background'} onClick={() => { finishStroke(); setTool('background'); }}>{text.background}</button>
+                            <button aria-pressed={tool === 'pan'} onClick={() => { finishStroke(); setTool('pan'); }}>{text.pan}</button>
+                            <button aria-label={text.undo} title={text.undo} disabled={!historyState.undo} onClick={() => undo()}><Undo2 size={18} aria-hidden="true" /></button>
+                            <button aria-label={text.redo} title={text.redo} disabled={!historyState.redo} onClick={() => undo(true)}><Redo2 size={18} aria-hidden="true" /></button>
                         </div>
                         <div className={styles.toolbar}>
-                            <label className={styles.paint}>Paint color<select value={selectedColor.id} onChange={e => setSelected(e.target.value)}>{chart.palette.map(c => <option key={c.id} value={c.id}>{c.symbol} — {c.name || 'Unnamed color'}{c.code ? ` (${c.code})` : ''}</option>)}</select></label>
-                            <label>Zoom<select value={zoom} onChange={e => { finishStroke(); setZoom(e.target.value); }}><option value="fit">Fit width</option><option value="10">Small</option><option value="18">Medium</option><option value="28">Large</option><option value="40">Extra large</option></select></label>
+                            <label className={styles.paint}>{text.paintColor}<select id="loom-selected" value={selectedColor.id} onChange={e => setSelected(e.target.value)}>{chart.palette.map(c => <option key={c.id} value={c.id}>{c.symbol} — {c.name || text.unnamed}{c.code ? ` (${c.code})` : ''}</option>)}</select></label>
+                            <label>{text.zoom}<select id="loom-zoom" value={zoom} onChange={e => { finishStroke(); setZoom(e.target.value as LoomZoom); }}><option value="fit">{text.fitWidth}</option><option value="10">{text.small}</option><option value="18">{text.medium}</option><option value="28">{text.large}</option><option value="40">{text.extraLarge}</option></select></label>
                         </div>
-                        <div ref={viewport} className={styles.viewport} role="region" aria-label="Scrollable bead chart" tabIndex={0}><div className={styles.stage}>
-                            <canvas ref={canvas} className={styles.canvas} role="img" aria-label={`Editable bead loom chart, ${chart.columns} columns and ${chart.rows} rows. Row ${rowNumberAt(chart, cursor[1])}, column ${cursor[0] + 1}, symbol ${activeSymbol}.`} tabIndex={busy ? -1 : 0} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} onKeyDown={keyboard} onPointerDown={start} onPointerMove={move} onPointerUp={finishStroke} onPointerCancel={finishStroke} onLostPointerCapture={finishStroke} />
+                        <div ref={viewport} className={styles.viewport} role="region" aria-label={text.scrollable} tabIndex={0}><div className={styles.stage}>
+                            <canvas ref={canvas} className={styles.canvas} role="img" aria-label={text.canvasAria(chart.columns, chart.rows, rowNumberAt(chart, cursor[1]), cursor[0] + 1, activeSymbol ?? '')} tabIndex={busy || restoreFailed ? -1 : 0} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} onKeyDown={keyboard} onPointerDown={start} onPointerMove={move} onPointerUp={finishStroke} onPointerCancel={finishStroke} onLostPointerCapture={finishStroke} />
                         </div></div>
-                        <p className={styles.hint}>Columns count left to right. Row 1 starts {chart.startCorner.replace('-', ' ')}; {chart.serpentine ? 'direction alternates each row' : 'every row reads in the same direction'}. Zoom in to see letters. Use arrows then Enter to paint; Delete places a background bead. Choose Pan to move the chart on a touch screen.</p>
-                        <p className={styles.hint}>Selected: row {rowNumberAt(chart, cursor[1])}, column {cursor[0] + 1}, symbol {activeSymbol}. {dirty ? 'Unsaved project changes.' : 'Project is saved or unchanged.'}</p>
+                        <p className={styles.hint}>{text.reading(chart.startCorner, chart.serpentine)}</p>
+                        <p className={styles.hint}>{text.cursor(rowNumberAt(chart, cursor[1]), cursor[0] + 1, activeSymbol ?? '')} {dirty ? text.dirty : text.saved}</p>
                     </section>
                     <section className={styles.panel} aria-labelledby="loom-palette">
-                        <h2 id="loom-palette">Your bead colors</h2>
-                        <p className={styles.hint}>Use your own bead names and codes. These screen colors are an example palette, not an official brand match. Editing a color changes every bead with that letter.</p>
+                        <h2 id="loom-palette">{text.paletteHeading}</h2>
+                        <p className={styles.hint}>{text.paletteHelp}</p>
                         <div className={`${styles.tableWrap} ${styles.topSpace}`}><table className={`${styles.table} ${styles.paletteTable}`}>
-                            <thead><tr><th>Letter</th><th>Screen color</th><th>Bead name</th><th>Your code</th><th>Count</th></tr></thead>
-                            <tbody>{counts.map(c => <tr key={c.id}><th scope="row">{c.symbol}</th><td><input aria-label={`Color ${c.symbol}`} type="color" value={c.hex} onInput={e => editColor(c.id, 'hex', e.currentTarget.value)} onChange={e => editColor(c.id, 'hex', e.target.value)} /></td><td><input aria-label={`Name ${c.symbol}`} value={c.name} maxLength={60} onChange={e => editColor(c.id, 'name', e.target.value)} /></td><td><input aria-label={`Code ${c.symbol}`} value={c.code} maxLength={40} onChange={e => editColor(c.id, 'code', e.target.value)} /></td><td>{c.count}</td></tr>)}</tbody>
+                            <thead><tr><th>{text.letter}</th><th>{text.screenColor}</th><th>{text.beadName}</th><th>{text.code}</th><th>{text.count}</th></tr></thead>
+                            <tbody>{counts.map(c => <tr key={c.id}><th scope="row">{c.symbol}</th><td><input aria-label={text.colorAria(c.symbol)} type="color" value={c.hex} onInput={e => editColor(c.id, 'hex', e.currentTarget.value)} onChange={e => editColor(c.id, 'hex', e.target.value)} /></td><td><input aria-label={text.nameAria(c.symbol)} value={c.name} maxLength={60} onChange={e => editColor(c.id, 'name', e.target.value)} /></td><td><input aria-label={text.codeAria(c.symbol)} value={c.code} maxLength={40} onChange={e => editColor(c.id, 'code', e.target.value)} /></td><td>{c.count}</td></tr>)}</tbody>
                         </table></div>
                         <div className={`${styles.buttons} ${styles.topSpace}`}><button disabled={chart.palette.length >= 26} onClick={() => action(() => {
                             const letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').find(s => !chartRef.current.palette.some(c => c.symbol === s))!;
                             const id = crypto.randomUUID();
-                            commit({ ...chartRef.current, palette: [...chartRef.current.palette, { id, symbol: letter, name: 'New color', code: '', hex: '#6688aa' }] }, `Color ${letter} added. You can edit its name and bead code.`); setSelected(id);
-                        })}>Add color ({chart.palette.length}/26)</button></div>
+                            commit({ ...chartRef.current, palette: [...chartRef.current.palette, { id, symbol: letter, name: text.newColor, code: '', hex: '#6688aa' }] }, text.colorAdded(letter)); setSelected(id);
+                        })}>{text.addColor(chart.palette.length)}</button></div>
                         <div className={`${styles.pair} ${styles.topSpace}`}>
-                            <label>Background bead<select value={chart.backgroundId} onChange={e => action(() => commit({ ...chartRef.current, backgroundId: e.target.value }, 'Background selected. Existing beads keep their colors; image conversion and the background tool use this color.'))}>{chart.palette.map(c => <option key={c.id} value={c.id}>{c.symbol} — {c.name}</option>)}</select></label>
-                            <label>Replace selected color with<select value={replaceTarget} onChange={e => setReplaceTarget(e.target.value)}>{chart.palette.map(c => <option key={c.id} value={c.id}>{c.symbol} — {c.name}</option>)}</select></label>
+                            <label>{text.background}<select id="loom-background" value={chart.backgroundId} onChange={e => action(() => commit({ ...chartRef.current, backgroundId: e.target.value }, text.backgroundSelected))}>{chart.palette.map(c => <option key={c.id} value={c.id}>{c.symbol} — {c.name}</option>)}</select></label>
+                            <label>{text.replaceTarget}<select id="loom-replace-target" value={replaceTarget} onChange={e => setReplaceTarget(e.target.value)}>{chart.palette.map(c => <option key={c.id} value={c.id}>{c.symbol} — {c.name}</option>)}</select></label>
                         </div>
                         <div className={`${styles.buttons} ${styles.topSpace}`}>
-                            <button disabled={selectedColor.id === replaceTarget} onClick={() => action(() => commit(replaceColor(chartRef.current, selectedColor.id, replaceTarget), `All ${selectedColor.symbol} beads replaced. Palette letters are kept.`))}>Replace all {selectedColor.symbol} beads</button>
-                            <button disabled={chart.palette.length <= 1 || selectedColor.id === chart.backgroundId || chart.cells.includes(selectedColor.id)} onClick={() => action(() => commit({ ...chartRef.current, palette: chartRef.current.palette.filter(c => c.id !== selectedColor.id) }, `Unused color ${selectedColor.symbol} removed. Other letters are unchanged.`))}>Remove unused {selectedColor.symbol}</button>
+                            <button disabled={selectedColor.id === replaceTarget} onClick={() => action(() => commit(replaceColor(chartRef.current, selectedColor.id, replaceTarget), text.replaced(selectedColor.symbol)))}>{text.replaceAll(selectedColor.symbol)}</button>
+                            <button disabled={chart.palette.length <= 1 || selectedColor.id === chart.backgroundId || chart.cells.includes(selectedColor.id)} onClick={() => action(() => commit({ ...chartRef.current, palette: chartRef.current.palette.filter(c => c.id !== selectedColor.id) }, text.removed(selectedColor.symbol)))}>{text.removeUnused(selectedColor.symbol)}</button>
                         </div>
-                        <p className={styles.hint}>To remove a used color, replace its beads first. The background color must remain in the palette.</p>
+                        <p className={styles.hint}>{text.removeHelp}</p>
                     </section>
                     <section className={styles.panel} aria-labelledby="loom-save">
-                        <h2 id="loom-save">4. Save the pattern</h2>
+                        <h2 id="loom-save">{text.saveHeading}</h2>
                         <div className={styles.export}>
-                            <label>Paper<select value={paper} onChange={e => setPaper(e.target.value as typeof paper)}><option value="a4">A4</option><option value="letter">US Letter</option></select></label>
-                            <button className={styles.primary} onClick={() => void exportFile('pdf')}>Download PDF</button>
-                            <button onClick={() => void exportFile('png')}>Download chart PNG</button>
-                            <button onClick={() => void exportFile('project')}>Save project</button>
+                            <label>{text.paper}<select id="loom-paper" value={paper} onChange={e => setPaper(e.target.value as typeof paper)}><option value="a4">A4</option><option value="letter">{text.letterPaper}</option></select></label>
+                            <button className={styles.primary} onClick={() => void exportFile('pdf')}>{text.pdf}</button>
+                            <button onClick={() => void exportFile('png')}>{text.png}</button>
+                            <button onClick={() => void exportFile('project')}>{text.saveProject}</button>
                         </div>
-                        <p className={styles.hint}>PDF includes a lettered chart, color counts and row instructions. Larger charts split into readable sections. It is a reading chart, not a life-size template. PNG includes chart labels and a color key; save the project to continue editing.</p>
-                        <details className={styles.details}><summary>Row-by-row instructions ({chart.rows} rows)</summary>
-                            <p className={styles.hint}>Read each group in order: “A × 3” means three beads of color A. Left and right refer to the chart as displayed. Counts exclude spares.</p>
-                            <div className={`${styles.rowScroll} ${styles.topSpace}`}><table className={styles.table}><thead><tr><th>Row</th><th>Direction</th><th>Bead sequence</th></tr></thead><tbody>{instructions.map(row => <tr key={row.rowNumber}><th scope="row">{row.rowNumber}</th><td>{row.direction === 'left-to-right' ? 'Left → right' : 'Right → left'}</td><td className={styles.rowSequence}>{row.runs.map(run => `${run.symbol} × ${run.count}`).join(' · ')}</td></tr>)}</tbody></table></div>
+                        <p className={styles.hint}>{text.exportHelp}</p>
+                        <details className={styles.details}><summary>{text.rowInstructions(chart.rows)}</summary>
+                            <p className={styles.hint}>{text.rowHelp}</p>
+                            <div className={`${styles.rowScroll} ${styles.topSpace}`}><table className={styles.table}><thead><tr><th>{text.row}</th><th>{text.direction}</th><th>{text.sequence}</th></tr></thead><tbody>{instructions.map(row => <tr key={row.rowNumber}><th scope="row">{row.rowNumber}</th><td>{row.direction === 'left-to-right' ? text.leftToRight : text.rightToLeft}</td><td className={styles.rowSequence}>{row.runs.map(run => `${run.symbol} × ${run.count}`).join(' · ')}</td></tr>)}</tbody></table></div>
                         </details>
                     </section>
                 </div>

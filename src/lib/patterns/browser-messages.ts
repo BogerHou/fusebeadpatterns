@@ -1,0 +1,6 @@
+export const patternBrowserMessages = {
+    en: { browse:'Browse patterns', search:'Search patterns', placeholder:'Character or design name', theme:'Theme', all:'All themes', originals:'Original designs', empty:'No patterns match this search.', help:'Try a character or design name, or choose another theme.', reset:'Clear filters', one:'pattern', many:'patterns' },
+    de: { browse:'Vorlagen durchsuchen', search:'Vorlagen suchen', placeholder:'Figur oder Motiv', theme:'Thema', all:'Alle Themen', originals:'Eigene Motive', empty:'Keine passende Vorlage gefunden.', help:'Suche nach einer Figur oder einem Motiv oder wähle ein anderes Thema.', reset:'Filter zurücksetzen', one:'Vorlage', many:'Vorlagen' },
+    fr: { browse:'Parcourir les modèles', search:'Rechercher un modèle', placeholder:'Nom du personnage ou du motif', theme:'Thème', all:'Tous les thèmes', originals:'Motifs originaux', empty:'Aucun modèle ne correspond.', help:'Essayez un nom de personnage ou de motif, ou changez de thème.', reset:'Effacer les filtres', one:'modèle', many:'modèles' },
+    ja: { browse:'図案を探す', search:'図案を検索', placeholder:'キャラクターやモチーフの名前', theme:'テーマ', all:'すべてのテーマ', originals:'オリジナル図案', empty:'一致する図案がありません。', help:'名前を変えて検索するか、別のテーマを選んでください。', reset:'絞り込みを解除', one:'件の図案', many:'件の図案' },
+};

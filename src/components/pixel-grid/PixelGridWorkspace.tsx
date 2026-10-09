@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
 import { trackPixelGridExport } from '@/lib/analytics';
 import {
@@ -10,6 +10,8 @@ import {
 } from '@/lib/pixel-grid/core';
 import { reducePixelGridColors, countVisibleColors, encodeScaledPng, type ColorLimit } from '@/lib/pixel-grid/conversion';
 import { PIXEL_GRID_MESSAGES, PixelGridUiError, pixelGridErrorMessage, type PixelGridLocale } from '@/lib/pixel-grid/messages';
+import { LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
+import { consumePixelLocaleSnapshot, consumeLargePixelLocaleSnapshot, hasLargePixelLocaleSnapshot, hasPixelLocaleWork, isPixelLocaleNavigation, savePixelLocaleSnapshot, saveLargePixelLocaleSnapshot, type PixelLocaleSnapshot } from '@/lib/pixel-grid/locale-navigation';
 import styles from './PixelGridWorkspace.module.css';
 
 type Tool = 'brush' | 'eraser' | 'pan';
@@ -94,6 +96,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const [dirty, setDirty] = useState(false);
     const [sourceInfo, setSourceInfo] = useState<{ name: string; width: number; height: number } | null>(null);
     const [busy, setBusy] = useState(false);
+    const [localeRecoveryPending, setLocaleRecoveryPending] = useState(false);
     const [status, setStatus] = useState({ text: converter ? text.converterReady : text.ready, error: false });
     const imageFileRef = useRef<HTMLInputElement>(null);
     const projectFileRef = useRef<HTMLInputElement>(null);
@@ -111,6 +114,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const taskId = useRef(0);
     const allowUnload = useRef(false);
     const downloads = useRef(new Map<string, number>());
+    const localeReadyRef = useRef(false);
+    const localeRestoreRef = useRef<PixelLocaleSnapshot | null | undefined>(undefined);
+    const largeLocaleRestoreRef = useRef<Promise<PixelLocaleSnapshot | null> | null>(null);
+    const localeRecoveryPendingRef = useRef(false);
+    const locked = busy || localeRecoveryPending;
 
     const scale = zoom === 'fit'
         ? Math.max(1, Math.min(24, Math.floor(Math.min(Math.max(1, viewportSize.width - 24) / grid.width, Math.max(1, viewportSize.height - 24) / grid.height))))
@@ -157,7 +165,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }, [finishStroke, publish]);
 
     const action = useCallback((callback: () => void) => {
-        if (busyRef.current) return;
+        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current) return;
         finishStroke();
         try { callback(); } catch (error) { setStatus({ text: pixelGridErrorMessage(error, locale), error: true }); }
     }, [finishStroke, locale]);
@@ -204,20 +212,23 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         const activeDownloads = downloads.current;
         const sequence = taskId;
         const beforeUnload = (event: BeforeUnloadEvent) => {
-            if (dirtyRef.current && !allowUnload.current) { event.preventDefault(); event.returnValue = ''; }
+            if ((dirtyRef.current || busyRef.current || localeRecoveryPendingRef.current) && !allowUnload.current) { event.preventDefault(); event.returnValue = ''; }
         };
         // A document capture listener sees the surrounding layout's Next Links before
         // their client-router handlers. Confirmed exits use a real navigation so the
         // workspace does not need to inject state into the shared site layout.
         const navigate = (event: MouseEvent) => {
-            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !dirtyRef.current) return;
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (!dirtyRef.current && !busyRef.current && !localeRecoveryPendingRef.current)) return;
             const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
             if (!(anchor instanceof HTMLAnchorElement) || anchor.hasAttribute('download') || (anchor.target && anchor.target !== '_self')) return;
             const destination = new URL(anchor.href, location.href);
             if (!['http:', 'https:'].includes(destination.protocol)) return;
+            if (anchor.hasAttribute('data-locale-navigation') && isPixelLocaleNavigation(location.href, destination.href)) return;
             if (destination.origin === location.origin && destination.pathname === location.pathname && destination.search === location.search) return;
             event.preventDefault();
             event.stopImmediatePropagation();
+            if (localeRecoveryPendingRef.current) { setStatus({ text: text.languageRestoreFailed, error: true }); return; }
+            if (busyRef.current) { setStatus({ text: text.languageBusy, error: true }); return; }
             finishStroke();
             if (window.confirm(text.leave)) {
                 allowUnload.current = true;
@@ -225,7 +236,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             }
         };
         const keyboard = (event: globalThis.KeyboardEvent) => {
-            if (busyRef.current || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+            if (busyRef.current || localeRecoveryPendingRef.current || !(event.ctrlKey || event.metaKey) || event.altKey) return;
             if (event.target instanceof Element && event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
             if (event.key.toLowerCase() === 'z') { event.preventDefault(); undo(event.shiftKey); }
             else if (event.key.toLowerCase() === 'y') { event.preventDefault(); undo(true); }
@@ -253,6 +264,123 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         };
     }, [finishStroke, undo, text]);
 
+    const applyLocaleSnapshot = useCallback((snapshot: PixelLocaleSnapshot | null) => {
+        if (snapshot) {
+            gridRef.current = snapshot.grid; savedRef.current = snapshot.saved;
+            sourceRef.current = snapshot.source; cursorRef.current = snapshot.cursor;
+            historyRef.current.restore(snapshot.history);
+            setGrid(snapshot.grid); setCursor(snapshot.cursor);
+            setWidth(snapshot.width); setHeight(snapshot.height); setMode(snapshot.mode);
+            setTool(snapshot.tool); setColor(snapshot.color); setAlpha(snapshot.alpha);
+            setZoom(snapshot.zoom); setShowGrid(snapshot.showGrid); setColorLimit(snapshot.colorLimit);
+            setExportScale(snapshot.exportScale); setSettingsExpanded(snapshot.settingsExpanded);
+            setSourceInfo(snapshot.source ? { name: snapshot.source.name, width: snapshot.source.width, height: snapshot.source.height } : null);
+            syncHistory();
+            setStatus({ text: text.languageRestored, error: false });
+        }
+        localeRecoveryPendingRef.current = false; setLocaleRecoveryPending(false);
+        localeReadyRef.current = true;
+    }, [syncHistory, text.languageRestored]);
+
+    const protectLocaleRecovery = useCallback(() => {
+        largeLocaleRestoreRef.current = null;
+        busyRef.current = false; setBusy(false);
+        localeReadyRef.current = false;
+        localeRecoveryPendingRef.current = true; setLocaleRecoveryPending(true);
+        setStatus({ text: text.languageRestoreFailed, error: true });
+    }, [text.languageRestoreFailed]);
+
+    const restoreLocale = useCallback(() => {
+        if (largeLocaleRestoreRef.current && busyRef.current) return;
+        try {
+            // Probe again on retry: a failed read may conceal either supported
+            // version, so pending recovery alone must not force the large path.
+            if (hasLargePixelLocaleSnapshot(window.sessionStorage) || largeLocaleRestoreRef.current) {
+                localeReadyRef.current = false;
+                localeRecoveryPendingRef.current = true; setLocaleRecoveryPending(true);
+                busyRef.current = true; setBusy(true);
+                setStatus({ text: text.languageRestoring, error: false });
+                largeLocaleRestoreRef.current ??= consumeLargePixelLocaleSnapshot(window.location.href, window.sessionStorage);
+                void largeLocaleRestoreRef.current.then(snapshot => {
+                    if (!mountedRef.current) return;
+                    busyRef.current = false; setBusy(false);
+                    if (snapshot) {
+                        localeRestoreRef.current = snapshot;
+                        applyLocaleSnapshot(snapshot);
+                        return;
+                    }
+                    // A read can fail while the full workspace is still saved.
+                    // Keep the canvas protected and allow a fresh attempt instead
+                    // of caching a failed promise or overwriting it with a blank.
+                    largeLocaleRestoreRef.current = null;
+                    try {
+                        if (hasLargePixelLocaleSnapshot(window.sessionStorage)) {
+                            protectLocaleRecovery();
+                        } else {
+                            localeRestoreRef.current = consumePixelLocaleSnapshot(window.location.href, window.sessionStorage);
+                            applyLocaleSnapshot(localeRestoreRef.current);
+                            if (!localeRestoreRef.current) setStatus({ text: text.languageRestoreUnavailable, error: true });
+                        }
+                    } catch {
+                        protectLocaleRecovery();
+                    }
+                }, () => {
+                    if (!mountedRef.current) return;
+                    protectLocaleRecovery();
+                });
+                return;
+            }
+            if (localeRestoreRef.current === undefined || localeRecoveryPendingRef.current) {
+                localeRestoreRef.current = consumePixelLocaleSnapshot(window.location.href, window.sessionStorage);
+            }
+        } catch {
+            protectLocaleRecovery();
+            return;
+        }
+        applyLocaleSnapshot(localeRestoreRef.current ?? null);
+    }, [applyLocaleSnapshot, protectLocaleRecovery, text.languageRestoring, text.languageRestoreUnavailable]);
+
+    useEffect(() => { restoreLocale(); }, [restoreLocale]);
+
+    const handleLocaleNavigation = useEffectEvent((event: Event) => {
+            const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
+            if (!detail?.href || !isPixelLocaleNavigation(window.location.href, detail.href)) return;
+            if (!localeReadyRef.current || busyRef.current) {
+                event.preventDefault();
+                setStatus({ text: localeRecoveryPendingRef.current ? text.languageRestoreFailed : text.languageBusy, error: true });
+                return;
+            }
+            try {
+                finishStroke();
+                const snapshot: PixelLocaleSnapshot = {
+                    grid: gridRef.current, saved: savedRef.current, source: sourceRef.current,
+                    history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
+                    zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
+                };
+                if (savePixelLocaleSnapshot(hasPixelLocaleWork(snapshot, initialSide, converter) ? snapshot : null, detail.href, window.sessionStorage)) {
+                    allowUnload.current = true;
+                    return;
+                }
+                event.preventDefault();
+                void task(text.languageSaving, async current => {
+                    const saved = await saveLargePixelLocaleSnapshot(snapshot, detail.href, window.sessionStorage);
+                    if (!current()) return;
+                    if (!saved) { setStatus({ text: text.languageFailed, error: true }); return; }
+                    allowUnload.current = true;
+                    window.location.assign(detail.href);
+                });
+                return;
+            } catch { /* Browser storage can be blocked before its methods are available. */ }
+            event.preventDefault();
+            setStatus({ text: text.languageFailed, error: true });
+    });
+
+    useEffect(() => {
+        const navigate = (event: Event) => handleLocaleNavigation(event);
+        window.addEventListener(LOCALE_NAVIGATION_EVENT, navigate);
+        return () => window.removeEventListener(LOCALE_NAVIGATION_EVENT, navigate);
+    }, []);
+
     function paintColor(): Color {
         return [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16), alpha];
     }
@@ -276,7 +404,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
-        if (busyRef.current || strokeRef.current || event.button !== 0 || event.isPrimary === false) return;
+        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || strokeRef.current || event.button !== 0 || event.isPrimary === false) return;
         const cell = point(event), viewport = viewportRef.current;
         if (!cell || !viewport) return;
         event.preventDefault();
@@ -294,7 +422,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
 
     function pointerMove(event: PointerEvent<HTMLCanvasElement>) {
         const stroke = strokeRef.current;
-        if (busyRef.current || !stroke || stroke.id !== event.pointerId) return;
+        if (busyRef.current || localeRecoveryPendingRef.current || !stroke || stroke.id !== event.pointerId) return;
         event.preventDefault();
         if (stroke.tool === 'pan') {
             const viewport = viewportRef.current;
@@ -310,7 +438,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     function keyboard(event: KeyboardEvent<HTMLCanvasElement>) {
-        if (busyRef.current || event.ctrlKey || event.metaKey || event.altKey) return;
+        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || event.ctrlKey || event.metaKey || event.altKey) return;
         const move = MOVES[event.key];
         if (tool === 'pan') {
             if (move && viewportRef.current) { event.preventDefault(); viewportRef.current.scrollLeft += move[0] * 64; viewportRef.current.scrollTop += move[1] * 64; }
@@ -381,7 +509,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     async function task(message: string, callback: (current: () => boolean) => Promise<void>) {
-        if (busyRef.current) return;
+        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current) return;
         finishStroke(); busyRef.current = true; setBusy(true);
         setStatus({ text: message, error: false });
         const id = ++taskId.current;
@@ -487,42 +615,46 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const imageImport = (
         <section className={`${styles.panel} ${styles.converterImport}`} aria-labelledby="pixel-import-title">
             <h2 id="pixel-import-title">{text.converterTitle}</h2>
-            <label htmlFor="pixel-image-file">{text.chooseImage}<input ref={imageFileRef} hidden={locale !== 'en'} id="pixel-image-file" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importImage(file); }} /></label>
-            {locale !== 'en' && <button className={styles.spaced} type="button" disabled={busy} onClick={() => imageFileRef.current?.click()} aria-describedby="pixel-import-title">{text.chooseFile}</button>}
+            <label htmlFor="pixel-image-file">{text.chooseImage}<input ref={imageFileRef} hidden={locale !== 'en'} id="pixel-image-file" type="file" accept="image/png,image/jpeg,image/webp" disabled={locked} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importImage(file); }} /></label>
+            {locale !== 'en' && <button className={styles.spaced} type="button" disabled={locked} onClick={() => imageFileRef.current?.click()} aria-describedby="pixel-import-title">{text.chooseFile}</button>}
             <p className={styles.hint}>{text.converterImportHelp}</p>
             <div className={styles.detailChoices}>
                 <p>{text.detail}</p>
-                <div className={styles.buttons}>{[32, 64, 128].map(side => <button type="button" key={side} disabled={busy} onClick={() => detailSize(side)}>{text.detailButton(side)}</button>)}</div>
+                <div className={styles.buttons}>{[32, 64, 128].map(side => <button type="button" key={side} disabled={locked} onClick={() => detailSize(side)}>{text.detailButton(side)}</button>)}</div>
                 <p className={styles.hint}>{text.detailHelp}</p>
             </div>
-            <button className={styles.spaced} type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button>
+            <button className={styles.spaced} type="button" disabled={locked || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button>
             <p className={styles.hint}>{sourceInfo ? text.converterLastImage(sourceInfo.name, sourceInfo.width, sourceInfo.height) : text.converterNoImage}</p>
         </section>
     );
 
     return (
         <div className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
+            {localeRecoveryPending && <section className={`${styles.panel} ${styles.converterImport}`} aria-label={text.languageRetry}>
+                <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
+                <button type="button" disabled={busy} onClick={restoreLocale}>{text.languageRetry}</button>
+            </section>}
             {imageImport}
             <details className={styles.settingsDisclosure} open={settingsExpanded ?? isWideViewport}>
                 <summary onClick={event => { event.preventDefault(); setSettingsExpanded(!(settingsExpanded ?? isWideViewport)); }}>{text.settings}</summary>
             <aside className={styles.settings} aria-label={text.settingsAria}>
                 <section className={styles.panel} aria-labelledby="pixel-size-title">
                     <h2 id="pixel-size-title">{text.canvasSize}</h2>
-                    {!converter && <div className={styles.buttons}>{([[16, 16], [32, 32], [24, 40]] as const).map(([w, h]) => <button type="button" key={`${w}x${h}`} disabled={busy} onClick={() => newCanvas(w, h)}>{text.newSize(w, h)}</button>)}</div>}
+                    {!converter && <div className={styles.buttons}>{([[16, 16], [32, 32], [24, 40]] as const).map(([w, h]) => <button type="button" key={`${w}x${h}`} disabled={locked} onClick={() => newCanvas(w, h)}>{text.newSize(w, h)}</button>)}</div>}
                     <div className={styles.dimensions}>
-                        <label htmlFor="pixel-width">{text.width}<input id="pixel-width" type="number" min="1" max="128" step="1" value={width} disabled={busy} onChange={event => setWidth(event.target.value)} /></label>
+                        <label htmlFor="pixel-width">{text.width}<input id="pixel-width" type="number" min="1" max="128" step="1" value={width} disabled={locked} onChange={event => setWidth(event.target.value)} /></label>
                         <span aria-hidden="true">×</span>
-                        <label htmlFor="pixel-height">{text.height}<input id="pixel-height" type="number" min="1" max="128" step="1" value={height} disabled={busy} onChange={event => setHeight(event.target.value)} /></label>
+                        <label htmlFor="pixel-height">{text.height}<input id="pixel-height" type="number" min="1" max="128" step="1" value={height} disabled={locked} onChange={event => setHeight(event.target.value)} /></label>
                     </div>
-                    <label htmlFor="pixel-image-mode">{text.sizing}<select id="pixel-image-mode" value={mode} disabled={busy} onChange={event => setMode(event.target.value as ResizeMode)}><option value="fit">{text.fit}</option><option value="crop">{text.crop}</option><option value="stretch">{text.stretch}</option></select></label>
-                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy} onClick={() => resize()}>{text.resizeDrawing}</button><button type="button" disabled={busy} onClick={() => newCanvas()}>{text.newBlank}</button></div>
+                    <label htmlFor="pixel-image-mode">{text.sizing}<select id="pixel-image-mode" value={mode} disabled={locked} onChange={event => setMode(event.target.value as ResizeMode)}><option value="fit">{text.fit}</option><option value="crop">{text.crop}</option><option value="stretch">{text.stretch}</option></select></label>
+                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={locked} onClick={() => resize()}>{text.resizeDrawing}</button><button type="button" disabled={locked} onClick={() => newCanvas()}>{text.newBlank}</button></div>
                     <p className={styles.hint}>{text.sizeHelp}</p>
                 </section>
                 <section className={styles.panel} aria-labelledby="pixel-colors-title">
                     <h2 id="pixel-colors-title">{text.colorLimit}</h2>
-                    <label htmlFor="pixel-color-limit">{text.colorLimit}<select id="pixel-color-limit" value={colorLimit} disabled={busy} onChange={event => setColorLimit(event.target.value === 'original' ? 'original' : Number(event.target.value) as ColorLimit)}><option value="original">{text.originalColors}</option>{[8, 16, 32, 64].map(value => <option key={value} value={value}>{text.colors(value)}</option>)}</select></label>
+                    <label htmlFor="pixel-color-limit">{text.colorLimit}<select id="pixel-color-limit" value={colorLimit} disabled={locked} onChange={event => setColorLimit(event.target.value === 'original' ? 'original' : Number(event.target.value) as ColorLimit)}><option value="original">{text.originalColors}</option>{[8, 16, 32, 64].map(value => <option key={value} value={value}>{text.colors(value)}</option>)}</select></label>
                     <p className={styles.hint}>{text.colorHelp}</p>
-                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={busy || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button><button type="button" disabled={busy || colorLimit === 'original'} onClick={applyColorLimit}>{text.reduceCurrent}</button></div>
+                    <div className={`${styles.buttons} ${styles.spaced}`}><button type="button" disabled={locked || !sourceInfo} onClick={() => resize(true)}>{text.reconvert}</button><button type="button" disabled={locked || colorLimit === 'original'} onClick={applyColorLimit}>{text.reduceCurrent}</button></div>
                     <p className={styles.hint}>{text.converterLimitHelp}</p>
                 </section>
             </aside>
@@ -531,36 +663,38 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 <section className={styles.panel} aria-labelledby="pixel-canvas-title">
                     <div className={styles.heading}><h2 id="pixel-canvas-title">{text.pixels(grid.width, grid.height)}</h2><span>{text.visiblePixels(nontransparent)} · {text.visibleColors(countVisibleColors(grid))}</span></div>
                     <div className={styles.drawingTools} aria-label={text.drawingTools}>
-                        {(['brush', 'eraser', 'pan'] as const).map(id => <button type="button" key={id} aria-pressed={tool === id} disabled={busy} onClick={() => action(() => setTool(id))}>{text[id]}</button>)}
-                        <button className={styles.historyButton} type="button" aria-label={text.undo} title={text.undo} disabled={busy || !historyState.undo} onClick={() => undo()}><Undo2 size={20} aria-hidden="true" /></button><button className={styles.historyButton} type="button" aria-label={text.redo} title={text.redo} disabled={busy || !historyState.redo} onClick={() => undo(true)}><Redo2 size={20} aria-hidden="true" /></button>
+                        {(['brush', 'eraser', 'pan'] as const).map(id => <button type="button" key={id} aria-pressed={tool === id} disabled={locked} onClick={() => action(() => setTool(id))}>{text[id]}</button>)}
+                        <div className={styles.historyButtons}>
+                            <button className={styles.historyButton} type="button" aria-label={text.undo} title={text.undo} disabled={locked || !historyState.undo} onClick={() => undo()}><Undo2 size={20} aria-hidden="true" /></button><button className={styles.historyButton} type="button" aria-label={text.redo} title={text.redo} disabled={locked || !historyState.redo} onClick={() => undo(true)}><Redo2 size={20} aria-hidden="true" /></button>
+                        </div>
                     </div>
                     <div className={styles.paintSettings}>
-                        <label className={styles.color} htmlFor="pixel-color">{text.color}<input id="pixel-color" type="color" value={color} disabled={busy} onChange={event => setColor(event.target.value)} /></label>
-                        <label className={styles.alpha} htmlFor="pixel-alpha">{text.alpha} <output>{text.number(alpha)} / 255</output><input id="pixel-alpha" type="range" min="0" max="255" step="1" value={alpha} disabled={busy} onChange={event => setAlpha(Number(event.target.value))} /></label>
+                        <label className={styles.color} htmlFor="pixel-color">{text.color}<input id="pixel-color" type="color" value={color} disabled={locked} onChange={event => setColor(event.target.value)} /></label>
+                        <label className={styles.alpha} htmlFor="pixel-alpha">{text.alpha} <output>{text.number(alpha)} / 255</output><input id="pixel-alpha" type="range" min="0" max="255" step="1" value={alpha} disabled={locked} onChange={event => setAlpha(Number(event.target.value))} /></label>
                     </div>
                     <div className={styles.viewSettings}>
-                        <label htmlFor="pixel-zoom">{text.zoom}<select id="pixel-zoom" value={zoom} disabled={busy} onChange={event => action(() => { const next = event.target.value as Zoom; setZoom(next); if (next === 'fit' && viewportRef.current) viewportRef.current.scrollLeft = viewportRef.current.scrollTop = 0; })}><option value="fit">{text.zoomFit}</option>{[4, 8, 16, 24, 32].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
-                        <label className={styles.check} htmlFor="pixel-show-grid"><input id="pixel-show-grid" type="checkbox" checked={showGrid} disabled={busy} onChange={event => setShowGrid(event.target.checked)} />{text.grid}</label>
-                        <button type="button" disabled={busy} onClick={() => action(() => commit(createGrid(gridRef.current.width, gridRef.current.height), text.cleared))}>{text.clear}</button>
+                        <label htmlFor="pixel-zoom">{text.zoom}<select id="pixel-zoom" value={zoom} disabled={locked} onChange={event => action(() => { const next = event.target.value as Zoom; setZoom(next); if (next === 'fit' && viewportRef.current) viewportRef.current.scrollLeft = viewportRef.current.scrollTop = 0; })}><option value="fit">{text.zoomFit}</option>{[4, 8, 16, 24, 32].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
+                        <label className={styles.check} htmlFor="pixel-show-grid"><input id="pixel-show-grid" type="checkbox" checked={showGrid} disabled={locked} onChange={event => setShowGrid(event.target.checked)} />{text.grid}</label>
+                        <button type="button" disabled={locked} onClick={() => action(() => commit(createGrid(gridRef.current.width, gridRef.current.height), text.cleared))}>{text.clear}</button>
                     </div>
                     <div ref={viewportRef} className={styles.viewport} aria-label={text.scrollArea}>
-                        <div className={styles.stage}><canvas ref={canvasRef} width={grid.width * scale} height={grid.height * scale} tabIndex={0} role="img" aria-label={text.canvasAria(grid.width, grid.height, cursor[0] + 1, cursor[1] + 1)} aria-describedby="pixel-canvas-help pixel-cursor" className={styles.canvas} style={{ width: grid.width * scale, height: grid.height * scale, cursor: tool === 'pan' ? panning ? 'grabbing' : 'grab' : 'crosshair' }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishStroke(event.pointerId)} onPointerCancel={event => finishStroke(event.pointerId)} onLostPointerCapture={event => finishStroke(event.pointerId)} onKeyDown={keyboard} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} /></div>
+                        <div className={styles.stage}><canvas ref={canvasRef} width={grid.width * scale} height={grid.height * scale} tabIndex={locked ? -1 : 0} inert={locked} role="img" aria-label={text.canvasAria(grid.width, grid.height, cursor[0] + 1, cursor[1] + 1)} aria-describedby="pixel-canvas-help pixel-cursor" className={styles.canvas} style={{ width: grid.width * scale, height: grid.height * scale, cursor: tool === 'pan' ? panning ? 'grabbing' : 'grab' : 'crosshair' }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishStroke(event.pointerId)} onPointerCancel={event => finishStroke(event.pointerId)} onLostPointerCapture={event => finishStroke(event.pointerId)} onKeyDown={keyboard} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} /></div>
                     </div>
                     <p id="pixel-cursor" className={styles.hint}>{text.cursor(cursor[0] + 1, cursor[1] + 1, scale)}</p>
                     <p id="pixel-canvas-help" className={styles.hint}>{text.drawingHelp}</p>
                 </section>
-                <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
+                {!localeRecoveryPending && <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>}
                 <section className={styles.panel} aria-labelledby="pixel-save-title">
                     <div className={styles.heading}><h2 id="pixel-save-title">{text.saveTitle}</h2><span>{dirty ? text.dirty : text.saved}</span></div>
                     <div className={styles.scaledExport}>
-                        <label htmlFor="pixel-export-scale">{text.exportScale}<select id="pixel-export-scale" value={exportScale} disabled={busy} onChange={event => setExportScale(Number(event.target.value) as 1 | 2 | 4 | 8 | 16)}>{[1, 2, 4, 8, 16].map(value => <option key={value} value={value}>{text.exportDimensions(grid.width, grid.height, value)}</option>)}</select></label>
-                        <button className={converter ? styles.primary : undefined} type="button" disabled={busy} onClick={saveScaledPng}>{text.saveScaled}</button>
+                        <label htmlFor="pixel-export-scale">{text.exportScale}<select id="pixel-export-scale" value={exportScale} disabled={locked} onChange={event => setExportScale(Number(event.target.value) as 1 | 2 | 4 | 8 | 16)}>{[1, 2, 4, 8, 16].map(value => <option key={value} value={value}>{text.exportDimensions(grid.width, grid.height, value)}</option>)}</select></label>
+                        <button className={converter ? styles.primary : undefined} type="button" disabled={locked} onClick={saveScaledPng}>{text.saveScaled}</button>
                         <p className={styles.hint}>{text.scaledHelp}</p>
                     </div>
-                    <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={busy} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={busy} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={busy} onClick={saveProject}>{text.saveProject}</button></div>
+                    <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={locked} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={locked} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={locked} onClick={saveProject}>{text.saveProject}</button></div>
                     <p className={styles.hint}>{text.exportHelp}</p>
-                    <label className={styles.spaced} htmlFor="pixel-project-file">{text.openProject}<input ref={projectFileRef} hidden={locale !== 'en'} id="pixel-project-file" type="file" accept=".json,application/json" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importProject(file); }} /></label>
-                    {locale !== 'en' && <button className={styles.spaced} type="button" disabled={busy} onClick={() => projectFileRef.current?.click()} aria-label={text.openProject}>{text.chooseFile}</button>}
+                    <label className={styles.spaced} htmlFor="pixel-project-file">{text.openProject}<input ref={projectFileRef} hidden={locale !== 'en'} id="pixel-project-file" type="file" accept=".json,application/json" disabled={locked} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importProject(file); }} /></label>
+                    {locale !== 'en' && <button className={styles.spaced} type="button" disabled={locked} onClick={() => projectFileRef.current?.click()} aria-label={text.openProject}>{text.chooseFile}</button>}
                     <p className={styles.hint}>{text.projectHelp}</p>
                     <p className={styles.hint}>{text.converterProjectHelp}</p>
                 </section>

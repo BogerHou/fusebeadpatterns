@@ -1,6 +1,7 @@
 import { BoardOptionId } from './config';
 import { BOARDS } from '../core/model/board/board.model';
 import { Palette } from '@/lib/core/model/palette/palette.model';
+import { isPdfScaleMode, type PdfScaleMode } from './pdf-scale';
 
 export const EDITOR_DRAFT_STORAGE_KEY = 'bead-pattern-editor-draft-v1';
 export const EDITOR_DRAFT_PATTERN_MAX_BYTES = 1_500_000;
@@ -34,6 +35,7 @@ export type EditorDraft = {
     ditheringId: string;
     useSymbols: boolean;
     exportFormatId: string;
+    pdfScaleMode?: PdfScaleMode;
     imageAdjustments: {
         brightness: number;
         contrast: number;
@@ -241,6 +243,7 @@ function isEditorDraft(value: unknown): value is EditorDraft {
         typeof value.ditheringId === 'string' &&
         isBoolean(value.useSymbols) &&
         typeof value.exportFormatId === 'string' &&
+        (value.pdfScaleMode === undefined || isPdfScaleMode(value.pdfScaleMode)) &&
         isImageAdjustments(value.imageAdjustments) &&
         isRendererSettings(value.rendererSettings) &&
         (value.showReference === undefined || isBoolean(value.showReference)) &&

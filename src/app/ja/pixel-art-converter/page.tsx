@@ -1,5 +1,7 @@
+import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
+import SiteHeader from '@/components/layout/SiteHeader';
+import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
 
@@ -10,7 +12,7 @@ const pageUrl = 'https://fusebeadpatterns.art/ja/pixel-art-converter';
 export const metadata: Metadata = {
     title,
     description,
-    alternates: { canonical: pageUrl },
+    alternates: { canonical: pageUrl, languages: pixelLanguageAlternates },
     openGraph: { title, description, url: pageUrl, locale: 'ja_JP', siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
     twitter: { card: 'summary', title, description, images: [] },
 };
@@ -23,19 +25,7 @@ export default function JapanesePixelConverterPage() {
                 name: 'ドット絵変換', description, url: pageUrl, inLanguage: 'ja',
                 applicationCategory: 'DesignApplication', operatingSystem: 'Web',
             }).replace(/</g, '\\u003c') }} />
-            <header className="site-header">
-                <a href="#main-content" className="skip-link">本文へ移動</a>
-                <div className="site-header-inner">
-                    <Link href="/ja" className="site-brand" aria-label="Fuse Bead Patterns 日本語ホーム" prefetch={false}>
-                        <Image src="/logo.png" alt="" width={36} height={36} sizes="36px" preload />
-                        <span lang="en" className="site-brand-name">Fuse Bead Patterns<span aria-hidden="true">.</span></span>
-                    </Link>
-                    <nav className="site-nav" aria-label="メインメニュー">
-                        <Link href="/ja" prefetch={false}>アイロンビーズ図案</Link>
-                        <Link href="/ja/patterns" prefetch={false}>無料の図案</Link>
-                    </nav>
-                </div>
-            </header>
+            <SiteHeader locale="ja" />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16">
                 <nav aria-label="パンくずリスト" className="mb-6 text-sm text-muted">
                     <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -59,14 +49,7 @@ export default function JapanesePixelConverterPage() {
                     <p className="mt-5">ビーズの色番号や印刷用PDFが必要なときは、<Link href="/ja" prefetch={false} className="text-link">アイロンビーズ図案作成ツール</Link>を使ってください。このツールのグリッド付きPNGは、プレートに重ねる原寸図案ではありません。</p>
                 </section>
             </main>
-            <footer className="border-t border-line px-6 py-8 text-sm leading-7 text-muted">
-                <nav aria-label="サイト情報" className="mx-auto flex max-w-6xl flex-wrap gap-x-6 gap-y-2">
-                    <span lang="en">Fuse Bead Patterns</span>
-                    <Link href="/pixel-art-grid" hrefLang="en" prefetch={false}>英語のドット絵エディター</Link>
-                    <Link href="/privacy-policy" hrefLang="en" prefetch={false}>プライバシー（英語）</Link>
-                    <Link href="/terms-of-service" hrefLang="en" prefetch={false}>利用規約（英語）</Link>
-                </nav>
-            </footer>
+            <SiteFooter locale="ja" />
         </>
     );
 }

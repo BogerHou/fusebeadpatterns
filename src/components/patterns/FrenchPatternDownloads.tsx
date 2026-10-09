@@ -71,8 +71,8 @@ export default function FrenchPatternDownloads({ patterns }: { patterns: FrenchP
                                 <a href={pattern.project} download={`${pattern.id}-${brand}.bead-pattern.json`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
                                     aria-label={`${pattern.name} : enregistrer le projet ${label}`} data-pattern-event="pattern_download" data-pattern-format="project" {...tracking}>Enregistrer le projet</a>
                             </div>
-                            <a href={pattern.editor} hrefLang="en" className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent"
-                                aria-label={`${pattern.name} : modifier le projet ${label} dans l’éditeur en anglais`} data-pattern-event="pattern_editor_open" {...tracking}>Modifier (anglais)</a>
+                            <a href={pattern.editor} hrefLang="fr" className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent"
+                                aria-label={`${pattern.name} : modifier le projet ${label} dans l’éditeur en français`} data-pattern-event="pattern_editor_open" {...tracking}>Modifier</a>
                         </article>
                     );
                 })}

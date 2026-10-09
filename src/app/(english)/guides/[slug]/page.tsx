@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { getGuideBySlug, guidePages } from '../guide-data';
 import GuideHeader from '../GuideHeader';
-import GuidePatternGallery from '../GuidePatternGallery';
+import GuideSections from '@/components/guides/GuideSections';
+import { guideLanguageAlternates, isTranslatedGuideSlug } from '@/lib/guides/routes';
 
 type GuideRouteProps = {
     params: Promise<{
@@ -35,6 +35,7 @@ export async function generateMetadata({
         description: guide.description,
         alternates: {
             canonical: `/guides/${guide.slug}`,
+            ...(isTranslatedGuideSlug(slug) ? { languages: guideLanguageAlternates(slug) } : {}),
         },
         openGraph: {
             title: `${guide.title} | Fuse Bead Patterns`,
@@ -84,121 +85,7 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                         {guide.intro}
                     </p>
 
-                    <div className="mt-10 space-y-10 sm:mt-14 sm:space-y-14">
-                        {guide.sections.map((section) => (
-                            <section key={section.heading}>
-                                <h2 className="section-heading mb-4">
-                                    {section.heading}
-                                </h2>
-                                <div className="max-w-[70ch] space-y-5 text-base leading-8 text-[#43564d] sm:text-lg sm:leading-8">
-                                    {section.body.map((paragraph) => (
-                                        <p key={paragraph}>{paragraph}</p>
-                                    ))}
-                                </div>
-                                {section.table ? (
-                                    <div
-                                        role="region"
-                                        aria-label={section.table.caption}
-                                        tabIndex={0}
-                                        className="mt-6 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#28614e]"
-                                    >
-                                        <table className="w-full min-w-[40rem] border-collapse text-left text-base leading-7 text-[#43564d]">
-                                            <caption className="pb-4 text-left text-sm leading-6 text-[#59685d]">
-                                                {section.table.caption}
-                                            </caption>
-                                            <thead>
-                                                <tr className="border-y border-[#d9ded5] bg-[#f2f4ed]">
-                                                    {section.table.headers.map((header) => (
-                                                        <th key={header} scope="col" className="px-4 py-3 font-semibold text-[#243e36]">
-                                                            {header}
-                                                        </th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {section.table.rows.map((row) => (
-                                                    <tr key={row.label} className="border-b border-[#d9ded5] align-top">
-                                                        <th scope="row" className="px-4 py-4 font-semibold text-[#243e36]">
-                                                            {row.label}
-                                                        </th>
-                                                        {row.cells.map((cell, index) => (
-                                                            <td key={index} className="px-4 py-4">
-                                                                {cell}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : null}
-                                {section.patternIds ? (
-                                    <GuidePatternGallery patternIds={section.patternIds} />
-                                ) : null}
-                                {section.comparison ? (
-                                    <div className={`mt-7 grid gap-6 ${section.comparison.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
-                                        {section.comparison.map((figure) => (
-                                            <figure key={figure.src}>
-                                                <Image
-                                                    src={figure.src}
-                                                    alt={figure.alt}
-                                                    width={figure.width}
-                                                    height={figure.height}
-                                                    unoptimized
-                                                    className="aspect-square h-auto w-full rounded-lg border border-[#d9ded5] object-contain"
-                                                />
-                                                <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
-                                                    {figure.caption}
-                                                </figcaption>
-                                            </figure>
-                                        ))}
-                                    </div>
-                                ) : null}
-                                {section.links ? (
-                                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-base sm:text-lg">
-                                        {section.links.map((link) => (
-                                            <Link
-                                                key={link.href}
-                                                href={link.href}
-                                                download={link.download}
-                                                prefetch={link.download ? false : undefined}
-                                                className="text-link"
-                                            >
-                                                {link.label}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                ) : null}
-                                {section.bullets ? (
-                                    <ul className="mt-5 list-disc space-y-3 pl-5 text-base leading-8 text-[#43564d] marker:text-[#78917f] sm:text-lg">
-                                        {section.bullets.map((bullet) => (
-                                            <li
-                                                key={bullet}
-                                                className="pl-1"
-                                            >
-                                                {bullet}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : null}
-                                {section.figure ? (
-                                    <figure className="mt-7">
-                                        <Image
-                                            src={section.figure.src}
-                                            alt={section.figure.alt}
-                                            width={section.figure.width}
-                                            height={section.figure.height}
-                                            unoptimized
-                                            className="h-auto w-full rounded-lg border border-[#d9ded5]"
-                                        />
-                                        <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
-                                            {section.figure.caption}
-                                        </figcaption>
-                                    </figure>
-                                ) : null}
-                            </section>
-                        ))}
-                    </div>
+                    <GuideSections sections={guide.sections} id={slug === 'photo-to-perler-bead-pattern' ? 'conversion-examples' : undefined} />
 
                     <div className="mt-12 border-t border-[#d9ded5] pt-8 sm:mt-16 sm:pt-10">
                         <h2 className="section-heading">

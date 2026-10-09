@@ -1,6 +1,9 @@
+import LocalizedPatternCatalog from './LocalizedPatternCatalog';
+import SiteHeader from '@/components/layout/SiteHeader';
+import SiteFooter from '@/components/layout/SiteFooter';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPatternById, getPatternHref, type Pattern } from '@/lib/patterns/catalog';
+import { getPatternById, type Pattern } from '@/lib/patterns/catalog';
 import japanesePatterns from '@/lib/patterns/japanese.json';
 
 export const japanesePatternLibraryTitle = '無料のアイロンビーズ図案｜印刷用PDF・画像 | Fuse Bead Patterns';
@@ -69,20 +72,20 @@ function DownloadCard({ id, name }: { id: string; name: string }) {
                 </a>
             </div>
             <Link
-                href={`/ja?pattern=${encodeURIComponent(id)}`}
+                href={`/ja/editor?pattern=${encodeURIComponent(id)}`}
                 prefetch={false}
                 className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4"
                 aria-label={`${name}の図案を日本語で編集`}
             >日本語で編集<span className="ml-2" aria-hidden="true">→</span></Link>
             <br />
             <Link
-                href={getPatternHref(pattern)}
-                hrefLang="en"
+                href={`/ja/patterns/${pattern.slug}`}
+                hrefLang="ja"
                 prefetch={false}
                 className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent"
-                aria-label={`${name}の色・制作メモ・出典を見る（英語）`}
+                aria-label={`${name}の色・制作メモ・出典を見る`}
             >
-                詳細・出典（英語）
+                詳細・出典
             </Link>
         </article>
     );
@@ -91,21 +94,7 @@ function DownloadCard({ id, name }: { id: string; name: string }) {
 export default function JapanesePatternLibrary() {
     return (
         <div lang="ja" className="flex min-h-screen flex-col">
-            <header className="site-header">
-                <a href="#main-content" className="skip-link">本文へ移動</a>
-                <div className="site-header-inner">
-                    <Link href="/ja/patterns" className="site-brand" aria-label="Fuse Bead Patterns 日本語の図案一覧">
-                        <Image src="/logo.png" alt="" width={36} height={36} sizes="36px" />
-                        <span lang="en" className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
-                    </Link>
-                    <nav className="site-nav" aria-label="メインメニュー">
-                        <Link href="/ja">図案を作る</Link>
-                        <a href="#patterns">図案を選ぶ</a>
-                        <a href="#printing">印刷ガイド</a>
-                        <Link href="/patterns" hrefLang="en" lang="en">English</Link>
-                    </nav>
-                </div>
-            </header>
+            <SiteHeader locale="ja" active="patterns" />
 
             <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
                 <nav aria-label="パンくずリスト" className="mb-6 text-xs font-medium text-muted">
@@ -120,12 +109,17 @@ export default function JapanesePatternLibrary() {
                     ポケモンやスーパーマリオの図案を選んで、印刷用PDFやマス目付き画像を無料でダウンロードできます。登録は不要です。
                 </p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-                    PDFは日本語の説明・材料表付きです。画像を押すと図案を拡大表示できます。
+                    すべての図案の詳細ページで、日本語の説明・材料表付きPDFを保存し、日本語エディターを開けます。このページ下部の12点は、ここから直接ダウンロードできます。
+                </p>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+                    配色やマスを変えたい場合は「日本語で編集」からエディターを開きます。別の図案に切り替える前に、残したい編集をプロジェクトとして保存してください。編集後のPDFや画像はエディターの「書き出し」から保存できます。このページのダウンロードファイルはPerler Midiの元の配色です。
                 </p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
                     自分の画像からは、<Link href="/ja" className="text-link">日本語の図案作成ツール</Link>で作れます。画像の読み込みから保存までの手順は<Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">日本語の作り方ガイド</Link>をご覧ください。
                 </p>
 
+                <p className="mt-5"><a href="#patterns" className="text-link">日本語PDF付きの図案へ ↓</a></p>
+                <LocalizedPatternCatalog locale="ja" />
                 <nav aria-label="図案のテーマ" className="mt-5 flex flex-wrap gap-x-6 text-sm font-medium">
                     {groups.map(group => <a key={group.id} href={`#${group.id}-heading`} className="inline-flex min-h-11 items-center text-accent underline underline-offset-4">{group.title}</a>)}
                 </nav>
@@ -166,34 +160,24 @@ export default function JapanesePatternLibrary() {
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">ほかのブランドのビーズでも作れますか？</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
                                 ダウンロードする図案の色表はPerler Midi用です。別のブランドでは使える色が異なるため、手持ちの色を確認してください。
-                                <Link href="/guides/perler-to-hama-artkal" hrefLang="en" className="text-link">Hama・Artkalへの配色変更ガイド（英語）</Link>
-                                から、英語の編集画面で色を変更する手順も確認できます。
+                                「日本語で編集」から開き、「図案の設定」（スマートフォンでは「設定」）で「ビーズのブランド」を選んで「変更を適用」を押すと配色を変更できます。プレートの設定と実物のビーズサイズも確認してください。
+                                <Link href="/ja/guides/perler-to-hama-artkal" className="text-link">Hama・Artkalへの配色変更ガイド</Link>
+                                では、配色変更で確認したい点を詳しく紹介しています。
                             </p>
                         </details>
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">自分の写真から図案を作れますか？</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
                                 <Link href="/ja" className="text-link">日本語の図案作成ツール</Link>
-                                で画像を読み込み、配色を選び、マスを修正して日本語PDFを保存できます。完成済みの図案をこのページから保存する場合は、ツールの操作は必要ありません。
+                                で画像を読み込むと、自動でプレビューができます。配色と大きさを選び、「エディターを開く」からマスの修正や日本語PDFの書き出しへ進みます。
+                                書き出し時に「PDF の印刷サイズ」を確認してください。使える原寸設定はブランドとプレートによって異なります。<Link href="/ja/guides/photo-to-perler-bead-pattern#export-heading" className="text-link">PDFの書き出し・印刷の説明</Link>もご覧ください。完成済みの図案をこのページから保存する場合は、ツールの操作は必要ありません。
                             </p>
                         </details>
                     </div>
                 </section>
             </main>
 
-            <footer className="mt-auto border-t border-line bg-[#edeee7]">
-                <div className="mx-auto max-w-[1248px] px-5 py-8 sm:px-10">
-                    <p className="text-sm leading-7 text-muted">写真からの作成は日本語ツールで、全図案と詳しい編集機能は英語版で利用できます。</p>
-                    <nav aria-label="関連ページ" className="mt-3 flex flex-wrap gap-x-6">
-                        <Link href="/patterns" hrefLang="en" className="text-link">すべての図案（英語）</Link>
-                        <Link href="/privacy-policy" hrefLang="en" className="text-link">プライバシー（英語）</Link>
-                        <Link href="/terms-of-service" hrefLang="en" className="text-link">利用規約（英語）</Link>
-                    </nav>
-                    <p className="mt-5 max-w-3xl text-xs leading-6 text-muted">
-                        © 2026 Fuse Bead Patterns. 当サイトは各ビーズブランドやキャラクターの権利元の公式サイトではありません。
-                    </p>
-                </div>
-            </footer>
+            <SiteFooter locale="ja" active="patterns" />
         </div>
     );
 }

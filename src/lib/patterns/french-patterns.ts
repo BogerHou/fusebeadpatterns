@@ -31,7 +31,7 @@ function cardsForBrand(brand: FrenchPatternBrand): FrenchPatternCard[] {
             preview: brand === 'hama' ? hama.preview : original.assets.preview,
             pdf: `/${brand === 'hama' ? 'patterns-fr-hama' : 'patterns-fr'}/${id}/pattern.pdf`,
             project: brand === 'hama' ? hama.project : original.assets.project,
-            editor: `/editor?pattern=${encodeURIComponent(projectId)}`,
+            editor: `/fr/editor?pattern=${encodeURIComponent(projectId)}`,
         };
     });
 }

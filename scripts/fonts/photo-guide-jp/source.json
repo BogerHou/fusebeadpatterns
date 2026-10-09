@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "weight": 400,
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Guide Japanese",
+  "subsetPurpose": "Three unchanged photo/illustration guide projects, Japanese labels, original Perler names/references/symbols",
+  "subsetSha256": "1608e5c3a4dff0927ae10cfa7749e1a9ee2549053695d13487cc803d3a2bc121",
+  "charactersSha256": "88e3c8448cecd001d51bef8bd08cd483eda9630a2bc2793d1f66a9d1c926a01a",
+  "characterCount": 268,
+  "fonttoolsVersion": "4.60.1"
+}

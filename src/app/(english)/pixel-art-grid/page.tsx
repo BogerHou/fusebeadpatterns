@@ -1,3 +1,4 @@
+import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
     title,
     description,
     keywords: ['pixel art grid', 'pixel grid maker', 'grid for pixel art', 'transparent pixel art PNG'],
-    alternates: { canonical: '/pixel-art-grid' },
+    alternates: { canonical: '/pixel-art-grid', languages: pixelLanguageAlternates },
     openGraph: {
         title,
         description,

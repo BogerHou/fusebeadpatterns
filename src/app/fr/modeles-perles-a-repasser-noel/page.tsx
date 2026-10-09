@@ -1,7 +1,12 @@
+import { patternLanguageAlternates } from '@/lib/i18n/metadata';
+import PatternSectionNav from '@/components/patterns/PatternSectionNav';
+import { topicMessages } from '@/lib/patterns/section-messages';
+import SiteHeader from '@/components/layout/SiteHeader';
+import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPatternById, getPatternHref } from '@/lib/patterns/catalog';
+import { getPatternById } from '@/lib/patterns/catalog';
 import selection from '@/lib/patterns/french-christmas.json';
 
 const path = '/fr/modeles-perles-a-repasser-noel';
@@ -16,7 +21,7 @@ const selected = selection.patterns.map((local) => {
 
 export const metadata: Metadata = {
     title, description,
-    alternates: { canonical: path },
+    alternates: { canonical: path, languages: patternLanguageAlternates('christmas') },
     openGraph: {
         title, description, locale: 'fr_FR', type: 'website',
         url: `https://fusebeadpatterns.art${path}`, siteName: 'Fuse Bead Patterns',
@@ -43,24 +48,11 @@ export default function FrenchChristmasPatternsPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
-            <header className="site-header">
-                <a href="#main-content" className="skip-link">Aller au contenu</a>
-                <div className="site-header-inner">
-                    <Link href={path} className="site-brand" aria-label="Fuse Bead Patterns – modèles de Noël">
-                        <Image src="/logo.png" alt="" width={36} height={36} sizes="36px" />
-                        <span lang="en" className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
-                    </Link>
-                    <nav className="site-nav" aria-label="Navigation principale">
-                        <a href="#modeles">Modèles</a>
-                        <a href="#imprimer">Imprimer</a>
-                        <Link href="/patterns/christmas" hrefLang="en" lang="en">English</Link>
-                    </nav>
-                </div>
-            </header>
+            <SiteHeader locale="fr" active="patterns" />
             <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
                 <nav aria-label="Fil d’Ariane" className="mb-6 text-xs font-medium text-muted">
                     <ol className="flex flex-wrap items-center gap-x-2">
-                        <li><Link href="/" hrefLang="en" className="inline-flex min-h-10 items-center hover:underline">Accueil (anglais)</Link></li>
+                        <li><Link href="/fr" className="inline-flex min-h-10 items-center hover:underline">Accueil</Link></li>
                         <li aria-hidden="true">/</li>
                         <li aria-current="page">Modèles de Noël</li>
                     </ol>
@@ -69,6 +61,7 @@ export default function FrenchChristmasPatternsPage() {
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
                     Trois motifs gratuits à télécharger : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Chaque PDF A4 contient la grille, les symboles et la liste des couleurs Perler. Sans inscription.
                 </p>
+                <PatternSectionNav locale="fr" current="christmas" />
                 <section id="modeles" aria-labelledby="models-heading" className="mt-9">
                     <h2 id="models-heading" className="mb-6 text-xl font-semibold leading-relaxed sm:text-2xl">Choisir un modèle à imprimer</h2>
                     <div className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
@@ -93,12 +86,21 @@ export default function FrenchChristmasPatternsPage() {
                                         Grille PNG<span aria-hidden="true">↓</span>
                                     </a>
                                 </div>
-                                <Link href={getPatternHref(pattern)} hrefLang="en" prefetch={false} className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent">
-                                    Détails et édition (anglais)
+                                <Link href={`/fr/editor?pattern=${encodeURIComponent(pattern.id)}`} prefetch={false} className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4"
+                                    aria-label={`${pattern.name} : modifier le modèle`} data-pattern-event="pattern_editor_open" data-pattern-id={pattern.id} data-pattern-palette="perler" data-pattern-entry="patterns">
+                                    Modifier
+                                </Link>
+                                <br />
+                                <Link href={`/fr/patterns/${pattern.slug}`} hrefLang="fr" prefetch={false} className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent">
+                                    Détails et source
                                 </Link>
                             </article>
                         ))}
                     </div>
+                </section>
+                <section aria-labelledby="making-heading" className="mt-12 max-w-3xl border-t border-line pt-8">
+                    <h2 id="making-heading" className="section-heading">{topicMessages.fr.christmas.heading}</h2>
+                    {topicMessages.fr.christmas.notes.map(note => <p key={note} className="mt-4 leading-8 text-muted">{note}</p>)}
                 </section>
                 <section id="imprimer" aria-labelledby="print-heading" className="mt-14 border-t border-line pt-8">
                     <h2 id="print-heading" className="text-2xl font-semibold leading-relaxed">Imprimer à la bonne taille</h2>
@@ -122,7 +124,7 @@ export default function FrenchChristmasPatternsPage() {
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Puis-je utiliser des perles Hama ?</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
-                                Les références de ces PDFs sont celles de Perler, pas de Hama. Pour une fiche déjà préparée en français, ouvrez les <Link href="/fr/modeles-perles-a-repasser#marque" className="text-link">six modèles de perles à repasser</Link> et choisissez Hama Midi. Vous pouvez aussi comparer vos couleurs disponibles ou changer la palette dans l’éditeur avant d’exporter une autre fiche. Le <Link href="/guides/perler-to-hama-artkal" hrefLang="en" className="text-link">guide de changement de marque (anglais)</Link> explique cette étape ; l’éditeur et ses exports sont en anglais.
+                                Les références de ces PDFs sont celles de Perler, pas de Hama. Pour une fiche déjà préparée en français, ouvrez les <Link href="/fr/modeles-perles-a-repasser#marque" className="text-link">six modèles de perles à repasser</Link> et choisissez Hama Midi. Vous pouvez aussi comparer vos couleurs disponibles ou changer la palette dans l’éditeur avant d’exporter une autre fiche. Le <Link href="/fr/guides/perler-to-hama-artkal" className="text-link">guide de changement de marque</Link> explique cette étape ; vous pouvez modifier le projet et exporter sa nouvelle version dans l’éditeur en français.
                             </p>
                         </details>
                         <details className="py-4">
@@ -132,17 +134,7 @@ export default function FrenchChristmasPatternsPage() {
                     </div>
                 </section>
             </main>
-            <footer className="mt-auto border-t border-line bg-[#edeee7]">
-                <div className="mx-auto max-w-[1248px] px-5 py-8 sm:px-10">
-                    <nav aria-label="Autres pages" className="flex flex-wrap gap-x-6">
-                        <Link href="/fr/modeles-perles-a-repasser" className="text-link">Modèles de perles à repasser</Link>
-                        <Link href="/patterns" hrefLang="en" className="text-link">Tous les modèles (anglais)</Link>
-                        <Link href="/privacy-policy" hrefLang="en" className="text-link">Confidentialité (anglais)</Link>
-                        <Link href="/terms-of-service" hrefLang="en" className="text-link">Conditions d’utilisation (anglais)</Link>
-                    </nav>
-                    <p className="mt-5 max-w-3xl text-xs leading-6 text-muted">© 2026 Fuse Bead Patterns. Créations originales. Site indépendant des marques de perles.</p>
-                </div>
-            </footer>
+            <SiteFooter locale="fr" active="patterns" />
         </>
     );
 }

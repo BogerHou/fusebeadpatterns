@@ -1,6 +1,7 @@
 import { Project } from '../../model/project/project.model';
 import { SvgPrinter } from '../svg/svg.printer';
 import { downloadRasterSvg } from '../raster';
+import type { PrinterOptions } from '../messages';
 
 export class JpgPrinter extends SvgPrinter {
     name(): string {
@@ -11,9 +12,10 @@ export class JpgPrinter extends SvgPrinter {
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
-        filename: string
+        filename: string,
+        { locale = 'en' }: PrinterOptions = {}
     ): Promise<void> {
-        const svg = this.drawSVG(reducedColor, usage, project);
-        await downloadRasterSvg(svg, 'image/jpeg', `${filename}.jpeg`);
+        const svg = this.drawSVG(reducedColor, usage, project, locale);
+        await downloadRasterSvg(svg, 'image/jpeg', `${filename}.jpeg`, { locale });
     }
 }

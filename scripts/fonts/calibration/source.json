@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Calibration",
+  "weights": [
+    400,
+    700
+  ],
+  "purpose": "DE/FR/JA calibration labels only",
+  "charactersSha256": "18aadec9bfac993149119ac650ecf1a929223e686918ec0a764e202b1a98beee",
+  "fonttoolsVersion": "4.66.1",
+  "subsetSha256": {
+    "Regular": "bf8461c74e9b76be6e4eda854a4381e0e69a4c962701033cd8c639d1c4920f40",
+    "Bold": "215a6880371721c86bb36b5231750154fe4f02432b1949cefd79e356c1604cd2"
+  }
+}

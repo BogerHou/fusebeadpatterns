@@ -1,7 +1,10 @@
 import React from 'react';
 import { useDialogFocus } from './useDialogFocus';
+import type { SiteLocale } from '@/lib/i18n/locales';
+import { getEditorTranslator } from '@/lib/editor/messages';
 
 type EditorDialogProps = {
+    locale?: SiteLocale;
     title: string;
     summary: string;
     onClose: () => void;
@@ -10,12 +13,14 @@ type EditorDialogProps = {
 };
 
 export function EditorDialog({
+    locale = 'en',
     title,
     summary,
     onClose,
     restoreFocusFallback,
     children,
 }: EditorDialogProps) {
+    const t = getEditorTranslator(locale);
     const dialogRef = useDialogFocus(true, onClose, restoreFocusFallback);
 
     return (
@@ -41,7 +46,7 @@ export function EditorDialog({
                         type="button"
                         onClick={onClose}
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white text-2xl leading-none transition-colors hover:bg-brand-cyan sm:h-9 sm:w-9"
-                        aria-label={`Close ${title}`}
+                        aria-label={t('Close {title}', { title })}
                     >
                         &times;
                     </button>

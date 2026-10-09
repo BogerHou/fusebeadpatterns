@@ -35,7 +35,7 @@ describe('French original pattern downloads', () => {
             expect(card.projectId).toBe(expectedId);
             expect(card.preview).toBe(`/${directory}/${card.id}/preview.png`);
             expect(card.project).toBe(`/${directory}/${card.id}/pattern.bead-pattern.json`);
-            expect(card.editor).toBe(`/editor?pattern=${expectedId}`);
+            expect(card.editor).toBe(`/fr/editor?pattern=${expectedId}`);
             expect(getLibraryProject(expectedId)?.projectUrl).toBe(card.project);
             const project = parseEditorProject(readFileSync(publicFile(card.project), 'utf8'));
             expect(project?.selectedPaletteIds).toEqual([brand]);
@@ -71,7 +71,7 @@ describe('French original pattern downloads', () => {
         expect(html).not.toContain('Grille PNG');
         expect(html).not.toContain('colorCount');
         expect(html).toContain('6 modèles affichés en Perler Midi');
-        expect(html).toContain('Modifier (anglais)');
+        expect(html).toContain('Modifier');
         for (const card of frenchPatternChoices.perler) {
             const article = html.match(new RegExp(`<article[^>]*id="${card.id}"[\\s\\S]*?<\\/article>`))?.[0];
             expect(article).toBeDefined();
@@ -80,7 +80,7 @@ describe('French original pattern downloads', () => {
             expect(anchors).toHaveLength(4);
             expect(anchors.filter(anchor => anchor.includes(`href="${card.pdf}"`) && anchor.includes('download=') && anchor.includes('data-pattern-format="pdf"'))).toHaveLength(2);
             expect(anchors.filter(anchor => anchor.includes(`href="${card.project}"`) && anchor.includes('download=') && anchor.includes('data-pattern-format="project"'))).toHaveLength(1);
-            expect(anchors.filter(anchor => anchor.includes(`href="${card.editor}"`) && anchor.includes('data-pattern-event="pattern_editor_open"') && anchor.includes('hrefLang="en"'))).toHaveLength(1);
+            expect(anchors.filter(anchor => anchor.includes(`href="${card.editor}"`) && anchor.includes('data-pattern-event="pattern_editor_open"') && anchor.includes('hrefLang="fr"'))).toHaveLength(1);
             for (const anchor of anchors) {
                 expect(anchor).toContain(`data-pattern-id="${card.projectId}"`);
                 expect(anchor).toContain('data-pattern-palette="perler"');

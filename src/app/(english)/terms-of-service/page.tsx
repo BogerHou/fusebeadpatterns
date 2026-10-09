@@ -1,12 +1,14 @@
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
+import { sitePageLanguageAlternates } from '@/lib/site-pages/routes';
 
 export const metadata = {
     title: 'Terms of Service | Fuse Bead Patterns',
     description: 'Terms of Service and terms of use for Fuse Bead Patterns.',
     alternates: {
         canonical: '/terms-of-service',
+        languages: sitePageLanguageAlternates('terms-of-service'),
     },
 };
 

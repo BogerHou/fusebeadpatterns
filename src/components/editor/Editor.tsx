@@ -24,8 +24,16 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { EditorDialog } from './EditorDialog';
 import { EditorSection } from './EditorSection';
+import { PdfScaleField } from './PdfScaleField';
 import { useDialogFocus } from './useDialogFocus';
 import './editor-studio.css';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import type { SiteLocale } from '@/lib/i18n/locales';
+import { localeRoutes, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
+import { formatEditorNumber, getEditorErrorMessage, getEditorTranslator } from '@/lib/editor/messages';
+import { clearRestoredPatternQuery, consumeEditorLocaleDraft, getEditorLocaleRestoreHref, saveEditorLocaleDraft, type EditorLocaleRecovery } from '@/lib/editor/locale-navigation';
+import { getInitialPdfScaleMode, isMidiActualSizeSupported, resolvePdfScaleMode, type PdfScaleMode } from '@/lib/editor/pdf-scale';
+import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
 
 import {
     BOARD_OPTIONS,
@@ -45,6 +53,7 @@ import {
     decodeEditorPatternDraft,
     encodeEditorPatternDraft,
     encodeEditorProjectPattern,
+    EDITOR_DRAFT_PATTERN_MAX_BYTES,
     EDITOR_PROJECT_FILE_EXTENSION,
     EditorDraft,
     EditorPatternDraft,
@@ -211,6 +220,7 @@ type TouchListLike = {
 
 type EditorProps = {
     mode?: 'home' | 'editor';
+    locale?: SiteLocale;
 };
 
 const EDITOR_TOOLS: {
@@ -326,25 +336,25 @@ function getPatternBeadCount(
     );
 }
 
-function formatBeadCount(beadCount: number): string {
-    return new Intl.NumberFormat('en-US').format(beadCount);
+function formatBeadCount(beadCount: number, locale: SiteLocale): string {
+    return formatEditorNumber(beadCount, locale);
 }
 
-function getLargePatternWarning(beadCount: number): string | null {
+function getLargePatternWarning(beadCount: number, locale: SiteLocale): string | null {
     if (beadCount < LARGE_PATTERN_WARNING_BEAD_COUNT) {
         return null;
     }
 
-    return `${formatBeadCount(beadCount)} bead positions. Large patterns can process slowly; reduce boards or turn off dithering if it feels stuck.`;
+    return getEditorTranslator(locale)('{count} bead positions. Large patterns can process slowly; reduce boards or turn off dithering if it feels stuck.', { count: formatBeadCount(beadCount, locale) });
 }
 
-function confirmLargePatternAction(beadCount: number): boolean {
+function confirmLargePatternAction(beadCount: number, locale: SiteLocale): boolean {
     if (beadCount < LARGE_PATTERN_CONFIRM_BEAD_COUNT) {
         return true;
     }
 
     return window.confirm(
-        `This setup creates ${formatBeadCount(beadCount)} bead positions and may make the browser slow or temporarily unresponsive.\n\nContinue? For faster results, reduce boards or turn off dithering.`
+        getEditorTranslator(locale)('This setup creates {count} bead positions and may make the browser slow or temporarily unresponsive.\n\nContinue? For faster results, reduce boards or turn off dithering.', { count: formatBeadCount(beadCount, locale) })
     );
 }
 
@@ -390,6 +400,7 @@ function getProjectDownloadFileName(fileName: string): string {
 }
 
 type LibraryPatternEntryProps = {
+    locale: SiteLocale;
     hasCurrentPattern: boolean;
     canSaveCurrentPattern: boolean;
     busy: boolean;
@@ -400,6 +411,7 @@ type LibraryPatternEntryProps = {
 
 function LibraryPatternEntry({
     patternId,
+    locale,
     hasCurrentPattern,
     canSaveCurrentPattern,
     busy,
@@ -407,7 +419,8 @@ function LibraryPatternEntry({
     onSave,
     onLoadingChange,
 }: LibraryPatternEntryProps & { patternId: string }) {
-    const project = getLibraryProject(patternId);
+    const t = getEditorTranslator(locale);
+    const project = getLibraryProject(patternId, locale);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const requestRef = useRef<AbortController | null>(null);
@@ -421,7 +434,7 @@ function LibraryPatternEntry({
         // This is client-only state on the same static route. Next's native
         // History integration updates useSearchParams without a cached route
         // navigation restoring the old query string in production.
-        window.history.replaceState(null, '', '/editor');
+        window.history.replaceState(null, '', clearRestoredPatternQuery(window.location.href));
     };
 
     const dismiss = () => {
@@ -457,21 +470,21 @@ function LibraryPatternEntry({
 
     return (
         <section
-            aria-label="Open library pattern"
+            aria-label={t("Open library pattern")}
             data-testid="library-pattern-entry"
             className="shrink-0 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-3 text-sm text-brutal-black sm:px-4"
         >
             <p className="font-semibold">
-                {project ? `Open ${project.title}?` : 'This pattern is not in the library.'}
+                {project ? t('Open {title}?', { title: project.title }) : t("This pattern is not in the library.")}
             </p>
             <p className="mt-1">
                 {project
                     ? hasCurrentPattern
-                        ? 'Your current pattern is still open. Save a project copy before replacing it.'
-                        : 'Open this ready-made pattern to edit its beads and colors.'
-                    : 'Your current project has not changed. You can continue editing or choose another pattern.'}
+                        ? t("Your current pattern is still open. Save a project copy before replacing it.")
+                        : t("Open this ready-made pattern to edit its beads and colors.")
+                    : t("Your current project has not changed. You can continue editing or choose another pattern.")}
             </p>
-            {error && <p role="alert" className="mt-2 font-semibold">{error}</p>}
+            {error && <p role="alert" className="mt-2 font-semibold">{getEditorErrorMessage(error, locale)}</p>}
             <div className="mt-2 flex flex-wrap gap-2">
                 {project && (
                     <button
@@ -481,7 +494,7 @@ function LibraryPatternEntry({
                         disabled={loading || busy}
                         className="rounded-lg border border-[#d9ded5] bg-brutal-black px-3 py-2 font-semibold text-white disabled:opacity-50"
                     >
-                        {loading ? 'Opening pattern...' : hasCurrentPattern ? 'Replace current pattern' : 'Open pattern'}
+                        {loading ? t("Opening pattern...") : hasCurrentPattern ? t("Replace current pattern") : t("Open pattern")}
                     </button>
                 )}
                 {project && hasCurrentPattern && (
@@ -491,7 +504,7 @@ function LibraryPatternEntry({
                         disabled={!canSaveCurrentPattern || loading || busy}
                         className="rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold disabled:opacity-50"
                     >
-                        Save current project
+                        {t("Save current project")}
                     </button>
                 )}
                 <button
@@ -500,9 +513,9 @@ function LibraryPatternEntry({
                     onClick={dismiss}
                     className="rounded-lg border border-[#d9ded5] bg-white px-3 py-2 font-semibold"
                 >
-                    {hasCurrentPattern ? 'Keep current pattern' : 'Continue without opening'}
+                    {hasCurrentPattern ? t("Keep current pattern") : t("Continue without opening")}
                 </button>
-                {!project && <Link href="/patterns" className="px-2 py-2 font-semibold underline">Browse patterns</Link>}
+                {!project && <Link href={localeRoutes[locale].patterns} className="px-2 py-2 font-semibold underline">{t("Browse patterns")}</Link>}
             </div>
         </section>
     );
@@ -513,7 +526,12 @@ function LibraryPatternRequest(props: LibraryPatternEntryProps) {
     return patternId === null ? null : <LibraryPatternEntry key={patternId} patternId={patternId} {...props} />;
 }
 
-export default function Editor({ mode = 'home' }: EditorProps) {
+export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
+    const t = getEditorTranslator(locale);
+    const localHome = localeRoutes[locale].home;
+    const localEditor = localeRoutes[locale].editor;
+    const number = (value: number) => formatEditorNumber(value, locale);
+    const confirmImageGeneration = React.useEffectEvent((beadCount: number) => confirmLargePatternAction(beadCount, locale));
     const router = useRouter();
     const isEditorPage = mode === 'editor';
     const [sourceMode, setSourceMode] = useState<EditorSourceMode>('image');
@@ -536,6 +554,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     const [ditheringId, setDitheringId] = useState(DEFAULT_DITHERING_ID);
     const [useSymbols, setUseSymbols] = useState(false);
     const [exportFormatId, setExportFormatId] = useState(DEFAULT_EXPORT_ID);
+    const initialLocaleRef = useRef(locale);
+    const [pdfScaleMode, setPdfScaleMode] = useState<PdfScaleMode>(() => getInitialPdfScaleMode(locale));
     const [imageAdjustments, setImageAdjustments] = useState<ImageAdjustments>(
         DEFAULT_IMAGE_ADJUSTMENTS
     );
@@ -563,9 +583,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         useState<EditorMobilePanel>(null);
     const [homeMobilePanel, setHomeMobilePanel] =
         useState<HomeMobilePanel>(null);
-    const [isEditorDraftReady, setIsEditorDraftReady] = useState(
-        !isEditorPage
-    );
+    const [isEditorDraftReady, setIsEditorDraftReady] = useState(false);
     const [activeEditorTool, setActiveEditorTool] =
         useState<EditorTool>('bead');
     const [activeEditorColorRef, setActiveEditorColorRef] = useState<
@@ -653,6 +671,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         totalBeads > 0 &&
         !processing &&
         exportingId === null;
+    const supportsMidiActualSize = isMidiActualSizeSupported(selectedPaletteIds, boardId);
+    const isPdfScaleSupported = pdfScaleMode === 'fit-page' || supportsMidiActualSize;
+    const canExportSelectedFormat = canExportPattern && (exportFormatId !== 'pdf' || isPdfScaleSupported);
     const hasPendingPatternSettings =
         pendingPrimaryPaletteId !== primaryPaletteId ||
         pendingBoardId !== boardId ||
@@ -712,14 +733,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     );
     const patternSize = selectedBoard
         ? `${boardWidth * selectedBoard.beadsPerRow} x ${boardHeight * selectedBoard.beadsPerRow}`
-        : 'Unknown';
-    const boardCountStatus = `${boardWidth} x ${boardHeight} board${
-        boardWidth * boardHeight > 1 ? 's' : ''
-    }`;
+        : t('Unknown');
+    const boardCountStatus = t(boardWidth * boardHeight > 1 ? '{width} x {height} boards' : '{width} x {height} board', { width: number(boardWidth), height: number(boardHeight) });
     const pendingSelectedBoard = getBoardOption(pendingBoardId);
     const pendingPatternSize = pendingSelectedBoard
         ? `${pendingBoardWidth * pendingSelectedBoard.beadsPerRow} x ${pendingBoardHeight * pendingSelectedBoard.beadsPerRow}`
-        : 'Unknown';
+        : t('Unknown');
     const currentPatternBeadCount = getPatternBeadCount(
         selectedBoard,
         boardWidth,
@@ -731,10 +750,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         pendingBoardHeight
     );
     const currentLargePatternWarning = getLargePatternWarning(
-        currentPatternBeadCount
+        currentPatternBeadCount, locale
     );
     const pendingLargePatternWarning = getLargePatternWarning(
-        pendingPatternBeadCount
+        pendingPatternBeadCount, locale
     );
     const processingHint =
         currentPatternBeadCount >= LARGE_PATTERN_WARNING_BEAD_COUNT
@@ -748,23 +767,21 @@ export default function Editor({ mode = 'home' }: EditorProps) {
           'export')
         : null;
     const exportStatusText = activeExportLabel
-        ? `Preparing ${activeExportLabel}. Loading export tools can take a moment the first time.`
+        ? t('Preparing {format}. Loading export tools can take a moment the first time.', { format: t(activeExportLabel) })
         : null;
-    const pendingBoardCountStatus = `${pendingBoardWidth} x ${pendingBoardHeight} board${
-        pendingBoardWidth * pendingBoardHeight > 1 ? 's' : ''
-    }`;
+    const pendingBoardCountStatus = t(pendingBoardWidth * pendingBoardHeight > 1 ? '{width} x {height} boards' : '{width} x {height} board', { width: number(pendingBoardWidth), height: number(pendingBoardHeight) });
     const pendingPaletteLabel =
         getPaletteDisplayLabel(getPaletteOption(pendingPrimaryPaletteId));
     const primaryPaletteLabel =
         getPaletteDisplayLabel(getPaletteOption(primaryPaletteId));
     const compactColorBrandStatus =
         selectedPaletteIds.length > 1
-            ? `${selectedPaletteIds.length} palettes • ${enabledColorCount} colors`
-            : `${enabledColorCount} colors`;
-    const compactPatternStatus = `${patternSize} pattern • ${boardCountStatus}`;
+            ? t('{palettes} palettes • {colors} colors', { palettes: number(selectedPaletteIds.length), colors: number(enabledColorCount) })
+            : t('{count} colors', { count: number(enabledColorCount) });
+    const compactPatternStatus = t('{size} pattern • {boards}', { size: patternSize, boards: boardCountStatus });
     const fullscreenPaletteSummary =
         selectedPaletteIds.length > 1
-            ? `${primaryPaletteLabel} + ${selectedPaletteIds.length - 1} more`
+            ? t('{brand} + {count} more', { brand: primaryPaletteLabel, count: number(selectedPaletteIds.length - 1) })
             : primaryPaletteLabel;
     const allPaletteEntries = activePalettes.flatMap(
         (palette) => palette.entries
@@ -906,7 +923,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     );
 
     const getCurrentEditedPatternDraft = useCallback((forProject = false) => {
-        if (forProject) {
+        if (forProject && reducedColorRef.current) {
             return encodeEditorProjectPattern(
                 reducedColorRef.current,
                 previewSize.width,
@@ -981,6 +998,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             ditheringId,
             useSymbols,
             exportFormatId,
+            pdfScaleMode,
             imageAdjustments,
             rendererSettings,
             showReference,
@@ -995,6 +1013,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         boardWidth,
         ditheringId,
         exportFormatId,
+        pdfScaleMode,
         fileName,
         getCurrentEditedPatternDraft,
         imageAdjustments,
@@ -1011,9 +1030,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
     const persistEditorDraft = useCallback((draft: EditorDraft) => {
         if (reducedColorRef.current && !draft.editedPattern) {
-            setDraftWarning(
-                'This pattern is too large for automatic recovery. Save a project file to keep all bead edits.'
-            );
+            if (reducedColorRef.current.byteLength > EDITOR_DRAFT_PATTERN_MAX_BYTES) {
+                setDraftWarning(
+                    'This pattern is too large for automatic recovery. Save a project file to keep all bead edits.'
+                );
+            }
             return false;
         }
 
@@ -1080,6 +1101,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             setDitheringId(draft.ditheringId);
             setUseSymbols(draft.useSymbols);
             setExportFormatId(draft.exportFormatId);
+            setPdfScaleMode(resolvePdfScaleMode(draft.pdfScaleMode, initialLocaleRef.current));
             setImageAdjustments(draft.imageAdjustments);
             setRendererSettings(draft.rendererSettings);
             setShowReference(draft.showReference ?? true);
@@ -1118,16 +1140,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     );
 
     useEffect(() => {
-        if (!isEditorPage) {
-            return;
+        let languageRecovery: EditorLocaleRecovery | null = null;
+        try {
+            languageRecovery = consumeEditorLocaleDraft(window.location.href, window.sessionStorage);
+        } catch {
+            // Storage can be blocked before getItem is called. Normal startup still works.
         }
-
-        const draft = loadEditorDraft();
-
-        if (draft) {
-            restoreEditorDraft(draft);
+        const draft = languageRecovery?.draft ?? (isEditorPage ? loadEditorDraft() : null);
+        if (draft) restoreEditorDraft(draft);
+        if (languageRecovery) {
+            libraryPatternIdRef.current = languageRecovery.acceptedPatternId;
+            window.history.replaceState(null, '', getEditorLocaleRestoreHref(window.location.href, languageRecovery));
         }
-
         setIsEditorDraftReady(true);
     }, [isEditorPage, restoreEditorDraft]);
 
@@ -1452,7 +1476,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 plannedBeadCount >= LARGE_PATTERN_CONFIRM_BEAD_COUNT &&
                 confirmedLargeGenerationKeyRef.current !== largeGenerationKey
             ) {
-                if (!confirmLargePatternAction(plannedBeadCount)) {
+                if (!confirmImageGeneration(plannedBeadCount)) {
                     setErrorMessage(
                         'Large pattern generation cancelled. Reduce boards or turn off dithering for a faster build.'
                     );
@@ -1872,6 +1896,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             return;
         }
 
+        // Blank initialization updates the canvas/ref before React commits its
+        // new preview dimensions. Keep the previous draft until both agree;
+        // equal areas alone are insufficient when a rectangle changes orientation.
+        const canvas = canvasRef.current;
+        if (!isEditorPatternSnapshotReady(reducedColorRef.current, canvas, previewSize)) {
+            return;
+        }
+
         persistEditorDraft(createCurrentEditorDraft());
     }, [
         createCurrentEditorDraft,
@@ -1880,6 +1912,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         manualPatternRevision,
         persistEditorDraft,
         processing,
+        previewSize,
         sourceMode,
     ]);
 
@@ -1933,7 +1966,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     };
 
     const handleCreateBlankPattern = () => {
-        if (!confirmLargePatternAction(currentPatternBeadCount)) {
+        if (!confirmLargePatternAction(currentPatternBeadCount, locale)) {
             setErrorMessage(
                 'Large blank pattern creation cancelled. Reduce boards for a faster setup.'
             );
@@ -1982,7 +2015,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             pendingBoardHeight
         );
 
-        if (!confirmLargePatternAction(nextPatternBeadCount)) {
+        if (!confirmLargePatternAction(nextPatternBeadCount, locale)) {
             setErrorMessage(
                 'Large pattern update cancelled. Reduce boards or turn off dithering for a faster build.'
             );
@@ -2002,7 +2035,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         if (
             !preservePattern && hasManualPatternChanges &&
             !window.confirm(
-                'Changing pattern setup will rebuild the pattern and discard manual bead edits. Continue?'
+                t('Changing pattern setup will rebuild the pattern and discard manual bead edits. Continue?')
             )
         ) {
             return;
@@ -2678,7 +2711,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 return;
             }
 
-            router.push('/editor');
+            router.push(localEditor);
         } catch {
             setErrorMessage('Could not prepare the pattern for editing. Try generating it again.');
         }
@@ -2804,6 +2837,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         if (exportInProgressRef.current) {
             return;
         }
+        if (exportId === 'pdf' && !isPdfScaleSupported) {
+            setErrorMessage('5 mm actual-size PDF requires a 29 × 29 Midi board and only Perler Midi, Hama Midi or Artkal S palettes. Choose a page-fit chart or change the setup.');
+            return;
+        }
 
         finishActiveStroke();
         if (
@@ -2839,6 +2876,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
             await waitForNextPaint();
             await exportEditorPattern({
                 exportId,
+                locale,
+                pdfScaleMode,
                 reducedColor: pattern,
                 beadsUsage: usage,
                 project,
@@ -2917,6 +2956,35 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         }
     );
 
+
+    const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
+        const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
+        if (!detail?.href) return;
+        if (!isEditorDraftReady || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
+            event.preventDefault();
+            setErrorMessage('Please wait for the current operation to finish before changing language.');
+            return;
+        }
+        // An empty generator must not overwrite an earlier recoverable project
+        // or consume a library request that has not been accepted yet.
+        if (sourceMode !== 'blank' && !imageSrc && !hasEditablePattern) return;
+        finishActiveStroke();
+        try {
+            const draft = createCurrentEditorDraft(true);
+            if (saveEditorLocaleDraft(draft, detail.href, window.sessionStorage, Date.now(), libraryPatternIdRef.current)) return;
+        } catch {
+            // A blocked/full storage area must never navigate away from unsaved edits.
+        }
+        event.preventDefault();
+        setErrorMessage('Could not preserve your pattern for the language change. Save a project file, then try again.');
+    });
+
+    useEffect(() => {
+        const listener = (event: Event) => handleLocaleNavigation(event);
+        window.addEventListener(LOCALE_NAVIGATION_EVENT, listener);
+        return () => window.removeEventListener(LOCALE_NAVIGATION_EVENT, listener);
+    }, []);
+
     const finishStrokeOnBlur = React.useEffectEvent(() => finishActiveStroke());
 
     useEffect(() => {
@@ -2941,6 +3009,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
     return (
         <div
             ref={editorRootRef}
+            lang={locale}
             className={
                 isEditorPage
                     ? 'editor-studio editor-workspace flex h-[100svh] w-full flex-col overflow-hidden bg-brutal-bg'
@@ -2949,25 +3018,26 @@ export default function Editor({ mode = 'home' }: EditorProps) {
         >
             {isEditorPage && !isEditorDraftReady ? (
                 <div className="flex h-full min-h-[100svh] items-center justify-center rounded-lg border border-[#d9ded5] bg-brutal-bg font-sans text-lg text-brutal-black sm:border sm:text-xl">
-                    Loading Editor...
+                    {t("Loading Editor...")}
                 </div>
             ) : null}
 
             {errorMessage && (
                 <div className="rounded-lg border border-[#d9ded5] bg-brand-magenta px-3 py-2 text-sm font-semibold text-white shadow-sm sm:border sm:px-4 sm:py-3 sm:text-base sm:shadow-brutal">
-                    {errorMessage}
+                    {getEditorErrorMessage(errorMessage, locale)}
                 </div>
             )}
 
             {draftWarning && (
                 <div role="status" className="rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-sm font-semibold text-brutal-black">
-                    {draftWarning}
+                    {getEditorErrorMessage(draftWarning, locale)}
                 </div>
             )}
 
-            {isEditorPage && isEditorDraftReady && (
+            {isEditorDraftReady && (
                 <Suspense fallback={null}>
                     <LibraryPatternRequest
+                        locale={locale}
                         hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
                         busy={processing || exportingId !== null}
@@ -2989,16 +3059,17 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         <div className="flex h-12 min-w-0 items-center justify-between xl:grid xl:grid-cols-[232px_minmax(0,1fr)_312px]">
                         <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:gap-3 sm:px-3 xl:col-span-2">
                             <Link
-                                href="/"
-                                aria-label="Back to generator"
+                                href={localHome}
+                                aria-label={t("Back to generator")}
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-brand-cyan font-sans text-xl leading-none text-brutal-black hover:bg-brand-yellow sm:h-9 sm:w-9"
-                                title="Back to generator"
+                                title={t("Back to generator")}
                             >
                                 &lt;
                             </Link>
                             <h1 className="truncate font-sans text-lg font-semibold leading-none sm:text-xl">
-                                Editor
+                                {t("Editor")}
                             </h1>
+                            <LanguageSwitcher locale={locale} className="editor-language-switcher" />
                         </div>
                         <div className="flex h-full shrink-0 items-center xl:col-start-3 xl:min-w-0 xl:justify-end xl:border-l xl:border-[#d9ded5]">
                             {hasEditablePattern ? (
@@ -3013,7 +3084,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
                                             className="flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 text-sm font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
-                                            aria-label="Zoom out"
+                                            aria-label={t("Zoom out")}
                                         >
                                             -
                                         </button>
@@ -3021,7 +3092,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             type="button"
                                             onClick={() => setClampedPreviewZoom(1)}
                                             className="h-7 min-w-12 rounded-lg border border-[#d9ded5] bg-white px-2 text-[11px] font-semibold hover:bg-brand-yellow"
-                                            aria-label="Reset zoom"
+                                            aria-label={t("Reset zoom")}
                                         >
                                             {Math.round(previewZoom * 100)}%
                                         </button>
@@ -3034,7 +3105,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
                                             className="flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 text-sm font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-300"
-                                            aria-label="Zoom in"
+                                            aria-label={t("Zoom in")}
                                         >
                                             +
                                         </button>
@@ -3045,7 +3116,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         disabled={!canUndoPattern}
                                         className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                                     >
-                                        Undo
+                                        {t("Undo")}
                                     </button>
                                     <button
                                         type="button"
@@ -3053,7 +3124,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         disabled={!canRedoPattern}
                                         className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                                     >
-                                        Redo
+                                        {t("Redo")}
                                     </button>
                                 </>
                             ) : null}
@@ -3062,7 +3133,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 onClick={handleOpenProjectPicker}
                                 className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-cyan sm:block"
                             >
-                                Open
+                                {t("Open")}
                             </button>
                             <button
                                 type="button"
@@ -3070,12 +3141,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 disabled={!canSaveProject}
                                 title={
                                     canSaveProject
-                                        ? 'Save project JSON'
-                                        : 'Create or open a pattern before saving'
+                                        ? t("Save project JSON")
+                                        : t("Create or open a pattern before saving")
                                 }
                                 className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                             >
-                                Save
+                                {t("Save")}
                             </button>
                             <button
                                 type="button"
@@ -3083,12 +3154,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 disabled={!canExportPattern}
                                 title={
                                     canExportPattern
-                                        ? 'Export pattern'
-                                        : 'Create or import a pattern before exporting'
+                                        ? t("Export pattern")
+                                        : t("Create or import a pattern before exporting")
                                 }
                                 className="h-full border-l border-[#28614e] bg-[#28614e] px-3 text-[11px] font-semibold text-white transition-colors hover:bg-[#214f40] disabled:cursor-not-allowed disabled:border-[#d9ded5] disabled:bg-gray-200 disabled:text-gray-500 sm:px-4 sm:text-xs"
                             >
-                                Export
+                                {t("Export")}
                             </button>
                         </div>
                         </div>
@@ -3096,22 +3167,22 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             {[
                                 {
                                     id: 'file' as const,
-                                    label: 'File',
+                                    label: t("File"),
                                     icon: FileText,
                                 },
                                 {
                                     id: 'edit' as const,
-                                    label: 'Edit',
+                                    label: t("Edit"),
                                     icon: Pencil,
                                 },
                                 {
                                     id: 'colors' as const,
-                                    label: 'Colors',
+                                    label: t("Colors"),
                                     icon: PaletteIcon,
                                 },
                                 {
                                     id: 'setup' as const,
-                                    label: 'Setup',
+                                    label: t("Setup"),
                                     icon: Settings2,
                                 },
                             ].map((item) => {
@@ -3138,7 +3209,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             strokeWidth={2.2}
                                         />
                                         <span className="truncate">
-                                            {item.label}
+                                            {t(item.label)}
                                         </span>
                                         <ChevronDown
                                             className={`h-3 w-3 shrink-0 transition-transform ${
@@ -3156,18 +3227,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         <div className="space-y-5 p-3">
                             <div>
                                 <div className="mb-2 block text-xs font-semibold leading-5 text-[#627168]">
-                                    Tools
+                                    {t("Tools")}
                                 </div>
                                 <div className="grid grid-cols-5 gap-2">
                                     {EDITOR_TOOLS.map((tool) => (
                                         <button
                                             key={tool.id}
                                             type="button"
-                                            aria-label={tool.label}
+                                            aria-label={t(tool.label)}
                                             aria-pressed={
                                                 activeEditorTool === tool.id
                                             }
-                                            title={`${tool.label} (${tool.shortcut}) • ${tool.description}`}
+                                            title={`${t(tool.label)} (${tool.shortcut}) • ${t(tool.description)}`}
                                             onClick={() =>
                                                 setActiveEditorTool(tool.id)
                                             }
@@ -3188,14 +3259,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <div>
                                 <div className="mb-2 block text-xs font-semibold leading-5 text-[#627168]">
-                                    Bead Color
+                                    {t("Bead Color")}
                                 </div>
                                 {activeEditorColorEntry && (
                                     <button
                                         type="button"
                                         onClick={openColorPicker}
                                         className="mb-3 block w-full rounded-lg border border-[#d9ded5] bg-brutal-bg p-2 text-left shadow-sm transition-colors hover:bg-brand-yellow"
-                                        title="Select bead color"
+                                        title={t("Select bead color")}
                                     >
                                         <div className="flex items-center gap-3">
                                             <span
@@ -3218,7 +3289,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                                 <div className="mb-2">
                                     <div className="text-[10px] font-semibold text-brutal-black/65">
-                                        Quick Colors
+                                        {t("Quick Colors")}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-1.5">
@@ -3264,7 +3335,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         )
                                     ) : (
                                         <div className="rounded-lg border border-dashed border-brutal-black/25 bg-brutal-bg p-2 text-[10px] font-semibold text-brutal-black/45">
-                                            No colors yet
+                                            {t("No colors yet")}
                                         </div>
                                     )}
                                 </div>
@@ -3276,9 +3347,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         {processing && (
                             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
                                 <span className="max-w-[280px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-4 text-center font-sans text-xl leading-none text-black shadow-brutal">
-                                    <span className="block">PROCESSING...</span>
+                                    <span className="block">{t("PROCESSING...")}</span>
                                     <span className="mt-2 block font-sans text-[11px] font-semibold leading-4">
-                                        {processingHint}
+                                        {t(processingHint)}
                                     </span>
                                 </span>
                             </div>
@@ -3318,7 +3389,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     </div>
                                     <div className="space-y-2">
                                         <p className="text-xs font-semibold text-brutal-black/65">
-                                            Choose a start point
+                                            {t("Choose a start point")}
                                         </p>
                                         <div className="flex flex-wrap justify-center gap-2">
                                             <label
@@ -3327,28 +3398,28 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }
                                                 className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[#d9ded5] bg-brand-yellow px-4 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-white sm:border sm:px-4 sm:shadow-brutal-sm"
                                             >
-                                                Convert Image
+                                                {t("Convert Image")}
                                             </label>
                                             <button
                                                 type="button"
                                                 onClick={handleCreateBlankPattern}
                                                 className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-4 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-brand-cyan sm:border sm:px-4 sm:shadow-brutal-sm"
                                             >
-                                                Blank Pattern
+                                                {t("Blank Pattern")}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={handleOpenProjectPicker}
                                                 className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-4 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-brand-purple sm:border sm:px-4 sm:shadow-brutal-sm"
                                             >
-                                                Open Project
+                                                {t("Open Project")}
                                             </button>
                                         </div>
                                     </div>
                                     <input
                                         id={EDITOR_EMPTY_UPLOAD_INPUT_ID}
                                         name="editorEmptyImage"
-                                        aria-label="Convert an image in the editor"
+                                        aria-label={t("Convert an image in the editor")}
                                         type="file"
                                         accept="image/*"
                                         className="sr-only"
@@ -3446,7 +3517,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                                         <canvas
                                             ref={editorPreviewCanvasRef}
-                                            aria-label="Bead pattern preview"
+                                            aria-label={t("Bead pattern preview")}
                                             onPointerDown={
                                                 handleEditorImagePointerDown
                                             }
@@ -3481,18 +3552,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <div className="font-sans text-lg leading-none">
                                     {editorMobilePanel === 'file'
-                                        ? 'File'
+                                        ? t("File")
                                         : editorMobilePanel === 'edit'
-                                          ? 'Edit'
+                                          ? t("Edit")
                                           : editorMobilePanel === 'colors'
-                                            ? 'Colors'
-                                            : 'Setup'}
+                                            ? t("Colors")
+                                            : t("Setup")}
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setEditorMobilePanel(null)}
                                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none hover:bg-brand-yellow"
-                                    aria-label="Close mobile editor panel"
+                                    aria-label={t("Close mobile editor panel")}
                                 >
                                     ×
                                 </button>
@@ -3508,7 +3579,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-2 text-[11px] font-semibold shadow-sm"
                                     >
                                         <ImageIcon className="h-4 w-4" />
-                                        Convert Image
+                                        {t("Convert Image")}
                                     </button>
                                     <button
                                         type="button"
@@ -3518,7 +3589,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }}
                                         className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                     >
-                                        Blank Pattern
+                                        {t("Blank Pattern")}
                                     </button>
                                     <button
                                         type="button"
@@ -3529,7 +3600,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                     >
                                         <FileText className="h-4 w-4" />
-                                        Open Project
+                                        {t("Open Project")}
                                     </button>
                                     <button
                                         type="button"
@@ -3541,7 +3612,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         <Save className="h-4 w-4" />
-                                        Save Project
+                                        {t("Save Project")}
                                     </button>
                                     <button
                                         type="button"
@@ -3552,7 +3623,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         disabled={!canExportPattern}
                                         className="col-span-2 flex min-h-12 items-center justify-center rounded-lg border border-[#d9ded5] bg-brand-purple px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
                                     >
-                                        Export Pattern
+                                        {t("Export Pattern")}
                                     </button>
                                 </div>
                             ) : null}
@@ -3564,7 +3635,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             <button
                                                 key={tool.id}
                                                 type="button"
-                                                aria-label={tool.label}
+                                                aria-label={t(tool.label)}
                                                 aria-pressed={
                                                     activeEditorTool === tool.id
                                                 }
@@ -3582,7 +3653,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     className="h-5 w-5"
                                                     strokeWidth={2.1}
                                                 />
-                                                {tool.label}
+                                                {t(tool.label)}
                                             </button>
                                         ))}
                                     </div>
@@ -3593,7 +3664,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={!canUndoPattern}
                                             className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
-                                            Undo
+                                            {t("Undo")}
                                         </button>
                                         <button
                                             type="button"
@@ -3601,7 +3672,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={!canRedoPattern}
                                             className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
-                                            Redo
+                                            {t("Redo")}
                                         </button>
                                         <button
                                             type="button"
@@ -3616,7 +3687,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             }
                                             className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
-                                            Zoom -
+                                            {t("Zoom -")}
                                         </button>
                                         <button
                                             type="button"
@@ -3631,7 +3702,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             }
                                             className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-2 py-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                                         >
-                                            Zoom +
+                                            {t("Zoom +")}
                                         </button>
                                     </div>
                                 </div>
@@ -3643,8 +3714,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         type="button"
                                         onClick={openColorPicker}
                                         disabled={enabledColorCount === 0}
-                                        aria-label="Select bead color"
-                                        title="Select bead color"
+                                        aria-label={t("Select bead color")}
+                                        title={t("Select bead color")}
                                         className="flex w-full items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg p-3 text-left shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                     >
                                         <span
@@ -3658,11 +3729,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         />
                                         <span className="min-w-0">
                                             <span className="block text-[11px] font-semibold text-brutal-black/60">
-                                                Active Color
+                                                {t("Active Color")}
                                             </span>
                                             <span className="block truncate text-sm font-semibold">
                                                 {activeEditorColorEntry?.name ??
-                                                    'Choose a color'}
+                                                    t("Choose a color")}
                                             </span>
                                         </span>
                                     </button>
@@ -3716,7 +3787,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }}
                                         className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                     >
-                                        Manage Palettes
+                                        {t("Manage Palettes")}
                                     </button>
                                 </div>
                             ) : null}
@@ -3726,7 +3797,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Color Brand
+                                                {t("Color Brand")}
                                             </span>
                                             <select
                                                 value={pendingPrimaryPaletteId}
@@ -3751,7 +3822,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         </label>
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Pegboard
+                                                {t("Pegboard")}
                                             </span>
                                             <select
                                                 value={pendingBoardId}
@@ -3768,14 +3839,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         key={option.id}
                                                         value={option.id}
                                                     >
-                                                        {option.label}
+                                                        {t(option.label)}
                                                     </option>
                                                 ))}
                                             </select>
                                         </label>
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Boards Wide
+                                                {t("Boards Wide")}
                                             </span>
                                             <input
                                                 type="number"
@@ -3794,7 +3865,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         </label>
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Boards Tall
+                                                {t("Boards Tall")}
                                             </span>
                                             <input
                                                 type="number"
@@ -3815,7 +3886,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     {imageSrc ? (
                                         <div className="mt-3 space-y-3 border-t border-brutal-black/10 pt-3">
                                             <label className="flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black">
-                                                <span>Show Reference</span>
+                                                <span>{t("Show Reference")}</span>
                                                 <input
                                                     type="checkbox"
                                                     checked={showReference}
@@ -3829,7 +3900,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             </label>
                                             <label className="block">
                                                 <span className="mb-1 flex items-center justify-between text-xs font-semibold text-brutal-black">
-                                                    <span>Source Opacity</span>
+                                                    <span>{t("Source Opacity")}</span>
                                                     <span>
                                                         {referenceOpacity}%
                                                     </span>
@@ -3880,7 +3951,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }
                                         className="mt-3 min-h-11 w-full rounded-lg border border-[#d9ded5] bg-brand-purple px-3 py-2 text-xs font-semibold text-brutal-black shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                                     >
-                                        Apply Changes
+                                        {t("Apply Changes")}
                                     </button>
                                 </div>
                             ) : null}
@@ -3893,9 +3964,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <button
                                     key={tool.id}
                                     type="button"
-                                    aria-label={tool.label}
+                                    aria-label={t(tool.label)}
                                     aria-pressed={activeEditorTool === tool.id}
-                                    title={`${tool.label} (${tool.shortcut}) • ${tool.description}`}
+                                    title={`${t(tool.label)} (${tool.shortcut}) • ${t(tool.description)}`}
                                     onClick={() => {
                                         setActiveEditorTool(tool.id);
                                         setEditorMobilePanel(null);
@@ -3917,8 +3988,8 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 type="button"
                                 onClick={openColorPicker}
                                 disabled={enabledColorCount === 0}
-                                aria-label="Select bead color"
-                                title="Select bead color"
+                                aria-label={t("Select bead color")}
+                                title={t("Select bead color")}
                                 className="flex h-10 min-w-[82px] shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d9ded5] bg-white px-2 text-[11px] font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400"
                             >
                                 <span
@@ -3929,7 +4000,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             : '#ffffff',
                                     }}
                                 />
-                                Color
+                                {t("Color")}
                             </button>
                         </div>
                     </div>
@@ -3937,12 +4008,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     <aside className="hidden min-h-0 overflow-y-auto border-l border-[#d9ded5] bg-white xl:col-start-3 xl:block">
                         <div className="border-b border-[#d9ded5] p-4">
                             <div className="mb-3 block text-xs font-semibold leading-5 text-[#627168]">
-                                Project
+                                {t("Project")}
                             </div>
                             <dl className="space-y-2 text-sm font-semibold">
                                 <div className="flex justify-between gap-3 border-b border-brutal-black/10 pb-1">
                                     <dt className="text-brutal-black/60">
-                                        Pattern Size
+                                        {t("Pattern Size")}
                                     </dt>
                                     <dd className="text-right font-semibold">
                                         {patternSize}
@@ -3950,16 +4021,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                                 <div className="flex justify-between gap-3 border-b border-brutal-black/10 pb-1">
                                     <dt className="text-brutal-black/60">
-                                        Total Beads
+                                        {t("Total Beads")}
                                     </dt>
                                     <dd className="text-right font-semibold">
-                                        {totalBeads}
+                                        {number(totalBeads)}
                                     </dd>
                                 </div>
                                 <div className="flex justify-between gap-3">
-                                    <dt className="text-brutal-black/60">Colors</dt>
+                                    <dt className="text-brutal-black/60">{t("Colors")}</dt>
                                     <dd className="text-right font-semibold">
-                                        {colorsUsed}
+                                        {number(colorsUsed)}
                                     </dd>
                                 </div>
                             </dl>
@@ -3968,16 +4039,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         {imageSrc && (
                             <div className="border-b border-[#d9ded5] p-4">
                                 <div className="mb-3 block text-xs font-semibold leading-5 text-[#627168]">
-                                    Source Image
+                                    {t("Source Image")}
                                 </div>
                                 <label
                                     htmlFor={IMAGE_UPLOAD_INPUT_ID}
                                     className="group relative block h-24 cursor-pointer overflow-hidden rounded-lg border border-[#d9ded5] bg-brutal-bg"
-                                    title="Change source image"
+                                    title={t("Change source image")}
                                 >
                                     <NextImage
                                         src={imageSrc}
-                                        alt="Source image"
+                                        alt={t("Source image")}
                                         fill
                                         unoptimized
                                         className="object-contain"
@@ -3988,12 +4059,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }}
                                     />
                                     <span className="absolute inset-x-0 bottom-0 translate-y-full bg-brutal-black px-2 py-1 text-center text-[10px] font-semibold text-white transition-transform group-hover:translate-y-0 group-focus-within:translate-y-0">
-                                        Change Source
+                                        {t("Change Source")}
                                     </span>
                                     <input
                                         id={IMAGE_UPLOAD_INPUT_ID}
                                         name="editorSourceImage"
-                                        aria-label="Change editor source image"
+                                        aria-label={t("Change editor source image")}
                                         type="file"
                                         accept="image/*"
                                         className="sr-only"
@@ -4005,7 +4076,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         htmlFor={EDITOR_SOURCE_VISIBLE_ID}
                                         className="flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black"
                                     >
-                                        <span>Show Source</span>
+                                        <span>{t("Show Source")}</span>
                                         <input
                                             id={EDITOR_SOURCE_VISIBLE_ID}
                                             name="editorSourceVisible"
@@ -4024,7 +4095,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         className="block"
                                     >
                                         <span className="mb-1 flex items-center justify-between text-xs font-semibold text-brutal-black">
-                                            <span>Source Opacity</span>
+                                            <span>{t("Source Opacity")}</span>
                                             <span>{referenceOpacity}%</span>
                                         </span>
                                         <input
@@ -4055,11 +4126,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                         <div className="space-y-4 p-4">
                             <div className="block text-xs font-semibold leading-5 text-[#627168]">
-                                Pattern Setup
+                                {t("Pattern Setup")}
                             </div>
                             <label className="block">
                                 <span className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black/65">
-                                    <span>Color Brand</span>
+                                    <span>{t("Color Brand")}</span>
                                     <span className="truncate text-[11px] text-brutal-black">
                                         {fullscreenPaletteSummary}
                                     </span>
@@ -4085,9 +4156,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             </label>
                             <label className="block">
                                 <span className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black/65">
-                                    <span>Pegboard</span>
+                                    <span>{t("Pegboard")}</span>
                                     <span className="truncate text-[11px] text-brutal-black">
-                                        {selectedBoard?.label ?? 'Not selected'}
+                                        {selectedBoard?.label ?? t("Not selected")}
                                     </span>
                                 </span>
                                 <select
@@ -4106,7 +4177,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             key={option.id}
                                             value={option.id}
                                         >
-                                            {option.label}
+                                            {t(option.label)}
                                         </option>
                                     ))}
                                 </select>
@@ -4114,7 +4185,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="grid grid-cols-2 gap-3">
                                 <label className="block">
                                     <span className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold text-brutal-black/65">
-                                        <span>Boards Wide</span>
+                                        <span>{t("Boards Wide")}</span>
                                         <span className="text-[11px] text-brutal-black">
                                             {boardWidth}
                                         </span>
@@ -4138,7 +4209,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </label>
                                 <label className="block">
                                     <span className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold text-brutal-black/65">
-                                        <span>Boards Tall</span>
+                                        <span>{t("Boards Tall")}</span>
                                         <span className="text-[11px] text-brutal-black">
                                             {boardHeight}
                                         </span>
@@ -4180,7 +4251,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 }
                                 className="w-full rounded-lg border border-[#d9ded5] bg-brand-purple px-3 py-2 text-xs font-semibold text-brutal-black shadow-brutal-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
                             >
-                                Apply Changes
+                                {t("Apply Changes")}
                             </button>
                         </div>
                     </aside>
@@ -4194,7 +4265,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="flex min-h-11 items-center justify-between gap-2 border-b border-[#d9ded5] bg-brand-cyan px-2.5 py-2">
                                 <div className="min-w-0">
                                     <div className="font-sans text-lg leading-none text-brutal-black">
-                                        Pattern Preview
+                                        {t("Pattern Preview")}
                                     </div>
                                 </div>
                                 <button
@@ -4204,7 +4275,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     }
                                     className="min-h-9 shrink-0 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-1.5 text-[11px] font-semibold text-brutal-black"
                                 >
-                                    {imageSrc ? 'Change' : 'Upload'}
+                                    {imageSrc ? t("Change") : t("Upload")}
                                 </button>
                             </div>
 
@@ -4226,7 +4297,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     >
                                         <NextImage
                                             src={previewDataUrl}
-                                            alt="Bead pattern preview"
+                                            alt={t("Bead pattern preview")}
                                             fill
                                             unoptimized
                                             sizes="100vw"
@@ -4239,7 +4310,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 ) : imageSrc ? (
                                     <NextImage
                                         src={imageSrc}
-                                        alt="Uploaded source image"
+                                        alt={t("Uploaded source image")}
                                         fill
                                         unoptimized
                                         sizes="100vw"
@@ -4275,15 +4346,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             )}
                                         </span>
                                         <span className="font-sans text-xl leading-none text-brutal-black">
-                                            Upload Image
+                                            {t("Upload Image")}
                                         </span>
                                         <span className="max-w-[260px] text-[11px] font-semibold leading-4 text-brutal-black/55">
-                                            Choose a photo and preview the bead
-                                            pattern here.
+                                            {t("Choose a photo and preview the bead pattern here.")}
                                         </span>
                                         <input
                                             name="homeMobileSourceImage"
-                                            aria-label="Upload image"
+                                            aria-label={t("Upload image")}
                                             type="file"
                                             accept="image/*"
                                             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -4308,7 +4378,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 previewZoom <= PREVIEW_MIN_ZOOM
                                             }
                                             className="flex h-8 min-w-8 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 font-sans text-sm leading-none text-brutal-black shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
-                                            aria-label="Zoom out preview"
+                                            aria-label={t("Zoom out preview")}
                                         >
                                             -
                                         </button>
@@ -4318,7 +4388,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 setClampedPreviewZoom(1)
                                             }
                                             className="h-8 min-w-[52px] rounded-lg border border-[#d9ded5] bg-white px-2 font-sans text-base font-semibold leading-none text-brutal-black shadow-sm hover:bg-brand-yellow"
-                                            aria-label="Reset preview zoom"
+                                            aria-label={t("Reset preview zoom")}
                                         >
                                             {Math.round(previewZoom * 100)}%
                                         </button>
@@ -4333,7 +4403,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 previewZoom >= PREVIEW_MAX_ZOOM
                                             }
                                             className="flex h-8 min-w-8 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-2 font-sans text-sm leading-none text-brutal-black shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
-                                            aria-label="Zoom in preview"
+                                            aria-label={t("Zoom in preview")}
                                         >
                                             +
                                         </button>
@@ -4344,10 +4414,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm">
                                         <span className="max-w-[260px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-3 text-center font-sans text-lg leading-none text-black shadow-sm">
                                             <span className="block">
-                                                Processing...
+                                                {t("Processing...")}
                                             </span>
                                             <span className="mt-2 block font-sans text-[10px] font-semibold leading-4">
-                                                {processingHint}
+                                                {t(processingHint)}
                                             </span>
                                         </span>
                                     </div>
@@ -4357,7 +4427,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="grid grid-cols-[1fr_1fr_1fr_1.2fr] border-t border-[#d9ded5] bg-white text-center">
                                 <div className="border-r border-[#d9ded5] px-2 py-2">
                                     <div className="text-[9px] font-semibold text-brutal-black/50">
-                                        Size
+                                        {t("Size")}
                                     </div>
                                     <div className="truncate text-xs font-semibold text-brutal-black">
                                         {patternSize}
@@ -4365,18 +4435,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                                 <div className="border-r border-[#d9ded5] px-2 py-2">
                                     <div className="text-[9px] font-semibold text-brutal-black/50">
-                                        Beads
+                                        {t("Beads")}
                                     </div>
                                     <div className="truncate text-xs font-semibold text-brutal-black">
-                                        {totalBeads}
+                                        {number(totalBeads)}
                                     </div>
                                 </div>
                                 <div className="border-r border-[#d9ded5] px-2 py-2">
                                     <div className="text-[9px] font-semibold text-brutal-black/50">
-                                        Colors
+                                        {t("Colors")}
                                     </div>
                                     <div className="truncate text-xs font-semibold text-brutal-black">
-                                        {colorsUsed}
+                                        {number(colorsUsed)}
                                     </div>
                                 </div>
                                 <button
@@ -4384,16 +4454,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onClick={handleOpenEditorPage}
                                     disabled={!previewDataUrl || processing}
                                     className="flex min-h-[50px] min-w-0 flex-col items-center justify-center bg-brand-purple px-1.5 py-1.5 text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-                                    aria-label="Open editor"
+                                    aria-label={t("Open editor")}
                                 >
                                     <span className="flex items-center justify-center gap-1 text-[9px] font-semibold">
                                         <Pencil className="h-3 w-3 shrink-0" />
                                         <span className="truncate">
-                                            Editor
+                                            {t("Editor")}
                                         </span>
                                     </span>
                                     <span className="truncate text-xs font-semibold">
-                                        {previewDataUrl ? 'Open' : 'Upload'}
+                                        {previewDataUrl ? t("Open") : t("Upload")}
                                     </span>
                                 </button>
                             </div>
@@ -4404,14 +4474,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div className="mb-3 flex items-center justify-between gap-3">
                                     <div className="font-sans text-lg leading-none">
                                         {homeMobilePanel === 'image'
-                                            ? 'Image'
+                                            ? t("Image")
                                             : homeMobilePanel === 'brand'
-                                              ? 'Color Brand'
+                                              ? t("Color Brand")
                                               : homeMobilePanel === 'pegboard'
-                                                ? 'Pegboard'
+                                                ? t("Pegboard")
                                                 : homeMobilePanel === 'advanced'
-                                                  ? 'Advanced'
-                                                  : 'Export'}
+                                                  ? t("Advanced")
+                                                  : t("Export")}
                                     </div>
                                     <button
                                         type="button"
@@ -4419,7 +4489,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             setHomeMobilePanel(null)
                                         }
                                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none hover:bg-brand-yellow"
-                                        aria-label="Close mobile generator panel"
+                                        aria-label={t("Close mobile generator panel")}
                                     >
                                         ×
                                     </button>
@@ -4447,11 +4517,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         >
                                             <ImageIcon className="h-4 w-4" />
                                             {imageSrc
-                                                ? 'Change Image'
-                                                : 'Upload Image'}
+                                                ? t("Change Image")
+                                                : t("Upload Image")}
                                             <input
                                                 name="homeMobileSheetImage"
-                                                aria-label="Upload or replace source image"
+                                                aria-label={t("Upload or replace source image")}
                                                 type="file"
                                                 accept="image/*"
                                                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -4470,7 +4540,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }}
                                                 className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-cyan"
                                             >
-                                                Open Project
+                                                {t("Open Project")}
                                             </button>
                                             <button
                                                 type="button"
@@ -4481,7 +4551,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 disabled={!canSaveProject}
                                                 className="min-h-11 rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                             >
-                                                Save Project
+                                                {t("Save Project")}
                                             </button>
                                         </div>
                                     </div>
@@ -4491,11 +4561,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <div className="space-y-3">
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Pegboard
+                                                {t("Pegboard")}
                                             </span>
                                             <select
                                                 name="homeMobileBoard"
-                                                aria-label="Pegboard"
+                                                aria-label={t("Pegboard")}
                                                 value={boardId}
                                                 onChange={(event) =>
                                                     setBoardId(
@@ -4511,7 +4581,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             key={option.id}
                                                             value={option.id}
                                                         >
-                                                            {option.label}
+                                                            {t(option.label)}
                                                         </option>
                                                     )
                                                 )}
@@ -4520,11 +4590,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         <div className="grid grid-cols-2 gap-3">
                                             <label className="block">
                                                 <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                    Boards Wide
+                                                    {t("Boards Wide")}
                                                 </span>
                                                 <input
                                                     name="homeMobileBoardWidth"
-                                                    aria-label="Boards wide"
+                                                    aria-label={t("Boards wide")}
                                                     type="number"
                                                     min="1"
                                                     max={MAX_BOARD_COUNT}
@@ -4542,11 +4612,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             </label>
                                             <label className="block">
                                                 <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                    Boards Tall
+                                                    {t("Boards Tall")}
                                                 </span>
                                                 <input
                                                     name="homeMobileBoardHeight"
-                                                    aria-label="Boards tall"
+                                                    aria-label={t("Boards tall")}
                                                     type="number"
                                                     min="1"
                                                     max={MAX_BOARD_COUNT}
@@ -4578,11 +4648,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <div className="space-y-3">
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Color Brand
+                                                {t("Color Brand")}
                                             </span>
                                             <select
                                                 name="homeMobilePrimaryPalette"
-                                                aria-label="Color brand"
+                                                aria-label={t("Color brand")}
                                                 value={primaryPaletteId}
                                                 onChange={(event) =>
                                                     handlePrimaryPaletteChange(
@@ -4659,7 +4729,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         <div className="grid gap-3">
                                             <label className="block">
                                                 <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                    Matching
+                                                    {t("Matching")}
                                                 </span>
                                                 <select
                                                     name="homeMobileMatching"
@@ -4679,7 +4749,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                     option.id
                                                                 }
                                                             >
-                                                                {option.label}
+                                                                {t(option.label)}
                                                             </option>
                                                         )
                                                     )}
@@ -4687,7 +4757,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             </label>
                                             <label className="block">
                                                 <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                    Dithering
+                                                    {t("Dithering")}
                                                 </span>
                                                 <select
                                                     name="homeMobileDithering"
@@ -4707,7 +4777,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                                     option.id
                                                                 }
                                                             >
-                                                                {option.label}
+                                                                {t(option.label)}
                                                             </option>
                                                         )
                                                     )}
@@ -4719,20 +4789,20 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             [
                                                 [
                                                     'brightness',
-                                                    'Brightness',
+                                                    t("Brightness"),
                                                     0,
                                                     200,
                                                 ],
-                                                ['contrast', 'Contrast', 0, 200],
+                                                ['contrast', t("Contrast"), 0, 200],
                                                 [
                                                     'saturation',
-                                                    'Saturation',
+                                                    t("Saturation"),
                                                     0,
                                                     200,
                                                 ],
                                                 [
                                                     'grayscale',
-                                                    'Grayscale',
+                                                    t("Grayscale"),
                                                     0,
                                                     100,
                                                 ],
@@ -4743,14 +4813,14 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 className="block rounded-lg border border-[#d9ded5] bg-white p-2"
                                             >
                                                 <span className="mb-1 flex items-center justify-between text-[11px] font-semibold text-brutal-black/65">
-                                                    <span>{label}</span>
+                                                    <span>{t(label)}</span>
                                                     <span>
                                                         {imageAdjustments[key]}
                                                     </span>
                                                 </span>
                                                 <input
                                                     name={`homeMobileImage-${key}`}
-                                                    aria-label={`${label} slider`}
+                                                    aria-label={t('{label} slider', { label: t(label) })}
                                                     type="range"
                                                     min={min}
                                                     max={max}
@@ -4777,11 +4847,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         <div className="grid gap-2">
                                             {(
                                                 [
-                                                    ['center', 'Center'],
-                                                    ['fit', 'Fit To Boards'],
+                                                    ['center', t("Center")],
+                                                    ['fit', t("Fit To Boards")],
                                                     [
                                                         'showGrid',
-                                                        'Show Board Grid',
+                                                        t("Show Board Grid"),
                                                     ],
                                                 ] as const
                                             ).map(([key, label]) => (
@@ -4810,7 +4880,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         }
                                                         className="h-4 w-4 accent-[#28614e]"
                                                     />
-                                                    {label}
+                                                    {t(label)}
                                                 </label>
                                             ))}
                                         </div>
@@ -4826,7 +4896,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             }}
                                             className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow"
                                         >
-                                            Reset Adjustments
+                                            {t("Reset Adjustments")}
                                         </button>
                                     </div>
                                 ) : null}
@@ -4835,12 +4905,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     <div className="space-y-3">
                                         {errorMessage && (
                                             <p role="alert" className="rounded-lg border border-[#d9ded5] bg-brand-magenta p-3 text-sm font-semibold text-white">
-                                                {errorMessage}
+                                                {getEditorErrorMessage(errorMessage, locale)}
                                             </p>
                                         )}
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                File Name
+                                                {t("File Name")}
                                             </span>
                                             <input
                                                 name="homeMobileExportFileName"
@@ -4856,7 +4926,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         </label>
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
-                                                Export Format
+                                                {t("Export Format")}
                                             </span>
                                             <select
                                                 name="homeMobileExportFormat"
@@ -4874,12 +4944,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                             key={option.id}
                                                             value={option.id}
                                                         >
-                                                            {option.label}
+                                                            {t(option.label)}
                                                         </option>
                                                     )
                                                 )}
                                             </select>
                                         </label>
+                                        <PdfScaleField locale={locale} id="home-pdf-scale" value={pdfScaleMode} supportsActualSize={supportsMidiActualSize} onChange={setPdfScaleMode} />
                                         <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold">
                                             <input
                                                 name="homeMobileExportSymbols"
@@ -4892,7 +4963,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }
                                                 className="h-4 w-4 accent-[#28614e]"
                                             />
-                                            Use Symbols In Printable Exports
+                                            {t("Use Symbols In Printable Exports")}
                                         </label>
                                         {exportStatusText ? (
                                             <div
@@ -4910,12 +4981,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     exportFormatId
                                                 )
                                             }
-                                            disabled={!canExportPattern}
+                                            disabled={!canExportSelectedFormat}
                                             className="min-h-12 w-full rounded-lg border border-[#28614e] bg-[#28614e] px-3 py-2 font-sans text-sm font-semibold text-white shadow-sm hover:bg-[#214f40] disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
                                         >
                                             {exportingId === exportFormatId
-                                                ? 'Exporting...'
-                                                : `Export ${selectedExportLabel}`}
+                                                ? t("Exporting...")
+                                                : t('Export {format}', { format: t(selectedExportLabel) })}
                                         </button>
                                         <button
                                             type="button"
@@ -4923,7 +4994,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             disabled={!canSaveProject}
                                             className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-[11px] font-semibold shadow-sm hover:bg-brand-yellow disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none"
                                         >
-                                            Save Project
+                                            {t("Save Project")}
                                         </button>
                                     </div>
                                 ) : null}
@@ -4956,7 +5027,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 strokeWidth={2.2}
                                             />
                                             <span className="truncate">
-                                                {item.label}
+                                                {t(item.label)}
                                             </span>
                                         </button>
                                     );
@@ -4969,7 +5040,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 <div className="min-h-0 xl:h-full">
                     <Card className="h-full overflow-y-auto bg-white p-3 sm:p-4">
                         <div className="space-y-3">
-                            <EditorSection title="Image">
+                            <EditorSection title={t("Image")}>
                                 <label
                                     htmlFor={IMAGE_UPLOAD_INPUT_ID}
                                     onDragOver={(event) => {
@@ -4993,25 +5064,25 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             <span className="relative block h-[118px] bg-[#f4f6f7] sm:h-[132px]">
                                                 <NextImage
                                                     src={imageSrc}
-                                                    alt="Uploaded source image"
+                                                    alt={t("Uploaded source image")}
                                                     fill
                                                     unoptimized
                                                     className="object-contain"
                                                 />
                                             </span>
                                             <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[#54595d] px-3 py-2 text-center text-[11px] font-semibold leading-none text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                                                Change Source
+                                                {t("Change Source")}
                                             </span>
                                         </span>
                                     ) : (
                                         <span className="font-semibold text-base">
-                                            Upload Image
+                                            {t("Upload Image")}
                                         </span>
                                     )}
                                     <input
                                         id={IMAGE_UPLOAD_INPUT_ID}
                                         name="homeSourceImage"
-                                        aria-label="Upload or replace source image"
+                                        aria-label={t("Upload or replace source image")}
                                         type="file"
                                         accept="image/*"
                                         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -5020,11 +5091,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </label>
                             </EditorSection>
 
-                            <EditorSection title="Color Brand">
+                            <EditorSection title={t("Color Brand")}>
                                 <select
                                     id={HOME_PRIMARY_PALETTE_ID}
                                     name="homePrimaryPalette"
-                                    aria-label="Color brand"
+                                    aria-label={t("Color brand")}
                                     value={primaryPaletteId}
                                     onChange={(event) =>
                                         handlePrimaryPaletteChange(
@@ -5048,11 +5119,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 </div>
                             </EditorSection>
 
-                            <EditorSection title="Pegboard">
+                            <EditorSection title={t("Pegboard")}>
                                 <select
                                     id={HOME_BOARD_ID}
                                     name="homeBoard"
-                                    aria-label="Pegboard"
+                                    aria-label={t("Pegboard")}
                                     value={boardId}
                                     onChange={(event) =>
                                         setBoardId(
@@ -5066,7 +5137,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             key={option.id}
                                             value={option.id}
                                         >
-                                            {option.label}
+                                            {t(option.label)}
                                         </option>
                                     ))}
                                 </select>
@@ -5074,12 +5145,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="mb-1 block text-sm font-semibold tracking-wide text-brutal-black/70">
-                                            Boards Wide
+                                            {t("Boards Wide")}
                                         </label>
                                         <input
                                             id={HOME_BOARD_WIDTH_ID}
                                             name="homeBoardWidth"
-                                            aria-label="Boards wide"
+                                            aria-label={t("Boards wide")}
                                             type="number"
                                             min="1"
                                             max={MAX_BOARD_COUNT}
@@ -5096,12 +5167,12 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     </div>
                                     <div>
                                         <label className="mb-1 block text-sm font-semibold tracking-wide text-brutal-black/70">
-                                            Boards Tall
+                                            {t("Boards Tall")}
                                         </label>
                                         <input
                                             id={HOME_BOARD_HEIGHT_ID}
                                             name="homeBoardHeight"
-                                            aria-label="Boards tall"
+                                            aria-label={t("Boards tall")}
                                             type="number"
                                             min="1"
                                             max={MAX_BOARD_COUNT}
@@ -5135,7 +5206,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={() => setIsPaletteManagerOpen(true)}
                                 >
-                                    Colors
+                                    {t("Colors")}
                                 </Button>
                                 <Button
                                     variant="secondary"
@@ -5143,7 +5214,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={() => setIsAdvancedOpen(true)}
                                 >
-                                    Advanced
+                                    {t("Advanced")}
                                 </Button>
                                 <Button
                                     variant="primary"
@@ -5152,7 +5223,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onClick={() => setIsExportDialogOpen(true)}
                                     disabled={!canExportPattern}
                                 >
-                                    Export
+                                    {t("Export")}
                                 </Button>
                             </div>
                             <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -5162,7 +5233,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     className="min-h-10 w-full px-2 py-1 text-sm [border-width:1px] shadow-sm sm:text-base sm:[border-width:1px] sm:shadow-brutal"
                                     onClick={handleOpenProjectPicker}
                                 >
-                                    Open Project
+                                    {t("Open Project")}
                                 </Button>
                                 <Button
                                     variant="secondary"
@@ -5171,7 +5242,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     onClick={handleSaveProject}
                                     disabled={!canSaveProject}
                                 >
-                                    Save Project
+                                    {t("Save Project")}
                                 </Button>
                             </div>
                         </div>
@@ -5179,8 +5250,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                     {isAdvancedOpen && (
                         <EditorDialog
-                            title="Advanced"
-                            summary="Matching, dithering, image filters, renderer"
+                            locale={locale}
+                            title={t("Advanced")}
+                            summary={t("Matching, dithering, image filters, renderer")}
                             onClose={() => setIsAdvancedOpen(false)}
                         >
                             <div className="space-y-5 text-black">
@@ -5190,7 +5262,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         htmlFor={EDITOR_MATCHING_ID}
                                         className="mb-1 block font-semibold"
                                     >
-                                        Matching
+                                        {t("Matching")}
                                     </label>
                                     <select
                                         id={EDITOR_MATCHING_ID}
@@ -5206,7 +5278,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 key={option.id}
                                                 value={option.id}
                                             >
-                                                {option.label}
+                                                {t(option.label)}
                                             </option>
                                         ))}
                                     </select>
@@ -5217,7 +5289,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         htmlFor={EDITOR_DITHERING_ID}
                                         className="mb-1 block font-semibold"
                                     >
-                                        Dithering
+                                        {t("Dithering")}
                                     </label>
                                     <select
                                         id={EDITOR_DITHERING_ID}
@@ -5233,7 +5305,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 key={option.id}
                                                 value={option.id}
                                             >
-                                                {option.label}
+                                                {t(option.label)}
                                             </option>
                                         ))}
                                     </select>
@@ -5243,10 +5315,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
                                 {(
                                     [
-                                        ['brightness', 'Brightness', 0, 200],
-                                        ['contrast', 'Contrast', 0, 200],
-                                        ['saturation', 'Saturation', 0, 200],
-                                        ['grayscale', 'Grayscale', 0, 100],
+                                        ['brightness', t("Brightness"), 0, 200],
+                                        ['contrast', t("Contrast"), 0, 200],
+                                        ['saturation', t("Saturation"), 0, 200],
+                                        ['grayscale', t("Grayscale"), 0, 100],
                                     ] as const
                                 ).map(([key, label, min, max]) => {
                                     const numberId = `editor-image-${key}-number`;
@@ -5262,7 +5334,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                     htmlFor={numberId}
                                                     className="font-semibold"
                                                 >
-                                                    {label}
+                                                    {t(label)}
                                                 </label>
                                                 <input
                                                     id={numberId}
@@ -5293,7 +5365,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             <input
                                                 id={rangeId}
                                                 name={rangeId}
-                                                aria-label={`${label} slider`}
+                                                aria-label={t('{label} slider', { label: t(label) })}
                                                 type="range"
                                                 min={min}
                                                 max={max}
@@ -5337,7 +5409,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }
                                         className="h-5 w-5 accent-[#28614e]"
                                     />
-                                    Center
+                                    {t("Center")}
                                 </label>
                                 <label
                                     htmlFor={EDITOR_RENDER_FIT_ID}
@@ -5358,7 +5430,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }
                                         className="h-5 w-5 accent-[#28614e]"
                                     />
-                                    Fit To Boards
+                                    {t("Fit To Boards")}
                                 </label>
                                 <label
                                     htmlFor={EDITOR_RENDER_GRID_ID}
@@ -5382,7 +5454,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         }
                                         className="h-5 w-5 accent-[#28614e]"
                                     />
-                                    Show Board Grid In Preview
+                                    {t("Show Board Grid In Preview")}
                                 </label>
                             </div>
 
@@ -5398,7 +5470,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     );
                                 }}
                             >
-                                Reset Advanced
+                                {t("Reset Advanced")}
                             </Button>
                         </div>
                         </EditorDialog>
@@ -5415,10 +5487,10 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-sm">
                                     <span className="max-w-[260px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-3 text-center font-sans text-lg leading-none text-black shadow-sm sm:max-w-[280px] sm:border sm:p-4 sm:text-xl sm:shadow-brutal">
                                         <span className="block">
-                                            PROCESSING...
+                                            {t("PROCESSING...")}
                                         </span>
                                         <span className="mt-2 block font-sans text-[11px] font-semibold leading-4">
-                                            {processingHint}
+                                            {t(processingHint)}
                                         </span>
                                     </span>
                                 </div>
@@ -5435,7 +5507,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         previewZoom <= PREVIEW_MIN_ZOOM
                                     }
                                     className="flex h-6 min-w-6 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-1 font-sans text-base leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
-                                    aria-label="Zoom out preview"
+                                    aria-label={t("Zoom out preview")}
                                 >
                                     -
                                 </button>
@@ -5457,7 +5529,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                         previewZoom >= PREVIEW_MAX_ZOOM
                                     }
                                     className="flex h-6 min-w-6 items-center justify-center rounded-lg border border-[#d9ded5] bg-white px-1 font-sans text-base leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0"
-                                    aria-label="Zoom in preview"
+                                    aria-label={t("Zoom in preview")}
                                 >
                                     +
                                 </button>
@@ -5467,7 +5539,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     disabled={!previewDataUrl || processing}
                                     className="hidden rounded-lg border border-[#d9ded5] bg-white px-1.5 py-0.5 font-sans text-xs font-semibold leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0 sm:block"
                                 >
-                                    Edit Pattern
+                                    {t("Edit Pattern")}
                                 </button>
                             </div>
 
@@ -5498,7 +5570,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             ))}
                                         </div>
                                         <p className="max-w-[260px] text-sm leading-6 text-[#627168]">
-                                            Upload an image to generate a centered board preview
+                                            {t("Upload an image to generate a centered board preview")}
                                         </p>
                                     </div>
                                 )}
@@ -5592,7 +5664,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                                             <NextImage
                                                 src={previewDataUrl}
-                                                alt="Bead pattern preview"
+                                                alt={t("Bead pattern preview")}
                                                 width={displayPreviewSize.width}
                                                 height={displayPreviewSize.height}
                                                 unoptimized
@@ -5611,9 +5683,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
                             <div className="pointer-events-none absolute inset-x-2 bottom-1.5 z-30 flex justify-center sm:inset-x-3">
                                 <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[9px] font-semibold text-brutal-black/80 sm:gap-x-4 sm:text-[10px] sm:tracking-normal">
-                                    <span>Pattern Size: {patternSize}</span>
-                                    <span>Total Beads: {totalBeads}</span>
-                                    <span>Colors: {colorsUsed}</span>
+                                    <span>{t("Pattern Size:")} {patternSize}</span>
+                                    <span>{t("Total Beads:")} {number(totalBeads)}</span>
+                                    <span>{t("Colors:")} {number(colorsUsed)}</span>
                                 </div>
                             </div>
                         </div>
@@ -5625,8 +5697,9 @@ export default function Editor({ mode = 'home' }: EditorProps) {
 
             {isPaletteManagerOpen && (
                 <EditorDialog
-                    title="Colors"
-                    summary={`${selectedPaletteIds.length} palettes selected • ${enabledColorCount} enabled colors`}
+                    locale={locale}
+                    title={t("Colors")}
+                    summary={t('{palettes} palettes selected • {colors} enabled colors', { palettes: number(selectedPaletteIds.length), colors: number(enabledColorCount) })}
                     onClose={() => setIsPaletteManagerOpen(false)}
                     restoreFocusFallback={isEditorPage ? mobileColorsNavButtonRef : undefined}
                 >
@@ -5689,12 +5762,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 {getPaletteNameDisplayLabel(palette.name)}
                                             </div>
                                             <div className="text-xs font-semibold tracking-wide">
-                                                {enabledEntries} /{' '}
-                                                {
-                                                    palette.entries
-                                                        .length
-                                                }{' '}
-                                                enabled
+                                                {t('{enabled} / {total} enabled', { enabled: number(enabledEntries), total: number(palette.entries.length) })}
                                             </div>
                                         </div>
                                         <label
@@ -5721,7 +5789,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                 }
                                                 className="h-4 w-4 accent-[#28614e]"
                                             />
-                                            Enable All
+                                            {t("Enable All")}
                                         </label>
                                     </div>
                                     <div className="grid max-h-48 grid-cols-1 gap-2 overflow-auto p-3 sm:grid-cols-2">
@@ -5785,16 +5853,16 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-[#243e36]/35 backdrop-blur-sm p-0 sm:items-center sm:justify-center sm:p-3"
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Select Color"
+                    aria-label={t("Select Color")}
                 >
                     <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[86vh] sm:max-w-4xl sm:rounded-xl sm:border sm:border-[#d9ded5] sm:shadow-lg">
                         <div className="flex items-center justify-between gap-3 border-b border-[#d9ded5] bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
                                 <div className="font-sans text-lg leading-none text-brutal-black sm:text-xl">
-                                    Select Color
+                                    {t("Select Color")}
                                 </div>
                                 <div className="mt-1 text-[10px] font-semibold text-brutal-black/60 sm:text-[11px]">
-                                    Pick a bead color from the loaded palettes
+                                    {t("Pick a bead color from the loaded palettes")}
                                 </div>
                             </div>
                             <button
@@ -5804,7 +5872,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     setIsColorPickerOpen(false);
                                 }}
                                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none text-brutal-black hover:bg-brand-cyan sm:h-9 sm:w-9 sm:text-lg"
-                                aria-label="Close color picker"
+                                aria-label={t("Close color picker")}
                             >
                                 ×
                             </button>
@@ -5851,7 +5919,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                             <div className="min-h-0 overflow-auto p-3 sm:p-4">
                                 {!currentColorPickerPalette ? (
                                     <div className="flex h-full min-h-[260px] items-center justify-center font-sans text-xl text-brutal-black/45">
-                                        Loading colors...
+                                        {t("Loading colors...")}
                                     </div>
                                 ) : (
                                     <>
@@ -5864,19 +5932,18 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                                         event.target.value
                                                     )
                                                 }
-                                                aria-label="Search bead colors"
-                                                placeholder="Search color or code"
+                                                aria-label={t("Search bead colors")}
+                                                placeholder={t("Search color or code")}
                                                 className="min-h-11 w-full rounded-lg border border-[#d9ded5] bg-white px-3 py-2 text-sm font-semibold focus:bg-brand-yellow focus:outline-none focus:ring-2 focus:ring-[#28614e]/35 focus:ring-offset-1 sm:max-w-xs"
                                             />
                                             <div className="text-[11px] font-semibold text-brutal-black/55">
-                                                {currentColorPickerEntries.length}{' '}
-                                                colors
+                                                {t('{count} colors', { count: number(currentColorPickerEntries.length) })}
                                             </div>
                                         </div>
                                         {currentColorPickerEntries.length ===
                                         0 ? (
                                             <div className="rounded-lg border border-dashed border-brutal-black/25 bg-brutal-bg p-4 text-sm font-semibold text-brutal-black/45">
-                                                No matching colors
+                                                {t("No matching colors")}
                                             </div>
                                         ) : (
                                             <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-2 lg:grid-cols-3">
@@ -5938,24 +6005,24 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                     className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-[#243e36]/35 backdrop-blur-sm p-0 sm:items-center sm:justify-center sm:p-3"
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Export"
+                    aria-label={t("Export")}
                     aria-busy={exportingId !== null}
                 >
                     <div className="flex h-[100svh] w-full max-w-none flex-col overflow-hidden bg-white shadow-none sm:h-auto sm:max-h-[90svh] sm:max-w-lg sm:rounded-xl sm:border sm:border-[#d9ded5] sm:shadow-lg">
                         <div className="flex items-center justify-between gap-3 border-b border-[#d9ded5] bg-white px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
                             <div>
                                 <div className="font-sans text-lg leading-none sm:text-xl">
-                                    Export
+                                    {t("Export")}
                                 </div>
                                 <div className="mt-1 text-[10px] font-semibold text-gray-600 sm:text-[11px]">
-                                    Choose file name, format and printable options
+                                    {t("Choose file name, format and printable options")}
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setIsExportDialogOpen(false)}
                                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ded5] bg-white font-sans text-xl leading-none hover:bg-brand-yellow sm:h-9 sm:w-9 sm:text-lg"
-                                aria-label="Close export dialog"
+                                aria-label={t("Close export dialog")}
                             >
                                 ×
                             </button>
@@ -5964,7 +6031,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
                             {errorMessage && (
                                 <p role="alert" className="rounded-lg border border-[#d9ded5] bg-brand-magenta p-3 text-sm font-semibold text-white">
-                                    {errorMessage}
+                                    {getEditorErrorMessage(errorMessage, locale)}
                                 </p>
                             )}
                             <div>
@@ -5972,7 +6039,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     htmlFor={EXPORT_FILE_NAME_ID}
                                     className="mb-1 block text-sm font-semibold"
                                 >
-                                    Export File Name
+                                    {t("Export File Name")}
                                 </label>
                                 <input
                                     id={EXPORT_FILE_NAME_ID}
@@ -5991,7 +6058,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     htmlFor={EXPORT_FORMAT_ID}
                                     className="mb-1 block text-sm font-semibold"
                                 >
-                                    Export Format
+                                    {t("Export Format")}
                                 </label>
                                 <select
                                     id={EXPORT_FORMAT_ID}
@@ -6007,11 +6074,13 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             key={option.id}
                                             value={option.id}
                                         >
-                                            {option.label}
+                                            {t(option.label)}
                                         </option>
                                     ))}
                                 </select>
                             </div>
+
+                            <PdfScaleField locale={locale} id="export-pdf-scale" value={pdfScaleMode} supportsActualSize={supportsMidiActualSize} onChange={setPdfScaleMode} />
 
                             <label
                                 htmlFor={EXPORT_SYMBOLS_ID}
@@ -6027,7 +6096,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                     }
                                     className="h-4 w-4 accent-[#28614e]"
                                 />
-                                Use Symbols In Printable Exports
+                                {t("Use Symbols In Printable Exports")}
                             </label>
 
                             {exportStatusText ? (
@@ -6044,11 +6113,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                 type="button"
                                 className="min-h-11 w-full rounded-lg border border-[#28614e] bg-[#28614e] px-4 py-2 font-sans text-base font-semibold text-white hover:bg-[#214f40] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:text-sm"
                                 onClick={() => void handleExport(exportFormatId)}
-                                disabled={!canExportPattern}
+                                disabled={!canExportSelectedFormat}
                             >
                                 {exportingId === exportFormatId
-                                    ? 'Exporting...'
-                                    : `Export ${selectedExportLabel}`}
+                                    ? t("Exporting...")
+                                    : t('Export {format}', { format: t(selectedExportLabel) })}
                             </button>
 
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -6065,11 +6134,11 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                                             setExportFormatId(option.id);
                                             void handleExport(option.id);
                                         }}
-                                        disabled={!canExportPattern}
+                                        disabled={!canExportPattern || (option.id === 'pdf' && !isPdfScaleSupported)}
                                     >
                                         {exportingId === option.id
-                                            ? 'Exporting...'
-                                            : option.label}
+                                            ? t("Exporting...")
+                                            : t(option.label)}
                                     </button>
                                 ))}
                             </div>
@@ -6082,7 +6151,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 <input
                     ref={editorImageFileInputRef}
                     name="editorMobileImage"
-                    aria-label="Convert image in the editor"
+                    aria-label={t("Convert image in the editor")}
                     type="file"
                     accept="image/*"
                     className="sr-only"
@@ -6094,7 +6163,7 @@ export default function Editor({ mode = 'home' }: EditorProps) {
                 id={PROJECT_UPLOAD_INPUT_ID}
                 ref={projectFileInputRef}
                 name="projectUpload"
-                aria-label="Open bead pattern project"
+                aria-label={t("Open bead pattern project")}
                 type="file"
                 accept=".json,application/json"
                 className="sr-only"

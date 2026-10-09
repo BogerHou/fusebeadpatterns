@@ -1,7 +1,11 @@
+import LocalizedPatternCatalog from '@/components/patterns/LocalizedPatternCatalog';
+import SiteHeader from '@/components/layout/SiteHeader';
+import SiteFooter from '@/components/layout/SiteFooter';
+import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPatternById, getPatternHref } from '@/lib/patterns/catalog';
+import { getPatternById } from '@/lib/patterns/catalog';
 import germanPatterns from '@/lib/patterns/german.json';
 
 const title = 'Kostenlose Bügelperlen-Vorlagen: Pokémon als PDF | Fuse Bead Patterns';
@@ -11,7 +15,7 @@ const preview = '/patterns/pokemon-pikachu-gen5/preview.png';
 export const metadata: Metadata = {
     title,
     description,
-    alternates: { canonical: '/de/patterns' },
+    alternates: { canonical: '/de/patterns', languages: patternLanguageAlternates() },
     openGraph: {
         title, description, locale: 'de_DE', type: 'website',
         url: 'https://fusebeadpatterns.art/de/patterns',
@@ -24,32 +28,24 @@ export const metadata: Metadata = {
 export default function GermanPatternsPage() {
     return (
         <>
-            <header className="site-header">
-                <a href="#main-content" className="skip-link">Zum Inhalt</a>
-                <div className="site-header-inner">
-                    <Link href="/de/patterns" className="site-brand" aria-label="Fuse Bead Patterns – deutsche Vorlagen">
-                        <Image src="/logo.png" alt="" width={36} height={36} sizes="36px" />
-                        <span lang="en" className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
-                    </Link>
-                    <nav className="site-nav" aria-label="Hauptnavigation">
-                        <a href="#vorlagen">Vorlagen</a>
-                        <a href="#drucken">Drucken</a>
-                        <Link href="/patterns" hrefLang="en" lang="en">English</Link>
-                    </nav>
-                </div>
-            </header>
+            <SiteHeader locale="de" active="patterns" />
             <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
                 <nav aria-label="Brotkrümelnavigation" className="mb-6 text-xs font-medium text-muted">
                     <ol className="flex flex-wrap items-center gap-x-2">
-                        <li><Link href="/" hrefLang="en" className="inline-flex min-h-10 items-center hover:underline">Startseite (Englisch)</Link></li>
+                        <li><Link href="/de" className="inline-flex min-h-10 items-center hover:underline">Startseite</Link></li>
                         <li aria-hidden="true">/</li>
                         <li aria-current="page">Deutsche Vorlagen</li>
                     </ol>
                 </nav>
                 <h1 className="page-heading leading-snug">Kostenlose Bügelperlen-Vorlagen</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
-                    Wähle dein Pokémon und lade die Vorlage direkt als PDF oder Rasterbild herunter. Die PDFs enthalten eine deutsche Anleitung und eine Farbliste. Ohne Anmeldung.
+                    Durchsuche alle Motive: Jede Detailseite bietet ein deutsches PDF und den deutschen Editor zum Bearbeiten. Weiter unten findest du außerdem acht Pokémon-Vorlagen zum direkten Herunterladen. Ohne Anmeldung.
                 </p>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+                    Du suchst Hama-Farbnummern? Hier findest du <Link href="/de/hama-perlen-vorlagen" className="text-link">sechs Hama-Midi-Vorlagen als deutsche PDFs</Link>, darunter Fußball, Halloween- und Weihnachtsmotive.
+                </p>
+                <p className="mt-5"><a href="#vorlagen" className="text-link">Auswahl mit deutschen PDFs ↓</a></p>
+                <LocalizedPatternCatalog locale="de" />
                 <section id="vorlagen" aria-labelledby="pokemon-heading" className="mt-9">
                     <h2 id="pokemon-heading" className="mb-6 text-xl font-semibold leading-relaxed sm:text-2xl">Pokémon-Vorlagen zum Ausdrucken</h2>
                     <div className="pattern-grid">
@@ -76,8 +72,13 @@ export default function GermanPatternsPage() {
                                             PNG<span aria-hidden="true">↓</span>
                                         </a>
                                     </div>
-                                    <Link href={getPatternHref(pattern)} hrefLang="en" prefetch={false} className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent">
-                                        Details und Quelle (Englisch)
+                                    <Link href={`/de/editor?pattern=${encodeURIComponent(id)}`} prefetch={false} className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline underline-offset-4"
+                                        aria-label={`${name}: Vorlage bearbeiten`} data-pattern-event="pattern_editor_open" data-pattern-id={id} data-pattern-palette="perler" data-pattern-entry="patterns">
+                                        Bearbeiten
+                                    </Link>
+                                    <br />
+                                    <Link href={`/de/patterns/${pattern.slug}`} hrefLang="de" prefetch={false} className="inline-flex min-h-11 items-center text-xs text-muted underline underline-offset-4 hover:text-accent">
+                                        Details und Quelle
                                     </Link>
                                 </article>
                             );
@@ -106,28 +107,20 @@ export default function GermanPatternsPage() {
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Kann ich Hama-Perlen verwenden?</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
-                                Die Farbnummern dieser PDFs gehören zu Perler, nicht zu Hama. Prüfe deine verfügbaren Farben oder passe die Palette im Editor an. Die <Link href="/guides/perler-to-hama-artkal" hrefLang="en" className="text-link">Anleitung zum Markenwechsel (Englisch)</Link> erklärt den Ablauf. Der Editor ist ebenfalls auf Englisch.
+                                Die Farbnummern dieser PDFs gehören zu Perler, nicht zu Hama. Prüfe deine verfügbaren Farben oder passe die Palette im deutschen Editor an. Die <Link href="/de/guides/perler-to-hama-artkal" className="text-link">Anleitung zum Markenwechsel</Link> erklärt den Ablauf.
+                                {' '}Für andere Motive mit bereits vorbereiteten Hama-Farbnummern gibt es unsere <Link href="/de/hama-perlen-vorlagen" className="text-link">kostenlosen Hama-Midi-PDFs</Link>.
                             </p>
                         </details>
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Wie mache ich aus einem eigenen Bild eine Vorlage?</summary>
                             <p className="mt-2 pb-2 leading-8 text-muted">
-                                Im <Link href="/" hrefLang="en" className="text-link">Bild-Konverter (Englisch)</Link> kannst du ein eigenes Bild öffnen, die Größe und Marke wählen und das Ergebnis bearbeiten. Für die fertigen Vorlagen auf dieser Seite brauchst du den Konverter nicht.
+                                Im <Link href="/de" className="text-link">Bügelperlen-Generator</Link> kannst du ein eigenes Bild öffnen, die Größe und Marke wählen und das Ergebnis bearbeiten. Für die fertigen Vorlagen auf dieser Seite brauchst du den Konverter nicht.
                             </p>
                         </details>
                     </div>
                 </section>
             </main>
-            <footer className="mt-auto border-t border-line bg-[#edeee7]">
-                <div className="mx-auto max-w-[1248px] px-5 py-8 sm:px-10">
-                    <nav aria-label="Weitere Seiten" className="flex flex-wrap gap-x-6">
-                        <Link href="/patterns" hrefLang="en" className="text-link">Alle Vorlagen (Englisch)</Link>
-                        <Link href="/privacy-policy" hrefLang="en" className="text-link">Datenschutz (Englisch)</Link>
-                        <Link href="/terms-of-service" hrefLang="en" className="text-link">Nutzungsbedingungen (Englisch)</Link>
-                    </nav>
-                    <p className="mt-5 max-w-3xl text-xs leading-6 text-muted">© 2026 Fuse Bead Patterns. Unabhängiges Fanprojekt, keine offizielle Website der Perlenmarken oder Pokémon-Rechteinhaber.</p>
-                </div>
-            </footer>
+            <SiteFooter locale="de" active="patterns" />
         </>
     );
 }

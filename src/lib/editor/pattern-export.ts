@@ -1,5 +1,8 @@
 import type { Printer } from '../core/printer/printer';
 import type { Project } from '../core/model/project/project.model';
+import type { SiteLocale } from '../i18n/locales';
+import { exportMessages } from '../core/printer/messages';
+import type { PdfScaleMode } from './pdf-scale';
 
 type CoreExportId = 'pdf' | 'svg' | 'png' | 'jpg' | 'xlsx';
 
@@ -13,6 +16,8 @@ export type ExportEditorPatternOptions = {
     beadsUsage: Map<string, number>;
     project: Project;
     fileName: string;
+    locale?: SiteLocale;
+    pdfScaleMode?: PdfScaleMode;
     exportGridPng: () => void | Promise<void>;
     printerLoaders?: Partial<Record<CoreExportId, EditorPrinterLoader>>;
 };
@@ -53,6 +58,8 @@ export async function exportEditorPattern({
     project,
     fileName,
     exportGridPng,
+    locale = 'en',
+    pdfScaleMode,
     printerLoaders = {},
 }: ExportEditorPatternOptions): Promise<void> {
     if (exportId === 'grid_png') {
@@ -61,12 +68,17 @@ export async function exportEditorPattern({
     }
 
     if (!isCoreExportId(exportId)) {
-        throw new Error(`Unsupported export format: ${exportId}`);
+        throw new Error(`${exportMessages(locale).unsupported}: ${exportId}`);
     }
 
     const loadPrinter =
         printerLoaders[exportId] ?? DEFAULT_PRINTER_LOADERS[exportId];
     const Printer = await loadPrinter();
 
-    await new Printer().print(reducedColor, beadsUsage, project, fileName);
+    if (locale === 'en' && (!pdfScaleMode || pdfScaleMode === 'fit-page')) {
+        // Keep the established default printer contract for existing integrations.
+        await new Printer().print(reducedColor, beadsUsage, project, fileName);
+    } else {
+        await new Printer().print(reducedColor, beadsUsage, project, fileName, { locale, ...(pdfScaleMode ? { pdfScaleMode } : {}) });
+    }
 }

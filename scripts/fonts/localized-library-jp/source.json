@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "weight": 400,
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Library Japanese",
+  "subsetPurpose": "Whole-library DE/FR/JA rollout: Japanese names, fixed copy, assembly notes, ASCII manufacturer color names/codes",
+  "subsetSha256": "a52aab68e7cbcb72e59e0b88a8aa442d17b8ff43132ec0d75ea522a7565afbe7",
+  "charactersSha256": "52fb95956d6a0412d13953739642ca5387c98305bacfbdad2f5a9a138ce24fb9",
+  "characterCount": 338,
+  "catalogCount": 106,
+  "fonttoolsVersion": "4.60.1"
+}

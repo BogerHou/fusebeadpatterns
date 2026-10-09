@@ -14,6 +14,8 @@ import {
 } from '../../utils/utils';
 
 import { defsStyle } from './MonoFont';
+import type { SiteLocale } from '../../../i18n/locales';
+import { exportMessages, type PrinterOptions } from '../messages';
 
 class Rect {
     x: number;
@@ -54,7 +56,8 @@ export class SvgPrinter implements Printer {
     drawSVG(
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
-        project: Project
+        project: Project,
+        locale: SiteLocale = 'en'
     ): SVGElement {
         const height =
             project.boardConfiguration.nbBoardHeight *
@@ -417,6 +420,18 @@ export class SvgPrinter implements Printer {
         defs.innerHTML = defsStyle;
         const svg = ctx.getSvg();
         svg.insertBefore(defs, svg.firstChild);
+        if (locale !== 'en') {
+            // Visible labels are palette references/symbols/counts, not translated prose.
+            // Localize accessible document text without changing pixels or dimensions.
+            const copy = exportMessages(locale);
+            svg.setAttribute('lang', locale);
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            title.textContent = copy.title;
+            const description = document.createElementNS('http://www.w3.org/2000/svg', 'desc');
+            description.textContent = `${copy.inventory}: ${copy.reference} / ${project.exportConfiguration.useSymbols ? `${copy.symbol} / ` : ''}${copy.count}`;
+            svg.insertBefore(description, svg.firstChild);
+            svg.insertBefore(title, svg.firstChild);
+        }
         return svg;
     }
 
@@ -424,9 +439,10 @@ export class SvgPrinter implements Printer {
         reducedColor: Uint8ClampedArray,
         usage: Map<string, number>,
         project: Project,
-        filename: string
+        filename: string,
+        { locale = 'en' }: PrinterOptions = {}
     ): Promise<void> {
-        const svg = this.drawSVG(reducedColor, usage, project);
+        const svg = this.drawSVG(reducedColor, usage, project, locale);
 
         downloadBlob(
             new Blob([new XMLSerializer().serializeToString(svg)], {

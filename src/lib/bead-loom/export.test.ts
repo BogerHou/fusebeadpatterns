@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LoomChart, LoomColor } from './core';
 import { planLoomPdf, wrapLoomLabel, type LoomPaper } from './export';
+import { LOOM_EXPORT_MESSAGES, type LoomExportLocale } from './export-messages';
 
 function example(columns = 17, rows = 31, aspect = 1, paletteSize = 5): LoomChart {
     const palette: LoomColor[] = Array.from({ length: paletteSize }, (_, index) => ({
@@ -13,6 +14,16 @@ function example(columns = 17, rows = 31, aspect = 1, paletteSize = 5): LoomChar
 }
 
 describe('bead loom PDF pagination', () => {
+    it('keeps the original English layout and labels when no locale is supplied', () => {
+        const chart = example();
+        expect(planLoomPdf(chart, 'a4')).toEqual(planLoomPdf(chart, 'a4', 'en'));
+        const plan = planLoomPdf(chart, 'a4');
+        expect(plan.contentTop).toBe(103);
+        expect(plan.tiles[0]).toMatchObject({ left: 79, top: 143, cellWidth: 12, cellHeight: 12, width: 204, height: 372 });
+        expect(plan.legendPages[0][0]).toMatchObject({ y: 134, height: 56, lines: ['Name: Color 1', 'Code: CUSTOM-1', 'HEX #F3E9D3 | 106 beads'] });
+        expect(plan.instructionPages[0][0]).toMatchObject({ y: 138, height: 44, headingLines: ['Row 1 | left-to-right | columns 1 to 17'] });
+    });
+
     it.each<LoomPaper>(['a4', 'letter'])('covers every cell exactly once inside %s print margins, including extreme shapes', paper => {
         for (const [columns, rows, aspect] of [[1, 400, 0.5], [100, 1, 2], [100, 200, 0.5], [50, 400, 2], [100, 200, 1], [1, 1, 1]]) {
             const chart = example(columns, rows, aspect);
@@ -121,6 +132,77 @@ describe('bead loom PDF pagination', () => {
     it('rejects invalid data before planning any output', () => {
         const invalid = example(); invalid.cells.pop();
         expect(() => planLoomPdf(invalid, 'a4')).toThrow();
+    });
+});
+
+describe('localized bead loom reading exports', () => {
+    it.each<LoomExportLocale>(['en', 'de', 'fr', 'ja'])('keeps user data, every cell and every logical row intact in %s on both paper sizes', locale => {
+        for (const paper of ['a4', 'letter'] as const) {
+            for (const [columns, rows, aspect] of [[1, 400, 0.5], [100, 1, 2], [100, 200, 0.5], [50, 400, 2], [17, 31, 1]]) {
+                const chart = example(columns, rows, aspect, 26);
+                chart.title = '🧵原文'.repeat(20);
+                chart.palette = chart.palette.map((color, index) => ({ ...color,
+                    name: `${index}`.padStart(2, '0') + '蓝'.repeat(58), code: 'Å-色号/'.repeat(8),
+                }));
+                const before = structuredClone(chart);
+                const plan = planLoomPdf(chart, paper, locale);
+                const messages = LOOM_EXPORT_MESSAGES[locale];
+                expect(chart).toEqual(before);
+                expect(plan.locale).toBe(locale);
+                expect(plan.titleLines.join('')).toBe(chart.title);
+                const coverage = new Uint8Array(chart.cells.length);
+                for (const tile of plan.tiles) {
+                    expect(tile.left + tile.width).toBeLessThanOrEqual(plan.width - 36);
+                    expect(tile.top + tile.height).toBeLessThanOrEqual(plan.contentBottom);
+                    const lastNoticeBaseline = plan.contentTop + 13 + (plan.tileNoticeLines.length - 1) * 12;
+                    expect(tile.top - 9 - lastNoticeBaseline).toBeGreaterThanOrEqual(12);
+                    expect(tile.symbolSize).toBe(9);
+                    for (let y = tile.y0; y < tile.y1; y++) for (let x = tile.x0; x < tile.x1; x++) coverage[y * columns + x]++;
+                }
+                expect(coverage.every(count => count === 1)).toBe(true);
+                const entries = plan.legendPages.flat();
+                expect(entries).toHaveLength(26);
+                expect(entries.reduce((count, item) => count + item.count, 0)).toBe(chart.cells.length);
+                for (const [index, item] of entries.entries()) {
+                    expect(item.lines.join('')).toContain(`${messages.name}: ${chart.palette[index].name}${messages.code}: ${chart.palette[index].code}`);
+                    expect(item.lines.join('')).toContain(messages.count(chart.palette[index].hex, item.count));
+                }
+                for (const page of plan.legendPages) for (const entry of page) expect(entry.y + entry.height).toBeLessThanOrEqual(plan.contentBottom);
+                const instructions = plan.instructionPages.flat();
+                expect(instructions.map(row => row.rowNumber)).toEqual(Array.from({ length: rows }, (_, index) => index + 1));
+                for (const row of instructions) {
+                    expect(row.y + row.height).toBeLessThanOrEqual(plan.contentBottom);
+                    expect(row.headingLines.join('')).toBe(messages.rowHeading(row.rowNumber, row.direction, columns));
+                    expect(row.lines.join(' ').split(/\s+/).reduce((sum, token) => sum + Number(token.match(/^(\d+)[A-Z]$/)![1]), 0)).toBe(columns);
+                }
+            }
+        }
+    });
+
+    it.each<LoomExportLocale>(['de', 'fr', 'ja'])('wraps native descriptions and instruction headings at readable sizes in %s', locale => {
+        const chart = example(100, 200, 1);
+        const plan = planLoomPdf(chart, 'letter', locale);
+        const messages = LOOM_EXPORT_MESSAGES[locale];
+        expect(plan.keyNoticeLines.join('')).toBe(messages.keyNotice);
+        expect(plan.tileNoticeLines.join('')).toBe(messages.tileNotice);
+        expect(plan.instructionNoticeLines.join('')).toBe(messages.instructionsNotice);
+        if (locale !== 'ja') expect(plan.instructionNoticeLines.length).toBeGreaterThan(1);
+        expect(plan.keyNoticeLines.every(line => Array.from(line).length <= Math.floor((plan.width - 72) / (9 * 1.1)))).toBe(true);
+        expect(plan.instructionPages.flat().every(item => item.headingLines.every(line => Array.from(line).length <= Math.floor((plan.width - 72) / (10 * 1.1))))).toBe(true);
+        expect(plan.instructionPages.flat().map(item => item.lines)).toEqual(planLoomPdf(chart, 'letter').instructionPages.flat().map(item => item.lines));
+    });
+
+    it.each<LoomExportLocale>(['de', 'fr', 'ja'])('translates starting corners and directions without leaking model enum values in %s', locale => {
+        const messages = LOOM_EXPORT_MESSAGES[locale];
+        for (const startCorner of ['bottom-left', 'bottom-right', 'top-left', 'top-right'] as const) {
+            const chart = { ...example(), startCorner };
+            expect(messages.overviewSettings(chart)).not.toContain(startCorner);
+            expect(messages.pngSummary(chart)).not.toContain(startCorner);
+        }
+        for (const direction of ['left-to-right', 'right-to-left'] as const) {
+            expect(messages.rowHeading(1, direction, 17)).not.toContain(direction);
+        }
+        expect(planLoomPdf({ ...example(), title: '' }, 'a4', locale).titleLines.join('')).toBe(messages.untitled);
     });
 });
 

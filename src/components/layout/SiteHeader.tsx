@@ -1,41 +1,51 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
+import { localeRoutes } from '@/lib/i18n/routes';
+import LanguageSwitcher from './LanguageSwitcher';
+import styles from './LanguageSwitcher.module.css';
 
 type SiteHeaderSection = 'generator' | 'patterns' | 'editor' | 'guides' | 'about';
 
 type SiteHeaderProps = {
     active?: SiteHeaderSection;
+    locale?: SiteLocale;
 };
 
-const navItems: Array<{
+type HeaderLink = {
     id: SiteHeaderSection;
     label: string;
     href: string;
     prefetch?: false;
-}> = [
-    { id: 'generator', label: 'Generator', href: '/' },
-    { id: 'patterns', label: 'Patterns', href: '/patterns' },
-    { id: 'editor', label: 'Editor', href: '/editor', prefetch: false },
-    { id: 'guides', label: 'Guides', href: '/guides' },
-    { id: 'about', label: 'About', href: '/about' },
-];
+    hrefLang?: SiteLocale;
+};
 
-export default function SiteHeader({ active }: SiteHeaderProps) {
+export default function SiteHeader({ active, locale = 'en' }: SiteHeaderProps) {
+    const copy = siteNavigation[locale];
+    const routes = localeRoutes[locale];
+    const navItems: HeaderLink[] = [
+        { id: 'generator', label: copy.generator, href: routes.home },
+        { id: 'patterns', label: copy.patterns, href: routes.patterns },
+        { id: 'editor', label: copy.editor, href: routes.editor, prefetch: false },
+        { id: 'guides', label: copy.guides, href: routes.guides },
+        { id: 'about', label: copy.about, href: routes.about },
+    ];
     return (
         <header className="site-header">
-            <a href="#main-content" className="skip-link">Skip to content</a>
-            <div className="site-header-inner">
-                <Link href="/" className="site-brand">
+            <a href="#main-content" className="skip-link">{copy.skip}</a>
+            <div className={`site-header-inner ${styles.headerInner}`}>
+                <Link href={routes.home} className={`site-brand ${styles.brand}`}>
                     <Image src="/logo.png" alt="Fuse Bead Patterns Logo" width={36} height={36} sizes="36px" preload />
                     <span className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
                 </Link>
-                <nav className="site-nav" aria-label="Main navigation">
+                <nav className={`site-nav ${styles.navigation}`} aria-label={copy.main}>
                     {navItems.map((item) => (
-                        <Link key={item.id} href={item.href} prefetch={item.prefetch} aria-label={item.label} aria-current={item.id === active ? 'page' : undefined}>
+                        <Link key={item.id} href={item.href} hrefLang={item.hrefLang} prefetch={item.prefetch} aria-label={item.label} aria-current={item.id === active ? 'page' : undefined}>
                             {item.label}
                         </Link>
                     ))}
                 </nav>
+                <LanguageSwitcher locale={locale} className={styles.headerSwitcher} />
             </div>
         </header>
     );
