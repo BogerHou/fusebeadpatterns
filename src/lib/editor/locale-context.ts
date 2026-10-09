@@ -15,6 +15,7 @@ export function isEditorLanguageArrival(fromHref: string, toHref: string): boole
         const route = (url: URL) => Object.entries(localeRoutes).flatMap(([locale, routes]) => [
             { locale, kind: 'home', pathname: routes.home },
             { locale, kind: 'editor', pathname: routes.editor },
+            { locale, kind: 'hama-maker', pathname: routes.hamaMaker },
         ]).find(item => item.pathname === path(url));
         const source = route(from), target = route(to);
         return Boolean(source && target && source.kind === target.kind && source.locale !== target.locale);

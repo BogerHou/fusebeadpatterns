@@ -11,6 +11,7 @@ export function isSiteLocale(value: string): value is SiteLocale {
 
 export const siteNavigation = {
     en: {
+        hamaMaker: 'Hama bead pattern maker',
         skip: 'Skip to content', main: 'Main navigation', language: 'Language',
         fallback: 'Home — this page is not available',
         collectionFallback: 'Browse all patterns in this language', tools: 'Tools', beadGenerator: 'Photo to bead pattern',
@@ -22,6 +23,7 @@ export const siteNavigation = {
         copyright: 'All rights reserved. Not affiliated with any bead brand mentioned.',
     },
     de: {
+        hamaMaker: 'Hama aus Bildern',
         skip: 'Zum Inhalt', main: 'Hauptnavigation', language: 'Sprache',
         fallback: 'Startseite — diese Seite ist nicht verfügbar',
         collectionFallback: 'Alle Vorlagen in dieser Sprache ansehen', tools: 'Werkzeuge', beadGenerator: 'Bild in Bügelperlen umwandeln',
@@ -33,6 +35,7 @@ export const siteNavigation = {
         copyright: 'Alle Rechte vorbehalten. Unabhängig von den genannten Perlenmarken.',
     },
     fr: {
+        hamaMaker: 'Image en modèle Hama',
         skip: 'Aller au contenu', main: 'Navigation principale', language: 'Langue',
         fallback: 'Accueil — cette page n’est pas disponible',
         collectionFallback: 'Voir tous les modèles dans cette langue', tools: 'Outils', beadGenerator: 'Image en modèle de perles',
@@ -44,6 +47,7 @@ export const siteNavigation = {
         copyright: 'Tous droits réservés. Site indépendant des marques de perles citées.',
     },
     ja: {
+        hamaMaker: 'Hama図案作成',
         skip: '本文へ移動', main: 'メインナビゲーション', language: '言語',
         fallback: 'ホーム — このページの翻訳はありません',
         collectionFallback: 'この言語の図案一覧を見る', tools: 'ツール', beadGenerator: '画像からビーズ図案を作る',
