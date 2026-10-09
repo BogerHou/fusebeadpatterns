@@ -14,6 +14,7 @@ export default function ToolMenu({ locale }: { locale: SiteLocale }) {
     const summaryRef = useRef<HTMLElement>(null);
     const tools = [
         { href: routes.home, label: copy.beadGenerator },
+        { href: routes.hamaMaker, label: copy.hamaMaker },
         { href: routes.pixelGrid!, label: copy.pixelGrid },
         { href: routes.beadLoom, label: copy.beadLoom },
     ];

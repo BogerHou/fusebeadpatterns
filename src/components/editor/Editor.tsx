@@ -35,6 +35,7 @@ import { clearRestoredPatternQuery, consumeEditorLocaleDraft, consumeLargeEditor
 import { isEditorLanguageArrival, parseEditorLocaleContext, type EditorLocaleContext } from '@/lib/editor/locale-context';
 import { getInitialPdfScaleMode, isMidiActualSizeSupported, resolvePdfScaleMode, type PdfScaleMode } from '@/lib/editor/pdf-scale';
 import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
+import { DEFAULT_EDITOR_PALETTE_ID as DEFAULT_PALETTE_ID, getInitialEditorConfiguration } from '@/lib/editor/initial-configuration';
 
 import {
     BOARD_OPTIONS,
@@ -120,8 +121,6 @@ import {
     drawImageInsideCanvas,
 } from '@/lib/core/utils/utils';
 
-const DEFAULT_PALETTE_ID = 'perler';
-const DEFAULT_BOARD_ID = getPaletteOption(DEFAULT_PALETTE_ID)?.boardId ?? 'midi';
 const DEFAULT_MATCHING_ID = 'delta_e_cie2000';
 const DEFAULT_DITHERING_ID = 'none';
 const DEFAULT_EXPORT_ID = 'pdf';
@@ -222,6 +221,7 @@ type TouchListLike = {
 type EditorProps = {
     mode?: 'home' | 'editor';
     locale?: SiteLocale;
+    initialPaletteId?: string;
 };
 
 const EDITOR_TOOLS: {
@@ -527,7 +527,7 @@ function LibraryPatternRequest(props: LibraryPatternEntryProps) {
     return patternId === null ? null : <LibraryPatternEntry key={patternId} patternId={patternId} {...props} />;
 }
 
-export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
+export default function Editor({ mode = 'home', locale = 'en', initialPaletteId }: EditorProps) {
     const t = getEditorTranslator(locale);
     const localHome = localeRoutes[locale].home;
     const localEditor = localeRoutes[locale].editor;
@@ -535,20 +535,22 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
     const confirmImageGeneration = React.useEffectEvent((beadCount: number) => confirmLargePatternAction(beadCount, locale));
     const router = useRouter();
     const isEditorPage = mode === 'editor';
+    // Freeze entry defaults on mount; prop changes must not replace live work.
+    const [initialConfiguration] = useState(() => getInitialEditorConfiguration(initialPaletteId));
     const [sourceMode, setSourceMode] = useState<EditorSourceMode>('image');
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [fileName, setFileName] = useState('bead-pattern');
     const [selectedPaletteIds, setSelectedPaletteIds] = useState<string[]>([
-        DEFAULT_PALETTE_ID,
+        initialConfiguration.paletteId,
     ]);
     const [activePalettes, setActivePalettes] = useState<Palette[]>([]);
-    const [boardId, setBoardId] = useState<BoardOptionId>(DEFAULT_BOARD_ID);
+    const [boardId, setBoardId] = useState<BoardOptionId>(initialConfiguration.boardId);
     const [boardWidth, setBoardWidth] = useState(1);
     const [boardHeight, setBoardHeight] = useState(1);
     const [pendingPrimaryPaletteId, setPendingPrimaryPaletteId] =
-        useState(DEFAULT_PALETTE_ID);
+        useState(initialConfiguration.paletteId);
     const [pendingBoardId, setPendingBoardId] =
-        useState<BoardOptionId>(DEFAULT_BOARD_ID);
+        useState<BoardOptionId>(initialConfiguration.boardId);
     const [pendingBoardWidth, setPendingBoardWidth] = useState(1);
     const [pendingBoardHeight, setPendingBoardHeight] = useState(1);
     const [matchingId, setMatchingId] = useState(DEFAULT_MATCHING_ID);
@@ -595,7 +597,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         string | null
     >(null);
     const [colorPickerPaletteId, setColorPickerPaletteId] =
-        useState(DEFAULT_PALETTE_ID);
+        useState(initialConfiguration.paletteId);
     const [colorPickerQuery, setColorPickerQuery] = useState('');
     const [allBrandPalettes, setAllBrandPalettes] = useState<
         Record<string, Palette>

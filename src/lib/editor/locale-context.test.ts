@@ -184,26 +184,49 @@ describe('editor language working context', () => {
 
 describe('editor language arrival detection', () => {
     const origin = 'https://fusebeadpatterns.art';
-    const equivalentRoutes = Object.entries(localeRoutes).flatMap(([fromLocale, from]) => (
-        Object.entries(localeRoutes).flatMap(([toLocale, to]) => (['home', 'editor'] as const).map(kind => ({
-            fromLocale, toLocale, kind, from: `${origin}${from[kind]}`, to: `${origin}${to[kind]}`,
-            expected: fromLocale !== toLocale,
-        })))
+    const workspaceKinds = [
+        { kind: 'home', route: 'home' },
+        { kind: 'editor', route: 'editor' },
+        { kind: 'hama-maker', route: 'hamaMaker' },
+    ] as const;
+    const workspaceRoutes = Object.entries(localeRoutes).flatMap(([locale, routes]) => (
+        workspaceKinds.map(({ kind, route }) => ({ locale, kind, href: `${origin}${routes[route]}` }))
+    ));
+    const equivalentRoutes = workspaceRoutes.flatMap(from => (
+        workspaceRoutes.filter(to => to.kind === from.kind).map(to => ({
+            fromLocale: from.locale, toLocale: to.locale, kind: from.kind, from: from.href, to: to.href,
+            expected: from.locale !== to.locale,
+        }))
     ));
     it.each(equivalentRoutes)('$fromLocale → $toLocale $kind = $expected', ({ from, to, expected }) => {
         expect(isEditorLanguageArrival(from, to)).toBe(expected);
     });
 
+    const differentKinds = workspaceRoutes.flatMap(from => (
+        workspaceRoutes.filter(to => to.kind !== from.kind).map(to => ({
+            fromLocale: from.locale, fromKind: from.kind, toLocale: to.locale, toKind: to.kind,
+            from: from.href, to: to.href,
+        }))
+    ));
+    it.each(differentKinds)('does not treat $fromLocale $fromKind → $toLocale $toKind as a language arrival', ({ from, to }) => {
+        expect(isEditorLanguageArrival(from, to)).toBe(false);
+    });
+
     it.each([
         { label: 'first visit without a referrer', from: '', to: `${origin}/ja/editor` },
+        { label: 'first Hama visit without a referrer', from: '', to: `${origin}${localeRoutes.ja.hamaMaker}` },
         { label: 'same-language home to editor', from: `${origin}/de`, to: `${origin}/de/editor` },
         { label: 'different-language home to editor', from: `${origin}/de`, to: `${origin}/ja/editor` },
         { label: 'different-language editor to home', from: `${origin}/de/editor`, to: `${origin}/fr` },
         { label: 'external origin', from: 'https://makebead.com/de/editor', to: `${origin}/ja/editor` },
+        { label: 'external Hama origin', from: `https://makebead.com${localeRoutes.de.hamaMaker}`, to: `${origin}${localeRoutes.ja.hamaMaker}` },
         { label: 'different scheme', from: 'http://fusebeadpatterns.art/de/editor', to: `${origin}/ja/editor` },
+        { label: 'different Hama scheme', from: `http://fusebeadpatterns.art${localeRoutes.de.hamaMaker}`, to: `${origin}${localeRoutes.ja.hamaMaker}` },
         { label: 'different port', from: 'http://127.0.0.1:4332/de/editor', to: 'http://127.0.0.1:4333/ja/editor' },
+        { label: 'different Hama port', from: `http://127.0.0.1:4332${localeRoutes.de.hamaMaker}`, to: `http://127.0.0.1:4333${localeRoutes.ja.hamaMaker}` },
         { label: 'catalog routes', from: `${origin}/de/patterns`, to: `${origin}/ja/patterns` },
         { label: 'unrecognized nested editor path', from: `${origin}/de/editor/other`, to: `${origin}/ja/editor` },
+        { label: 'unrecognized nested Hama path', from: `${origin}${localeRoutes.de.hamaMaker}/other`, to: `${origin}${localeRoutes.ja.hamaMaker}` },
         { label: 'relative referrer', from: '/de/editor', to: `${origin}/ja/editor` },
         { label: 'invalid destination', from: `${origin}/de/editor`, to: 'not a URL' },
     ])('returns false for $label', ({ from, to }) => {
@@ -216,4 +239,11 @@ describe('editor language arrival detection', () => {
         expect(isEditorLanguageArrival('http://127.0.0.1:4332/editor/', 'http://127.0.0.1:4332/fr/editor/')).toBe(true);
         expect(isEditorLanguageArrival(`${origin}/`, `${origin}/de/`)).toBe(true);
     });
+
+    it.each(equivalentRoutes.filter(route => route.kind === 'hama-maker'))(
+        'recognizes $fromLocale → $toLocale Hama arrivals with trailing slashes, queries and fragments = $expected',
+        ({ from, to, expected }) => {
+            expect(isEditorLanguageArrival(`${from}/?from=generator#preview`, `${to}/?from=generator#preview`)).toBe(expected);
+        }
+    );
 });

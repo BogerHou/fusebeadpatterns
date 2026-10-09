@@ -1,3 +1,4 @@
+import { hamaMakerPaths } from '@/lib/hama-maker/routes';
 import { guideRouteGroups } from '@/lib/guides/routes';
 import { sitePageRouteGroups } from '@/lib/site-pages/routes';
 import { localeRoutes } from '@/lib/i18n/routes';
@@ -15,6 +16,11 @@ const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
+        ...Object.values(hamaMakerPaths).map(path => ({
+            url: `https://fusebeadpatterns.art${path}`,
+            lastModified: new Date('2026-10-09T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
+        })),
         {
             url: 'https://fusebeadpatterns.art',
             lastModified: new Date('2026-10-04T00:00:00.000Z'),
