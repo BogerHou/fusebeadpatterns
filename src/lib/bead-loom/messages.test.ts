@@ -11,6 +11,7 @@ import * as transfer from './locale-navigation';
 import * as pixelCore from '../pixel-grid/core';
 import * as routes from '../i18n/routes';
 import * as contrast from './contrast';
+import * as patterns from './patterns';
 import { PixelGridError } from '../pixel-grid/errors';
 import { pixelGridErrorMessage } from '../pixel-grid/messages';
 import type { PixelLocaleStore } from '../pixel-grid/locale-storage';
@@ -81,6 +82,7 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/bead-loom/locale-navigation') return transfer;
         if (id === '@/lib/pixel-grid/core') return pixelCore;
         if (id === '@/lib/bead-loom/contrast') return contrast;
+        if (id === '@/lib/bead-loom/patterns') return patterns;
         if (id === '@/lib/i18n/routes') return routes;
         if (id === '@/lib/analytics') return { trackBeadLoomExport: () => false };
         if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_target, name) => String(name) }) };
@@ -110,13 +112,14 @@ function localStore() {
     return { values, store };
 }
 // Real component handlers and model/exported project JSON; only DOM drawing/image decoding are fixtures.
-function interactive(locale: messages.LoomLocale, options: { storage?: ReturnType<typeof storageArea>; store?: PixelLocaleStore } = {}) {
+function interactive(locale: messages.LoomLocale, options: { storage?: ReturnType<typeof storageArea>; store?: PixelLocaleStore; search?: string; strictReplay?: boolean } = {}) {
     const slots: unknown[] = [], effects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
     let slot = 0, first = true, tree: unknown;
     const browserListeners = new Map<string, Set<(event: Event) => void>>(), documentListeners = new Map<string, Set<(event: Event) => void>>();
     const register = (map: typeof browserListeners, key: string, fn: (event: Event) => void) => { if (!map.has(key)) map.set(key, new Set()); map.get(key)!.add(fn); };
     const storage = options.storage ?? storageArea(), assignments: string[] = [], confirmations: string[] = [], exports: unknown[][] = [];
-    const location = { href: `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(locale)]}`, origin: 'https://fusebeadpatterns.art', pathname: transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(locale)], search: '', assign(href: string) { assignments.push(href); }, reload() { assignments.push('reload'); } };
+    const search = options.search ?? '';
+    const location = { href: `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(locale)]}${search}`, origin: 'https://fusebeadpatterns.art', pathname: transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(locale)], search, assign(href: string) { assignments.push(href); }, reload() { assignments.push('reload'); } };
     const browser = {
         location, sessionStorage: storage, confirm: (message: string) => { confirmations.push(message); return false; },
         addEventListener: (key: string, fn: (event: Event) => void) => register(browserListeners, key, fn), removeEventListener: (key: string, fn: (event: Event) => void) => browserListeners.get(key)?.delete(fn),
@@ -151,6 +154,11 @@ function interactive(locale: messages.LoomLocale, options: { storage?: ReturnTyp
     }) as (props: { locale: messages.LoomLocale }) => unknown;
     function render() { slot = 0; tree = Component({ locale }); if (first) { first = false; for (const effect of effects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); } } }
     render(); render();
+    if (options.strictReplay) {
+        for (const cleanup of cleanups.splice(0)) cleanup();
+        for (const effect of effects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); }
+        render();
+    }
     const find = (predicate: (node: Node) => boolean) => { const node = nodes(tree).find(predicate); if (!node) throw new Error('Control not found'); return node; };
     const byId = (id: string) => find(node => node.props.id === id), button = (label: string) => find(node => node.type === 'button' && (content(node) === label || node.props['aria-label'] === label));
     async function settle() { await new Promise(resolve => setImmediate(resolve)); render(); }
@@ -183,8 +191,79 @@ function interactive(locale: messages.LoomLocale, options: { storage?: ReturnTyp
 }
 
 describe('actual loom language events and project continuity', () => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('opens the real heart chart from its gallery link in %s', async locale => {
+        const ui = interactive(locale, { search: '?pattern=heart-band', strictReplay: true });
+        expect(ui.byId('loom-columns').props.value).toBe('11');
+        expect(ui.byId('loom-rows').props.value).toBe('61');
+        expect(ui.disabled()).toBe(false); expect(ui.beforeUnload()).toBe(false);
+        const project = await ui.download(copy[locale].saveProject);
+        expect(core.parseProject(await project.blob.text())).toEqual(patterns.getLoomPatternChart('heart-band', locale));
+        ui.unmount();
+    });
+    it.each(['', '?pattern=missing', '?pattern=..%2Fprivate'])('keeps the old blank start for an absent or unknown gallery request: %s', async search => {
+        const ui = interactive('en', { search });
+        expect(core.parseProject(await (await ui.download(copy.en.saveProject)).blob.text())).toEqual(core.createChart());
+        ui.unmount();
+    });
+    it('restores unsaved edits and pending settings before considering a gallery query on language changes', async () => {
+        const ui = interactive('en', { search: '?pattern=heart-band' });
+        const custom = patterns.getLoomPatternChart('heart-band', 'en');
+        custom.title = 'My edited chart'; custom.palette[1].name = 'My blue'; custom.palette[1].code = 'OWN-77';
+        await ui.loadProject(custom);
+        const different = custom.palette.find(color => color.id !== custom.cells[0])!;
+        ui.change('loom-selected', different.id); ui.paint();
+        ui.change('loom-rows', '72');
+        const destination = `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[2]}?pattern=heart-band`;
+        expect(ui.switchLanguage(destination).defaultPrevented).toBe(false);
+        const target = interactive('fr', { storage: ui.storage, search: '?pattern=heart-band', strictReplay: true });
+        expect(target.status()).toContain(copy.fr.languageRestored);
+        expect(target.byId('loom-rows').props.value).toBe('72'); expect(target.beforeUnload()).toBe(true);
+        const reopened = core.parseProject(await (await target.download(copy.fr.saveProject)).blob.text());
+        expect(reopened.title).toBe(custom.title); expect(reopened.palette).toEqual(custom.palette);
+        expect(reopened.cells[0]).toBe(different.id); expect(reopened.cells.slice(1)).toEqual(custom.cells.slice(1));
+        target.click(copy.fr.undo);
+        expect(core.parseProject(await (await target.download(copy.fr.saveProject)).blob.text())).toEqual(custom);
+        ui.unmount(); target.unmount();
+    });
+    it('does not load a requested pattern while a language transfer cannot be read', () => {
+        const area = storageArea();
+        area.getItem = () => { throw new Error('Storage unavailable'); };
+        const ui = interactive('ja', { storage: area, search: '?pattern=heart-band' });
+        expect(ui.disabled()).toBe(true); expect(ui.status()).toContain(copy.ja.languageRestoreFailed);
+        expect(ui.byId('loom-rows').props.value).toBe('31');
+        expect(ui.switchLanguage(transfer.LOOM_LOCALE_PATHS[1]).defaultPrevented).toBe(true);
+        ui.unmount();
+    });
+    it('keeps an unmatched pending transfer intact instead of replacing it with a gallery pattern', () => {
+        const ui = interactive('en', { search: '?pattern=heart-band' });
+        ui.change('loom-rows', '72');
+        const destination = `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[2]}?pattern=heart-band`;
+        expect(ui.switchLanguage(destination).defaultPrevented).toBe(false);
+        const pending = ui.storage.getItem(transfer.LOOM_LOCALE_STORAGE_KEY);
+        expect(pending).not.toBeNull();
+        const target = interactive('ja', { storage: ui.storage, search: '?pattern=chevron-band' });
+        expect(target.disabled()).toBe(true); expect(target.status()).toContain(copy.ja.languageRestoreFailed);
+        expect(target.byId('loom-rows').props.value).toBe('31');
+        expect(target.switchLanguage(transfer.LOOM_LOCALE_PATHS[1]).defaultPrevented).toBe(true);
+        expect(ui.storage.getItem(transfer.LOOM_LOCALE_STORAGE_KEY)).toBe(pending);
+        const retry = interactive('fr', { storage: ui.storage, search: '?pattern=heart-band' });
+        expect(retry.disabled()).toBe(false); expect(retry.status()).toContain(copy.fr.languageRestored);
+        expect(retry.byId('loom-rows').props.value).toBe('72');
+        expect(ui.storage.getItem(transfer.LOOM_LOCALE_STORAGE_KEY)).toBeNull();
+        ui.unmount(); target.unmount(); retry.unmount();
+    });
+    it('asks before replacing unsaved edits with another pattern in the same tool', async () => {
+        const ui = interactive('en', { search: '?pattern=heart-band' });
+        const original = patterns.getLoomPatternChart('heart-band', 'en');
+        const different = original.palette.find(color => color.id !== original.cells[0])!;
+        ui.change('loom-selected', different.id); ui.paint();
+        expect(ui.switchLanguage('/bead-loom-pattern-maker?pattern=chevron-band', false).defaultPrevented).toBe(true);
+        expect(ui.confirmations).toEqual([copy.en.leave]); expect(ui.assignments).toEqual([]);
+        expect(core.parseProject(await (await ui.download(copy.en.saveProject)).blob.text()).cells[0]).toBe(different.id);
+        ui.unmount();
+    });
     it.each([['en', 'fr'], ['fr', 'ja'], ['ja', 'de'], ['de', 'en']] as const)('keeps chart/source/history/pending controls when switching %s → %s', async (from, to) => {
-        const ui = interactive(from), custom = core.createChart(4, 3);
+        const ui = interactive(from, { search: '?pattern=heart-band' }), custom = core.createChart(4, 3);
         custom.title = 'User title 青'; custom.palette[0].name = 'CUSTOM IVORY'; custom.palette[1].code = 'B-77';
         await ui.loadProject(custom); await ui.loadImage();
         ui.change('loom-columns', '7'); ui.change('loom-rows', '9'); ui.change('loom-aspect', '1.2');
@@ -195,12 +274,12 @@ describe('actual loom language events and project continuity', () => {
         ui.change('loom-corner', 'bottom-right'); ui.change('loom-serpentine', true); ui.change('loom-selected', 'color-c');
         ui.change('loom-replace-target', 'color-e'); ui.change('loom-zoom', '40'); ui.change('loom-paper', 'letter');
         ui.change('loom-mode', 'stretch'); ui.click(copy[from].pan);
-        const destination = `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(to)]}`;
+        const destination = `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(to)]}?pattern=heart-band`;
         expect(ui.switchLanguage(destination).defaultPrevented).toBe(false); expect(ui.confirmations).toEqual([]);
         const raw = ui.storage.getItem(transfer.LOOM_LOCALE_STORAGE_KEY)!;
         const expected = transfer.consumeLoomLocaleSnapshot(destination, { getItem: () => raw, setItem() {}, removeItem() {} })!;
         expect(expected.saved).toEqual(custom); expect(expected.source!.pixels).toEqual(ui.source.pixels); expect(expected.cursor).toEqual([1, 1]);
-        const target = interactive(to, { storage: ui.storage });
+        const target = interactive(to, { storage: ui.storage, search: '?pattern=heart-band', strictReplay: true });
         expect(target.status()).toContain(copy[to].languageRestored); expect(target.status()).toContain(copy[to].dirty);
         expect(target.byId('loom-columns').props.value).toBe('17'); expect(target.byId('loom-rows').props.value).toBe('');
         expect(target.byId('loom-aspect').props.value).toBe('1.6'); expect(target.byId('loom-corner').props.value).toBe('bottom-right');
@@ -226,15 +305,15 @@ describe('actual loom language events and project continuity', () => {
         const records = localStore(), area = storageArea(512);
         let release!: () => void;
         const waiting: PixelLocaleStore = { ...records.store, async put(key, raw) { await new Promise<void>(resolve => { release = resolve; }); await records.store.put(key, raw, Date.now() + 300000); } };
-        const ui = interactive('fr', { storage: area, store: waiting });
+        const ui = interactive('fr', { storage: area, store: waiting, search: '?pattern=chevron-band' });
         await ui.loadImage(); ui.click(copy.fr.convert); ui.paint(); ui.change('loom-paper', 'letter');
-        const destination = `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[1]}`;
+        const destination = `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[1]}?pattern=chevron-band`;
         expect(ui.switchLanguage(destination).defaultPrevented).toBe(true);
         expect(ui.disabled()).toBe(true); expect(ui.status()).toContain(copy.fr.languageSaving); expect(ui.assignments).toEqual([]);
         expect(ui.switchLanguage(destination).defaultPrevented).toBe(true); expect(ui.beforeUnload()).toBe(true);
         release(); await ui.settle();
         expect(ui.assignments).toEqual([destination]); expect(records.values.size).toBe(1);
-        const target = interactive('de', { storage: area, store: records.store });
+        const target = interactive('de', { storage: area, store: records.store, search: '?pattern=chevron-band', strictReplay: true });
         await target.settle(); expect(target.disabled()).toBe(false); expect(target.status()).toContain(copy.de.languageRestored);
         expect(target.byId('loom-paper').props.value).toBe('letter');
         target.click(copy.de.undo); expect(target.status()).toContain(copy.de.undone);
@@ -261,10 +340,11 @@ describe('actual loom language events and project continuity', () => {
             corner: 'bottom-left', serpentine: true, selected: 'color-b', replaceTarget: 'color-a', tool: 'paint', zoom: '18',
             cursor: [0, 0], source: null, sourceName: '', mode: 'fit', paper: 'a4',
         };
-        expect(await transfer.saveLargeLoomLocaleSnapshot(snapshot, transfer.LOOM_LOCALE_PATHS[2], area, records.store)).toBe(true);
+        expect(await transfer.saveLargeLoomLocaleSnapshot(snapshot, `${transfer.LOOM_LOCALE_PATHS[2]}?pattern=heart-band`, area, records.store)).toBe(true);
         records.values.clear();
-        const target = interactive('fr', { storage: area, store: records.store }); await target.settle();
+        const target = interactive('fr', { storage: area, store: records.store, search: '?pattern=heart-band', strictReplay: true }); await target.settle();
         expect(target.status()).toContain(copy.fr.languageRestoreUnavailable); expect(target.disabled()).toBe(false);
+        expect(target.byId('loom-rows').props.value).toBe('31');
         const custom = core.createChart(7, 9); custom.title = 'Recovered from saved project';
         await target.loadProject(custom);
         expect(await (await target.download(copy.fr.saveProject)).blob.text()).toBe(core.serializeProject(custom));

@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import loomPatternLibrary from './src/lib/bead-loom/patterns.json';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -100,6 +101,15 @@ const nextConfig: NextConfig = {
                 source: '/:path*',
                 headers: securityHeaders,
             },
+            ...loomPatternLibrary.patterns.flatMap(({ id }) =>
+                Object.keys(loomPatternLibrary.libraryPaths).map((locale) => ({
+                    source: `/bead-loom-patterns/${id}/${locale}/pattern.bead-loom.json`,
+                    headers: [{
+                        key: 'Content-Disposition',
+                        value: `attachment; filename="${id}-${locale}.bead-loom.json"`,
+                    }],
+                })),
+            ),
         ];
     },
     reactCompiler: true,

@@ -21,6 +21,17 @@ describe('site language routes', () => {
         expect(getLocaleDestination('/fr/modeles-perles-a-repasser-noel', 'ja')).toEqual({ href: '/ja/patterns/christmas', isFallback: false });
     });
 
+    it('switches loom pattern libraries to the same design in each language', () => {
+        for (const source of SITE_LOCALES) {
+            for (const destination of SITE_LOCALES) {
+                expect(getLocaleDestination(localeRoutes[source].beadLoomPatterns, destination, { hash: '#heart-band' })).toEqual({
+                    href: `${localeRoutes[destination].beadLoomPatterns}#heart-band`,
+                    isFallback: false,
+                });
+            }
+        }
+    });
+
     it('keeps untranslated pages in the current language and labels other targets as a home fallback', () => {
         expect(getLocaleDestination('/patterns/pokemon/pikachu', 'en', { search: '?from=search' })).toEqual({ href: '/patterns/pokemon/pikachu?from=search', isFallback: false });
         expect(getLocaleDestination('/guides/mini-perler-beads', 'ja', { search: '?from=search' })).toEqual({ href: '/ja/guides/mini-perler-beads?from=search', isFallback: false });

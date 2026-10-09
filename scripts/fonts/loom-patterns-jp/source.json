@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "weight": 400,
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Loom Patterns",
+  "subsetPurpose": "Original loom pattern library: complete fixed EN/DE/FR/JA copy, titles and color labels; ASCII counts and symbols",
+  "subsetSha256": "104166e7c6598efedfe2d1766a6531a27435946615cd92330abd9b0d72d0e724",
+  "charactersSha256": "dd5ef29ac943c299718a40a2eac53acd77dc2b1225b3e62c81591e0847ed8cd7",
+  "characterCount": 267,
+  "fonttoolsVersion": "4.60.1"
+}

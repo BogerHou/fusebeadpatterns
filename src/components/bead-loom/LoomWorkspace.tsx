@@ -8,6 +8,7 @@ import { LOOM_MESSAGES, createLocalizedLoomChart, loomErrorMessage, type LoomLoc
 import { LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import { LOOM_LOCALE_STORAGE_KEY, consumeLoomLocaleSnapshot, consumeLargeLoomLocaleSnapshot, hasLargeLoomLocaleSnapshot, isLoomLocaleNavigation, saveLoomLocaleSnapshot, saveLargeLoomLocaleSnapshot, type LoomLocaleSnapshot, type LoomZoom } from '@/lib/bead-loom/locale-navigation';
 import { loomSymbolInk } from '@/lib/bead-loom/contrast';
+import { getLoomPattern, getLoomPatternChart } from '@/lib/bead-loom/patterns';
 import { trackBeadLoomExport } from '@/lib/analytics';
 import styles from './LoomWorkspace.module.css';
 
@@ -77,6 +78,7 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
     const imageInput = useRef<HTMLInputElement>(null), projectInput = useRef<HTMLInputElement>(null);
     const stroke = useRef<Stroke | null>(null), mounted = useRef(false), allowLeave = useRef(false);
     const localeReady = useRef(false), localeRestore = useRef<LoomLocaleSnapshot | null | undefined>(undefined);
+    const patternOpened = useRef(false);
     const largeLocaleRestore = useRef<Promise<LoomLocaleSnapshot | null> | null>(null);
     const [busyMessage, setBusyMessage] = useState(text.preparing);
     const [restoreFailed, setRestoreFailed] = useState(false);
@@ -169,8 +171,9 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
         };
     }, [finishStroke, undo, text]);
 
-    const applyLocaleSnapshot = useCallback((snapshot: LoomLocaleSnapshot | null) => {
+    const applyLocaleSnapshot = useCallback((snapshot: LoomLocaleSnapshot | null, allowPattern = true) => {
         if (snapshot) {
+            patternOpened.current = true;
             chartRef.current = snapshot.chart; saved.current = snapshot.saved; history.current = snapshot.history;
             source.current = snapshot.source; cursorRef.current = snapshot.cursor;
             setChart(snapshot.chart); setColumns(snapshot.columns); setRows(snapshot.rows); setAspect(snapshot.aspect);
@@ -178,9 +181,21 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
             setReplaceTarget(snapshot.replaceTarget); setTool(snapshot.tool); setZoom(snapshot.zoom);
             setCursor(snapshot.cursor); setSourceName(snapshot.sourceName); setMode(snapshot.mode); setPaper(snapshot.paper);
             sync(); setStatus({ text: text.languageRestored, error: false });
+        } else if (allowPattern && !patternOpened.current) {
+            patternOpened.current = true;
+            const id = new URL(window.location.href).searchParams.get('pattern');
+            if (id && getLoomPattern(id)) {
+                const next = getLoomPatternChart(id, locale);
+                saved.current = next;
+                history.current = { past: [], future: [] };
+                publish(next, true);
+                setSelected(next.palette[1]?.id ?? next.palette[0].id);
+                setReplaceTarget(next.backgroundId);
+                setStatus({ text: text.chartReady, error: false });
+            }
         }
         localeReady.current = true;
-    }, [sync, text.languageRestored]);
+    }, [sync, publish, locale, text.chartReady, text.languageRestored]);
     const protectLocaleRecovery = useCallback(() => {
         largeLocaleRestore.current = null;
         busyRef.current = false; setBusy(false); localeReady.current = false;
@@ -203,7 +218,7 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
                             if (window.sessionStorage.getItem(LOOM_LOCALE_STORAGE_KEY)) {
                                 protectLocaleRecovery();
                             } else {
-                                applyLocaleSnapshot(null); setStatus({ text: text.languageRestoreUnavailable, error: true });
+                                applyLocaleSnapshot(null, false); setStatus({ text: text.languageRestoreUnavailable, error: true });
                             }
                         } catch { protectLocaleRecovery(); }
                     }
@@ -214,6 +229,10 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
                 return;
             }
             if (localeRestore.current === undefined) localeRestore.current = consumeLoomLocaleSnapshot(window.location.href, window.sessionStorage);
+            if (!localeRestore.current && window.sessionStorage.getItem(LOOM_LOCALE_STORAGE_KEY)) {
+                protectLocaleRecovery();
+                return;
+            }
         } catch {
             protectLocaleRecovery();
             return;
