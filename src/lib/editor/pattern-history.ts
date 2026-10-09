@@ -4,6 +4,29 @@ import {
     getPaletteEntryColorKey,
 } from '../core/utils/utils';
 import type { PatternPoint } from './pattern-edit';
+import { EDITOR_PROJECT_PATTERN_DIMENSION_MAX } from './draft';
+
+export const PATTERN_HISTORY_MAX_BYTES = 32 * 1024 * 1024;
+export const PATTERN_HISTORY_MAX_STEPS = 200;
+
+type SerializedPatternPatch = {
+    count: number;
+    /** Little-endian uint32 RGBA byte offsets. */
+    indices: string;
+    before: string;
+    after: string;
+};
+
+/** Tab-local language transfer only; this is not the saved project format. */
+export type PatternHistorySnapshot = {
+    version: 1;
+    width: number;
+    height: number;
+    /** Exact current pixels bind the history, including pixels never edited. */
+    data: string;
+    undo: SerializedPatternPatch[];
+    redo: SerializedPatternPatch[];
+};
 
 export type PatternPatch = {
     /** RGBA byte offsets in the full pattern, rather than pixel numbers. */
@@ -164,6 +187,125 @@ function patchByteLength(patch: PatternPatch): number {
     return patch.indices.byteLength + patch.before.byteLength + patch.after.byteLength;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isPatternSize(data: Uint8ClampedArray, width: number, height: number): boolean {
+    return [width, height].every((dimension) => (
+        Number.isInteger(dimension) && dimension > 0 &&
+        dimension <= EDITOR_PROJECT_PATTERN_DIMENSION_MAX
+    )) && data.length === width * height * 4;
+}
+
+function encodeBytes(bytes: Uint8Array | Uint8ClampedArray): string {
+    let binary = '';
+    for (let start = 0; start < bytes.length; start += 0x8000) {
+        const end = Math.min(start + 0x8000, bytes.length);
+        let chunk = '';
+        for (let index = start; index < end; index += 1) {
+            chunk += String.fromCharCode(bytes[index]);
+        }
+        binary += chunk;
+    }
+    return btoa(binary);
+}
+
+function hasEncodedByteLength(value: unknown, byteLength: number): value is string {
+    return typeof value === 'string' && value.length === Math.ceil(byteLength / 3) * 4;
+}
+
+function decodeBytes(value: string, byteLength: number): Uint8Array | null {
+    try {
+        const binary = atob(value);
+        if (binary.length !== byteLength) return null;
+        const bytes = new Uint8Array(byteLength);
+        for (let index = 0; index < binary.length; index += 1) {
+            bytes[index] = binary.charCodeAt(index);
+        }
+        // Reject non-canonical encodings rather than silently normalizing corruption.
+        return encodeBytes(bytes) === value ? bytes : null;
+    } catch {
+        return null;
+    }
+}
+
+function serializePatch(patch: PatternPatch): SerializedPatternPatch {
+    const indices = new Uint8Array(patch.indices.length * 4);
+    const view = new DataView(indices.buffer);
+    patch.indices.forEach((index, offset) => view.setUint32(offset * 4, index, true));
+    return {
+        count: patch.indices.length,
+        indices: encodeBytes(indices),
+        before: encodeBytes(patch.before),
+        after: encodeBytes(patch.after),
+    };
+}
+
+function deserializePatch(patch: SerializedPatternPatch): PatternPatch | null {
+    const indicesBytes = decodeBytes(patch.indices, patch.count * 4);
+    const before = decodeBytes(patch.before, patch.count * 4);
+    const after = decodeBytes(patch.after, patch.count * 4);
+    if (!indicesBytes || !before || !after) return null;
+    const indices = new Uint32Array(patch.count);
+    const view = new DataView(indicesBytes.buffer);
+    for (let offset = 0; offset < patch.count; offset += 1) {
+        indices[offset] = view.getUint32(offset * 4, true);
+    }
+    return {
+        indices,
+        before: new Uint8ClampedArray(before.buffer),
+        after: new Uint8ClampedArray(after.buffer),
+    };
+}
+
+function isValidPatch(patch: PatternPatch, patternLength: number, seen: Uint8Array, mark: number): boolean {
+    if (
+        !(patch.indices instanceof Uint32Array) ||
+        !(patch.before instanceof Uint8ClampedArray) ||
+        !(patch.after instanceof Uint8ClampedArray)
+    ) return false;
+    const count = patch.indices.length;
+    if (
+        count === 0 || count > patternLength / 4 ||
+        patch.before.length !== count * 4 || patch.after.length !== count * 4
+    ) return false;
+
+    for (let offset = 0; offset < count; offset += 1) {
+        const index = patch.indices[offset];
+        if (index % 4 !== 0 || index + 3 >= patternLength || seen[index / 4] === mark) return false;
+        if (pixelsMatch(patch.before, offset * 4, patch.after, offset * 4)) return false;
+        seen[index / 4] = mark;
+    }
+    return true;
+}
+
+function hasConsistentHistory(
+    data: Uint8ClampedArray,
+    undo: PatternPatch[],
+    redo: PatternPatch[]
+): boolean {
+    const seen = new Uint8Array(data.length / 4);
+    const patches = [...undo, ...redo];
+    for (let step = 0; step < patches.length; step += 1) {
+        if (!isValidPatch(patches[step], data.length, seen, step + 1)) return false;
+    }
+
+    const working = data.slice();
+    for (const [stack, direction] of [[undo, 'undo'], [redo, 'redo']] as const) {
+        working.set(data);
+        for (let step = stack.length - 1; step >= 0; step -= 1) {
+            const patch = stack[step];
+            const expected = direction === 'undo' ? patch.after : patch.before;
+            for (let offset = 0; offset < patch.indices.length; offset += 1) {
+                if (!pixelsMatch(working, patch.indices[offset], expected, offset * 4)) return false;
+            }
+            applyPatternPatch(working, patch, direction);
+        }
+    }
+    return true;
+}
+
 export class PatternHistory {
     private readonly undoStack: PatternPatch[] = [];
     private readonly redoStack: PatternPatch[] = [];
@@ -172,8 +314,8 @@ export class PatternHistory {
     private retainedBytes = 0;
 
     constructor(options: { byteBudget?: number; maxSteps?: number } = {}) {
-        this.byteBudget = options.byteBudget ?? 32 * 1024 * 1024;
-        this.maxSteps = options.maxSteps ?? 200;
+        this.byteBudget = options.byteBudget ?? PATTERN_HISTORY_MAX_BYTES;
+        this.maxSteps = options.maxSteps ?? PATTERN_HISTORY_MAX_STEPS;
         if (
             !Number.isFinite(this.byteBudget) ||
             this.byteBudget < 0 ||
@@ -195,6 +337,82 @@ export class PatternHistory {
     /** Includes undo and redo: moving an operation between stacks retains its bytes. */
     get byteLength(): number {
         return this.retainedBytes;
+    }
+
+    /** Captures both stacks without retaining references to live pattern/history data. */
+    capture(data: Uint8ClampedArray, width: number, height: number): PatternHistorySnapshot | null {
+        if (
+            !isPatternSize(data, width, height) ||
+            this.undoStack.length + this.redoStack.length > Math.min(this.maxSteps, PATTERN_HISTORY_MAX_STEPS)
+        ) return null;
+        let retainedBytes = 0;
+        for (const patch of [...this.undoStack, ...this.redoStack]) {
+            if (
+                !(patch.indices instanceof Uint32Array) ||
+                !(patch.before instanceof Uint8ClampedArray) ||
+                !(patch.after instanceof Uint8ClampedArray)
+            ) return null;
+            retainedBytes += patchByteLength(patch);
+            if (retainedBytes > Math.min(this.byteBudget, PATTERN_HISTORY_MAX_BYTES)) return null;
+        }
+        if (!hasConsistentHistory(data, this.undoStack, this.redoStack)) return null;
+        return {
+            version: 1,
+            width,
+            height,
+            data: encodeBytes(data),
+            undo: this.undoStack.map(serializePatch),
+            redo: this.redoStack.map(serializePatch),
+        };
+    }
+
+    /** Validates the complete graph before replacing history; never modifies pixels. */
+    restore(snapshot: unknown, data: Uint8ClampedArray, width: number, height: number): boolean {
+        if (
+            !isPatternSize(data, width, height) || !isRecord(snapshot) ||
+            snapshot.version !== 1 || snapshot.width !== width || snapshot.height !== height ||
+            !hasEncodedByteLength(snapshot.data, data.length) ||
+            !Array.isArray(snapshot.undo) || !Array.isArray(snapshot.redo) ||
+            snapshot.undo.length + snapshot.redo.length > Math.min(this.maxSteps, PATTERN_HISTORY_MAX_STEPS)
+        ) return false;
+
+        // Check every encoded size and the aggregate budget before decoding any patch.
+        let retainedBytes = 0;
+        const serializedStacks = [snapshot.undo, snapshot.redo];
+        for (const stack of serializedStacks) {
+            for (const patch of stack) {
+                if (
+                    !isRecord(patch) || typeof patch.count !== 'number' ||
+                    !Number.isInteger(patch.count) || patch.count <= 0 || patch.count > data.length / 4 ||
+                    !hasEncodedByteLength(patch.indices, patch.count * 4) ||
+                    !hasEncodedByteLength(patch.before, patch.count * 4) ||
+                    !hasEncodedByteLength(patch.after, patch.count * 4)
+                ) return false;
+                retainedBytes += patch.count * 12;
+                if (retainedBytes > Math.min(this.byteBudget, PATTERN_HISTORY_MAX_BYTES)) return false;
+            }
+        }
+        if (snapshot.data !== encodeBytes(data)) return false;
+
+        const decodedStacks: PatternPatch[][] = [];
+        for (const stack of serializedStacks) {
+            const decoded: PatternPatch[] = [];
+            for (const patch of stack) {
+                const restored = deserializePatch(patch as SerializedPatternPatch);
+                if (!restored) return false;
+                decoded.push(restored);
+            }
+            decodedStacks.push(decoded);
+        }
+        const [undo, redo] = decodedStacks;
+        if (!hasConsistentHistory(data, undo, redo)) return false;
+
+        this.undoStack.length = 0;
+        this.redoStack.length = 0;
+        this.undoStack.push(...undo);
+        this.redoStack.push(...redo);
+        this.retainedBytes = retainedBytes;
+        return true;
     }
 
     push(patch: PatternPatch | null): void {
