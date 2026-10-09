@@ -31,7 +31,8 @@ import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import { formatEditorNumber, getEditorErrorMessage, getEditorTranslator } from '@/lib/editor/messages';
-import { clearRestoredPatternQuery, consumeEditorLocaleDraft, getEditorLocaleRestoreHref, saveEditorLocaleDraft, type EditorLocaleRecovery } from '@/lib/editor/locale-navigation';
+import { clearRestoredPatternQuery, consumeEditorLocaleDraft, consumeLargeEditorLocaleDraft, hasLargeEditorLocaleDraft, EDITOR_LOCALE_RESTORE_KEY, getEditorLocaleRestoreHref, saveEditorLocaleDraft, saveLargeEditorLocaleDraft, type EditorLocaleRecovery } from '@/lib/editor/locale-navigation';
+import { isEditorLanguageArrival, parseEditorLocaleContext, type EditorLocaleContext } from '@/lib/editor/locale-context';
 import { getInitialPdfScaleMode, isMidiActualSizeSupported, resolvePdfScaleMode, type PdfScaleMode } from '@/lib/editor/pdf-scale';
 import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
 
@@ -584,6 +585,10 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
     const [homeMobilePanel, setHomeMobilePanel] =
         useState<HomeMobilePanel>(null);
     const [isEditorDraftReady, setIsEditorDraftReady] = useState(false);
+    const [localeRestoreAttempt, setLocaleRestoreAttempt] = useState(0);
+    const [localeRestoreBlocked, setLocaleRestoreBlocked] = useState(false);
+    const [localeTransferPending, setLocaleTransferPending] = useState(false);
+    const [localeContextInstalling, setLocaleContextInstalling] = useState(false);
     const [activeEditorTool, setActiveEditorTool] =
         useState<EditorTool>('bead');
     const [activeEditorColorRef, setActiveEditorColorRef] = useState<
@@ -621,6 +626,13 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
     const projectFileInputRef = useRef<HTMLInputElement>(null);
     const currentProjectRef = useRef<Project | null>(null);
     const libraryPatternIdRef = useRef<string | null>(null);
+    const initialLocaleReadRef = useRef<Promise<EditorLocaleRecovery | null> | null>(null);
+    const initialLocaleValueRef = useRef<EditorLocaleRecovery | null | undefined>(undefined);
+    const initialDraftAppliedRef = useRef(false);
+    const pendingLocaleContextRef = useRef<EditorLocaleContext | null>(null);
+    const pendingLocaleViewportRef = useRef<EditorLocaleContext['viewport'] | null>(null);
+    const localeSaveInProgressRef = useRef(false);
+    const localeSaveMountedRef = useRef(true);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
     const imageGenerationRef = useRef<AbortController | null>(null);
     const settingsUpdateRef = useRef<AbortController | null>(null);
@@ -1057,6 +1069,9 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
 
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft) => {
+            pendingLocaleContextRef.current = null;
+            pendingLocaleViewportRef.current = null;
+            setLocaleContextInstalling(false);
             libraryPatternIdRef.current = null;
             cancelSettingsUpdate();
             imageGenerationRef.current?.abort();
@@ -1140,20 +1155,90 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
     );
 
     useEffect(() => {
-        let languageRecovery: EditorLocaleRecovery | null = null;
-        try {
-            languageRecovery = consumeEditorLocaleDraft(window.location.href, window.sessionStorage);
-        } catch {
-            // Storage can be blocked before getItem is called. Normal startup still works.
+        if (initialDraftAppliedRef.current) return;
+        let active = true;
+        // StrictMode can replay this effect. Both passes observe the same read,
+        // and only the live pass installs its complete recovery once.
+        initialLocaleReadRef.current ??= Promise.resolve().then(() => {
+            let storage: Storage;
+            try {
+                storage = window.sessionStorage;
+                if (!storage.getItem(EDITOR_LOCALE_RESTORE_KEY)) return null;
+            } catch (error) {
+                // Ordinary first visits still work with browser storage disabled.
+                // A same-site language arrival may have saved work, so protect it.
+                if (isEditorLanguageArrival(document.referrer, window.location.href)) throw error;
+                return null;
+            }
+            return hasLargeEditorLocaleDraft(storage)
+                ? consumeLargeEditorLocaleDraft(window.location.href, storage)
+                : consumeEditorLocaleDraft(window.location.href, storage);
+        });
+        void initialLocaleReadRef.current.then(languageRecovery => {
+            if (!active || initialDraftAppliedRef.current) return;
+            initialLocaleValueRef.current = languageRecovery;
+            const draft = languageRecovery?.draft ?? (isEditorPage ? loadEditorDraft() : null);
+            if (draft) restoreEditorDraft(draft);
+            if (languageRecovery) {
+                pendingLocaleContextRef.current = languageRecovery.context ?? null;
+                setLocaleContextInstalling(Boolean(languageRecovery.context));
+                libraryPatternIdRef.current = languageRecovery.acceptedPatternId;
+                window.history.replaceState(null, '', getEditorLocaleRestoreHref(window.location.href, languageRecovery));
+            }
+            initialDraftAppliedRef.current = true;
+            setLocaleRestoreBlocked(false);
+            setIsEditorDraftReady(true);
+        }).catch(() => {
+            if (!active) return;
+            // A storage read failure is not proof that a saved transfer is absent.
+            // Keep startup protected instead of overwriting it with a blank draft.
+            setLocaleRestoreBlocked(true);
+        });
+        return () => { active = false; };
+    }, [isEditorPage, localeRestoreAttempt, restoreEditorDraft]);
+
+    const restorePendingLocaleContext = useCallback((data: Uint8ClampedArray, width: number, height: number) => {
+        const context = pendingLocaleContextRef.current;
+        if (!context) return true;
+        if (!patternHistoryRef.current.restore(context.history, data, width, height)) {
+            setLocaleRestoreBlocked(true);
+            setIsEditorDraftReady(false);
+            setLocaleContextInstalling(false);
+            return false;
         }
-        const draft = languageRecovery?.draft ?? (isEditorPage ? loadEditorDraft() : null);
-        if (draft) restoreEditorDraft(draft);
-        if (languageRecovery) {
-            libraryPatternIdRef.current = languageRecovery.acceptedPatternId;
-            window.history.replaceState(null, '', getEditorLocaleRestoreHref(window.location.href, languageRecovery));
-        }
-        setIsEditorDraftReady(true);
-    }, [isEditorPage, restoreEditorDraft]);
+        pendingLocaleContextRef.current = null;
+        paletteHistoryRef.current = context.paletteHistory.map(palettes => clonePalettes(palettes));
+        editorColorSelectionModeRef.current = context.colorSelection;
+        activeEditorColorValueRef.current = context.colorRef;
+        setActiveEditorColorRef(context.colorRef);
+        setActiveEditorTool(context.tool);
+        setPendingPrimaryPaletteId(context.pendingPaletteId);
+        setPendingBoardId(context.pendingBoardId);
+        setPendingBoardWidth(context.pendingBoardWidth);
+        setPendingBoardHeight(context.pendingBoardHeight);
+        setColorPickerPaletteId(context.colorPickerPaletteId);
+        setColorPickerQuery(context.colorPickerQuery);
+        setIsAdvancedOpen(context.advancedOpen);
+        setEditorMobilePanel(context.editorPanel);
+        setHomeMobilePanel(context.homePanel);
+        setManualPatternRevision(context.manualRevision);
+        pendingLocaleViewportRef.current = context.viewport;
+        setLocaleContextInstalling(false);
+        return true;
+    }, []);
+
+    useEffect(() => {
+        const position = pendingLocaleViewportRef.current;
+        if (!position || !previewDataUrl || !previewViewportRef.current) return;
+        const frame = window.requestAnimationFrame(() => {
+            const viewport = previewViewportRef.current;
+            if (!viewport) return;
+            viewport.scrollLeft = position.left;
+            viewport.scrollTop = position.top;
+            pendingLocaleViewportRef.current = null;
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [previewDataUrl, displayPreviewSize.width, displayPreviewSize.height, historyRevision]);
 
     useEffect(() => {
         activeEditorColorValueRef.current = activeEditorColorRef;
@@ -1474,7 +1559,13 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
 
             if (
                 plannedBeadCount >= LARGE_PATTERN_CONFIRM_BEAD_COUNT &&
-                confirmedLargeGenerationKeyRef.current !== largeGenerationKey
+                confirmedLargeGenerationKeyRef.current !== largeGenerationKey &&
+                // A verified language transfer already contains this exact grid.
+                // It is restoration, so cancelling a new-generation prompt must
+                // never discard previously completed work.
+                !(pendingLocaleContextRef.current &&
+                    pendingEditedPatternRef.current?.width === boardWidth * selectedBoard.beadsPerRow &&
+                    pendingEditedPatternRef.current?.height === boardHeight * selectedBoard.beadsPerRow)
             ) {
                 if (!confirmImageGeneration(plannedBeadCount)) {
                     setErrorMessage(
@@ -1633,8 +1724,15 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
                 lastProcessedImageSrcRef.current = imageSrc;
                 lastProcessedImageSettingsKeyRef.current =
                     imageProcessingSettingsKey;
+                restorePendingLocaleContext(resultImageData.data, canvas.width, canvas.height);
             } catch (error) {
                 if (controller.signal.aborted) {
+                    return;
+                }
+                if (pendingLocaleContextRef.current) {
+                    setLocaleRestoreBlocked(true);
+                    setIsEditorDraftReady(false);
+                    setLocaleContextInstalling(false);
                     return;
                 }
                 const nextMessage =
@@ -1685,6 +1783,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         setAutomaticEditorColorRef,
         syncEditorColorAfterPatternBuild,
         takePendingEditedPattern,
+        restorePendingLocaleContext,
         isEditorDraftReady,
     ]);
 
@@ -1849,6 +1948,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         );
         setManualPatternRevision(restoredPatternData ? 1 : 0);
         setHistoryRevision((previous) => previous + 1);
+        restorePendingLocaleContext(nextPatternData, canvas.width, canvas.height);
         },
         [
             activePalettes,
@@ -1860,6 +1960,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
             rendererSettings.showGrid,
             syncEditorColorAfterPatternBuild,
             takePendingEditedPattern,
+            restorePendingLocaleContext,
         ]
     );
 
@@ -1922,6 +2023,8 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         }
 
         libraryPatternIdRef.current = null;
+        pendingLocaleContextRef.current = null;
+        pendingLocaleViewportRef.current = null;
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
@@ -1974,6 +2077,8 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         }
 
         libraryPatternIdRef.current = null;
+        pendingLocaleContextRef.current = null;
+        pendingLocaleViewportRef.current = null;
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
@@ -2136,6 +2241,8 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
             // current edits, but start history again with the converted palette.
             paletteHistoryRef.current = [];
             patternHistoryRef.current.clear();
+            pendingLocaleContextRef.current = null;
+            pendingLocaleViewportRef.current = null;
             activeStrokeRef.current = null;
             pendingEditedPatternRef.current = null;
             setHistoryRevision((previous) => previous + 1);
@@ -2790,6 +2897,14 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
 
             restoreEditorDraft(draft);
             persistEditorDraft(draft);
+            if (localeRestoreBlocked) {
+                // Opening a file is an explicit choice to replace the protected
+                // language recovery. Its temporary data can expire independently.
+                initialDraftAppliedRef.current = true;
+                setLocaleRestoreBlocked(false);
+                setIsEditorDraftReady(true);
+                try { window.sessionStorage.removeItem(EDITOR_LOCALE_RESTORE_KEY); } catch { /* Storage may still be unavailable. */ }
+            }
         } catch {
             setErrorMessage('Could not read project file.');
         }
@@ -2911,6 +3026,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
 
     const handleEditorShortcuts = React.useEffectEvent(
         (event: KeyboardEvent) => {
+            if (localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
             const target = event.target as HTMLElement | null;
             const isTypingTarget =
                 target instanceof HTMLInputElement ||
@@ -2960,7 +3076,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
     const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
         const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
         if (!detail?.href) return;
-        if (!isEditorDraftReady || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
+        if (!isEditorDraftReady || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
             event.preventDefault();
             setErrorMessage('Please wait for the current operation to finish before changing language.');
             return;
@@ -2970,8 +3086,62 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         if (sourceMode !== 'blank' && !imageSrc && !hasEditablePattern) return;
         finishActiveStroke();
         try {
+            if (!isEditorPatternSnapshotReady(reducedColorRef.current, canvasRef.current, previewSize) || !reducedColorRef.current) throw new Error('Pattern not ready');
             const draft = createCurrentEditorDraft(true);
-            if (saveEditorLocaleDraft(draft, detail.href, window.sessionStorage, Date.now(), libraryPatternIdRef.current)) return;
+            const history = patternHistoryRef.current.capture(reducedColorRef.current, previewSize.width, previewSize.height);
+            if (!history) throw new Error('History not ready');
+            const context = parseEditorLocaleContext({
+                history,
+                tool: activeEditorTool,
+                colorRef: activeEditorColorValueRef.current,
+                colorSelection: editorColorSelectionModeRef.current,
+                pendingPaletteId: pendingPrimaryPaletteId,
+                pendingBoardId,
+                pendingBoardWidth,
+                pendingBoardHeight,
+                manualRevision: Math.max(manualPatternRevision, patternHistoryRef.current.canUndo || patternHistoryRef.current.canRedo ? 1 : 0),
+                colorPickerPaletteId,
+                colorPickerQuery,
+                paletteHistory: paletteHistoryRef.current,
+                advancedOpen: isAdvancedOpen,
+                editorPanel: editorMobilePanel,
+                homePanel: homeMobilePanel,
+                viewport: { left: previewViewportRef.current?.scrollLeft ?? 0, top: previewViewportRef.current?.scrollTop ?? 0 },
+            }, draft);
+            if (!context) throw new Error('Context not ready');
+            const storage = window.sessionStorage;
+            const acceptedPatternId = libraryPatternIdRef.current;
+            if (saveEditorLocaleDraft(draft, detail.href, storage, Date.now(), acceptedPatternId, context)) return;
+            event.preventDefault();
+            localeSaveInProgressRef.current = true;
+            setLocaleTransferPending(true);
+            const fromHref = window.location.href;
+            void saveLargeEditorLocaleDraft(draft, detail.href, storage, Date.now(), acceptedPatternId, context).then(saved => {
+                if (!localeSaveMountedRef.current) return;
+                if (window.location.href !== fromHref) {
+                    localeSaveInProgressRef.current = false;
+                    setLocaleTransferPending(false);
+                    return;
+                }
+                if (saved) {
+                    window.location.assign(detail.href);
+                    return;
+                }
+                setErrorMessage('Could not preserve your pattern for the language change. Save a project file, then try again.');
+                localeSaveInProgressRef.current = false;
+                setLocaleTransferPending(false);
+            }).catch(() => {
+                if (!localeSaveMountedRef.current) return;
+                if (window.location.href !== fromHref) {
+                    localeSaveInProgressRef.current = false;
+                    setLocaleTransferPending(false);
+                    return;
+                }
+                setErrorMessage('Could not preserve your pattern for the language change. Save a project file, then try again.');
+                localeSaveInProgressRef.current = false;
+                setLocaleTransferPending(false);
+            });
+            return;
         } catch {
             // A blocked/full storage area must never navigate away from unsaved edits.
         }
@@ -2984,6 +3154,21 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         window.addEventListener(LOCALE_NAVIGATION_EVENT, listener);
         return () => window.removeEventListener(LOCALE_NAVIGATION_EVENT, listener);
     }, []);
+
+    useEffect(() => {
+        localeSaveMountedRef.current = true;
+        const guardNavigation = (event: MouseEvent) => {
+            if (!(localeSaveInProgressRef.current || (!initialDraftAppliedRef.current && !localeRestoreBlocked) || pendingLocaleContextRef.current) ||
+                event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !(event.target instanceof Element)) return;
+            const anchor = event.target.closest('a[href]');
+            if (anchor && anchor.getAttribute('target') !== '_blank') event.preventDefault();
+        };
+        document.addEventListener('click', guardNavigation, true);
+        return () => {
+            localeSaveMountedRef.current = false;
+            document.removeEventListener('click', guardNavigation, true);
+        };
+    }, [localeRestoreBlocked]);
 
     const finishStrokeOnBlur = React.useEffectEvent(() => finishActiveStroke());
 
@@ -3010,17 +3195,33 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
         <div
             ref={editorRootRef}
             lang={locale}
+            inert={localeTransferPending || localeContextInstalling || (!isEditorDraftReady && !localeRestoreBlocked)}
             className={
                 isEditorPage
                     ? 'editor-studio editor-workspace flex h-[100svh] w-full flex-col overflow-hidden bg-brutal-bg'
                     : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
-            {isEditorPage && !isEditorDraftReady ? (
+            {localeRestoreBlocked ? (
+                <div role="alert" className="flex min-h-48 flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#d9ded5] bg-brutal-bg p-6 font-sans text-brutal-black">
+                    <p>{t('Your saved language change could not be restored. Retry or open a saved project to continue.')}</p>
+                    <div className="flex flex-wrap gap-3">
+                        <Button type="button" onClick={() => {
+                            initialDraftAppliedRef.current = false;
+                            initialLocaleReadRef.current = initialLocaleValueRef.current === undefined ? null : Promise.resolve(initialLocaleValueRef.current);
+                            setLocaleRestoreBlocked(false);
+                            setLocaleRestoreAttempt(previous => previous + 1);
+                        }}>{t('Retry restoring project')}</Button>
+                        <Button type="button" onClick={handleOpenProjectPicker}>{t('Open Project')}</Button>
+                    </div>
+                </div>
+            ) : isEditorPage && !isEditorDraftReady ? (
                 <div className="flex h-full min-h-[100svh] items-center justify-center rounded-lg border border-[#d9ded5] bg-brutal-bg font-sans text-lg text-brutal-black sm:border sm:text-xl">
                     {t("Loading Editor...")}
                 </div>
             ) : null}
+
+            {localeTransferPending ? <p role="status" className="bg-brand-yellow px-3 py-2 text-sm font-semibold">{t('Saving your pattern for the language change...')}</p> : null}
 
             {errorMessage && (
                 <div className="rounded-lg border border-[#d9ded5] bg-brand-magenta px-3 py-2 text-sm font-semibold text-white shadow-sm sm:border sm:px-4 sm:py-3 sm:text-base sm:shadow-brutal">
@@ -4258,7 +4459,7 @@ export default function Editor({ mode = 'home', locale = 'en' }: EditorProps) {
 
                 </div>
                 ) : null
-            ) : (
+            ) : localeRestoreBlocked ? null : (
                 <>
                     <div className="relative flex h-[calc(100svh-215px)] min-h-[430px] flex-col sm:hidden">
                         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#d9ded5] bg-white shadow-sm">

@@ -8,8 +8,11 @@ import {
     createPatternPatch,
     getPatternLinePoints,
     PatternHistory,
+    PATTERN_HISTORY_MAX_BYTES,
+    PATTERN_HISTORY_MAX_STEPS,
     PatternStroke,
     updatePatternUsage,
+    type PatternHistorySnapshot,
 } from './pattern-history';
 
 function createEntry(ref: string, color: Color): PaletteEntry {
@@ -216,6 +219,255 @@ describe('PatternHistory', () => {
         expect(history.byteLength).toBe(0);
         expect(history.canUndo).toBe(false);
         expect(history.canRedo).toBe(false);
+    });
+});
+
+describe('PatternHistory language snapshots', () => {
+    function copySnapshot(snapshot: PatternHistorySnapshot): PatternHistorySnapshot {
+        return JSON.parse(JSON.stringify(snapshot)) as PatternHistorySnapshot;
+    }
+
+    function encodedBytes(values: number[]): string {
+        return btoa(String.fromCharCode(...values));
+    }
+
+    function encodedIndices(values: number[]): string {
+        const bytes = new Uint8Array(values.length * 4);
+        const view = new DataView(bytes.buffer);
+        values.forEach((value, index) => view.setUint32(index * 4, value, true));
+        return encodedBytes(Array.from(bytes));
+    }
+
+    it('round trips independent undo and redo stacks with actual RGBA edits and branching', () => {
+        const data = new Uint8ClampedArray([
+            0, 0, 0, 0, 12, 34, 56, 78, 0, 0, 0, 0, 255, 0, 255, 128,
+        ]);
+        const history = new PatternHistory();
+        const states = [data.slice()];
+        for (const [index, color] of [
+            [0, [240, 106, 69, 255]],
+            [8, [100, 200, 255, 120]],
+            [0, [0, 0, 0, 0]],
+            [4, [255, 255, 255, 255]],
+        ] as const) {
+            const stroke = new PatternStroke(data);
+            stroke.setPixel(index, color);
+            history.push(stroke.finish());
+            states.push(data.slice());
+        }
+        history.undo(data);
+        history.undo(data);
+        const snapshot = copySnapshot(history.capture(data, 2, 2)!);
+        const restored = new PatternHistory();
+        const pixels = data.slice();
+
+        expect(restored.restore(snapshot, pixels, 2, 2)).toBe(true);
+        expect(pixels).toEqual(states[2]);
+        expect(restored.byteLength).toBe(48);
+        expect(restored.canUndo).toBe(true);
+        expect(restored.canRedo).toBe(true);
+        restored.undo(pixels);
+        expect(pixels).toEqual(states[1]);
+        restored.undo(pixels);
+        expect(pixels).toEqual(states[0]);
+        expect(restored.undo(pixels)).toBeNull();
+        for (const expected of states.slice(1)) {
+            restored.redo(pixels);
+            expect(pixels).toEqual(expected);
+        }
+        expect(restored.redo(pixels)).toBeNull();
+        restored.undo(pixels);
+        restored.push(paint(pixels, 99, 12));
+        expect(restored.canRedo).toBe(false);
+        restored.undo(pixels);
+        expect(pixels).toEqual(states[3]);
+    });
+
+    it('owns serialized pixels and patches rather than sharing the live history', () => {
+        const data = new Uint8ClampedArray(8);
+        const history = new PatternHistory();
+        const patch = paint(data, 1)!;
+        history.push(patch);
+        const capturedPixels = data.slice();
+        const snapshot = history.capture(data, 2, 1)!;
+        data[0] = 77;
+        patch.after[0] = 88;
+        patch.before[0] = 99;
+        patch.indices[0] = 4;
+
+        const restored = new PatternHistory();
+        expect(restored.restore(snapshot, capturedPixels, 2, 1)).toBe(true);
+        snapshot.undo[0].before = encodedBytes([100, 0, 0, 0]);
+        restored.undo(capturedPixels);
+        expect(capturedPixels).toEqual(new Uint8ClampedArray(8));
+        restored.redo(capturedPixels);
+        expect(capturedPixels[0]).toBe(1);
+    });
+
+    it('retains empty history and accepts the full 200-step cursor position', () => {
+        const pixels = new Uint8ClampedArray(4);
+        const history = new PatternHistory();
+        const empty = history.capture(pixels, 1, 1)!;
+        const restored = new PatternHistory();
+        expect(restored.restore(empty, pixels, 1, 1)).toBe(true);
+        expect(restored.canUndo || restored.canRedo).toBe(false);
+        for (let red = 1; red <= PATTERN_HISTORY_MAX_STEPS; red += 1) {
+            history.push(paint(pixels, red));
+        }
+        for (let step = 0; step < 100; step += 1) history.undo(pixels);
+        expect(restored.restore(copySnapshot(history.capture(pixels, 1, 1)!), pixels, 1, 1)).toBe(true);
+        for (let step = 0; step < 100; step += 1) restored.undo(pixels);
+        expect(pixels[0]).toBe(0);
+        for (let step = 0; step < 200; step += 1) restored.redo(pixels);
+        expect(pixels[0]).toBe(200);
+    });
+
+    it('rejects wrong current pixels, including untouched pixels, and changed dimensions', () => {
+        const pixels = new Uint8ClampedArray(8);
+        const history = new PatternHistory();
+        history.push(paint(pixels, 1));
+        const snapshot = history.capture(pixels, 2, 1)!;
+        const restored = new PatternHistory();
+        const changed = pixels.slice();
+        changed[4] = 77;
+
+        expect(restored.restore(snapshot, changed, 2, 1)).toBe(false);
+        expect(restored.restore(snapshot, pixels, 1, 2)).toBe(false);
+        expect(restored.restore(snapshot, pixels, 1, 1)).toBe(false);
+        expect(changed[4]).toBe(77);
+        expect(restored.canUndo).toBe(false);
+        expect(history.capture(changed, 2, 1)).not.toBeNull(); // A newly captured state has its own exact binding.
+        expect(history.capture(pixels, 0, 2)).toBeNull();
+        expect(history.capture(pixels, 1.5, 2)).toBeNull();
+        expect(history.capture(pixels, Infinity, 2)).toBeNull();
+    });
+
+    it.each(['undo', 'redo'] as const)('rejects a broken %s chain beyond its first available operation', (direction) => {
+        const pixels = new Uint8ClampedArray(4);
+        const history = new PatternHistory();
+        for (const red of [1, 2, 3, 4]) history.push(paint(pixels, red));
+        if (direction === 'redo') {
+            history.undo(pixels);
+            history.undo(pixels);
+        }
+        const snapshot = history.capture(pixels, 1, 1)!;
+        if (direction === 'undo') snapshot.undo[0].after = encodedBytes([99, 0, 0, 255]);
+        else snapshot.redo[0].before = encodedBytes([99, 0, 0, 255]);
+        const before = pixels.slice();
+        const restored = new PatternHistory();
+        expect(restored.restore(snapshot, pixels, 1, 1)).toBe(false);
+        expect(pixels).toEqual(before);
+        expect(restored.canUndo || restored.canRedo).toBe(false);
+    });
+
+    it.each([
+        ['unaligned index', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].indices = encodedIndices([1]); }],
+        ['out of bounds index', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].indices = encodedIndices([8]); }],
+        ['no-op patch', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].before = snapshot.undo[0].after; }],
+        ['truncated colors', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].before = 'AAA='; }],
+        ['wrong encoded type', (snapshot: PatternHistorySnapshot) => { Object.assign(snapshot.undo[0], { indices: [0] }); }],
+        ['invalid base64', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].before = '!!!!!!!!'; }],
+        ['negative count', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].count = -1; }],
+        ['huge count', (snapshot: PatternHistorySnapshot) => { snapshot.undo[0].count = Number.MAX_SAFE_INTEGER; }],
+        ['wrong version', (snapshot: PatternHistorySnapshot) => { Object.assign(snapshot, { version: 2 }); }],
+    ])('rejects %s atomically without losing an existing history', (_name, damage) => {
+        const pixels = new Uint8ClampedArray(8);
+        const history = new PatternHistory();
+        const originalPatch = paint(pixels, 1)!;
+        history.push(originalPatch);
+        const snapshot = copySnapshot(history.capture(pixels, 2, 1)!);
+        damage(snapshot);
+        const before = pixels.slice();
+
+        expect(history.restore(snapshot, pixels, 2, 1)).toBe(false);
+        expect(pixels).toEqual(before);
+        expect(history.byteLength).toBe(12);
+        expect(history.undo(pixels)).toBe(originalPatch);
+        expect(pixels).toEqual(new Uint8ClampedArray(8));
+    });
+
+    it('rejects repeated offsets and never applies an ambiguous multi-pixel patch', () => {
+        const pixels = new Uint8ClampedArray(8);
+        const history = new PatternHistory();
+        const stroke = new PatternStroke(pixels);
+        stroke.setPixel(0, [1, 0, 0, 255]);
+        stroke.setPixel(4, [2, 0, 0, 255]);
+        history.push(stroke.finish());
+        const snapshot = history.capture(pixels, 2, 1)!;
+        snapshot.undo[0].indices = encodedIndices([0, 0]);
+        expect(new PatternHistory().restore(snapshot, pixels, 2, 1)).toBe(false);
+        expect(pixels).toEqual(new Uint8ClampedArray([1, 0, 0, 255, 2, 0, 0, 255]));
+    });
+
+    it('preserves byte offsets beyond one byte through explicit little-endian serialization', () => {
+        const pixels = new Uint8ClampedArray(29 * 29 * 4);
+        const history = new PatternHistory();
+        history.push(paint(pixels, 42, 1028));
+        const snapshot = history.capture(pixels, 29, 29)!;
+        expect(snapshot.undo[0].indices).toBe(encodedIndices([1028]));
+        const restored = new PatternHistory();
+        expect(restored.restore(copySnapshot(snapshot), pixels, 29, 29)).toBe(true);
+        restored.undo(pixels);
+        expect(pixels.every((byte) => byte === 0)).toBe(true);
+        restored.redo(pixels);
+        expect(pixels.slice(1028, 1032)).toEqual(new Uint8ClampedArray([42, 0, 0, 255]));
+        expect(pixels[4]).toBe(0);
+    });
+
+    it('respects smaller instance budgets and rejects oversized imports before decoding', () => {
+        const pixels = new Uint8ClampedArray(4);
+        const history = new PatternHistory();
+        history.push(paint(pixels, 1));
+        history.push(paint(pixels, 2));
+        const snapshot = history.capture(pixels, 1, 1)!;
+        expect(new PatternHistory({ byteBudget: 12 }).restore(snapshot, pixels, 1, 1)).toBe(false);
+        expect(new PatternHistory({ maxSteps: 1 }).restore(snapshot, pixels, 1, 1)).toBe(false);
+
+        const tooMany = copySnapshot(snapshot);
+        tooMany.undo = Array(PATTERN_HISTORY_MAX_STEPS + 1).fill(tooMany.undo[0]);
+        expect(new PatternHistory({ maxSteps: 999 }).restore(tooMany, pixels, 1, 1)).toBe(false);
+
+        // A bounded-size string advertises too many repeated full-pattern patches.
+        const largePixels = new Uint8ClampedArray(1140 * 1140 * 4);
+        const count = largePixels.length / 4;
+        const oversizedPatch = {
+            count,
+            indices: 'A'.repeat(Math.ceil(count * 4 / 3) * 4),
+            before: 'A'.repeat(Math.ceil(count * 4 / 3) * 4),
+            after: 'A'.repeat(Math.ceil(count * 4 / 3) * 4),
+        };
+        const oversized: PatternHistorySnapshot = {
+            version: 1,
+            width: 1140,
+            height: 1140,
+            data: 'A'.repeat(Math.ceil(largePixels.length / 3) * 4),
+            undo: Array(3).fill(oversizedPatch),
+            redo: [],
+        };
+        expect(count * 12 * 3).toBeGreaterThan(PATTERN_HISTORY_MAX_BYTES);
+        expect(new PatternHistory({ byteBudget: PATTERN_HISTORY_MAX_BYTES * 2 }).restore(oversized, largePixels, 1140, 1140)).toBe(false);
+    });
+
+    it('rejects internally corrupted histories rather than transferring a misleading undo flag', () => {
+        const pixels = new Uint8ClampedArray(4);
+        const history = new PatternHistory();
+        const patch = paint(pixels, 1)!;
+        history.push(patch);
+        patch.after[0] = 99;
+        expect(history.canUndo).toBe(true);
+        expect(history.capture(pixels, 1, 1)).toBeNull();
+    });
+
+    it('bounds captures even when an instance allows more than the language transfer limits', () => {
+        const pixels = new Uint8ClampedArray(4);
+        const history = new PatternHistory({ maxSteps: 999 });
+        for (let red = 1; red <= PATTERN_HISTORY_MAX_STEPS + 1; red += 1) {
+            history.push(paint(pixels, red));
+        }
+        expect(history.capture(pixels, 1, 1)).toBeNull();
+        expect(history.canUndo).toBe(true);
+        history.undo(pixels);
+        expect(pixels[0]).toBe(200);
     });
 });
 
