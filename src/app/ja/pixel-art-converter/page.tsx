@@ -4,6 +4,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
+import PixelConversionExamples from '@/components/pixel-grid/PixelConversionExamples';
 
 const title = 'ドット絵変換｜写真・画像から無料で作成';
 const description = '写真やイラストをブラウザー内でドット絵に変換。サイズと色数を選び、1マスずつ修正して透過PNGを保存できます。無料・登録不要。';
@@ -39,6 +40,7 @@ export default function JapanesePixelConverterPage() {
                     <p className="mt-4 max-w-3xl leading-8 text-muted">画像を選び、ドットの細かさと色数を調整します。気になるマスを直して、PNGを保存できます。無料・登録不要。画像の処理はこのブラウザー内で行います。</p>
                 </div>
                 <PixelGridWorkspace locale="ja" experience="converter" />
+                <PixelConversionExamples locale="ja" />
                 <section aria-labelledby="conversion-help" className="mt-10 max-w-3xl border-t border-line pt-8 leading-8 text-muted">
                     <h2 id="conversion-help" className="section-heading">画像を選んで、PNGで保存</h2>
                     <p className="mt-4">静止画のPNG・JPEG・WebPに対応しています。ファイルは8 MiB以下、縦横とも2,048ピクセル以下の画像を選んでください。画像をサーバーへ送信しません。自分で撮影・制作した画像など、利用できる画像を使ってください。</p>
