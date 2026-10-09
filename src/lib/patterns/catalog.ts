@@ -9064,6 +9064,97 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-santa-hat/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-09"
+    },
+    {
+        "id": "original-christmas-stocking",
+        "slug": "christmas-stocking",
+        "title": "Christmas Stocking",
+        "collectionId": null,
+        "version": "Original Christmas stocking design v1",
+        "description": "An original red Christmas stocking with a white cuff, heel and toe, designed on a square Perler Midi grid. Uses 279 Perler Midi beads in 2 colors.",
+        "beads": 279,
+        "colorCount": 2,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 19,
+        "motifHeight": 23,
+        "palette": [
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 103
+            },
+            {
+                "symbol": "R",
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "count": 176
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-christmas-stocking/preview.png",
+            "grid": "/patterns/original-christmas-stocking/grid.png",
+            "pixels": "/patterns/original-christmas-stocking/pixels.png",
+            "project": "/patterns/original-christmas-stocking/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-christmas-stocking/pattern.pdf",
+            "pdfLetter": "/patterns/original-christmas-stocking/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-09"
+    },
+    {
+        "id": "original-snowflake",
+        "slug": "snowflake",
+        "title": "Snowflake",
+        "collectionId": null,
+        "version": "Original six-branch snowflake design v1",
+        "description": "An original light-blue snowflake with six primary branches, paired side twigs and a white center, adapted to a square Perler Midi grid. Uses 137 Perler Midi beads in 2 colors.",
+        "beads": 137,
+        "colorCount": 2,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 21,
+        "motifHeight": 23,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-19009",
+                "name": "Light Blue",
+                "hex": "#278cc9",
+                "count": 136
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 1
+            }
+        ],
+        "notes": [
+            "Fine one-bead snowflake branches need gentle handling. Consider mounting the finished piece on a backing.",
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-snowflake/preview.png",
+            "grid": "/patterns/original-snowflake/grid.png",
+            "pixels": "/patterns/original-snowflake/pixels.png",
+            "project": "/patterns/original-snowflake/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-snowflake/pattern.pdf",
+            "pdfLetter": "/patterns/original-snowflake/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-09"
     }
 ];
 

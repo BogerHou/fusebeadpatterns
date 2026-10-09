@@ -138,29 +138,32 @@ describe('complete native-language library downloads', () => {
                 }
             }
         }
-        expect(destinations.size).toBe(107);
+        expect(destinations.size).toBe(109);
     });
 
-    it('offers actual native US Letter PDFs only for the newly reviewed Santa Hat', () => {
-        const santaHat = patterns.find(pattern => pattern.id === 'original-santa-hat')!;
-        expect(santaHat).toBeDefined();
-        expect(santaHat.assets.pdfLetter).toBe('/patterns/original-santa-hat/pattern-letter.pdf');
-        for (const pattern of patterns.filter(pattern => pattern.id !== santaHat.id)) {
+    it('offers actual native US Letter PDFs only for the reviewed original additions', () => {
+        const reviewedIds = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake'];
+        const reviewed = patterns.filter(pattern => reviewedIds.includes(pattern.id));
+        expect(reviewed.map(pattern => pattern.id)).toEqual(reviewedIds);
+        for (const pattern of patterns.filter(pattern => !reviewedIds.includes(pattern.id))) {
             expect(pattern.assets.pdfLetter).toBeUndefined();
             for (const locale of locales) expect(getLocalizedPatternLetterPdf(pattern, locale)).toBeUndefined();
         }
-        for (const locale of locales) {
-            const download = getLocalizedPatternLetterPdf(santaHat, locale)!;
-            expect(download).toEqual({ href: `/patterns-${locale}/original-santa-hat/pattern-letter.pdf`, language: locale });
-            const pdf = readFileSync(publicFile(download.href));
-            expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
-            const raw = pdf.toString('latin1');
-            expect(raw).toMatch(/\/MediaBox\s*\[\s*0\s+0\s+612\s+792\s*\]/);
-            expect(raw).toContain(`/Lang (${locale}-${{ de: 'DE', fr: 'FR', ja: 'JP' }[locale]})`);
-            const titleStart = raw.indexOf('/Title (') + '/Title '.length;
-            expect(comparable(metadataText(literal(raw, titleStart).value))).toContain(comparable(getLocalizedSubjectName(santaHat, locale)));
+        for (const pattern of reviewed) {
+            expect(pattern.assets.pdfLetter).toBe(`/patterns/${pattern.id}/pattern-letter.pdf`);
+            for (const locale of locales) {
+                const download = getLocalizedPatternLetterPdf(pattern, locale)!;
+                expect(download).toEqual({ href: `/patterns-${locale}/${pattern.id}/pattern-letter.pdf`, language: locale });
+                const pdf = readFileSync(publicFile(download.href));
+                expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+                const raw = pdf.toString('latin1');
+                expect(raw).toMatch(/\/MediaBox\s*\[\s*0\s+0\s+612\s+792\s*\]/);
+                expect(raw).toContain(`/Lang (${locale}-${{ de: 'DE', fr: 'FR', ja: 'JP' }[locale]})`);
+                const titleStart = raw.indexOf('/Title (') + '/Title '.length;
+                expect(comparable(metadataText(literal(raw, titleStart).value))).toContain(comparable(getLocalizedSubjectName(pattern, locale)));
+            }
+            expect(readFileSync(publicFile(pattern.assets.pdfLetter!)).toString('latin1')).toMatch(/\/MediaBox\s*\[\s*0\s+0\s+612\s+792\s*\]/);
         }
-        expect(readFileSync(publicFile(santaHat.assets.pdfLetter!)).toString('latin1')).toMatch(/\/MediaBox\s*\[\s*0\s+0\s+612\s+792\s*\]/);
     });
 
     it('uses the reviewed original project colors, symbols and actual pixel quantities for every downloadable motif', () => {

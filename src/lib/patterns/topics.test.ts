@@ -52,11 +52,11 @@ describe('curated pattern topics', () => {
         }
     });
 
-    it('keeps the three published Christmas selections and adds a distinct connected Santa Hat', async () => {
+    it('keeps the published Christmas selections and discloses the fine snowflake connections', async () => {
         const topic = getPatternTopicBySlug('christmas')!;
         expect(topic.patternIds).toEqual(['original-christmas-tree', 'original-snowman', 'original-gingerbread-man']);
         expect(topic.title).toBe('Christmas Perler Bead Patterns');
-        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat']);
+        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat', 'original-christmas-stocking', 'original-snowflake']);
         for (const pattern of [...getPatternsForTopic(topic), ...getAdditionalPatternsForTopic(topic)]) {
             expect(pattern.source).toBeNull();
             expect(pattern.collectionId).toBeNull();
@@ -71,7 +71,8 @@ describe('curated pattern topics', () => {
             const occupied = new Set<number>();
             for (let cell = 0; cell < 29 * 29; cell++) if (data[cell * 4 + 3] !== 0) occupied.add(cell);
             expect(occupied.size).toBe(pattern.beads);
-            // Every occupied cell must stay connected even after removing one bead.
+            // Keep the old robust designs, and independently count the disclosed fine branches.
+            let cutPoints = 0;
             for (const removed of [undefined, ...occupied]) {
                 const unvisited = new Set(occupied);
                 if (removed !== undefined) unvisited.delete(removed);
@@ -86,8 +87,11 @@ describe('curated pattern topics', () => {
                         if (unvisited.delete(next)) queue.push(next);
                     }
                 }
-                expect(unvisited.size, `${pattern.id}: disconnected after removing ${removed}`).toBe(0);
+                if (removed === undefined) expect(unvisited.size, `${pattern.id} contains a detached part`).toBe(0);
+                else if (unvisited.size) cutPoints += 1;
             }
+            expect(cutPoints).toBe(pattern.id === 'original-snowflake' ? 104 : 0);
+            if (cutPoints) expect(pattern.notes[0]).toContain('Fine one-bead snowflake branches');
         }
     });
 });

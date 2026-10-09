@@ -310,7 +310,7 @@ describe('remapPatternPalette', () => {
     );
 
     it('remaps every library project to Hama and Artkal without losing beads', async () => {
-        expect(patterns).toHaveLength(107);
+        expect(patterns).toHaveLength(109);
         const targets = await Promise.all(['hama', 'artkal_a'].map(async (id) => {
             const target = await loadPalette(id);
             const allowedColors = new Set(target.entries
