@@ -1,0 +1,88 @@
+{
+  "type": "bead-pattern-project-v1",
+  "version": 1,
+  "savedAt": "2026-10-10T00:00:00.000Z",
+  "draft": {
+    "version": 1,
+    "sourceMode": "blank",
+    "imageSrc": null,
+    "fileName": "original-retro-diamond-coaster",
+    "selectedPaletteIds": [
+      "perler"
+    ],
+    "activePalettes": [
+      {
+        "name": "Perler Midi",
+        "entries": [
+          {
+            "name": "Cheddar",
+            "ref": "80-19057",
+            "symbol": "G",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 251,
+              "g": 177,
+              "b": 70,
+              "a": 255
+            }
+          },
+          {
+            "name": "Midnight",
+            "ref": "80-15201",
+            "symbol": "N",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 47,
+              "g": 60,
+              "b": 85,
+              "a": 255
+            }
+          },
+          {
+            "name": "White",
+            "ref": "80-19001",
+            "symbol": "W",
+            "prefix": "P",
+            "enabled": true,
+            "color": {
+              "r": 234,
+              "g": 239,
+              "b": 238,
+              "a": 255
+            }
+          }
+        ]
+      }
+    ],
+    "boardId": "midi",
+    "boardWidth": 1,
+    "boardHeight": 1,
+    "matchingId": "delta_e_cie2000",
+    "ditheringId": "none",
+    "useSymbols": true,
+    "exportFormatId": "pdf",
+    "pdfScaleMode": "midi-5mm",
+    "imageAdjustments": {
+      "brightness": 100,
+      "contrast": 100,
+      "saturation": 100,
+      "grayscale": 0
+    },
+    "rendererSettings": {
+      "center": true,
+      "fit": true,
+      "showGrid": true
+    },
+    "showReference": false,
+    "referenceOpacity": 0.3,
+    "previewZoom": 1,
+    "editedPattern": {
+      "width": 29,
+      "height": 29,
+      "byteLength": 3364,
+      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf/q7+7/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf/q7+7/6u/u/+rv7v/7sUb/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG/y88Vf8vPFX/LzxV/y88Vf8vPFX/6u/u/+rv7v/q7+7/+7FG//uxRv/7sUb/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV/y88Vf/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u//uxRv/7sUb/+7FG//uxRv/7sUb/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv8vPFX/LzxV/y88Vf/q7+7/6u/u/+rv7v/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG/y88Vf8vPFX/6u/u/+rv7v/q7+7/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/6u/u/+rv7v/q7+7/LzxV/y88Vf/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/+rv7v/q7+7/6u/u//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/6u/u/+rv7v/q7+7/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv8vPFX/LzxV/+rv7v/q7+7/6u/u//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG/+rv7v/q7+7/6u/u/y88Vf8vPFX/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/q7+7/6u/u/+rv7v8vPFX/LzxV/y88Vf/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u//uxRv/7sUb/+7FG//uxRv/7sUb/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv8vPFX/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u//uxRv/7sUb/+7FG/+rv7v/q7+7/6u/u/y88Vf8vPFX/LzxV/y88Vf8vPFX/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u//uxRv/q7+7/6u/u/+rv7v8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u/+rv7v/q7+7/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+7FG//uxRv8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/+rv7v/q7+7/6u/u/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7sUb/+7FG/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/+rv7v8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV/y88Vf8vPFX/LzxV//uxRv/7sUb/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPuxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv/7sUb/+7FG//uxRv8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    }
+  }
+}

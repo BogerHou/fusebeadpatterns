@@ -16,6 +16,7 @@ import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import { PatternGrid } from './PatternCards';
 import { toLocalizedPatternCard } from './LocalizedPatternCatalog';
 import PatternShare from './PatternShare';
+import CoasterInstructions from './CoasterInstructions';
 import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
 
 const siteUrl = 'https://fusebeadpatterns.art';
@@ -74,7 +75,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                 <div className="mt-12 grid items-start gap-10 lg:grid-cols-2">
                     <section aria-labelledby="chart-heading">
                         <h2 id="chart-heading" className="section-heading mb-5">{copy.chart}</h2>
-                        <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer"><Image src={pattern.assets.grid} alt={`${name} · ${copy.chartAlt}`} width={586} height={586} unoptimized className="h-auto w-full rounded-xl border border-line" /></a>
+                        <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer"><Image src={pattern.assets.grid} alt={`${name} · ${copy.chartAlt}`} width={pattern.id === 'original-retro-diamond-coaster' ? 788 : 586} height={pattern.id === 'original-retro-diamond-coaster' ? 908 : 586} unoptimized className="h-auto w-full rounded-xl border border-line" /></a>
                         <p className="mt-3 text-sm leading-7 text-muted">{copy.chartHelp}</p>
                     </section>
                     <section aria-labelledby="colors-heading">
@@ -92,6 +93,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                     <h2 className="section-heading">{copy.make}</h2>
                     <ul className="mt-5 list-disc space-y-3 pl-5 leading-8 text-muted">{pattern.notes.map(note => <li key={note}>{localizePatternNote(note, locale)}</li>)}</ul>
                 </section>
+                <CoasterInstructions patternId={pattern.id} locale={locale} />
                 <details className="mt-8 border-t border-line pt-5 text-sm leading-7 text-muted">
                     <summary className="min-h-11 cursor-pointer font-semibold">{pattern.source ? copy.reference : copy.original}</summary>
                     {pattern.source ? <div className="mt-3 max-w-3xl"><p lang={locale}>{localizePatternSourceDescription(pattern.source.description, locale)}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link">{copy.source}: <span lang="en">{pattern.source.label}</span></a></div> : <p>{copy.originalText}</p>}

@@ -9,6 +9,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import { PatternGrid, toPatternCard } from '@/components/patterns/PatternCards';
 import PatternTopicPage from '@/components/patterns/PatternTopicPage';
 import PatternShare from '@/components/patterns/PatternShare';
+import CoasterInstructions from '@/components/patterns/CoasterInstructions';
 import { patterns, patternCollections, getPatternBySlug, getCollectionBySlug, getPatternsForCollection, getPatternHref, type Pattern } from '@/lib/patterns/catalog';
 import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib/patterns/topics';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
@@ -105,7 +106,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     <section aria-labelledby="pattern-chart-heading">
                         <h2 id="pattern-chart-heading" className="section-heading mb-5">Pattern chart</h2>
                         <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-[#d9ded5] bg-white transition-colors hover:border-[#78917f]" aria-label={`Open full-size ${pattern.title} pattern chart`}>
-                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={586} height={586} unoptimized className="h-auto w-full" />
+                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={pattern.id === 'original-retro-diamond-coaster' ? 788 : 586} height={pattern.id === 'original-retro-diamond-coaster' ? 908 : 586} unoptimized className="h-auto w-full" />
                         </a>
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Blank cells are empty. Tap the chart to view it at full size.</p>
                     </section>
@@ -127,6 +128,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     <ul className="mt-5 list-disc space-y-3 pl-5 leading-8 text-[#43564d] marker:text-[#78917f]">{pattern.notes.map((note) => <li key={note}>{note}</li>)}</ul>
                     <p className="mt-5 leading-8 text-[#43564d]">New to beadwork? Check the <Link href="/guides/perler-bead-pegboards" className="text-link">pegboard size guide</Link> and <Link href="/guides/perler-bead-kits-and-storage" className="text-link">beginner supplies guide</Link>.</p>
                 </section>
+                <CoasterInstructions patternId={pattern.id} />
                 <details className="mt-8 border-t border-[#d9ded5] pt-5 text-sm leading-7 text-[#59685d]">
                     <summary className="min-h-11 cursor-pointer font-semibold text-[#243e36]">{pattern.source ? 'Reference version & source' : 'About this original design'}</summary>
                     {pattern.source ? <div className="mt-3 max-w-[70ch]"><p>{pattern.source.description}</p><a href={pattern.source.url} target="_blank" rel="noopener noreferrer" className="text-link mt-2 inline-block">{pattern.source.label}</a></div> : <p className="mt-3">An original design on a bead grid. It does not depict a named game or anime character.</p>}

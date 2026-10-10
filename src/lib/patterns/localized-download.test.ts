@@ -138,11 +138,11 @@ describe('complete native-language library downloads', () => {
                 }
             }
         }
-        expect(destinations.size).toBe(110);
+        expect(destinations.size).toBe(111);
     });
 
-    it('offers actual native US Letter PDFs only for individually reviewed Santa, winter and Creeper additions', () => {
-        const reviewedIds = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'minecraft-creeper-face-v1'];
+    it('offers actual native US Letter PDFs only for individually reviewed additions', () => {
+        const reviewedIds = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'minecraft-creeper-face-v1', 'original-retro-diamond-coaster'];
         const reviewed = patterns.filter(pattern => reviewedIds.includes(pattern.id));
         expect(reviewed.map(pattern => pattern.id)).toEqual(reviewedIds);
         expect(reviewed.find(pattern => pattern.id === 'minecraft-creeper-face-v1')?.kind).toBe('fan-art');

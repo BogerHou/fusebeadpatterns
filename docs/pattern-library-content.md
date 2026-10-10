@@ -1,6 +1,6 @@
 # Pattern library content maintenance
 
-The 14 reviewed packs integrate 110 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 11 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
+The 15 reviewed packs integrate 111 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 12 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
 
 ## Content identity and versions
 
@@ -176,6 +176,14 @@ Library previews and downloads use Perler Midi by default. In the editor, applyi
 Existing hand edits remain in the converted grid, but pixel undo history starts again because its old patches contain the previous brand's colors. Loading failures leave the current pattern intact, and opening another project cancels pending conversions. Changing pegboard dimensions retains the separate rebuild behavior and confirmation.
 
 ## Physical assembly notes
+
+### Original retro diamond coaster
+
+`original-retro-diamond-coaster` uses the independent source pack `artifacts/pattern-samples/2026-10-10/original-coaster-v1`, generated with `scripts/generate-original-coaster-sourcepack.mjs`; see `scripts/README-original-coaster-sourcepack.md`. It appends one catalog object and one editor project ID without changing the 110 earlier objects. The older library builder retains its frozen promotion gates; do not relax its locks or regenerate old assets to accept this addition.
+
+The 23 × 23 motif is centered at `(3,3)` on a 29 × 29 grid and uses 517 Perler Midi beads: Cheddar 217, Midnight 216 and White 84. Its independent symbol-row SHA-256 is `10f48f09d0902b1c6552a87d36633168a7988c085a003fee4ae8e375997ebd17`; native RGBA SHA-256 is `3548cce963d03b9ca9d23ba3bc0f8415dc4e611edb9285c91eb814f28c75b8be`. Copy only the five reviewed non-PDF source assets and eight separately reviewed English/German/French/Japanese A4/US Letter PDFs to new public paths, using exclusive creation and comparing each copied file with its source hash. The symbol PNG is 788 × 908; its detail-page dimensions must reflect that aspect ratio. The PDF builder uses the separately named `scripts/fonts/coaster-jp` subset and pinned license/source lock; see `scripts/README-original-coaster-pdfs.md`. Never refresh an old font directory to add these labels.
+
+The single connected digital shape does not establish a usable finished coaster. Its four language pages include cup-base measurement, complete cooling, tracing and cutting cork to the actual finished outline, and adhesive instructions. The nominal 115 mm grid span is not a measured finished dimension. The cork method cites Perler's [Flower Coaster Set](https://perler.com/blogs/projects/flower-coaster-set); the artwork is independent. Physical assembly, glue adhesion, heat resistance, load capacity and dishwasher suitability remain untested. One pattern does not warrant a separate coaster collection page.
 
 All designs use one 29 × 29 MIDI board. Motif dimensions are recorded separately from the board canvas. Junimo has three disconnected parts and requires a backing. One-bead bridges are recorded for the relevant other patterns. No design has been physically assembled or iron-tested. Avoid claims that a pattern is physically validated, guaranteed to hold together or an exact physical color match.
 

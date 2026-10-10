@@ -50,7 +50,17 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 110, fr: 110, ja: 110 });
+        expect(counts).toEqual({ de: 111, fr: 111, ja: 111 });
+    });
+    it('keeps the coaster subject and project across all native editor journeys', () => {
+        const pattern = patterns.find(pattern => pattern.id === 'original-retro-diamond-coaster')!;
+        expect(pattern).toBeDefined();
+        const names = { de: 'Retro-Untersetzer mit Rautenmuster', fr: 'Dessous de verre rétro à losanges', ja: 'レトロなひし形コースター' };
+        for (const locale of locales) {
+            expect(getLocalizedPatternName(pattern, locale)).toBe(names[locale]);
+            expect(getLocalizedPatternIntro(pattern, locale)).toContain('517');
+            expect(getLibraryProject(pattern.id, locale)).toMatchObject({ title: names[locale], projectUrl: pattern.assets.project });
+        }
     });
     it('names the Santa Hat consistently across native details and editor imports', () => {
         const pattern = patterns.find(pattern => pattern.id === 'original-santa-hat')!;

@@ -1,4 +1,4 @@
-/** Reviewed pattern content. Regenerate with scripts/build-pattern-library.mjs. */
+/** Reviewed pattern content. See docs/pattern-library-content.md and scripts/README-original-coaster-sourcepack.md for the separate source builders. */
 export type Pattern = {
     id: string;
     slug: string;
@@ -9214,6 +9214,58 @@ export const patterns: Pattern[] = [
             "project": "/patterns/minecraft-creeper-face-v1/pattern.bead-pattern.json",
             "pdf": "/patterns/minecraft-creeper-face-v1/pattern.pdf",
             "pdfLetter": "/patterns/minecraft-creeper-face-v1/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-10"
+    },
+    {
+        "id": "original-retro-diamond-coaster",
+        "slug": "retro-diamond-coaster",
+        "title": "Retro Diamond Coaster",
+        "collectionId": null,
+        "version": "Original retro diamond coaster design v1",
+        "description": "Make an original retro diamond coaster layout with 517 Perler Midi beads in three colors. Download the printable grid and add a cork backing for coaster use.",
+        "beads": 517,
+        "colorCount": 3,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 23,
+        "motifHeight": 23,
+        "palette": [
+            {
+                "symbol": "G",
+                "ref": "80-19057",
+                "name": "Cheddar",
+                "hex": "#fbb146",
+                "count": 217
+            },
+            {
+                "symbol": "N",
+                "ref": "80-15201",
+                "name": "Midnight",
+                "hex": "#2f3c55",
+                "count": 216
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 84
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-retro-diamond-coaster/preview.png",
+            "grid": "/patterns/original-retro-diamond-coaster/grid.png",
+            "pixels": "/patterns/original-retro-diamond-coaster/pixels.png",
+            "project": "/patterns/original-retro-diamond-coaster/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-retro-diamond-coaster/pattern.pdf",
+            "pdfLetter": "/patterns/original-retro-diamond-coaster/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-10"
     }

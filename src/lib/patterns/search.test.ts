@@ -91,6 +91,11 @@ describe('real catalog discovery across page languages', () => {
         expectEveryLanguage(query, ['smb-blooper']);
     });
 
+    it.each(['Retro Diamond Coaster', 'Perler bead coaster', 'perler bead coaster patterns', 'Bügelperlen Untersetzer Vorlagen', 'Untersetzer', 'sous-verre', 'modèles dessous de verre', 'dessous de verre', 'アイロンビーズ コースター 図案', 'コースター'])('finds the original coaster for %s in every page language', query => {
+        expectEveryLanguage(query, ['original-retro-diamond-coaster']);
+        for (const locale of SITE_LOCALES) expect(matches(locale, query, 'minecraft')).toEqual([]);
+    });
+
     it('retains multi-word AND matching and excludes unrelated subjects', () => {
         expectEveryLanguage('マイクラ ダイヤモンド 剣', ['minecraft-diamond-sword-1-21-1']);
         expectEveryLanguage('ピカチュウ マイクラ', []);
@@ -107,8 +112,9 @@ describe('real catalog discovery across page languages', () => {
         expectEveryLanguage('ﾀﾞｲﾔﾓﾝﾄ', []);
         expectEveryLanguage('ゲンカ', []);
         expectEveryLanguage('ビカチュウ', []);
-        expectEveryLanguage('ヒ', ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5']);
-        expectEveryLanguage('ﾋ', ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5']);
+        // The original coaster's native subject includes ひし形, an actual unvoiced match.
+        expectEveryLanguage('ヒ', ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5', 'original-retro-diamond-coaster']);
+        expectEveryLanguage('ﾋ', ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5', 'original-retro-diamond-coaster']);
         expect(normalizePatternSearch('ピ')).not.toBe(normalizePatternSearch('ヒ'));
         expect(normalizePatternSearch('ピ')).not.toBe(normalizePatternSearch('ビ'));
         expect(normalizePatternSearch('ガ')).not.toBe(normalizePatternSearch('カ'));
