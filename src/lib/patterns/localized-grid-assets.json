@@ -1,0 +1,1673 @@
+{
+  "de": {
+    "sdv-blue-chicken": {
+      "href": "/patterns-de/sdv-blue-chicken/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "sdv-white-chicken": {
+      "href": "/patterns-de/sdv-white-chicken/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "sdv-brown-chicken": {
+      "href": "/patterns-de/sdv-brown-chicken/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "sdv-void-chicken": {
+      "href": "/patterns-de/sdv-void-chicken/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "sdv-golden-chicken": {
+      "href": "/patterns-de/sdv-golden-chicken/grid.png",
+      "width": 1172,
+      "height": 2552
+    },
+    "sdv-junimo": {
+      "href": "/patterns-de/sdv-junimo/grid.png",
+      "width": 1172,
+      "height": 2512
+    },
+    "pokemon-eevee-gen5": {
+      "href": "/patterns-de/pokemon-eevee-gen5/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "pokemon-vaporeon-gen5": {
+      "href": "/patterns-de/pokemon-vaporeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "pokemon-gengar-gen5": {
+      "href": "/patterns-de/pokemon-gengar-gen5/grid.png",
+      "width": 1172,
+      "height": 2552
+    },
+    "pokemon-pikachu-gen5": {
+      "href": "/patterns-de/pokemon-pikachu-gen5/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "pokemon-snorlax-gen5": {
+      "href": "/patterns-de/pokemon-snorlax-gen5/grid.png",
+      "width": 1172,
+      "height": 2552
+    },
+    "pokemon-bulbasaur-gen5": {
+      "href": "/patterns-de/pokemon-bulbasaur-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-charmander-gen5": {
+      "href": "/patterns-de/pokemon-charmander-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-squirtle-gen5": {
+      "href": "/patterns-de/pokemon-squirtle-gen5/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "pokemon-umbreon-gen5": {
+      "href": "/patterns-de/pokemon-umbreon-gen5/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "pokemon-mew-gen5": {
+      "href": "/patterns-de/pokemon-mew-gen5/grid.png",
+      "width": 1172,
+      "height": 2706
+    },
+    "pokemon-jigglypuff-gen5": {
+      "href": "/patterns-de/pokemon-jigglypuff-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "minecraft-diamond-sword-1-21-1": {
+      "href": "/patterns-de/minecraft-diamond-sword-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2848
+    },
+    "minecraft-diamond-pickaxe-1-21-1": {
+      "href": "/patterns-de/minecraft-diamond-pickaxe-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2796
+    },
+    "minecraft-diamond-1-21-1": {
+      "href": "/patterns-de/minecraft-diamond-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "minecraft-golden-apple-1-21-1": {
+      "href": "/patterns-de/minecraft-golden-apple-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2752
+    },
+    "minecraft-apple-1-21-1": {
+      "href": "/patterns-de/minecraft-apple-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2800
+    },
+    "minecraft-full-heart-1-21-1": {
+      "href": "/patterns-de/minecraft-full-heart-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "minecraft-tnt-side-1-21-1": {
+      "href": "/patterns-de/minecraft-tnt-side-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "minecraft-diamond-ore-1-21-1": {
+      "href": "/patterns-de/minecraft-diamond-ore-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "kirby-adventure-normal": {
+      "href": "/patterns-de/kirby-adventure-normal/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "smb-super-mushroom": {
+      "href": "/patterns-de/smb-super-mushroom/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "smb-super-star": {
+      "href": "/patterns-de/smb-super-star/grid.png",
+      "width": 1172,
+      "height": 2364
+    },
+    "pokemon-lucario-gen5": {
+      "href": "/patterns-de/pokemon-lucario-gen5/grid.png",
+      "width": 1172,
+      "height": 2698
+    },
+    "pokemon-gardevoir-gen5": {
+      "href": "/patterns-de/pokemon-gardevoir-gen5/grid.png",
+      "width": 1172,
+      "height": 2552
+    },
+    "pokemon-dragonite-gen5": {
+      "href": "/patterns-de/pokemon-dragonite-gen5/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "pokemon-gyarados-gen5": {
+      "href": "/patterns-de/pokemon-gyarados-gen5/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "pokemon-psyduck-gen5": {
+      "href": "/patterns-de/pokemon-psyduck-gen5/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "pokemon-lapras-gen5": {
+      "href": "/patterns-de/pokemon-lapras-gen5/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "pokemon-ditto-gen5": {
+      "href": "/patterns-de/pokemon-ditto-gen5/grid.png",
+      "width": 1172,
+      "height": 2356
+    },
+    "pokemon-espeon-gen5": {
+      "href": "/patterns-de/pokemon-espeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2654
+    },
+    "pokemon-flareon-gen5": {
+      "href": "/patterns-de/pokemon-flareon-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-jolteon-gen5": {
+      "href": "/patterns-de/pokemon-jolteon-gen5/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "pokemon-leafeon-gen5": {
+      "href": "/patterns-de/pokemon-leafeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-glaceon-gen5": {
+      "href": "/patterns-de/pokemon-glaceon-gen5/grid.png",
+      "width": 1172,
+      "height": 2454
+    },
+    "pokemon-mewtwo-gen5": {
+      "href": "/patterns-de/pokemon-mewtwo-gen5/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "pokemon-cyndaquil-gen5": {
+      "href": "/patterns-de/pokemon-cyndaquil-gen5/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "pokemon-chikorita-gen5": {
+      "href": "/patterns-de/pokemon-chikorita-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-totodile-gen5": {
+      "href": "/patterns-de/pokemon-totodile-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-treecko-gen5": {
+      "href": "/patterns-de/pokemon-treecko-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-torchic-gen5": {
+      "href": "/patterns-de/pokemon-torchic-gen5/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "pokemon-mudkip-gen5": {
+      "href": "/patterns-de/pokemon-mudkip-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-turtwig-gen5": {
+      "href": "/patterns-de/pokemon-turtwig-gen5/grid.png",
+      "width": 1172,
+      "height": 2600
+    },
+    "pokemon-chimchar-gen5": {
+      "href": "/patterns-de/pokemon-chimchar-gen5/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "pokemon-piplup-gen5": {
+      "href": "/patterns-de/pokemon-piplup-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-snivy-gen5": {
+      "href": "/patterns-de/pokemon-snivy-gen5/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "pokemon-tepig-gen5": {
+      "href": "/patterns-de/pokemon-tepig-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-oshawott-gen5": {
+      "href": "/patterns-de/pokemon-oshawott-gen5/grid.png",
+      "width": 1172,
+      "height": 2748
+    },
+    "pokemon-togepi-gen5": {
+      "href": "/patterns-de/pokemon-togepi-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-pichu-gen5": {
+      "href": "/patterns-de/pokemon-pichu-gen5/grid.png",
+      "width": 1172,
+      "height": 2654
+    },
+    "pokemon-wooper-gen5": {
+      "href": "/patterns-de/pokemon-wooper-gen5/grid.png",
+      "width": 1172,
+      "height": 2654
+    },
+    "pokemon-slowpoke-gen5": {
+      "href": "/patterns-de/pokemon-slowpoke-gen5/grid.png",
+      "width": 1172,
+      "height": 2600
+    },
+    "pokemon-jirachi-gen5": {
+      "href": "/patterns-de/pokemon-jirachi-gen5/grid.png",
+      "width": 1172,
+      "height": 2654
+    },
+    "pokemon-celebi-gen5": {
+      "href": "/patterns-de/pokemon-celebi-gen5/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "pokemon-victini-gen5": {
+      "href": "/patterns-de/pokemon-victini-gen5/grid.png",
+      "width": 1172,
+      "height": 2800
+    },
+    "pokemon-chandelure-gen5": {
+      "href": "/patterns-de/pokemon-chandelure-gen5/grid.png",
+      "width": 1172,
+      "height": 2792
+    },
+    "pokemon-garchomp-gen5": {
+      "href": "/patterns-de/pokemon-garchomp-gen5/grid.png",
+      "width": 1172,
+      "height": 2706
+    },
+    "pokemon-zoroark-gen5": {
+      "href": "/patterns-de/pokemon-zoroark-gen5/grid.png",
+      "width": 1172,
+      "height": 2654
+    },
+    "minecraft-emerald-1-21-1": {
+      "href": "/patterns-de/minecraft-emerald-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "minecraft-ender-pearl-1-21-1": {
+      "href": "/patterns-de/minecraft-ender-pearl-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "minecraft-ender-eye-1-21-1": {
+      "href": "/patterns-de/minecraft-ender-eye-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2748
+    },
+    "minecraft-totem-of-undying-1-21-1": {
+      "href": "/patterns-de/minecraft-totem-of-undying-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2600
+    },
+    "minecraft-netherite-pickaxe-1-21-1": {
+      "href": "/patterns-de/minecraft-netherite-pickaxe-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2894
+    },
+    "minecraft-netherite-sword-1-21-1": {
+      "href": "/patterns-de/minecraft-netherite-sword-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2946
+    },
+    "minecraft-carrot-1-21-1": {
+      "href": "/patterns-de/minecraft-carrot-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2800
+    },
+    "minecraft-bread-1-21-1": {
+      "href": "/patterns-de/minecraft-bread-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "minecraft-cookie-1-21-1": {
+      "href": "/patterns-de/minecraft-cookie-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "minecraft-arrow-1-21-1": {
+      "href": "/patterns-de/minecraft-arrow-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2886
+    },
+    "minecraft-trident-1-21-1": {
+      "href": "/patterns-de/minecraft-trident-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2836
+    },
+    "minecraft-book-1-21-1": {
+      "href": "/patterns-de/minecraft-book-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "minecraft-feather-1-21-1": {
+      "href": "/patterns-de/minecraft-feather-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2552
+    },
+    "minecraft-amethyst-shard-1-21-1": {
+      "href": "/patterns-de/minecraft-amethyst-shard-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "minecraft-slime-ball-1-21-1": {
+      "href": "/patterns-de/minecraft-slime-ball-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2600
+    },
+    "minecraft-honey-bottle-1-21-1": {
+      "href": "/patterns-de/minecraft-honey-bottle-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2748
+    },
+    "minecraft-milk-bucket-1-21-1": {
+      "href": "/patterns-de/minecraft-milk-bucket-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2650
+    },
+    "minecraft-redstone-1-21-1": {
+      "href": "/patterns-de/minecraft-redstone-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "minecraft-quartz-1-21-1": {
+      "href": "/patterns-de/minecraft-quartz-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2600
+    },
+    "minecraft-carved-pumpkin-1-21-1": {
+      "href": "/patterns-de/minecraft-carved-pumpkin-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2552
+    },
+    "smb-small-mario": {
+      "href": "/patterns-de/smb-small-mario/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "smb-small-luigi": {
+      "href": "/patterns-de/smb-small-luigi/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "smb-green-koopa-troopa": {
+      "href": "/patterns-de/smb-green-koopa-troopa/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "smb-red-cheep-cheep": {
+      "href": "/patterns-de/smb-red-cheep-cheep/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "smb-bullet-bill": {
+      "href": "/patterns-de/smb-bullet-bill/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "smb-blooper": {
+      "href": "/patterns-de/smb-blooper/grid.png",
+      "width": 1172,
+      "height": 2548
+    },
+    "smb-piranha-plant": {
+      "href": "/patterns-de/smb-piranha-plant/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "smb-fire-flower": {
+      "href": "/patterns-de/smb-fire-flower/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "smb-1up-mushroom": {
+      "href": "/patterns-de/smb-1up-mushroom/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "smb-question-block": {
+      "href": "/patterns-de/smb-question-block/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "smb-goomba-smb3": {
+      "href": "/patterns-de/smb-goomba-smb3/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "smb-boo-smb3": {
+      "href": "/patterns-de/smb-boo-smb3/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "smb-bob-omb-smb3": {
+      "href": "/patterns-de/smb-bob-omb-smb3/grid.png",
+      "width": 1172,
+      "height": 2260
+    },
+    "kirby-waddle-dee-adventure": {
+      "href": "/patterns-de/kirby-waddle-dee-adventure/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "kirby-waddle-doo-adventure": {
+      "href": "/patterns-de/kirby-waddle-doo-adventure/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "capybara-potion": {
+      "href": "/patterns-de/capybara-potion/grid.png",
+      "width": 1172,
+      "height": 2402
+    },
+    "ghost-cat-pumpkin": {
+      "href": "/patterns-de/ghost-cat-pumpkin/grid.png",
+      "width": 1172,
+      "height": 2352
+    },
+    "original-soccer-ball": {
+      "href": "/patterns-de/original-soccer-ball/grid.png",
+      "width": 908,
+      "height": 1296
+    },
+    "original-friendly-ghost": {
+      "href": "/patterns-de/original-friendly-ghost/grid.png",
+      "width": 788,
+      "height": 1215
+    },
+    "original-christmas-tree": {
+      "href": "/patterns-de/original-christmas-tree/grid.png",
+      "width": 788,
+      "height": 1264
+    },
+    "original-halloween-bat": {
+      "href": "/patterns-de/original-halloween-bat/grid.png",
+      "width": 788,
+      "height": 1239
+    },
+    "original-snowman": {
+      "href": "/patterns-de/original-snowman/grid.png",
+      "width": 788,
+      "height": 1264
+    },
+    "original-gingerbread-man": {
+      "href": "/patterns-de/original-gingerbread-man/grid.png",
+      "width": 788,
+      "height": 1239
+    },
+    "original-santa-hat": {
+      "href": "/patterns-de/original-santa-hat/grid.png",
+      "width": 788,
+      "height": 1239
+    },
+    "original-christmas-stocking": {
+      "href": "/patterns-de/original-christmas-stocking/grid.png",
+      "width": 788,
+      "height": 1245
+    },
+    "original-snowflake": {
+      "href": "/patterns-de/original-snowflake/grid.png",
+      "width": 788,
+      "height": 1298
+    },
+    "minecraft-creeper-face-v1": {
+      "href": "/patterns-de/minecraft-creeper-face-v1/grid.png",
+      "width": 788,
+      "height": 1329
+    },
+    "original-retro-diamond-coaster": {
+      "href": "/patterns-de/original-retro-diamond-coaster/grid.png",
+      "width": 788,
+      "height": 1324
+    }
+  },
+  "fr": {
+    "sdv-blue-chicken": {
+      "href": "/patterns-fr/sdv-blue-chicken/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "sdv-white-chicken": {
+      "href": "/patterns-fr/sdv-white-chicken/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "sdv-brown-chicken": {
+      "href": "/patterns-fr/sdv-brown-chicken/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "sdv-void-chicken": {
+      "href": "/patterns-fr/sdv-void-chicken/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "sdv-golden-chicken": {
+      "href": "/patterns-fr/sdv-golden-chicken/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "sdv-junimo": {
+      "href": "/patterns-fr/sdv-junimo/grid.png",
+      "width": 1172,
+      "height": 2466
+    },
+    "pokemon-eevee-gen5": {
+      "href": "/patterns-fr/pokemon-eevee-gen5/grid.png",
+      "width": 1172,
+      "height": 2516
+    },
+    "pokemon-vaporeon-gen5": {
+      "href": "/patterns-fr/pokemon-vaporeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-gengar-gen5": {
+      "href": "/patterns-fr/pokemon-gengar-gen5/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "pokemon-pikachu-gen5": {
+      "href": "/patterns-fr/pokemon-pikachu-gen5/grid.png",
+      "width": 1172,
+      "height": 2516
+    },
+    "pokemon-snorlax-gen5": {
+      "href": "/patterns-fr/pokemon-snorlax-gen5/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "pokemon-bulbasaur-gen5": {
+      "href": "/patterns-fr/pokemon-bulbasaur-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "pokemon-charmander-gen5": {
+      "href": "/patterns-fr/pokemon-charmander-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-squirtle-gen5": {
+      "href": "/patterns-fr/pokemon-squirtle-gen5/grid.png",
+      "width": 1172,
+      "height": 2710
+    },
+    "pokemon-umbreon-gen5": {
+      "href": "/patterns-fr/pokemon-umbreon-gen5/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "pokemon-mew-gen5": {
+      "href": "/patterns-fr/pokemon-mew-gen5/grid.png",
+      "width": 1172,
+      "height": 2662
+    },
+    "pokemon-jigglypuff-gen5": {
+      "href": "/patterns-fr/pokemon-jigglypuff-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "minecraft-diamond-sword-1-21-1": {
+      "href": "/patterns-fr/minecraft-diamond-sword-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2804
+    },
+    "minecraft-diamond-pickaxe-1-21-1": {
+      "href": "/patterns-fr/minecraft-diamond-pickaxe-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2796
+    },
+    "minecraft-diamond-1-21-1": {
+      "href": "/patterns-fr/minecraft-diamond-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "minecraft-golden-apple-1-21-1": {
+      "href": "/patterns-fr/minecraft-golden-apple-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2706
+    },
+    "minecraft-apple-1-21-1": {
+      "href": "/patterns-fr/minecraft-apple-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "minecraft-full-heart-1-21-1": {
+      "href": "/patterns-fr/minecraft-full-heart-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2418
+    },
+    "minecraft-tnt-side-1-21-1": {
+      "href": "/patterns-fr/minecraft-tnt-side-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "minecraft-diamond-ore-1-21-1": {
+      "href": "/patterns-fr/minecraft-diamond-ore-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "kirby-adventure-normal": {
+      "href": "/patterns-fr/kirby-adventure-normal/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "smb-super-mushroom": {
+      "href": "/patterns-fr/smb-super-mushroom/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "smb-super-star": {
+      "href": "/patterns-fr/smb-super-star/grid.png",
+      "width": 1172,
+      "height": 2320
+    },
+    "pokemon-lucario-gen5": {
+      "href": "/patterns-fr/pokemon-lucario-gen5/grid.png",
+      "width": 1172,
+      "height": 2654
+    },
+    "pokemon-gardevoir-gen5": {
+      "href": "/patterns-fr/pokemon-gardevoir-gen5/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "pokemon-dragonite-gen5": {
+      "href": "/patterns-fr/pokemon-dragonite-gen5/grid.png",
+      "width": 1172,
+      "height": 2710
+    },
+    "pokemon-gyarados-gen5": {
+      "href": "/patterns-fr/pokemon-gyarados-gen5/grid.png",
+      "width": 1172,
+      "height": 2710
+    },
+    "pokemon-psyduck-gen5": {
+      "href": "/patterns-fr/pokemon-psyduck-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-lapras-gen5": {
+      "href": "/patterns-fr/pokemon-lapras-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-ditto-gen5": {
+      "href": "/patterns-fr/pokemon-ditto-gen5/grid.png",
+      "width": 1172,
+      "height": 2312
+    },
+    "pokemon-espeon-gen5": {
+      "href": "/patterns-fr/pokemon-espeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "pokemon-flareon-gen5": {
+      "href": "/patterns-fr/pokemon-flareon-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "pokemon-jolteon-gen5": {
+      "href": "/patterns-fr/pokemon-jolteon-gen5/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "pokemon-leafeon-gen5": {
+      "href": "/patterns-fr/pokemon-leafeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-glaceon-gen5": {
+      "href": "/patterns-fr/pokemon-glaceon-gen5/grid.png",
+      "width": 1172,
+      "height": 2410
+    },
+    "pokemon-mewtwo-gen5": {
+      "href": "/patterns-fr/pokemon-mewtwo-gen5/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "pokemon-cyndaquil-gen5": {
+      "href": "/patterns-fr/pokemon-cyndaquil-gen5/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "pokemon-chikorita-gen5": {
+      "href": "/patterns-fr/pokemon-chikorita-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-totodile-gen5": {
+      "href": "/patterns-fr/pokemon-totodile-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-treecko-gen5": {
+      "href": "/patterns-fr/pokemon-treecko-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "pokemon-torchic-gen5": {
+      "href": "/patterns-fr/pokemon-torchic-gen5/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "pokemon-mudkip-gen5": {
+      "href": "/patterns-fr/pokemon-mudkip-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "pokemon-turtwig-gen5": {
+      "href": "/patterns-fr/pokemon-turtwig-gen5/grid.png",
+      "width": 1172,
+      "height": 2556
+    },
+    "pokemon-chimchar-gen5": {
+      "href": "/patterns-fr/pokemon-chimchar-gen5/grid.png",
+      "width": 1172,
+      "height": 2710
+    },
+    "pokemon-piplup-gen5": {
+      "href": "/patterns-fr/pokemon-piplup-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-snivy-gen5": {
+      "href": "/patterns-fr/pokemon-snivy-gen5/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "pokemon-tepig-gen5": {
+      "href": "/patterns-fr/pokemon-tepig-gen5/grid.png",
+      "width": 1172,
+      "height": 2564
+    },
+    "pokemon-oshawott-gen5": {
+      "href": "/patterns-fr/pokemon-oshawott-gen5/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "pokemon-togepi-gen5": {
+      "href": "/patterns-fr/pokemon-togepi-gen5/grid.png",
+      "width": 1172,
+      "height": 2612
+    },
+    "pokemon-pichu-gen5": {
+      "href": "/patterns-fr/pokemon-pichu-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-wooper-gen5": {
+      "href": "/patterns-fr/pokemon-wooper-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-slowpoke-gen5": {
+      "href": "/patterns-fr/pokemon-slowpoke-gen5/grid.png",
+      "width": 1172,
+      "height": 2556
+    },
+    "pokemon-jirachi-gen5": {
+      "href": "/patterns-fr/pokemon-jirachi-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-celebi-gen5": {
+      "href": "/patterns-fr/pokemon-celebi-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-victini-gen5": {
+      "href": "/patterns-fr/pokemon-victini-gen5/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "pokemon-chandelure-gen5": {
+      "href": "/patterns-fr/pokemon-chandelure-gen5/grid.png",
+      "width": 1172,
+      "height": 2792
+    },
+    "pokemon-garchomp-gen5": {
+      "href": "/patterns-fr/pokemon-garchomp-gen5/grid.png",
+      "width": 1172,
+      "height": 2662
+    },
+    "pokemon-zoroark-gen5": {
+      "href": "/patterns-fr/pokemon-zoroark-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "minecraft-emerald-1-21-1": {
+      "href": "/patterns-fr/minecraft-emerald-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "minecraft-ender-pearl-1-21-1": {
+      "href": "/patterns-fr/minecraft-ender-pearl-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "minecraft-ender-eye-1-21-1": {
+      "href": "/patterns-fr/minecraft-ender-eye-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "minecraft-totem-of-undying-1-21-1": {
+      "href": "/patterns-fr/minecraft-totem-of-undying-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2556
+    },
+    "minecraft-netherite-pickaxe-1-21-1": {
+      "href": "/patterns-fr/minecraft-netherite-pickaxe-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2894
+    },
+    "minecraft-netherite-sword-1-21-1": {
+      "href": "/patterns-fr/minecraft-netherite-sword-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2902
+    },
+    "minecraft-carrot-1-21-1": {
+      "href": "/patterns-fr/minecraft-carrot-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2756
+    },
+    "minecraft-bread-1-21-1": {
+      "href": "/patterns-fr/minecraft-bread-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "minecraft-cookie-1-21-1": {
+      "href": "/patterns-fr/minecraft-cookie-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "minecraft-arrow-1-21-1": {
+      "href": "/patterns-fr/minecraft-arrow-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2840
+    },
+    "minecraft-trident-1-21-1": {
+      "href": "/patterns-fr/minecraft-trident-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2792
+    },
+    "minecraft-book-1-21-1": {
+      "href": "/patterns-fr/minecraft-book-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2710
+    },
+    "minecraft-feather-1-21-1": {
+      "href": "/patterns-fr/minecraft-feather-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "minecraft-amethyst-shard-1-21-1": {
+      "href": "/patterns-fr/minecraft-amethyst-shard-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "minecraft-slime-ball-1-21-1": {
+      "href": "/patterns-fr/minecraft-slime-ball-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2556
+    },
+    "minecraft-honey-bottle-1-21-1": {
+      "href": "/patterns-fr/minecraft-honey-bottle-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2702
+    },
+    "minecraft-milk-bucket-1-21-1": {
+      "href": "/patterns-fr/minecraft-milk-bucket-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2604
+    },
+    "minecraft-redstone-1-21-1": {
+      "href": "/patterns-fr/minecraft-redstone-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "minecraft-quartz-1-21-1": {
+      "href": "/patterns-fr/minecraft-quartz-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2556
+    },
+    "minecraft-carved-pumpkin-1-21-1": {
+      "href": "/patterns-fr/minecraft-carved-pumpkin-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2508
+    },
+    "smb-small-mario": {
+      "href": "/patterns-fr/smb-small-mario/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "smb-small-luigi": {
+      "href": "/patterns-fr/smb-small-luigi/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "smb-green-koopa-troopa": {
+      "href": "/patterns-fr/smb-green-koopa-troopa/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "smb-red-cheep-cheep": {
+      "href": "/patterns-fr/smb-red-cheep-cheep/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "smb-bullet-bill": {
+      "href": "/patterns-fr/smb-bullet-bill/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "smb-blooper": {
+      "href": "/patterns-fr/smb-blooper/grid.png",
+      "width": 1172,
+      "height": 2504
+    },
+    "smb-piranha-plant": {
+      "href": "/patterns-fr/smb-piranha-plant/grid.png",
+      "width": 1172,
+      "height": 2458
+    },
+    "smb-fire-flower": {
+      "href": "/patterns-fr/smb-fire-flower/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "smb-1up-mushroom": {
+      "href": "/patterns-fr/smb-1up-mushroom/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "smb-question-block": {
+      "href": "/patterns-fr/smb-question-block/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "smb-goomba-smb3": {
+      "href": "/patterns-fr/smb-goomba-smb3/grid.png",
+      "width": 1172,
+      "height": 2368
+    },
+    "smb-boo-smb3": {
+      "href": "/patterns-fr/smb-boo-smb3/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "smb-bob-omb-smb3": {
+      "href": "/patterns-fr/smb-bob-omb-smb3/grid.png",
+      "width": 1172,
+      "height": 2214
+    },
+    "kirby-waddle-dee-adventure": {
+      "href": "/patterns-fr/kirby-waddle-dee-adventure/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "kirby-waddle-doo-adventure": {
+      "href": "/patterns-fr/kirby-waddle-doo-adventure/grid.png",
+      "width": 1172,
+      "height": 2264
+    },
+    "capybara-potion": {
+      "href": "/patterns-fr/capybara-potion/grid.png",
+      "width": 1172,
+      "height": 2402
+    },
+    "ghost-cat-pumpkin": {
+      "href": "/patterns-fr/ghost-cat-pumpkin/grid.png",
+      "width": 1172,
+      "height": 2352
+    },
+    "original-soccer-ball": {
+      "href": "/patterns-fr/original-soccer-ball/grid.png",
+      "width": 908,
+      "height": 1296
+    },
+    "original-friendly-ghost": {
+      "href": "/patterns-fr/original-friendly-ghost/grid.png",
+      "width": 788,
+      "height": 1215
+    },
+    "original-christmas-tree": {
+      "href": "/patterns-fr/original-christmas-tree/grid.png",
+      "width": 788,
+      "height": 1264
+    },
+    "original-halloween-bat": {
+      "href": "/patterns-fr/original-halloween-bat/grid.png",
+      "width": 788,
+      "height": 1239
+    },
+    "original-snowman": {
+      "href": "/patterns-fr/original-snowman/grid.png",
+      "width": 788,
+      "height": 1264
+    },
+    "original-gingerbread-man": {
+      "href": "/patterns-fr/original-gingerbread-man/grid.png",
+      "width": 788,
+      "height": 1239
+    },
+    "original-santa-hat": {
+      "href": "/patterns-fr/original-santa-hat/grid.png",
+      "width": 788,
+      "height": 1239
+    },
+    "original-christmas-stocking": {
+      "href": "/patterns-fr/original-christmas-stocking/grid.png",
+      "width": 788,
+      "height": 1245
+    },
+    "original-snowflake": {
+      "href": "/patterns-fr/original-snowflake/grid.png",
+      "width": 788,
+      "height": 1298
+    },
+    "minecraft-creeper-face-v1": {
+      "href": "/patterns-fr/minecraft-creeper-face-v1/grid.png",
+      "width": 788,
+      "height": 1307
+    },
+    "original-retro-diamond-coaster": {
+      "href": "/patterns-fr/original-retro-diamond-coaster/grid.png",
+      "width": 788,
+      "height": 1324
+    }
+  },
+  "ja": {
+    "sdv-blue-chicken": {
+      "href": "/patterns-ja/sdv-blue-chicken/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "sdv-white-chicken": {
+      "href": "/patterns-ja/sdv-white-chicken/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "sdv-brown-chicken": {
+      "href": "/patterns-ja/sdv-brown-chicken/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "sdv-void-chicken": {
+      "href": "/patterns-ja/sdv-void-chicken/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "sdv-golden-chicken": {
+      "href": "/patterns-ja/sdv-golden-chicken/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "sdv-junimo": {
+      "href": "/patterns-ja/sdv-junimo/grid.png",
+      "width": 1172,
+      "height": 2422
+    },
+    "pokemon-eevee-gen5": {
+      "href": "/patterns-ja/pokemon-eevee-gen5/grid.png",
+      "width": 1172,
+      "height": 2470
+    },
+    "pokemon-vaporeon-gen5": {
+      "href": "/patterns-ja/pokemon-vaporeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-gengar-gen5": {
+      "href": "/patterns-ja/pokemon-gengar-gen5/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "pokemon-pikachu-gen5": {
+      "href": "/patterns-ja/pokemon-pikachu-gen5/grid.png",
+      "width": 1172,
+      "height": 2470
+    },
+    "pokemon-snorlax-gen5": {
+      "href": "/patterns-ja/pokemon-snorlax-gen5/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "pokemon-bulbasaur-gen5": {
+      "href": "/patterns-ja/pokemon-bulbasaur-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-charmander-gen5": {
+      "href": "/patterns-ja/pokemon-charmander-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-squirtle-gen5": {
+      "href": "/patterns-ja/pokemon-squirtle-gen5/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "pokemon-umbreon-gen5": {
+      "href": "/patterns-ja/pokemon-umbreon-gen5/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "pokemon-mew-gen5": {
+      "href": "/patterns-ja/pokemon-mew-gen5/grid.png",
+      "width": 1172,
+      "height": 2616
+    },
+    "pokemon-jigglypuff-gen5": {
+      "href": "/patterns-ja/pokemon-jigglypuff-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "minecraft-diamond-sword-1-21-1": {
+      "href": "/patterns-ja/minecraft-diamond-sword-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2714
+    },
+    "minecraft-diamond-pickaxe-1-21-1": {
+      "href": "/patterns-ja/minecraft-diamond-pickaxe-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2662
+    },
+    "minecraft-diamond-1-21-1": {
+      "href": "/patterns-ja/minecraft-diamond-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "minecraft-golden-apple-1-21-1": {
+      "href": "/patterns-ja/minecraft-golden-apple-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2616
+    },
+    "minecraft-apple-1-21-1": {
+      "href": "/patterns-ja/minecraft-apple-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "minecraft-full-heart-1-21-1": {
+      "href": "/patterns-ja/minecraft-full-heart-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2372
+    },
+    "minecraft-tnt-side-1-21-1": {
+      "href": "/patterns-ja/minecraft-tnt-side-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "minecraft-diamond-ore-1-21-1": {
+      "href": "/patterns-ja/minecraft-diamond-ore-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "kirby-adventure-normal": {
+      "href": "/patterns-ja/kirby-adventure-normal/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "smb-super-mushroom": {
+      "href": "/patterns-ja/smb-super-mushroom/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "smb-super-star": {
+      "href": "/patterns-ja/smb-super-star/grid.png",
+      "width": 1172,
+      "height": 2276
+    },
+    "pokemon-lucario-gen5": {
+      "href": "/patterns-ja/pokemon-lucario-gen5/grid.png",
+      "width": 1172,
+      "height": 2608
+    },
+    "pokemon-gardevoir-gen5": {
+      "href": "/patterns-ja/pokemon-gardevoir-gen5/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "pokemon-dragonite-gen5": {
+      "href": "/patterns-ja/pokemon-dragonite-gen5/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "pokemon-gyarados-gen5": {
+      "href": "/patterns-ja/pokemon-gyarados-gen5/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "pokemon-psyduck-gen5": {
+      "href": "/patterns-ja/pokemon-psyduck-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-lapras-gen5": {
+      "href": "/patterns-ja/pokemon-lapras-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-ditto-gen5": {
+      "href": "/patterns-ja/pokemon-ditto-gen5/grid.png",
+      "width": 1172,
+      "height": 2268
+    },
+    "pokemon-espeon-gen5": {
+      "href": "/patterns-ja/pokemon-espeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-flareon-gen5": {
+      "href": "/patterns-ja/pokemon-flareon-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-jolteon-gen5": {
+      "href": "/patterns-ja/pokemon-jolteon-gen5/grid.png",
+      "width": 1172,
+      "height": 2470
+    },
+    "pokemon-leafeon-gen5": {
+      "href": "/patterns-ja/pokemon-leafeon-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-glaceon-gen5": {
+      "href": "/patterns-ja/pokemon-glaceon-gen5/grid.png",
+      "width": 1172,
+      "height": 2364
+    },
+    "pokemon-mewtwo-gen5": {
+      "href": "/patterns-ja/pokemon-mewtwo-gen5/grid.png",
+      "width": 1172,
+      "height": 2470
+    },
+    "pokemon-cyndaquil-gen5": {
+      "href": "/patterns-ja/pokemon-cyndaquil-gen5/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "pokemon-chikorita-gen5": {
+      "href": "/patterns-ja/pokemon-chikorita-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-totodile-gen5": {
+      "href": "/patterns-ja/pokemon-totodile-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-treecko-gen5": {
+      "href": "/patterns-ja/pokemon-treecko-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-torchic-gen5": {
+      "href": "/patterns-ja/pokemon-torchic-gen5/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "pokemon-mudkip-gen5": {
+      "href": "/patterns-ja/pokemon-mudkip-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-turtwig-gen5": {
+      "href": "/patterns-ja/pokemon-turtwig-gen5/grid.png",
+      "width": 1172,
+      "height": 2512
+    },
+    "pokemon-chimchar-gen5": {
+      "href": "/patterns-ja/pokemon-chimchar-gen5/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "pokemon-piplup-gen5": {
+      "href": "/patterns-ja/pokemon-piplup-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-snivy-gen5": {
+      "href": "/patterns-ja/pokemon-snivy-gen5/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "pokemon-tepig-gen5": {
+      "href": "/patterns-ja/pokemon-tepig-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-oshawott-gen5": {
+      "href": "/patterns-ja/pokemon-oshawott-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-togepi-gen5": {
+      "href": "/patterns-ja/pokemon-togepi-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-pichu-gen5": {
+      "href": "/patterns-ja/pokemon-pichu-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-wooper-gen5": {
+      "href": "/patterns-ja/pokemon-wooper-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-slowpoke-gen5": {
+      "href": "/patterns-ja/pokemon-slowpoke-gen5/grid.png",
+      "width": 1172,
+      "height": 2512
+    },
+    "pokemon-jirachi-gen5": {
+      "href": "/patterns-ja/pokemon-jirachi-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "pokemon-celebi-gen5": {
+      "href": "/patterns-ja/pokemon-celebi-gen5/grid.png",
+      "width": 1172,
+      "height": 2568
+    },
+    "pokemon-victini-gen5": {
+      "href": "/patterns-ja/pokemon-victini-gen5/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "pokemon-chandelure-gen5": {
+      "href": "/patterns-ja/pokemon-chandelure-gen5/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "pokemon-garchomp-gen5": {
+      "href": "/patterns-ja/pokemon-garchomp-gen5/grid.png",
+      "width": 1172,
+      "height": 2616
+    },
+    "pokemon-zoroark-gen5": {
+      "href": "/patterns-ja/pokemon-zoroark-gen5/grid.png",
+      "width": 1172,
+      "height": 2520
+    },
+    "minecraft-emerald-1-21-1": {
+      "href": "/patterns-ja/minecraft-emerald-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "minecraft-ender-pearl-1-21-1": {
+      "href": "/patterns-ja/minecraft-ender-pearl-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "minecraft-ender-eye-1-21-1": {
+      "href": "/patterns-ja/minecraft-ender-eye-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "minecraft-totem-of-undying-1-21-1": {
+      "href": "/patterns-ja/minecraft-totem-of-undying-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2512
+    },
+    "minecraft-netherite-pickaxe-1-21-1": {
+      "href": "/patterns-ja/minecraft-netherite-pickaxe-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2760
+    },
+    "minecraft-netherite-sword-1-21-1": {
+      "href": "/patterns-ja/minecraft-netherite-sword-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2812
+    },
+    "minecraft-carrot-1-21-1": {
+      "href": "/patterns-ja/minecraft-carrot-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "minecraft-bread-1-21-1": {
+      "href": "/patterns-ja/minecraft-bread-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "minecraft-cookie-1-21-1": {
+      "href": "/patterns-ja/minecraft-cookie-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "minecraft-arrow-1-21-1": {
+      "href": "/patterns-ja/minecraft-arrow-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2706
+    },
+    "minecraft-trident-1-21-1": {
+      "href": "/patterns-ja/minecraft-trident-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "minecraft-book-1-21-1": {
+      "href": "/patterns-ja/minecraft-book-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2666
+    },
+    "minecraft-feather-1-21-1": {
+      "href": "/patterns-ja/minecraft-feather-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2418
+    },
+    "minecraft-amethyst-shard-1-21-1": {
+      "href": "/patterns-ja/minecraft-amethyst-shard-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "minecraft-slime-ball-1-21-1": {
+      "href": "/patterns-ja/minecraft-slime-ball-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2512
+    },
+    "minecraft-honey-bottle-1-21-1": {
+      "href": "/patterns-ja/minecraft-honey-bottle-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2658
+    },
+    "minecraft-milk-bucket-1-21-1": {
+      "href": "/patterns-ja/minecraft-milk-bucket-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2560
+    },
+    "minecraft-redstone-1-21-1": {
+      "href": "/patterns-ja/minecraft-redstone-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2414
+    },
+    "minecraft-quartz-1-21-1": {
+      "href": "/patterns-ja/minecraft-quartz-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2512
+    },
+    "minecraft-carved-pumpkin-1-21-1": {
+      "href": "/patterns-ja/minecraft-carved-pumpkin-1-21-1/grid.png",
+      "width": 1172,
+      "height": 2462
+    },
+    "smb-small-mario": {
+      "href": "/patterns-ja/smb-small-mario/grid.png",
+      "width": 1172,
+      "height": 2324
+    },
+    "smb-small-luigi": {
+      "href": "/patterns-ja/smb-small-luigi/grid.png",
+      "width": 1172,
+      "height": 2324
+    },
+    "smb-green-koopa-troopa": {
+      "href": "/patterns-ja/smb-green-koopa-troopa/grid.png",
+      "width": 1172,
+      "height": 2324
+    },
+    "smb-red-cheep-cheep": {
+      "href": "/patterns-ja/smb-red-cheep-cheep/grid.png",
+      "width": 1172,
+      "height": 2324
+    },
+    "smb-bullet-bill": {
+      "href": "/patterns-ja/smb-bullet-bill/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "smb-blooper": {
+      "href": "/patterns-ja/smb-blooper/grid.png",
+      "width": 1172,
+      "height": 2368
+    },
+    "smb-piranha-plant": {
+      "href": "/patterns-ja/smb-piranha-plant/grid.png",
+      "width": 1172,
+      "height": 2368
+    },
+    "smb-fire-flower": {
+      "href": "/patterns-ja/smb-fire-flower/grid.png",
+      "width": 1172,
+      "height": 2372
+    },
+    "smb-1up-mushroom": {
+      "href": "/patterns-ja/smb-1up-mushroom/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "smb-question-block": {
+      "href": "/patterns-ja/smb-question-block/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "smb-goomba-smb3": {
+      "href": "/patterns-ja/smb-goomba-smb3/grid.png",
+      "width": 1172,
+      "height": 2324
+    },
+    "smb-boo-smb3": {
+      "href": "/patterns-ja/smb-boo-smb3/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "smb-bob-omb-smb3": {
+      "href": "/patterns-ja/smb-bob-omb-smb3/grid.png",
+      "width": 1172,
+      "height": 2170
+    },
+    "kirby-waddle-dee-adventure": {
+      "href": "/patterns-ja/kirby-waddle-dee-adventure/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "kirby-waddle-doo-adventure": {
+      "href": "/patterns-ja/kirby-waddle-doo-adventure/grid.png",
+      "width": 1172,
+      "height": 2218
+    },
+    "capybara-potion": {
+      "href": "/patterns-ja/capybara-potion/grid.png",
+      "width": 1172,
+      "height": 2356
+    },
+    "ghost-cat-pumpkin": {
+      "href": "/patterns-ja/ghost-cat-pumpkin/grid.png",
+      "width": 1172,
+      "height": 2308
+    },
+    "original-soccer-ball": {
+      "href": "/patterns-ja/original-soccer-ball/grid.png",
+      "width": 908,
+      "height": 1296
+    },
+    "original-friendly-ghost": {
+      "href": "/patterns-ja/original-friendly-ghost/grid.png",
+      "width": 788,
+      "height": 1170
+    },
+    "original-christmas-tree": {
+      "href": "/patterns-ja/original-christmas-tree/grid.png",
+      "width": 788,
+      "height": 1219
+    },
+    "original-halloween-bat": {
+      "href": "/patterns-ja/original-halloween-bat/grid.png",
+      "width": 788,
+      "height": 1195
+    },
+    "original-snowman": {
+      "href": "/patterns-ja/original-snowman/grid.png",
+      "width": 788,
+      "height": 1219
+    },
+    "original-gingerbread-man": {
+      "href": "/patterns-ja/original-gingerbread-man/grid.png",
+      "width": 788,
+      "height": 1195
+    },
+    "original-santa-hat": {
+      "href": "/patterns-ja/original-santa-hat/grid.png",
+      "width": 788,
+      "height": 1195
+    },
+    "original-christmas-stocking": {
+      "href": "/patterns-ja/original-christmas-stocking/grid.png",
+      "width": 788,
+      "height": 1201
+    },
+    "original-snowflake": {
+      "href": "/patterns-ja/original-snowflake/grid.png",
+      "width": 788,
+      "height": 1253
+    },
+    "minecraft-creeper-face-v1": {
+      "href": "/patterns-ja/minecraft-creeper-face-v1/grid.png",
+      "width": 788,
+      "height": 1262
+    },
+    "original-retro-diamond-coaster": {
+      "href": "/patterns-ja/original-retro-diamond-coaster/grid.png",
+      "width": 788,
+      "height": 1279
+    }
+  }
+}

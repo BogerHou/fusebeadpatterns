@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getPatternById } from '@/lib/patterns/catalog';
-import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from '@/lib/patterns/localized-download';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf, getLocalizedPatternGrid } from '@/lib/patterns/localized-download';
 import { getLocalizedPatternName, localizePatternNote } from '@/lib/patterns/localized-content';
 import selection from '@/lib/patterns/french-christmas.json';
 
@@ -57,6 +57,7 @@ export default function FrenchChristmasPatternsPage() {
     const santaHat = additionalPatterns[0];
     const santaHatPdf = getLocalizedPatternPdf(santaHat, 'fr');
     const santaHatLetterPdf = getLocalizedPatternLetterPdf(santaHat, 'fr');
+    const santaHatGrid = getLocalizedPatternGrid(santaHat, 'fr');
     const santaHatTracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': santaHat.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'patterns', 'data-pattern-format': 'pdf' };
     const winterPatterns = additionalPatterns.slice(1);
     return (
@@ -84,7 +85,7 @@ export default function FrenchChristmasPatternsPage() {
                     <div className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
                         {selected.map((pattern) => (
                             <article key={pattern.id} id={pattern.id} className="pattern-card scroll-mt-6" data-pattern-card={pattern.id} aria-labelledby={`${pattern.id}-title`}>
-                                <a href={pattern.assets.grid} target="_blank" rel="noopener" className="block rounded-[10px]" aria-label={`${pattern.name} : agrandir la grille (nouvel onglet)`}>
+                                <a href={getLocalizedPatternGrid(pattern, 'fr').href} hrefLang="fr" target="_blank" rel="noopener" className="block rounded-[10px]" aria-label={`${pattern.name} : agrandir la grille (nouvel onglet)`}>
                                     <div className="pattern-art">
                                         <Image src={pattern.assets.preview} alt={`${pattern.name} en perles à repasser`} width={580} height={580} unoptimized />
                                     </div>
@@ -97,7 +98,7 @@ export default function FrenchChristmasPatternsPage() {
                                         data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-palette="perler" data-pattern-entry="patterns" data-pattern-format="pdf">
                                         PDF A4 (français)<span aria-hidden="true">↓</span>
                                     </a>
-                                    <a href={pattern.assets.grid} download={`${pattern.id}-grid.png`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
+                                    <a href={getLocalizedPatternGrid(pattern, 'fr').href} hrefLang="fr" download={`${pattern.id}-grid.png`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
                                         aria-label={`${pattern.name} : télécharger la grille PNG`}
                                         data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-palette="perler" data-pattern-entry="patterns" data-pattern-format="grid_png">
                                         Grille PNG<span aria-hidden="true">↓</span>
@@ -128,7 +129,7 @@ export default function FrenchChristmasPatternsPage() {
                                 <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
                                     <a href={santaHatPdf.href} hrefLang="fr" download {...santaHatTracking} className="text-link">PDF A4 (français) ↓</a>
                                     {santaHatLetterPdf && <a href={santaHatLetterPdf.href} hrefLang="fr" download {...santaHatTracking} className="text-link">PDF US Letter (français) ↓</a>}
-                                    <a href={santaHat.assets.grid} download {...santaHatTracking} data-pattern-format="grid_png" className="text-link">Grille PNG ↓</a>
+                                    <a href={santaHatGrid.href} hrefLang={santaHatGrid.language} download {...santaHatTracking} data-pattern-format="grid_png" className="text-link">Grille PNG ↓</a>
                                 </div>
                                 <p className="mt-3 text-sm leading-7 text-muted">Choisissez le PDF adapté à votre papier. Imprimez à 100 % / taille réelle et vérifiez le repère de 50 mm. Ce motif plat n’a pas été assemblé ni testé au fer ou en suspension.</p>
                                 <div className="mt-3 flex flex-wrap gap-x-5">

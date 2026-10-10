@@ -8,6 +8,7 @@ import japanesePatterns from '@/lib/patterns/japanese.json';
 import { patternLibraryCount } from '@/lib/patterns/library-overview';
 import PatternQuickDownloads from './PatternQuickDownloads';
 import PatternLibraryHelp from '@/components/patterns/PatternLibraryHelp';
+import { getLocalizedPatternGrid } from '@/lib/patterns/localized-download';
 
 export const japanesePatternLibraryTitle = '無料のアイロンビーズ図案｜印刷用PDF・画像 | Fuse Bead Patterns';
 export const japanesePatternLibraryDescription = 'ポケモンやスーパーマリオのアイロンビーズ図案を無料でダウンロード。印刷用PDFとマス目付き画像を、登録なしで保存できます。日本語の印刷ガイド付き。';
@@ -24,11 +25,13 @@ function requirePattern(id: string): Pattern {
 
 function DownloadCard({ id, name }: { id: string; name: string }) {
     const pattern = requirePattern(id);
+    const grid = getLocalizedPatternGrid(pattern, 'ja');
 
     return (
         <article className="pattern-card" data-pattern-card={id} aria-labelledby={`${id}-title`}>
             <a
-                href={pattern.assets.grid}
+                href={grid.href}
+                hrefLang={grid.language}
                 target="_blank"
                 rel="noopener"
                 className="block rounded-[10px]"
@@ -62,7 +65,8 @@ function DownloadCard({ id, name }: { id: string; name: string }) {
                     PDF（日本語）<span aria-hidden="true">↓</span>
                 </a>
                 <a
-                    href={pattern.assets.grid}
+                    href={grid.href}
+                    hrefLang={grid.language}
                     download={`${id}-grid.png`}
                     className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
                     aria-label={`${name}のマス目付き画像をダウンロード（PNG）`}

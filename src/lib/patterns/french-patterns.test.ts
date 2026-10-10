@@ -16,7 +16,7 @@ import hama from './hama.json';
 import { getLibraryProject } from './project-links';
 import { getPatternById } from './catalog';
 import { getLocalizedPatternName, localizePatternNote } from './localized-content';
-import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from './localized-download';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf, getLocalizedPatternGrid } from './localized-download';
 import { patternLanguageAlternates } from '../i18n/metadata';
 import { topicMessages } from './section-messages';
 
@@ -46,7 +46,7 @@ function frenchChristmasPage() {
         if (id === '@/lib/i18n/metadata') return { patternLanguageAlternates };
         if (id === '@/lib/patterns/section-messages') return { topicMessages };
         if (id === '@/lib/patterns/catalog') return { getPatternById };
-        if (id === '@/lib/patterns/localized-download') return { getLocalizedPatternPdf, getLocalizedPatternLetterPdf };
+        if (id === '@/lib/patterns/localized-download') return { getLocalizedPatternPdf, getLocalizedPatternLetterPdf, getLocalizedPatternGrid };
         if (id === '@/lib/patterns/localized-content') return { getLocalizedPatternName, localizePatternNote };
         if (id === '@/lib/patterns/french-christmas.json') return defaultModule(christmas);
         throw new Error(`Unexpected French Christmas page import: ${id}`);
@@ -161,6 +161,11 @@ describe('French original pattern downloads', () => {
             const pdf = getLocalizedPatternPdf(pattern, 'fr');
             expect(article).toContain(`href="${pdf.href}"`);
             expect(readFileSync(publicFile(pdf.href)).subarray(0, 5).toString()).toBe('%PDF-');
+            if ([...christmas.patterns.map(pattern => pattern.id), 'original-santa-hat'].includes(id)) {
+                const grid = getLocalizedPatternGrid(pattern, 'fr');
+                expect(article).toContain(`href="${grid.href}" hrefLang="fr"`);
+                expect(article).not.toContain(`href="${pattern.assets.grid}"`);
+            }
         }
         expect(html.indexOf('id="autre-modele"')).toBeLessThan(html.indexOf('id="autres-motifs"'));
         expect(html).toContain('id="santa-hat-title"');
