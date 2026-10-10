@@ -63,6 +63,7 @@ export default function GuidesPage() {
                             <p className="mt-4 max-w-[55ch] text-base leading-7 text-[#59685d]">
                                 {guide.description}
                             </p>
+                            {guide.slug === 'perler-bead-pegboards' && <span className="mt-3 block text-sm font-medium text-[#28614e]">Includes a pegboard calculator</span>}
                         </Link>
                     ))}
                 </div>

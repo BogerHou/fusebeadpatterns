@@ -6,6 +6,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import { getGuideBySlug, guidePages } from '../guide-data';
 import GuideHeader from '../GuideHeader';
 import GuideSections from '@/components/guides/GuideSections';
+import PegboardCalculator from '@/components/guides/PegboardCalculator';
 import { guideLanguageAlternates, isTranslatedGuideSlug } from '@/lib/guides/routes';
 
 type GuideRouteProps = {
@@ -88,6 +89,8 @@ export default async function GuidePage({ params }: GuideRouteProps) {
                     <p className="mt-6 max-w-[65ch] text-lg leading-8 text-[#59685d] sm:text-xl sm:leading-9">
                         {guide.intro}
                     </p>
+
+                    {slug === 'perler-bead-pegboards' && <PegboardCalculator />}
 
                     <GuideSections sections={guide.sections} id={slug === 'photo-to-perler-bead-pattern' ? 'conversion-examples' : undefined} />
 
