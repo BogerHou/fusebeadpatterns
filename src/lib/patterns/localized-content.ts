@@ -110,6 +110,26 @@ export function localizePatternNote(note: string, locale: PatternLocale): string
     throw new Error(`Untranslated ${locale} assembly note: ${note}`);
 }
 
+// Shared aliases preserve a visitor's search when they change the page language.
+// They do not rename indexed details, official palette names or existing downloads.
+const seriesSearchAliases: Record<string, readonly string[]> = {
+    pokemon: ['ポケモン'],
+    'super-mario': ['スーパーマリオ'],
+    kirby: ['星のカービィ'],
+    minecraft: ['マインクラフト', 'マイクラ'],
+    'stardew-valley': ['スターデューバレー'],
+};
+const subjectSearchAliases: Record<string, readonly string[]> = {
+    'sdv-void-chicken': ['Schattenhuhn', 'Poulet vide', 'Poulet du vide', 'Poule du vide', '闇ニワトリ'],
+    'smb-blooper': ['Bloups'],
+};
+
 export function getPatternSearchAliases(pattern: Pattern): string {
-    return `${getPatternDisplayName(pattern)} ${Object.values(namedPokemon[pattern.id] ?? {}).join(' ')} ${(subjects[pattern.title] ?? []).join(' ')}`;
+    return [
+        getPatternDisplayName(pattern),
+        ...Object.values(namedPokemon[pattern.id] ?? {}),
+        ...(subjects[pattern.title] ?? []),
+        ...(seriesSearchAliases[pattern.collectionId ?? ''] ?? []),
+        ...(subjectSearchAliases[pattern.id] ?? []),
+    ].join(' ');
 }
