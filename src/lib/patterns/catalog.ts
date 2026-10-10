@@ -9268,7 +9268,60 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-retro-diamond-coaster/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-10"
-    }
+    },
+  {
+    "id": "original-christmas-bauble-ornament",
+    "slug": "christmas-bauble-ornament",
+    "title": "Christmas Bauble Ornament",
+    "collectionId": null,
+    "version": "Original Christmas bauble ornament design v1",
+    "description": "Make an original Christmas bauble ornament with 362 Perler Midi beads in three colors and a planned 3 x 3 hanging opening. Download the printable grid or edit the pattern.",
+    "beads": 362,
+    "colorCount": 3,
+    "gridWidth": 29,
+    "gridHeight": 29,
+    "motifWidth": 21,
+    "motifHeight": 25,
+    "palette": [
+      {
+        "symbol": "R",
+        "ref": "80-19005",
+        "name": "Red",
+        "hex": "#b0353c",
+        "count": 249
+      },
+      {
+        "symbol": "W",
+        "ref": "80-19001",
+        "name": "White",
+        "hex": "#eaefee",
+        "count": 60
+      },
+      {
+        "symbol": "G",
+        "ref": "80-19057",
+        "name": "Cheddar",
+        "hex": "#fbb146",
+        "count": 53
+      }
+    ],
+    "notes": [
+      "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+      "Leave columns 14–16 and rows 5–7 empty for the planned hanging opening. Coordinates start at 1.",
+      "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+      "Physical assembly, ironing, cord fit and hanging strength have not been tested. Perler screen colors are approximate."
+    ],
+    "source": null,
+    "assets": {
+      "preview": "/patterns/original-christmas-bauble-ornament/preview.png",
+      "grid": "/patterns/original-christmas-bauble-ornament/grid.png",
+      "pixels": "/patterns/original-christmas-bauble-ornament/pixels.png",
+      "project": "/patterns/original-christmas-bauble-ornament/pattern.bead-pattern.json",
+      "pdf": "/patterns/original-christmas-bauble-ornament/pattern.pdf",
+      "pdfLetter": "/patterns/original-christmas-bauble-ornament/pattern-letter.pdf"
+    },
+    "updatedAt": "2026-10-10"
+  }
 ];
 
 export function getPatternBySlug(slug: string): Pattern | undefined {

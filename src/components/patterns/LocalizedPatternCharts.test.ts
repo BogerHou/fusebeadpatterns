@@ -19,6 +19,7 @@ import * as overview from '../../lib/patterns/library-overview';
 import german from '../../lib/patterns/german.json';
 import japanese from '../../lib/patterns/japanese.json';
 import CoasterInstructions from './CoasterInstructions';
+import OrnamentInstructions from './OrnamentInstructions';
 
 // Render the actual page components. Only unrelated navigation, card browsing,
 // and the Next image/link wrappers are replaced for the Node environment.
@@ -34,7 +35,7 @@ const modules: Record<string, unknown> = {
     '@/components/patterns/LocalizedPatternCatalog': patternCatalog, './LocalizedPatternCatalog': patternCatalog,
     '@/components/patterns/PatternQuickDownloads': quickDownloads, './PatternQuickDownloads': quickDownloads,
     '@/components/patterns/PatternLibraryHelp': empty, './PatternShare': empty,
-    './PatternCards': { PatternGrid: (): null => null }, './CoasterInstructions': defaultModule(CoasterInstructions),
+    './PatternCards': { PatternGrid: (): null => null }, './CoasterInstructions': defaultModule(CoasterInstructions), './OrnamentInstructions': defaultModule(OrnamentInstructions),
     '@/lib/patterns/catalog': catalog, '@/lib/patterns/localized-content': content, '@/lib/patterns/localized-download': downloads,
     '@/lib/patterns/localized-ui': ui, '@/lib/patterns/localized-sources': sources, '@/lib/patterns/fan-art': fanArt,
     '@/lib/patterns/topics': topics, '@/lib/patterns/section-routes': sectionRoutes, '@/lib/patterns/section-messages': sectionMessages,
@@ -55,7 +56,7 @@ const JapaneseLibrary = load('./JapanesePatternLibrary.tsx').default as Componen
 
 describe('native pattern chart journeys', () => {
     it.each(['de', 'fr', 'ja'] as const)('%s details show and download the same native chart while retaining PDF, preview and project links', locale => {
-        for (const id of ['pokemon-pikachu-gen5', 'original-soccer-ball', 'original-retro-diamond-coaster']) {
+        for (const id of ['pokemon-pikachu-gen5', 'original-soccer-ball', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament']) {
             const pattern = catalog.getPatternById(id)!;
             const grid = downloads.getLocalizedPatternGrid(pattern, locale);
             const html = renderToStaticMarkup(createElement(Detail, { pattern, locale }));
@@ -74,6 +75,12 @@ describe('native pattern chart journeys', () => {
             expect(html).toContain(`href="${pattern.assets.project}"`);
             expect(html).toContain(`href="${pattern.assets.pixels}"`);
             expect(html).toContain(`href="/${locale}/editor?pattern=${id}"`);
+            if (id === 'original-christmas-bauble-ornament') {
+                expect(html).toContain('id="ornament-finishing-heading"');
+                expect(html).toContain(`href="/${locale}/guides/how-to-iron-perler-beads"`);
+                expect(html).toContain(content.localizePatternNote(pattern.notes[1], locale));
+                expect(html).toContain(content.localizePatternNote(pattern.notes[3], locale));
+            }
         }
     });
 

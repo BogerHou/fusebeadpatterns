@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Bauble Chart Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Original bauble DE/FR/JA chart names, official materials, planned opening, attachment and digital-only limits",
+  "subsetSha256": "092ccdc4aae22ab2f6bbabff4ffb927e679cb9ca0d09fa700c1218019fbd9a2b",
+  "glyphsSha256": "ba3c22f0749f88bdd63053113c21bb8a166d2a533b578344c2735fb00cd97e70",
+  "charactersSha256": "1ac8174a70202ef9cd7b2253042fef84606d5a5c6c1ec98ad514f6c5b5ee9818",
+  "characterCount": 231,
+  "patternIds": [
+    "original-christmas-bauble-ornament"
+  ],
+  "chartCount": 3
+}

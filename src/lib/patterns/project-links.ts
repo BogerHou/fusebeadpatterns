@@ -561,6 +561,11 @@ const libraryProjects: LibraryProject[] = [
         "id": "original-retro-diamond-coaster",
         "title": "Retro Diamond Coaster",
         "projectUrl": "/patterns/original-retro-diamond-coaster/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-christmas-bauble-ornament",
+        "title": "Christmas Bauble Ornament",
+        "projectUrl": "/patterns/original-christmas-bauble-ornament/pattern.bead-pattern.json"
     }
 ];
 
