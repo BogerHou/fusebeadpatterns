@@ -5,6 +5,7 @@ import Breadcrumbs from '../layout/Breadcrumbs';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import GuideSections from './GuideSections';
+import PegboardCalculator from './PegboardCalculator';
 import { siteNavigation } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
 import { getGuideSummaries, getLocalizedGuide, guideUi, type GuideLocale } from '@/lib/guides/localized';
@@ -39,6 +40,7 @@ export function LocalizedGuideIndex({ locale }: { locale: GuideLocale }) {
                     <div className="eyebrow mb-4">{guide.eyebrow}</div>
                     <h2 className="font-display text-2xl font-semibold leading-tight tracking-[-0.035em] text-[#243e36] transition-colors group-hover:text-[#28614e] sm:text-3xl">{guide.title}</h2>
                     <p className="mt-4 max-w-[55ch] text-base leading-7 text-[#59685d]">{guide.description}</p>
+                    {guide.slug === 'perler-bead-pegboards' && <span className="mt-3 block text-sm font-medium text-[#28614e]">{{ de: 'Mit Steckplatten-Rechner', fr: 'Avec calculateur de plaques', ja: '必要なプレート枚数を計算できます' }[locale]}</span>}
                     {guide.language !== locale && <span className="mt-3 block text-sm text-muted">{siteNavigation[locale].english}</span>}
                 </Link>)}
             </div>
@@ -63,6 +65,7 @@ export function LocalizedGuidePage({ locale, slug }: { locale: GuideLocale; slug
                 <div className="eyebrow mb-5">{guide.eyebrow}</div>
                 <h1 className="page-heading">{guide.title}</h1>
                 <p className="mt-6 max-w-[65ch] text-lg leading-8 text-[#59685d] sm:text-xl sm:leading-9">{guide.intro}</p>
+                {slug === 'perler-bead-pegboards' && <PegboardCalculator locale={locale} />}
                 <GuideSections sections={guide.sections} locale={locale} id={slug === 'photo-to-perler-bead-pattern' ? 'conversion-examples' : undefined} />
                 <div className="mt-12 border-t border-[#d9ded5] pt-8 sm:mt-16 sm:pt-10">
                     <h2 className="section-heading">{copy.next}</h2>
