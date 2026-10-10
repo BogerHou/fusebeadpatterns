@@ -4,6 +4,7 @@ export const translatedGuideSlugs = [
     'photo-to-perler-bead-pattern',
     'perler-bead-pegboards', 'perler-to-hama-artkal', 'perler-vs-hama-vs-artkal',
     'mini-perler-beads', 'perler-bead-kits-and-storage', 'how-to-iron-perler-beads',
+    'how-to-make-perler-bead-keychains',
 ] as const;
 export type TranslatedGuideSlug = typeof translatedGuideSlugs[number];
 export function isTranslatedGuideSlug(slug: string): slug is TranslatedGuideSlug {

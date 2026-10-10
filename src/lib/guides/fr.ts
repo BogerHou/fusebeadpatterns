@@ -1,7 +1,9 @@
 import { photoGuideCopy } from './photo';
+import { keychainGuideCopy } from './keychains';
 import type { GuideTranslations } from './types';
 
 export const frenchGuides: GuideTranslations = {
+    'how-to-make-perler-bead-keychains': keychainGuideCopy.fr,
     'photo-to-perler-bead-pattern': photoGuideCopy.fr,
     'perler-bead-pegboards': {
         title: 'Choisir la taille des plaques pour perles à repasser',

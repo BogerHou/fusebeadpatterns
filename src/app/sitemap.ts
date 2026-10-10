@@ -13,6 +13,7 @@ import { germanHamaPath, germanHamaPatterns, germanHamaUpdatedAt } from '@/lib/p
 import { loomPatterns, loomPatternAssetPath } from '@/lib/bead-loom/patterns';
 
 const lastContentUpdate = new Date('2026-04-21T00:00:00.000Z');
+const translationBaseline = Date.parse('2026-10-09T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
@@ -78,7 +79,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         ...guideRouteGroups.flatMap(group => (['de', 'fr', 'ja'] as const).filter(locale => group[locale] !== '/ja/guides/photo-to-perler-bead-pattern').map(locale => ({
             url: `https://fusebeadpatterns.art${group[locale]}`,
-            lastModified: new Date('2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(Math.max(translationBaseline, Date.parse(guidePages.find(guide => group.en === `/guides/${guide.slug}`)?.updatedAt ?? '2026-10-09'))),
         }))),
         ...sitePageRouteGroups.flatMap(group => (['de', 'fr', 'ja'] as const).map(locale => ({
             url: `https://fusebeadpatterns.art${group[locale]}`,

@@ -1,7 +1,9 @@
 import { photoGuideCopy } from './photo';
+import { keychainGuideCopy } from './keychains';
 import type { GuideTranslations } from './types';
 
 export const japaneseGuides: GuideTranslations = {
+    'how-to-make-perler-bead-keychains': keychainGuideCopy.ja,
     'photo-to-perler-bead-pattern': photoGuideCopy.ja,
     'perler-bead-pegboards': {
         title: 'アイロンビーズのプレートサイズと印刷倍率',

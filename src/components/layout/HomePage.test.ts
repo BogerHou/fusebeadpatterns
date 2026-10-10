@@ -56,7 +56,7 @@ const faqSchema = (html: string) => [...html.matchAll(/<script type="application
     .flatMap(match => JSON.parse(match[1])).find(schema => schema['@type'] === 'FAQPage');
 
 describe('complete home experience in every site language', () => {
-    it.each(['en', 'de', 'fr', 'ja'] as const)('%s has every main module, four real designs and seven native guides', locale => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('%s has every main module, four real designs and eight native guides', locale => {
         const html = main(render(locale));
         const sections = [...html.matchAll(/<section\b([^>]*)>/g)].map(match => match[1]);
         const required = ['home-title', 'featured-patterns-title', 'generator', 'how-it-works', 'project-ideas', 'learn-heading', 'features-heading', 'faq-heading'];
@@ -81,7 +81,7 @@ describe('complete home experience in every site language', () => {
             expect(html).toContain(`src="${pattern.assets.preview}"`);
         }
         const summaries = locale === 'en' ? guideData.guidePages.map(guide => ({ ...guide, href: `/guides/${guide.slug}` })) : guides.getGuideSummaries(locale);
-        expect(summaries).toHaveLength(7);
+        expect(summaries).toHaveLength(8);
         for (const guide of summaries) {
             expect(html).toContain(`href="${guide.href}"`);
             expect(html).toContain(guide.title.replace(/&/g, '&amp;'));

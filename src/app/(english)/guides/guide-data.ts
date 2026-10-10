@@ -1,3 +1,5 @@
+import { keychainGuide } from '../../../lib/guides/keychains';
+
 export type GuideSection = {
     heading: string;
     body: string[];
@@ -660,6 +662,7 @@ export const guidePages: GuidePage[] = [
             { href: '/guides/perler-bead-pegboards', label: 'Check board size and printing' },
         ],
     },
+    keychainGuide,
 ];
 
 export function getGuideBySlug(slug: string): GuidePage | undefined {
