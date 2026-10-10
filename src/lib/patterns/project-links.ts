@@ -556,6 +556,11 @@ const libraryProjects: LibraryProject[] = [
         "id": "minecraft-creeper-face-v1",
         "title": "Creeper Face",
         "projectUrl": "/patterns/minecraft-creeper-face-v1/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-retro-diamond-coaster",
+        "title": "Retro Diamond Coaster",
+        "projectUrl": "/patterns/original-retro-diamond-coaster/pattern.bead-pattern.json"
     }
 ];
 

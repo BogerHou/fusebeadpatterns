@@ -20,8 +20,8 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(110);
-        expect(patterns.filter(pattern => pattern.id !== 'minecraft-creeper-face-v1')).toHaveLength(109);
+        expect(patterns).toHaveLength(111);
+        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster'].includes(pattern.id))).toHaveLength(109);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -83,6 +83,7 @@ describe('pattern library content integrity', () => {
                     'original-santa-hat': 'Original Santa hat design v1',
                     'original-christmas-stocking': 'Original Christmas stocking design v1',
                     'original-snowflake': 'Original six-branch snowflake design v1',
+                    'original-retro-diamond-coaster': 'Original retro diamond coaster design v1',
                 };
                 expect(originalVersions[pattern.id]).toBeDefined();
                 expect(pattern.version).toBe(originalVersions[pattern.id]);
@@ -129,6 +130,11 @@ describe('pattern library content integrity', () => {
             id: 'original-gingerbread-man', slug: 'gingerbread-man', motif: [23, 25], beads: 327,
             rgbaSha256: '65b0551ed86c1af5b24c26fa4219c0d08ff8e9d8f3eb2c7cbc30fd191c3da92b',
             colors: [['80-15250', 'Gingerbread', '#7e5446', 264], ['80-19001', 'White', '#eaefee', 51], ['80-19005', 'Red', '#b0353c', 12]],
+        },
+        {
+            id: 'original-retro-diamond-coaster', slug: 'retro-diamond-coaster', motif: [23, 23], beads: 517,
+            rgbaSha256: '3548cce963d03b9ca9d23ba3bc0f8415dc4e611edb9285c91eb814f28c75b8be',
+            colors: [['80-19057', 'Cheddar', '#fbb146', 217], ['80-15201', 'Midnight', '#2f3c55', 216], ['80-19001', 'White', '#eaefee', 84]],
         },
     ])('$id keeps its reviewed native grid and Perler material list', async ({ id, slug, motif, beads, rgbaSha256, colors }) => {
         const pattern = getPatternById(id)!;

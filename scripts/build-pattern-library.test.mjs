@@ -29,7 +29,13 @@ import { fanArtAddition, fanArtDescription, fanArtSource, fanArtPublishedCatalog
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const current = parsePublishedCatalog(await readFile(path.join(root, 'src/lib/patterns/catalog.ts'), 'utf8'));
-const fanArtPublished = fanArtPublishedCatalogBaseline(current);
+// These are historical Santa/winter/Creeper promotion tests. The independently
+// authored coaster uses its own generator and must not refresh any legacy lock.
+const historicalCatalog = {
+    collections: current.collections,
+    patterns: current.patterns.filter(pattern => pattern.id !== 'original-retro-diamond-coaster'),
+};
+const fanArtPublished = fanArtPublishedCatalogBaseline(historicalCatalog);
 const winterPublished = winterPublishedCatalogBaseline(fanArtPublished);
 const published = publishedCatalogBaseline(winterPublished);
 const selectedId = 'original-santa-hat';
@@ -44,6 +50,13 @@ const winterPatterns = winterIds.map((id, index) => ({
     assets: Object.fromEntries(Object.entries(winterPublished.patterns.at(-1).assets).map(([key, value]) => [key, value.replace(selectedId, id)])),
 }));
 const reconstructedWinter = () => [...structuredClone(winterPublished.patterns), ...structuredClone(winterPatterns)];
+
+test('the independent coaster addition preserves the complete published 110 catalog', () => {
+    assert.equal(current.patterns.length - historicalCatalog.patterns.length, 1);
+    assert.equal(historicalCatalog.patterns.length, 110);
+    assert.equal(createHash('sha256').update(JSON.stringify(historicalCatalog)).digest('hex'),
+        '70163c19034985395498762a6ff1beadefdfc2056b03f89e625e2a0e526fd9a7');
+});
 
 test('requires explicit selection and a separate staging output before reading packs', async () => {
     await assert.rejects(main([]), /Explicit --promote-id/);

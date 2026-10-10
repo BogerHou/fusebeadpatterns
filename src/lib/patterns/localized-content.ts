@@ -57,6 +57,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Santa Hat': ['Weihnachtsmütze', 'Bonnet de Noël', 'サンタの帽子'],
     'Christmas Stocking': ['Weihnachtsstrumpf', 'Chaussette de Noël', 'クリスマスの靴下'],
     Snowflake: ['Schneeflocke', 'Flocon de neige', '雪の結晶'],
+    'Retro Diamond Coaster': ['Retro-Untersetzer mit Rautenmuster', 'Dessous de verre rétro à losanges', 'レトロなひし形コースター'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -82,6 +83,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-retro-diamond-coaster') {
+        return locale === 'de'
+            ? `${name}: ein Originalmotiv für einen Untersetzer mit Korkrückseite, aus ${beads} Perler-Midi-Perlen in ${colorCount} Farben. Das ${w} × ${h} Perlen große Motiv passt auf eine ${gw} × ${gh}-Steckplatte. Lade die Vorlage herunter und beachte die Anleitung zum Abmessen und Hinterlegen mit Kork.`
+            : locale === 'fr'
+            ? `${name} : un motif original de ${beads} perles Perler Midi en ${colorCount} couleurs, à compléter par un dessous en liège. Le motif de ${w} × ${h} perles tient sur une plaque de ${gw} × ${gh} cases. Téléchargez le modèle et suivez les conseils de mesure et de collage du liège.`
+            : `${name}のオリジナル図案です。${colorCount}色のPerlerミディビーズを${beads}個使い、${gw}×${gh}マスのプレート上に横${w}×縦${h}マスの図柄を作ります。裏面にコルクを貼るための採寸と仕上げの説明も確認してください。`;
+    }
     return locale === 'de'
         ? `${name}: ${beads} Perlen in ${colorCount} Perler-Farben. Das Motiv misst ${w} × ${h} Perlen auf einem ${gw} × ${gh}-Raster. Lade die Vorlage herunter oder bearbeite die Farben im deutschen Editor.`
         : locale === 'fr'
@@ -122,6 +130,7 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
 const subjectSearchAliases: Record<string, readonly string[]> = {
     'sdv-void-chicken': ['Schattenhuhn', 'Poulet vide', 'Poulet du vide', 'Poule du vide', '闇ニワトリ'],
     'smb-blooper': ['Bloups'],
+    'original-retro-diamond-coaster': ['Perler bead coaster patterns', 'fuse bead coaster', 'Bügelperlen Untersetzer Vorlagen', 'sous-verre', 'modèles dessous de verre', 'アイロンビーズ コースター 図案'],
 };
 
 export function getPatternSearchAliases(pattern: Pattern): string {
