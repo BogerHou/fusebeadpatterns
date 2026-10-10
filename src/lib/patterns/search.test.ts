@@ -61,6 +61,15 @@ describe('real catalog discovery across page languages', () => {
         expectEveryLanguage(query, ids(expected));
     });
 
+    it.each([
+        'perler bead ornament patterns',
+        'Bügelperlen Weihnachtskugel Vorlage',
+        'modèle perles à repasser boule de Noël',
+        'アイロンビーズ クリスマス オーナメント 図案',
+    ])('finds the bauble ornament for the complete native query %s in every language', query => {
+        expectEveryLanguage(query, ['original-christmas-bauble-ornament']);
+    });
+
     it.each(['ピカチュウ', 'ぴかちゅう', 'ﾋﾟｶﾁｭｳ', 'ヒ\u309aカチュウ', 'ひ\u309aかちゅう', 'Pikachu', 'Ｐｉｋａｃｈｕ'])('finds the same Pikachu for %s', query => {
         expectEveryLanguage(query, ['pokemon-pikachu-gen5']);
     });
@@ -112,9 +121,13 @@ describe('real catalog discovery across page languages', () => {
         expectEveryLanguage('ﾀﾞｲﾔﾓﾝﾄ', []);
         expectEveryLanguage('ゲンカ', []);
         expectEveryLanguage('ビカチュウ', []);
-        // The original coaster's native subject includes ひし形, an actual unvoiced match.
-        expectEveryLanguage('ヒ', ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5', 'original-retro-diamond-coaster']);
-        expectEveryLanguage('ﾋ', ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5', 'original-retro-diamond-coaster']);
+        // The coaster subject contains ひし形 in every language's aliases. The
+        // ornament's Japanese description also contains the real word ひも.
+        for (const locale of SITE_LOCALES) {
+            const expected = ['pokemon-charmander-gen5', 'pokemon-cyndaquil-gen5', 'pokemon-chimchar-gen5', 'original-retro-diamond-coaster'];
+            if (locale === 'ja') expected.push('original-christmas-bauble-ornament');
+            for (const query of ['ヒ', 'ﾋ']) expect(matches(locale, query)).toEqual(expected.sort());
+        }
         expect(normalizePatternSearch('ピ')).not.toBe(normalizePatternSearch('ヒ'));
         expect(normalizePatternSearch('ピ')).not.toBe(normalizePatternSearch('ビ'));
         expect(normalizePatternSearch('ガ')).not.toBe(normalizePatternSearch('カ'));

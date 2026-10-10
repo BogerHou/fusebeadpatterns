@@ -293,14 +293,21 @@ async function buffers(job, font) {
 
 async function main() {
     const options = args(process.argv.slice(2)), data = modules();
-    assert.equal(data.patterns.length, 111, 'This reviewed batch covers exactly 111 current patterns');
-    const jobs = data.patterns.flatMap(pattern => {
+    const reviewedIds = JSON.parse(fs.readFileSync(path.join(repo, 'scripts/localized-pattern-charts-2026-10-10-111-ids.json'), 'utf8'));
+    assert.equal(reviewedIds.length, 111, 'The historical chart batch must retain its 111 reviewed IDs');
+    assert.equal(new Set(reviewedIds).size, 111, 'Duplicate historical chart ID');
+    const reviewedPatterns = reviewedIds.map(id => {
+        const matches = data.patterns.filter(pattern => pattern.id === id);
+        assert.equal(matches.length, 1, `Missing or duplicate historical chart ID: ${id}`);
+        return matches[0];
+    });
+    const jobs = reviewedPatterns.flatMap(pattern => {
         const old = legacy(pattern);
         return LOCALES.map(locale => ({ pattern, old, locale, labels: labels(pattern, locale, data) }));
     });
     const chars = characters(jobs);
     if (options['--font-characters']) { console.log(json({ characters: chars, count: chars.length, sha256: sha(chars) })); return; }
-    const font = fontFor(chars, options, data.patterns.length), output = options['--output'];
+    const font = fontFor(chars, options, reviewedPatterns.length), output = options['--output'];
     if (!options['--check-only']) assert.ok(!fs.existsSync(output), 'Refusing to overwrite an existing chart candidate directory');
     const manifest = Object.fromEntries(LOCALES.map(locale => [locale, {}])), checks = [];
     if (!options['--check-only']) fs.mkdirSync(output, { recursive: true });
@@ -327,7 +334,7 @@ async function main() {
             labels: job.labels, wrappedLines: result.native.lines, footerNoGlyphOverflow: true, allPixelsOpaque: true, losslessRgbPixelsIdentical: true, oldGridPixelsIdentical: true, oldSvgDrawingIdentical: true });
     }
     const manifestPath = path.join(output, 'localized-grid-assets.json');
-    const report = { patternCount: data.patterns.length, localeCount: LOCALES.length, charts: checks.length, resourceFiles: checks.length * 2, font: font.lock, checks };
+    const report = { patternCount: reviewedPatterns.length, localeCount: LOCALES.length, charts: checks.length, resourceFiles: checks.length * 2, font: font.lock, checks };
     if (options['--check-only']) {
         assert.deepEqual(JSON.parse(fs.readFileSync(manifestPath, 'utf8')), manifest);
         assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output, 'chart-checks.json'), 'utf8')), report);
@@ -340,4 +347,6 @@ async function main() {
         sizes: [...new Set(checks.map(check => `${check.width}x${check.height}`))].sort(), allOldGridPixelsIdentical: true, allOldSvgDrawingIdentical: true }));
 }
 
-await main();
+export { modules as loadChartModules, legacy as readLegacyChart, labels as getChartLabels, characters as chartCharacters, fontFor as readLegacyChartFont, buffers as renderNativeChart };
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

@@ -183,6 +183,16 @@ Existing hand edits remain in the converted grid, but pixel undo history starts 
 
 ## Physical assembly notes
 
+### Original Christmas bauble ornament
+
+`original-christmas-bauble-ornament` uses the private `artifacts/pattern-samples/2026-10-10/original-bauble-v1` source pack and the independent source, PDF and native-chart maintenance scripts documented in `scripts/README-original-bauble-sourcepack.md`, `scripts/README-original-bauble-pdfs.md` and `scripts/README-bauble-localized-charts.md`. It appends one pattern and editor project without changing the 111 earlier catalog objects or their downloads. The historical native-chart batch stays frozen to its original 111 IDs; new labels use separate purpose fonts.
+
+The 29 × 29 Midi canvas holds a 21 × 25 motif with 362 beads: Red 249, White 60 and Cheddar 53. Symbol-row SHA-256 is `380693bd584782c09b556bebc370ebb2b4bd0b8d6e0401125290e107118f0247`; native RGBA SHA-256 is `f5490475146d52acef508c9660bcc1beaf829ba78aa3573088e9f71168ab2773`. Leave the nine cells at one-based columns 14–16 and rows 5–7 empty; the digital opening has a two-cell frame. White symbol cells are occupied white beads. The nominal 105 × 125 mm motif footprint is not a measured finished size.
+
+Publish five source assets, eight separately reviewed A4 / US Letter PDFs and three reviewed native-language PNGs only to the new pattern paths, with byte comparisons. The English counting chart is 788 × 908; German and French charts are 788 × 1420, and Japanese is 788 × 1308. Preserve the old 333 chart-manifest entries when appending the new three. PNGs are counting references, not actual-size printing templates; the PDFs include independent 50 mm rulers and a 5 mm nominal grid pitch.
+
+Four language details include adult fusing, complete cooling, checking joins, threading a thin cord or ribbon naturally through the cooled opening and tying the ends. The threading method references Perler's [Easter Egg Ornaments](https://perler.com/blogs/projects/easter-egg-ornaments); the artwork is original. Physical assembly, ironing, actual opening size, cord fit and hanging strength have not been verified. One design does not warrant a new ornament collection URL.
+
 ### Original retro diamond coaster
 
 `original-retro-diamond-coaster` uses the independent source pack `artifacts/pattern-samples/2026-10-10/original-coaster-v1`, generated with `scripts/generate-original-coaster-sourcepack.mjs`; see `scripts/README-original-coaster-sourcepack.md`. It appends one catalog object and one editor project ID without changing the 110 earlier objects. The older library builder retains its frozen promotion gates; do not relax its locks or regenerate old assets to accept this addition.

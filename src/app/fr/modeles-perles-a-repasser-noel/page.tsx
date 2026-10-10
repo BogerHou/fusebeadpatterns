@@ -20,13 +20,13 @@ const selected = selection.patterns.map((local) => {
     if (!pattern) throw new Error(`French Christmas pattern is missing: ${local.id}`);
     return { ...pattern, ...local };
 });
-const additionalPatterns = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake'].map(id => {
+const additionalPatterns = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'original-christmas-bauble-ornament'].map(id => {
     const pattern = getPatternById(id);
     if (!pattern) throw new Error(`Additional French Christmas pattern is missing: ${id}`);
     return pattern;
 });
 const allPatterns = [...selected, ...additionalPatterns.map(pattern => ({ ...pattern, name: getLocalizedPatternName(pattern, 'fr') }))];
-const collectionDescription = 'Trois modèles principaux : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Trois autres motifs complètent la sélection : un bonnet de Noël, une chaussette de Noël et un flocon de neige. Six modèles gratuits avec PDF en français, grilles PNG et éditeur en français.';
+const collectionDescription = 'Trois modèles principaux : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Quatre autres motifs complètent la sélection : un bonnet de Noël, une chaussette de Noël, un flocon de neige et une boule de Noël à suspendre. Sept modèles gratuits avec PDF en français, grilles PNG et éditeur en français.';
 
 export const metadata: Metadata = {
     title, description,
@@ -76,7 +76,7 @@ export default function FrenchChristmasPatternsPage() {
                 </nav>
                 <h1 className="page-heading leading-snug">Modèles de Noël en perles à repasser</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
-                    Trois modèles principaux : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Trois autres motifs complètent la sélection : un bonnet de Noël, une chaussette de Noël et un flocon de neige. Les six modèles ont un PDF en français, une grille PNG et un accès à l’éditeur en français, sans inscription.
+                    Trois modèles principaux : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Quatre autres motifs complètent la sélection : un bonnet de Noël, une chaussette de Noël, un flocon de neige et une boule de Noël à suspendre. Les sept modèles ont un PDF en français, une grille PNG et un accès à l’éditeur en français, sans inscription.
                 </p>
                 <p className="mt-3 max-w-3xl leading-8 text-muted">Pour d’autres thèmes, parcourez la <Link href="/fr/patterns" hrefLang="fr" className="text-link">bibliothèque complète de modèles</Link>. Les liens « Détails » présentent les couleurs et les téléchargements ; « Modifier » ouvre le modèle dans l’éditeur en français.</p>
                 <PatternSectionNav locale="fr" current="christmas" />
@@ -141,7 +141,7 @@ export default function FrenchChristmasPatternsPage() {
                     </article>
                 </section>
                 <section id="autres-motifs" aria-labelledby="winter-patterns-heading" className="mt-12 max-w-3xl border-t border-line pt-8">
-                    <h2 id="winter-patterns-heading" className="section-heading mb-6">Deux autres motifs pour Noël</h2>
+                    <h2 id="winter-patterns-heading" className="section-heading mb-6">Trois autres motifs pour Noël</h2>
                     <div className="space-y-8">
                         {winterPatterns.map(pattern => {
                             const name = getLocalizedPatternName(pattern, 'fr');
@@ -184,7 +184,7 @@ export default function FrenchChristmasPatternsPage() {
                     <div className="mt-5 divide-y divide-line border-y border-line">
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Les modèles sont-ils gratuits ?</summary>
-                            <p className="mt-2 pb-2 leading-8 text-muted">Oui. Les six modèles ont un PDF en français et une grille PNG disponibles gratuitement, sans créer de compte. Les trois modèles principaux sont proposés en A4 ; le bonnet, la chaussette et le flocon proposent aussi un PDF US Letter.</p>
+                            <p className="mt-2 pb-2 leading-8 text-muted">Oui. Les sept modèles ont un PDF en français et une grille PNG disponibles gratuitement, sans créer de compte. Les trois modèles principaux sont proposés en A4 ; le bonnet, la chaussette, le flocon et la boule proposent aussi un PDF US Letter.</p>
                         </details>
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Puis-je utiliser des perles Hama ?</summary>

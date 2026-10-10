@@ -1,6 +1,6 @@
 # 本语图格 PNG：德语、法语、日语
 
-`build-localized-pattern-charts.mjs` 为当前111张图纸生成333张本语图格，全部输出到显式指定的任务 staging 目录，不写 `public`、`src`、PDF、旧字体或原始源包。英文 URL、旧图格与旧下载保持。挂饰候选不属于这批。
+`build-localized-pattern-charts.mjs` 为2026-10-10已发布的111张图纸生成333张本语图格，全部输出到显式指定的任务 staging 目录，不写 `public`、`src`、PDF、旧字体或原始源包。英文 URL、旧图格与旧下载保持。历史批次的ID及顺序独立冻结在 `localized-pattern-charts-2026-10-10-111-ids.json`；catalog新增图纸后仍只重建这111张，每个冻结ID必须唯一存在，不能用一个通用排除列表扩大旧批范围。挂饰不属于这批，使用单独的 `build-bauble-localized-charts.mjs` 和目的字体。
 
 本批的100张旧 SVG 是586 × 586，而对应 PNG 是1172 × 1172，必须保留2倍栅格密度；另10张 SVG/PNG 是788 × 908，足球是908 × 990。100张纯图格的完整旧PNG像素直接保留；11张带英文尾注的图格仅裁去尾注区域，绘图区像素直接保留。新本语 footer 单独矢量栅格化后在下方拼接。逐张断言全部RGBA像素的alpha为255后，以去除冗余alpha、压缩等级9及关闭adaptive filtering的RGB PNG无损编码，再回读ensureAlpha验证整张RGBA与拼接缓冲完全一致。旧 SVG 绘图、格线、坐标和符号分组逐字节保留，只替换末尾说明分组。不会通过整图重新栅格化改变旧符号的抗锯齿。
 
@@ -26,3 +26,5 @@ node scripts/build-localized-pattern-charts.mjs --build-font --python "$CHART_TA
 新字体仅写 `scripts/fonts/native-chart-labels`，族名为 **Fuse Bead Native Chart Labels**。Google Fonts Noto Sans JP 的不可变revision、上游字体/许可SHA沿用已有经过核验的上游记录；下载字节在内存中处理并校验，SIL OFL原文保留，衍生族名独立。`source.json` 记录字体、轮廓和字符库存SHA；`glyphs.json` 记录 advance、bbox 与路径。`--build-font`拒绝覆盖已有目录。后续内容或字符扩展应建立新的、单独命名的目的版本并重新审阅，不能删除或覆盖任何旧字体来强制重建；也不能删掉原39份字体文件。
 
 `chart-checks.json` 是数字结构、字形边界和绘图区保护证据，不能代替根代理对长标题、13色材料表、足球、杯垫及Creeper的实际PNG目检，也不代表实体制作或打印效果已验证。根代理验收并保留必要记录后，任务 staging 中的SVG、中间环境及重复图像可回收；维护脚本、冻结字体和正式PNG保留供复现。
+
+脚本可被其他离线维护入口导入，复用同一套文字排版和绘图区RGBA拼接函数；导入不执行CLI、不写任何文件。旧111批的标签、字体校验及渲染逻辑保持。新增图纸应使用独立源图校验、独立字体库存及独立 staging，不能刷新旧批文字库存或改旧333张PNG来接受新图纸。

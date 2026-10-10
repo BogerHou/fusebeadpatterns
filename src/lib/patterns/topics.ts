@@ -117,7 +117,7 @@ export const patternTopics: readonly PatternTopic[] = [
             'original-snowman',
             'original-gingerbread-man',
         ],
-        additionalPatternIds: ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake'],
+        additionalPatternIds: ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'original-christmas-bauble-ornament'],
         selectionHeading: 'Making your Christmas pattern',
         selectionNotes: [
             'The downloads use Perler Midi colors and a single 29 × 29 board. The gingerbread man uses three colors; the tree and snowman use four. Check the individual color list before gathering beads.',

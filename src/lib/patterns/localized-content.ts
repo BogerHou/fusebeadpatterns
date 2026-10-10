@@ -57,6 +57,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Santa Hat': ['Weihnachtsmütze', 'Bonnet de Noël', 'サンタの帽子'],
     'Christmas Stocking': ['Weihnachtsstrumpf', 'Chaussette de Noël', 'クリスマスの靴下'],
     Snowflake: ['Schneeflocke', 'Flocon de neige', '雪の結晶'],
+    'Christmas Bauble Ornament': ['Weihnachtskugel mit Aufhängeöffnung', 'Boule de Noël à suspendre', '吊り下げ穴付きクリスマスオーナメント'],
     'Retro Diamond Coaster': ['Retro-Untersetzer mit Rautenmuster', 'Dessous de verre rétro à losanges', 'レトロなひし形コースター'],
 };
 
@@ -83,6 +84,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-christmas-bauble-ornament') {
+        return locale === 'de'
+            ? `${name}: eine originale Bügelperlen-Weihnachtskugel-Vorlage mit ${beads} Perler-Midi-Perlen in ${colorCount} Farben. Das flache ${w} × ${h}-Motiv passt auf eine ${gw} × ${gh}-Steckplatte. Lade die Vorlage herunter und lies die Anleitung für ein Band durch die vorgesehene Öffnung.`
+            : locale === 'fr'
+            ? `${name} : un modèle original de perles à repasser en forme de boule de Noël, avec ${beads} perles Perler Midi en ${colorCount} couleurs. Le motif plat de ${w} × ${h} perles tient sur une plaque de ${gw} × ${gh} cases. Téléchargez le modèle et consultez les conseils pour passer un ruban dans l’ouverture prévue.`
+            : `${name}のアイロンビーズ図案です。${colorCount}色のPerlerミディビーズを${beads}個使う、平面のクリスマスオーナメントです。${gw}×${gh}マスのプレート上に横${w}×縦${h}マスの図柄を作ります。図案を保存し、空けておいた穴にひもやリボンを通す説明も確認してください。`;
+    }
     if (pattern.id === 'original-retro-diamond-coaster') {
         return locale === 'de'
             ? `${name}: ein Originalmotiv für einen Untersetzer mit Korkrückseite, aus ${beads} Perler-Midi-Perlen in ${colorCount} Farben. Das ${w} × ${h} Perlen große Motiv passt auf eine ${gw} × ${gh}-Steckplatte. Lade die Vorlage herunter und beachte die Anleitung zum Abmessen und Hinterlegen mit Kork.`
@@ -98,6 +106,8 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'Leave columns 14–16 and rows 5–7 empty for the planned hanging opening. Coordinates start at 1.': ['Lass die Spalten 14–16 und Zeilen 5–7 für die vorgesehene Aufhängeöffnung frei. Die Koordinaten beginnen bei 1.', 'Laissez vides les colonnes 14–16 et les lignes 5–7 pour l’ouverture de suspension prévue. Les coordonnées commencent à 1.', '吊り下げ用の開口部として14–16列・5–7行を空けておきます。列と行は1から数えます。'],
+    'Physical assembly, ironing, cord fit and hanging strength have not been tested. Perler screen colors are approximate.': ['Die praktische Herstellung, das Bügeln, die Passung der Schnur und die Festigkeit beim Aufhängen wurden nicht getestet. Die Perler-Farben am Bildschirm sind Näherungen.', 'La réalisation, le repassage, le passage de la ficelle et la résistance en suspension n’ont pas été testés. Les couleurs Perler à l’écran sont approximatives.', '実物の制作・アイロン仕上げ・ひもの適合・吊り下げ強度は検証していません。画面上のPerlerの色は目安です。'],
     'Fine one-bead snowflake branches need gentle handling. Consider mounting the finished piece on a backing.': ['Die feinen Zweige der Schneeflocke sind nur eine Perle breit. Behandle sie vorsichtig und erwäge, das fertige Motiv auf einer Trägerplatte zu befestigen.', 'Les branches fines du flocon font une perle de large. Manipulez-les avec soin et envisagez de fixer la pièce terminée sur un support.', '雪の結晶の枝はビーズ一個幅の細い部分があります。慎重に扱い、完成後は台紙などに固定することも検討してください。'],
     'Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.': ['Verwende eine Midi-Steckplatte mit 29 × 29 Feldern. Leere Felder bleiben ohne Perle.', 'Utilisez une plaque Midi de 29 × 29 cases. Les cases vides restent sans perle.', '29×29マスのミディ用プレートを1枚使います。空白のマスにはビーズを置きません。'],
     'Print the PDF at 100% / Actual size and check its 50 mm scale line before use.': ['Drucke das PDF mit 100 % / tatsächlicher Größe und prüfe vor der Nutzung die 50-mm-Messlinie.', 'Imprimez le PDF à 100 % / taille réelle et vérifiez le repère de 50 mm avant utilisation.', 'PDFを100％・実際のサイズで印刷し、使用前に50 mmの目盛りを確認してください。'],
@@ -128,6 +138,7 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
     'stardew-valley': ['スターデューバレー'],
 };
 const subjectSearchAliases: Record<string, readonly string[]> = {
+    'original-christmas-bauble-ornament': ['perler bead ornament patterns', 'Bügelperlen Weihnachtskugel Vorlage', 'modèle perles à repasser boule de Noël', 'アイロンビーズ クリスマス オーナメント 図案'],
     'sdv-void-chicken': ['Schattenhuhn', 'Poulet vide', 'Poulet du vide', 'Poule du vide', '闇ニワトリ'],
     'smb-blooper': ['Bloups'],
     'original-retro-diamond-coaster': ['Perler bead coaster patterns', 'fuse bead coaster', 'Bügelperlen Untersetzer Vorlagen', 'sous-verre', 'modèles dessous de verre', 'アイロンビーズ コースター 図案'],

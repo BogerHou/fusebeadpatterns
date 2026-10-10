@@ -59,7 +59,7 @@ describe('localized collection and topic continuity', () => {
     it('keeps the old French Christmas URL as the sole canonical language destination', () => {
         const topic = patternTopics.find(topic => topic.slug === 'christmas')!;
         expect(frenchChristmas.patterns.map(pattern => pattern.id)).toEqual([...topic.patternIds]);
-        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat', 'original-christmas-stocking', 'original-snowflake']);
+        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'original-christmas-bauble-ornament']);
         expect(getPatternSectionHref('christmas', 'fr')).toBe('/fr/modeles-perles-a-repasser-noel');
         expect(patternLanguageAlternates('christmas').fr).toBe('https://fusebeadpatterns.art/fr/modeles-perles-a-repasser-noel');
         for (const locale of ['en', ...locales] as const) {

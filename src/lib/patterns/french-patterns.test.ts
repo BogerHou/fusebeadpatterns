@@ -127,7 +127,7 @@ describe('French original pattern downloads', () => {
         }
     });
 
-    it('presents all six Christmas downloads while retaining the indexed identity of the three primary patterns', () => {
+    it('presents all seven Christmas downloads while retaining the indexed identity of the three primary patterns', () => {
         const page = frenchChristmasPage();
         const html = renderToStaticMarkup(createElement(page.default));
         const canonical = '/fr/modeles-perles-a-repasser-noel';
@@ -136,18 +136,18 @@ describe('French original pattern downloads', () => {
         expect(page.metadata.alternates).toEqual({ canonical, languages: patternLanguageAlternates('christmas') });
         const schema = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]);
         const cardIds = [...html.matchAll(/data-pattern-card="([^"]+)"/g)].map(match => match[1]);
-        expect(cardIds).toEqual([...christmas.patterns.map(pattern => pattern.id), 'original-santa-hat', 'original-christmas-stocking', 'original-snowflake']);
-        expect(schema.mainEntity.numberOfItems).toBe(6);
+        expect(cardIds).toEqual([...christmas.patterns.map(pattern => pattern.id), 'original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'original-christmas-bauble-ornament']);
+        expect(schema.mainEntity.numberOfItems).toBe(7);
         expect(schema.mainEntity.itemListElement).toEqual(cardIds.map((id, index) => ({
             '@type': 'ListItem', position: index + 1,
             name: christmas.patterns.find(pattern => pattern.id === id)?.name ?? getLocalizedPatternName(getPatternById(id)!, 'fr'),
             url: `https://fusebeadpatterns.art${canonical}#${id}`,
         })));
         expect(schema.description).toContain('Trois modèles principaux');
-        expect(schema.description).toContain('Trois autres motifs');
-        expect(schema.description).toContain('Six modèles gratuits');
+        expect(schema.description).toContain('Quatre autres motifs');
+        expect(schema.description).toContain('Sept modèles gratuits');
         expect(html).toContain('Les trois modèles principaux à imprimer');
-        expect(html).toContain('Les six modèles ont un PDF en français');
+        expect(html).toContain('Les sept modèles ont un PDF en français');
         expect(html).not.toContain('Les trois PDFs');
         expect(html).toContain('href="/fr/patterns" hrefLang="fr"');
         expect(html).toContain('bibliothèque complète de modèles');
@@ -170,7 +170,7 @@ describe('French original pattern downloads', () => {
         expect(html.indexOf('id="autre-modele"')).toBeLessThan(html.indexOf('id="autres-motifs"'));
         expect(html).toContain('id="santa-hat-title"');
         expect(html).toContain('Bonnet de Noël');
-        for (const id of ['original-christmas-stocking', 'original-snowflake']) {
+        for (const id of ['original-christmas-stocking', 'original-snowflake', 'original-christmas-bauble-ornament']) {
             const pattern = getPatternById(id)!;
             const article = html.match(new RegExp(`<article[^>]*id="${id}"[\\s\\S]*?<\\/article>`))![0];
             expect(article).toContain(getLocalizedPatternName(pattern, 'fr'));

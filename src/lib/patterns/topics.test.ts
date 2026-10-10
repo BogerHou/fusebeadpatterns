@@ -56,14 +56,16 @@ describe('curated pattern topics', () => {
         const topic = getPatternTopicBySlug('christmas')!;
         expect(topic.patternIds).toEqual(['original-christmas-tree', 'original-snowman', 'original-gingerbread-man']);
         expect(topic.title).toBe('Christmas Perler Bead Patterns');
-        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat', 'original-christmas-stocking', 'original-snowflake']);
+        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'original-christmas-bauble-ornament']);
         for (const pattern of [...getPatternsForTopic(topic), ...getAdditionalPatternsForTopic(topic)]) {
             expect(pattern.source).toBeNull();
             expect(pattern.collectionId).toBeNull();
             expect(pattern.version).toMatch(/^Original .+ design v1$/);
             expect([pattern.gridWidth, pattern.gridHeight]).toEqual([29, 29]);
             expect(pattern.colorCount).toBeLessThanOrEqual(4);
-            expect(pattern.notes.join(' ')).toContain('not been physically assembled or iron-tested');
+            if (pattern.id === 'original-christmas-bauble-ornament') {
+                expect(pattern.notes.join(' ')).toContain('Physical assembly, ironing, cord fit and hanging strength have not been tested');
+            } else expect(pattern.notes.join(' ')).toContain('not been physically assembled or iron-tested');
             const draft = parseEditorProject(await readFile(path.join(process.cwd(), 'public', pattern.assets.project), 'utf8'))!;
             expect(draft.selectedPaletteIds).toEqual(['perler']);
             expect([draft.boardId, draft.boardWidth, draft.boardHeight]).toEqual(['midi', 1, 1]);

@@ -554,6 +554,11 @@
       "href": "/patterns-de/original-retro-diamond-coaster/grid.png",
       "width": 788,
       "height": 1324
+    },
+    "original-christmas-bauble-ornament": {
+      "href": "/patterns-de/original-christmas-bauble-ornament/grid.png",
+      "width": 788,
+      "height": 1420
     }
   },
   "fr": {
@@ -1111,6 +1116,11 @@
       "href": "/patterns-fr/original-retro-diamond-coaster/grid.png",
       "width": 788,
       "height": 1324
+    },
+    "original-christmas-bauble-ornament": {
+      "href": "/patterns-fr/original-christmas-bauble-ornament/grid.png",
+      "width": 788,
+      "height": 1420
     }
   },
   "ja": {
@@ -1668,6 +1678,11 @@
       "href": "/patterns-ja/original-retro-diamond-coaster/grid.png",
       "width": 788,
       "height": 1279
+    },
+    "original-christmas-bauble-ornament": {
+      "href": "/patterns-ja/original-christmas-bauble-ornament/grid.png",
+      "width": 788,
+      "height": 1308
     }
   }
 }

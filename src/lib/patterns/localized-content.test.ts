@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { existsSync } from 'node:fs';
+import { describe, expect, it, vi } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
 import { patterns } from './catalog';
 import { getLibraryProject } from './project-links';
 import slugs from './route-slugs.json';
 import { getLocalizedPatternName, getLocalizedSubjectName, getLocalizedPatternIntro, localizePatternNote } from './localized-content';
 import { getLocalizedPatternPdf } from './localized-download';
 import { getLocaleDestination } from '../i18n/routes';
+import { loadLibraryEditorProject } from '../editor/library-project';
+import { decodeEditorPatternDraft, parseEditorProject } from '../editor/draft';
 
 const locales = ['de', 'fr', 'ja'] as const;
 describe('full localized pattern coverage', () => {
@@ -33,7 +35,7 @@ describe('full localized pattern coverage', () => {
                 const localized = localizePatternNote(note, locale);
                 expect(localized).not.toBe(note);
                 // Every safety-related row/column and separate-part count survives translation.
-                if (note.startsWith('Thin one-bead')) {
+                if (note.startsWith('Thin one-bead') || note.startsWith('Leave columns')) {
                     expect(localized.match(/\d+/g)).toEqual(note.match(/\d+/g));
                 }
                 if (note.startsWith('This design has') || note.startsWith('The body and feet')) {
@@ -50,7 +52,27 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 111, fr: 111, ja: 111 });
+        expect(counts).toEqual({ de: 112, fr: 112, ja: 112 });
+    });
+    it('keeps the ornament identity, project and opening across native editor journeys', async () => {
+        const pattern = patterns.find(pattern => pattern.id === 'original-christmas-bauble-ornament')!;
+        expect(pattern).toBeDefined();
+        const contents = readFileSync(`public${pattern.assets.project}`, 'utf8');
+        const source = parseEditorProject(contents)!;
+        const sourcePixels = decodeEditorPatternDraft(source.editedPattern)!;
+        const names = { de: 'Weihnachtskugel mit Aufhängeöffnung', fr: 'Boule de Noël à suspendre', ja: '吊り下げ穴付きクリスマスオーナメント' };
+        const opening = { de: 'Öffnung', fr: 'ouverture', ja: '穴' };
+        for (const locale of locales) {
+            expect(getLocalizedPatternName(pattern, locale)).toBe(names[locale]);
+            expect(getLocalizedPatternIntro(pattern, locale)).toContain(opening[locale]);
+            expect(getLibraryProject(pattern.id, locale)).toMatchObject({ title: names[locale], projectUrl: pattern.assets.project });
+            const fetchProject = vi.fn<typeof fetch>().mockResolvedValue(new Response(contents));
+            const restored = await loadLibraryEditorProject(pattern.id, new AbortController().signal, fetchProject);
+            expect(fetchProject).toHaveBeenCalledWith(pattern.assets.project, expect.objectContaining({ credentials: 'omit', redirect: 'error' }));
+            expect(restored.selectedPaletteIds).toEqual(['perler']);
+            expect([restored.boardId, restored.boardWidth, restored.boardHeight]).toEqual(['midi', 1, 1]);
+            expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(sourcePixels);
+        }
     });
     it('keeps the coaster subject and project across all native editor journeys', () => {
         const pattern = patterns.find(pattern => pattern.id === 'original-retro-diamond-coaster')!;
