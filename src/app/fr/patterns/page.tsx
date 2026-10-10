@@ -5,6 +5,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import LocalizedPatternCatalog from '@/components/patterns/LocalizedPatternCatalog';
 import { patternLanguageAlternates } from '@/lib/i18n/metadata';
+import PatternLibraryHelp from '@/components/patterns/PatternLibraryHelp';
 import { patternLibraryCount } from '@/lib/patterns/library-overview';
 
 const title = 'Modèles de perles à repasser gratuits | Fuse Bead Patterns';
@@ -22,6 +23,7 @@ export default function Page() {
             <h1 className="page-heading">Modèles de perles à repasser gratuits</h1>
             <p className="mt-4 max-w-3xl leading-7 text-muted">Choisissez parmi {patternLibraryCount} modèles gratuits. Recherchez un personnage ou filtrez par thème. Chaque image mène au PDF en français, aux couleurs et au même motif dans l’éditeur en français.</p>
             <LocalizedPatternCatalog locale="fr" />
+            <PatternLibraryHelp locale="fr" />
             <p className="mt-10 max-w-3xl border-t border-line pt-6 text-sm leading-7 text-muted">Vous souhaitez des fichiers déjà préparés pour deux marques ? Retrouvez <Link href="/fr/modeles-perles-a-repasser" className="text-link">six modèles originaux à télécharger en Perler et Hama</Link>, ou les <Link href="/fr/modeles-perles-a-repasser-noel" className="text-link">modèles de Noël</Link>.</p>
         </main>
         <SiteFooter locale="fr" active="patterns" />

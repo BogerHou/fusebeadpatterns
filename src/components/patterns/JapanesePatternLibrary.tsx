@@ -7,6 +7,7 @@ import { getPatternById, type Pattern } from '@/lib/patterns/catalog';
 import japanesePatterns from '@/lib/patterns/japanese.json';
 import { patternLibraryCount } from '@/lib/patterns/library-overview';
 import PatternQuickDownloads from './PatternQuickDownloads';
+import PatternLibraryHelp from '@/components/patterns/PatternLibraryHelp';
 
 export const japanesePatternLibraryTitle = '無料のアイロンビーズ図案｜印刷用PDF・画像 | Fuse Bead Patterns';
 export const japanesePatternLibraryDescription = 'ポケモンやスーパーマリオのアイロンビーズ図案を無料でダウンロード。印刷用PDFとマス目付き画像を、登録なしで保存できます。日本語の印刷ガイド付き。';
@@ -112,12 +113,6 @@ export default function JapanesePatternLibrary() {
                     {patternLibraryCount}点の無料図案から選べます。キャラクター名で検索するか、テーマで絞り込んでください。画像を選ぶと、日本語PDF・色表・日本語エディターを開けます。登録は不要です。
                 </p>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-                    すべての図案の詳細ページで、日本語の説明・材料表付きPDFを保存できます。ポケモンとマリオの{quickDownloadCount}点は、下の「PDFのクイックダウンロード」から直接保存することもできます。
-                </p>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-                    配色やマスを変えたい場合は「日本語で編集」からエディターを開きます。別の図案に切り替える前に、残したい編集をプロジェクトとして保存してください。編集後のPDFや画像はエディターの「書き出し」から保存できます。このページのダウンロードファイルはPerler Midiの元の配色です。
-                </p>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
                     自分の画像からは、<Link href="/ja" className="text-link">日本語の図案作成ツール</Link>で作れます。画像の読み込みから保存までの手順は<Link href="/ja/guides/photo-to-perler-bead-pattern" className="text-link">日本語の作り方ガイド</Link>をご覧ください。
                 </p>
 
@@ -140,19 +135,7 @@ export default function JapanesePatternLibrary() {
                 </div>
                 </PatternQuickDownloads>
 
-                <section id="printing" aria-labelledby="printing-heading" className="mt-14 border-t border-line pt-8">
-                    <h2 id="printing-heading" className="text-2xl font-semibold leading-relaxed">図案の使い方・印刷ガイド</h2>
-                    <p className="mt-3"><a href="#patterns" className="text-link">日本語PDF付きの図案へ</a></p>
-                    <ol className="mt-5 max-w-3xl list-decimal space-y-3 pl-6 leading-8 text-muted">
-                        <li>好きな図案の「PDF（日本語）」を押して保存します。画面で見ながら作る場合は、マス目付き画像も使えます。</li>
-                        <li>PDFはA4用紙で、印刷倍率を100％または「実際のサイズ」に設定します。「用紙に合わせる」は選ばないでください。</li>
-                        <li>印刷後、PDFの50mmの目盛りを定規で確認します。図案は29×29マス、1マスの間隔は5mmのミディサイズ用です。実際のプレートの間隔も確認してください。</li>
-                        <li>空白のマスにはビーズを置きません。記号と色表を見ながら並べ、細い接続部分は慎重に扱ってください。</li>
-                    </ol>
-                    <p className="mt-5 max-w-3xl text-sm leading-7 text-muted">
-                        配色はPerler Midiをもとにしています。画面の色と実物のビーズの色は異なる場合があります。これらの図案は実物制作・アイロン仕上げを検証していません。ミニビーズ用の原寸図案ではありません。
-                    </p>
-                </section>
+                <PatternLibraryHelp locale="ja" quickDownloadHref="#patterns" />
 
                 <section aria-labelledby="faq-heading" className="mt-12 max-w-3xl">
                     <h2 id="faq-heading" className="text-2xl font-semibold leading-relaxed">よくある質問</h2>

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { getPatternById } from '@/lib/patterns/catalog';
 import germanPatterns from '@/lib/patterns/german.json';
 import PatternQuickDownloads from '@/components/patterns/PatternQuickDownloads';
+import PatternLibraryHelp from '@/components/patterns/PatternLibraryHelp';
 import { localizedLibraryMetadata, patternLibraryCount } from '@/lib/patterns/library-overview';
 
 const { title, description } = localizedLibraryMetadata.de;
@@ -88,19 +89,7 @@ export default function GermanPatternsPage() {
                     </div>
                 </section>
                 </PatternQuickDownloads>
-                <section id="drucken" aria-labelledby="print-heading" className="mt-14 border-t border-line pt-8">
-                    <h2 id="print-heading" className="text-2xl font-semibold leading-relaxed">So druckst du deine Vorlage</h2>
-                    <p className="mt-3"><a href="#vorlagen" className="text-link">Auswahl mit deutschen PDFs öffnen</a></p>
-                    <ol className="mt-5 max-w-3xl list-decimal space-y-3 pl-6 leading-8 text-muted">
-                        <li>Speichere das deutsche PDF. Für die Ansicht am Bildschirm eignet sich auch das PNG mit Raster.</li>
-                        <li>Wähle A4 und 100 % oder „Tatsächliche Größe“. Schalte „An Seite anpassen“ aus.</li>
-                        <li>Miss die 50-mm-Kontrolllinie auf dem Ausdruck. Das Raster hat 29 × 29 Felder mit 5 mm Abstand. Prüfe zusätzlich, ob es zu deiner Steckplatte passt.</li>
-                        <li>Leere Felder bleiben frei. Symbole und Farbliste zeigen dir, welche Perle auf welches Feld gehört. Hinweise zu schmalen Verbindungen stehen im PDF.</li>
-                    </ol>
-                    <p className="mt-5 max-w-3xl text-sm leading-7 text-muted">
-                        Die Farblisten verwenden Perler Midi mit den ursprünglichen Farbnummern und englischen Farbnamen. Bildschirm- und Druckfarben können von echten Perlen abweichen. Die Motive wurden nicht mit echten Perlen gesteckt und gebügelt. Für Mini-Perlen sind die PDFs keine Vorlagen in Originalgröße.
-                    </p>
-                </section>
+                <PatternLibraryHelp locale="de" quickDownloadHref="#vorlagen" />
                 <section aria-labelledby="questions-heading" className="mt-12 max-w-3xl">
                     <h2 id="questions-heading" className="text-2xl font-semibold leading-relaxed">Häufige Fragen</h2>
                     <div className="mt-5 divide-y divide-line border-y border-line">

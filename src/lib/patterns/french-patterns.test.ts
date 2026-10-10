@@ -127,7 +127,7 @@ describe('French original pattern downloads', () => {
         }
     });
 
-    it('renders both winter additions on the real French Christmas page while retaining its original three-item identity', () => {
+    it('presents all six Christmas downloads while retaining the indexed identity of the three primary patterns', () => {
         const page = frenchChristmasPage();
         const html = renderToStaticMarkup(createElement(page.default));
         const canonical = '/fr/modeles-perles-a-repasser-noel';
@@ -135,9 +135,33 @@ describe('French original pattern downloads', () => {
         expect(page.metadata.description).toBe('Sapin, bonhomme de neige et pain d’épices : 3 modèles de Noël en perles à repasser. PDF A4 en français, grilles PNG et couleurs Perler, sans compte.');
         expect(page.metadata.alternates).toEqual({ canonical, languages: patternLanguageAlternates('christmas') });
         const schema = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]);
-        expect(schema.mainEntity.numberOfItems).toBe(3);
-        expect(schema.mainEntity.itemListElement.map((item: { url: string }) => item.url)).toEqual(christmas.patterns.map(pattern => `https://fusebeadpatterns.art${canonical}#${pattern.id}`));
-        expect(html.match(/data-pattern-card="([^"]+)"/g)).toHaveLength(6);
+        const cardIds = [...html.matchAll(/data-pattern-card="([^"]+)"/g)].map(match => match[1]);
+        expect(cardIds).toEqual([...christmas.patterns.map(pattern => pattern.id), 'original-santa-hat', 'original-christmas-stocking', 'original-snowflake']);
+        expect(schema.mainEntity.numberOfItems).toBe(6);
+        expect(schema.mainEntity.itemListElement).toEqual(cardIds.map((id, index) => ({
+            '@type': 'ListItem', position: index + 1,
+            name: christmas.patterns.find(pattern => pattern.id === id)?.name ?? getLocalizedPatternName(getPatternById(id)!, 'fr'),
+            url: `https://fusebeadpatterns.art${canonical}#${id}`,
+        })));
+        expect(schema.description).toContain('Trois modèles principaux');
+        expect(schema.description).toContain('Trois autres motifs');
+        expect(schema.description).toContain('Six modèles gratuits');
+        expect(html).toContain('Les trois modèles principaux à imprimer');
+        expect(html).toContain('Les six modèles ont un PDF en français');
+        expect(html).not.toContain('Les trois PDFs');
+        expect(html).toContain('href="/fr/patterns" hrefLang="fr"');
+        expect(html).toContain('bibliothèque complète de modèles');
+        expect(html).toContain('id="imprimer"');
+        expect(html).toContain('A4, ou US Letter lorsque cette version est proposée');
+        for (const id of cardIds) {
+            const pattern = getPatternById(id)!;
+            const article = html.match(new RegExp(`<article[^>]*id="${id}"[\\s\\S]*?<\\/article>`))![0];
+            expect(article).toContain(`href="/fr/patterns/${pattern.slug}"`);
+            expect(article).toContain(`href="/fr/editor?pattern=${id}"`);
+            const pdf = getLocalizedPatternPdf(pattern, 'fr');
+            expect(article).toContain(`href="${pdf.href}"`);
+            expect(readFileSync(publicFile(pdf.href)).subarray(0, 5).toString()).toBe('%PDF-');
+        }
         expect(html.indexOf('id="autre-modele"')).toBeLessThan(html.indexOf('id="autres-motifs"'));
         expect(html).toContain('id="santa-hat-title"');
         expect(html).toContain('Bonnet de Noël');

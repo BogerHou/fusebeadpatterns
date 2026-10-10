@@ -27,6 +27,73 @@ describe('site language routes', () => {
         expect(getLocaleDestination('/fr/modeles-perles-a-repasser-noel', 'ja')).toEqual({ href: '/ja/patterns/christmas', isFallback: false });
     });
 
+    it('switches to the equivalent printing section and back across all four languages', () => {
+        const pageGroups = [
+            {
+                en: ['/patterns', 'printing'], de: ['/de/patterns', 'drucken'],
+                fr: ['/fr/patterns', 'printing'], ja: ['/ja/patterns', 'printing'],
+            },
+            {
+                en: ['/patterns/christmas', 'printing'], de: ['/de/patterns/christmas', 'printing'],
+                fr: ['/fr/modeles-perles-a-repasser-noel', 'imprimer'], ja: ['/ja/patterns/christmas', 'printing'],
+            },
+        ] as const;
+        const search = '?theme=christmas&query=green%20tree';
+        for (const pages of pageGroups) {
+            for (const source of SITE_LOCALES) {
+                for (const target of SITE_LOCALES) {
+                    const [sourcePath, sourceFragment] = pages[source];
+                    const [targetPath, targetFragment] = pages[target];
+                    expect(getLocaleDestination(sourcePath, target, { search, hash: `#${sourceFragment}` }))
+                        .toEqual({ href: `${targetPath}${search}#${targetFragment}`, isFallback: false });
+                    expect(getLocaleDestination(targetPath, source, { search, hash: targetFragment }))
+                        .toEqual({ href: `${sourcePath}${search}#${sourceFragment}`, isFallback: false });
+                }
+            }
+        }
+    });
+
+    it('maps encoded known fragments without rewriting same-language bookmarks', () => {
+        expect(getLocaleDestination('/de/patterns/', 'ja', { search: 'query=a%26b', hash: '#%64rucken' }))
+            .toEqual({ href: '/ja/patterns?query=a%26b#printing', isFallback: false });
+        expect(getLocaleDestination('/de/patterns', 'de', { hash: '#%64rucken' }))
+            .toEqual({ href: '/de/patterns#%64rucken', isFallback: false });
+        expect(getLocaleDestination('/fr/modeles-perles-a-repasser-noel', 'de', { hash: '%69mprimer' }))
+            .toEqual({ href: '/de/patterns/christmas#printing', isFallback: false });
+    });
+
+    it('retains unknown and malformed fragments instead of guessing an equivalent section', () => {
+        for (const hash of ['#all-patterns', '#preview', '#drucken-extra', '#%E0%A4%A', '#%', '#%23drucken', '##drucken']) {
+            expect(getLocaleDestination('/de/patterns', 'ja', { search: '?theme=minecraft', hash }))
+                .toEqual({ href: `/ja/patterns?theme=minecraft${hash}`, isFallback: false });
+        }
+        // These IDs belong to a different page or language; they are not a
+        // printing section on the current page.
+        expect(getLocaleDestination('/de/patterns/christmas', 'fr', { hash: '#drucken' }))
+            .toEqual({ href: '/fr/modeles-perles-a-repasser-noel#drucken', isFallback: false });
+        expect(getLocaleDestination('/patterns', 'de', { hash: '#imprimer' }))
+            .toEqual({ href: '/de/patterns#imprimer', isFallback: false });
+        expect(getLocaleDestination('/de/patterns', 'ja'))
+            .toEqual({ href: '/ja/patterns', isFallback: false });
+    });
+
+    it('does not reinterpret printing-like fragments on tools, details or fallback pages', () => {
+        const equivalentPaths = [
+            ['/de/editor', '/ja/editor'],
+            ['/de/pixel-art-generator', '/ja/pixel-art-converter'],
+            ['/de/perlenwebmuster-generator', '/ja/bead-loom-pattern-maker'],
+            ['/de/patterns/minecraft/diamond-sword', '/ja/patterns/minecraft/diamond-sword'],
+        ];
+        for (const [source, target] of equivalentPaths) {
+            expect(getLocaleDestination(source, 'ja', { search: '?pattern=original-friendly-ghost-hama&view=colors', hash: '#drucken' }))
+                .toEqual({ href: `${target}?pattern=original-friendly-ghost-hama&view=colors#drucken`, isFallback: false });
+        }
+        expect(getLocaleDestination('/fr/modeles-perles-a-repasser', 'ja', { search: '?brand=hama', hash: '#imprimer' }))
+            .toEqual({ href: '/ja/patterns', isFallback: true, fallback: 'patterns' });
+        expect(getLocaleDestination('/de/untranslated', 'ja', { search: '?keep=1', hash: '#drucken' }))
+            .toEqual({ href: '/ja', isFallback: true });
+    });
+
     it('switches loom pattern libraries to the same design in each language', () => {
         for (const source of SITE_LOCALES) {
             for (const destination of SITE_LOCALES) {

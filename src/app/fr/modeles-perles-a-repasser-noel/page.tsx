@@ -20,6 +20,13 @@ const selected = selection.patterns.map((local) => {
     if (!pattern) throw new Error(`French Christmas pattern is missing: ${local.id}`);
     return { ...pattern, ...local };
 });
+const additionalPatterns = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake'].map(id => {
+    const pattern = getPatternById(id);
+    if (!pattern) throw new Error(`Additional French Christmas pattern is missing: ${id}`);
+    return pattern;
+});
+const allPatterns = [...selected, ...additionalPatterns.map(pattern => ({ ...pattern, name: getLocalizedPatternName(pattern, 'fr') }))];
+const collectionDescription = 'Trois modèles principaux : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Trois autres motifs complètent la sélection : un bonnet de Noël, une chaussette de Noël et un flocon de neige. Six modèles gratuits avec PDF en français, grilles PNG et éditeur en français.';
 
 export const metadata: Metadata = {
     title, description,
@@ -35,11 +42,11 @@ export const metadata: Metadata = {
 const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: title, description, inLanguage: 'fr',
+    name: title, description: collectionDescription, inLanguage: 'fr',
     url: `https://fusebeadpatterns.art${path}`,
     mainEntity: {
-        '@type': 'ItemList', numberOfItems: selected.length,
-        itemListElement: selected.map((pattern, index) => ({
+        '@type': 'ItemList', numberOfItems: allPatterns.length,
+        itemListElement: allPatterns.map((pattern, index) => ({
             '@type': 'ListItem', position: index + 1, name: pattern.name,
             url: `https://fusebeadpatterns.art${path}#${pattern.id}`,
         })),
@@ -47,16 +54,11 @@ const structuredData = {
 };
 
 export default function FrenchChristmasPatternsPage() {
-    const santaHat = getPatternById('original-santa-hat');
-    if (!santaHat) throw new Error('Additional French Christmas pattern is missing: original-santa-hat');
+    const santaHat = additionalPatterns[0];
     const santaHatPdf = getLocalizedPatternPdf(santaHat, 'fr');
     const santaHatLetterPdf = getLocalizedPatternLetterPdf(santaHat, 'fr');
     const santaHatTracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': santaHat.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'patterns', 'data-pattern-format': 'pdf' };
-    const winterPatterns = ['original-christmas-stocking', 'original-snowflake'].map(id => {
-        const pattern = getPatternById(id);
-        if (!pattern) throw new Error(`Additional French Christmas pattern is missing: ${id}`);
-        return pattern;
-    });
+    const winterPatterns = additionalPatterns.slice(1);
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
@@ -66,16 +68,19 @@ export default function FrenchChristmasPatternsPage() {
                     <ol className="flex flex-wrap items-center gap-x-2">
                         <li><Link href="/fr" className="inline-flex min-h-10 items-center hover:underline">Accueil</Link></li>
                         <li aria-hidden="true">/</li>
+                        <li><Link href="/fr/patterns" className="inline-flex min-h-10 items-center hover:underline">Bibliothèque de modèles</Link></li>
+                        <li aria-hidden="true">/</li>
                         <li aria-current="page">Modèles de Noël</li>
                     </ol>
                 </nav>
                 <h1 className="page-heading leading-snug">Modèles de Noël en perles à repasser</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
-                    Trois motifs gratuits à télécharger : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Chaque PDF A4 contient la grille, les symboles et la liste des couleurs Perler. Sans inscription.
+                    Trois modèles principaux : un sapin, un bonhomme de neige et un bonhomme en pain d’épices. Trois autres motifs complètent la sélection : un bonnet de Noël, une chaussette de Noël et un flocon de neige. Les six modèles ont un PDF en français, une grille PNG et un accès à l’éditeur en français, sans inscription.
                 </p>
+                <p className="mt-3 max-w-3xl leading-8 text-muted">Pour d’autres thèmes, parcourez la <Link href="/fr/patterns" hrefLang="fr" className="text-link">bibliothèque complète de modèles</Link>. Les liens « Détails » présentent les couleurs et les téléchargements ; « Modifier » ouvre le modèle dans l’éditeur en français.</p>
                 <PatternSectionNav locale="fr" current="christmas" />
                 <section id="modeles" aria-labelledby="models-heading" className="mt-9">
-                    <h2 id="models-heading" className="mb-6 text-xl font-semibold leading-relaxed sm:text-2xl">Choisir un modèle à imprimer</h2>
+                    <h2 id="models-heading" className="mb-6 text-xl font-semibold leading-relaxed sm:text-2xl">Les trois modèles principaux à imprimer</h2>
                     <div className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
                         {selected.map((pattern) => (
                             <article key={pattern.id} id={pattern.id} className="pattern-card scroll-mt-6" data-pattern-card={pattern.id} aria-labelledby={`${pattern.id}-title`}>
@@ -165,7 +170,7 @@ export default function FrenchChristmasPatternsPage() {
                     <h2 id="print-heading" className="text-2xl font-semibold leading-relaxed">Imprimer à la bonne taille</h2>
                     <ol className="mt-5 max-w-3xl list-decimal space-y-3 pl-6 leading-8 text-muted">
                         <li>Téléchargez le PDF du motif choisi. Le PNG sert à lire la grille à l’écran ; sa taille d’impression dépend du logiciel utilisé.</li>
-                        <li>Choisissez le papier A4 et une échelle de 100 % ou « Taille réelle ». Désactivez « Ajuster à la page ».</li>
+                        <li>Choisissez le format de papier indiqué sur le PDF : A4, ou US Letter lorsque cette version est proposée. Réglez l’échelle sur 100 % ou « Taille réelle » et désactivez « Ajuster à la page ».</li>
                         <li>Mesurez la ligne de contrôle de 50 mm sur le papier. La grille compte 29 × 29 cases espacées de 5 mm. Vérifiez aussi l’espacement sur votre propre plaque carrée.</li>
                         <li>Suivez les symboles et les quantités de la liste Perler. Les cases vides restent sans perle.</li>
                     </ol>
@@ -178,7 +183,7 @@ export default function FrenchChristmasPatternsPage() {
                     <div className="mt-5 divide-y divide-line border-y border-line">
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Les modèles sont-ils gratuits ?</summary>
-                            <p className="mt-2 pb-2 leading-8 text-muted">Oui. Les trois PDFs et les grilles PNG se téléchargent gratuitement, sans créer de compte.</p>
+                            <p className="mt-2 pb-2 leading-8 text-muted">Oui. Les six modèles ont un PDF en français et une grille PNG disponibles gratuitement, sans créer de compte. Les trois modèles principaux sont proposés en A4 ; le bonnet, la chaussette et le flocon proposent aussi un PDF US Letter.</p>
                         </details>
                         <details className="py-4">
                             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Puis-je utiliser des perles Hama ?</summary>

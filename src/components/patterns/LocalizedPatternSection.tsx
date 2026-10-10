@@ -11,6 +11,7 @@ import { sectionUi } from '@/lib/patterns/section-messages';
 import { PatternGrid } from './PatternCards';
 import { toLocalizedPatternCard } from './LocalizedPatternCatalog';
 import PatternSectionNav from './PatternSectionNav';
+import PatternLibraryHelp from './PatternLibraryHelp';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 export function localizedSectionMetadata(section: Section, locale: PatternLocale): Metadata {
@@ -53,6 +54,7 @@ export default function LocalizedPatternSection({ section, locale }: { section: 
                     {section.relatedLinks.map(link => <Link key={link.href} href={link.href} hrefLang={link.language} className="text-link">{link.label}</Link>)}
                 </nav>
             </section>
+            {section.slug === 'christmas' && locale !== 'fr' && <PatternLibraryHelp locale={locale} id="printing" />}
             <p className="mt-8"><Link href={`/${locale}/patterns`} className="text-link">{ui.all}</Link></p>
         </main>
         <SiteFooter locale={locale} active="patterns" />
