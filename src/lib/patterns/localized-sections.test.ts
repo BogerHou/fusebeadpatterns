@@ -2,13 +2,33 @@ import { describe, expect, it } from 'vitest';
 import { patternCollections, getPatternsForCollection } from './catalog';
 import { patternTopics, getPatternsForTopic, getAdditionalPatternsForTopic } from './topics';
 import { patternSectionSlugs, patternSectionRouteGroups, getPatternSectionHref } from './section-routes';
-import { getLocalizedPatternSection } from './localized-sections';
+import { getLocalizedPatternSection, localizedSectionMetadata } from './localized-sections';
 import { patternLanguageAlternates } from '../i18n/metadata';
 import { getLocaleDestination } from '../i18n/routes';
 import frenchChristmas from './french-christmas.json';
 
 const locales = ['de', 'fr', 'ja'] as const;
 describe('localized collection and topic continuity', () => {
+    it('keeps indexed Minecraft snippets while the visible section includes the new face', () => {
+        const indexed = {
+            de: '28 kostenlose Minecraft-Bügelperlen-Vorlagen. Raster, Farben und Druckdateien ansehen oder im deutschen Editor bearbeiten.',
+            fr: '28 modèles Minecraft gratuits en perles à repasser. Grilles, couleurs et fichiers à imprimer, avec un éditeur en français.',
+            ja: 'Minecraftの無料アイロンビーズ図案28点。マス目付き画像、色別の必要数、印刷用ファイルを確認し、日本語エディターで配色や形を編集できます。',
+        };
+        for (const locale of locales) {
+            const section = getLocalizedPatternSection('minecraft', locale)!;
+            expect(section.patterns).toHaveLength(29);
+            expect(section.patterns.at(-1)?.id).toBe('minecraft-creeper-face-v1');
+            expect(section.description).toContain('29');
+            expect(section.intro).toContain('29');
+            const metadata = localizedSectionMetadata(section, locale);
+            expect(metadata.description).toBe(indexed[locale]);
+            expect(metadata.openGraph).toMatchObject({ description: indexed[locale] });
+            expect(metadata.twitter).toMatchObject({ description: indexed[locale] });
+            const other = getLocalizedPatternSection('pokemon', locale)!;
+            expect(localizedSectionMetadata(other, locale).description).toBe(other.description);
+        }
+    });
     it('uses every existing section and the exact same ordered pattern membership', () => {
         expect([...patternSectionSlugs].sort()).toEqual([...patternCollections.map(item => item.slug), ...patternTopics.map(item => item.slug)].sort());
         for (const locale of locales) {

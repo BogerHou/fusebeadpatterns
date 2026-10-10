@@ -6,6 +6,7 @@ export type Pattern = {
     collectionId: string | null;
     version: string;
     description: string;
+    kind?: 'fan-art';
     beads: number;
     colorCount: number;
     gridWidth: number;
@@ -14,7 +15,7 @@ export type Pattern = {
     motifHeight: number;
     palette: Array<{ symbol: string; ref: string; name: string; hex: string; count: number }>;
     notes: string[];
-    source: null | { label: string; url: string; description: string };
+    source: null | { label: string; url: string; description: string; kind?: 'fan-art'; rightsHolder?: string; permission?: 'unconfirmed' };
     assets: { preview: string; grid: string; pixels: string; project: string; pdf: string; pdfLetter?: string };
     updatedAt: string;
 };
@@ -9155,6 +9156,66 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-snowflake/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-09"
+    },
+    {
+        "id": "minecraft-creeper-face-v1",
+        "slug": "minecraft/creeper-face",
+        "title": "Creeper Face",
+        "collectionId": "minecraft",
+        "version": "Hand-drawn Creeper face fan art v1",
+        "description": "Make a Creeper face with black features and two green shades using 256 Perler Midi beads. Download the printable fan-art chart or open the editable grid.",
+        "kind": "fan-art",
+        "beads": 256,
+        "colorCount": 3,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 16,
+        "motifHeight": 16,
+        "palette": [
+            {
+                "symbol": "G",
+                "ref": "80-19080",
+                "name": "Green",
+                "hex": "#4dab64",
+                "count": 136
+            },
+            {
+                "symbol": "K",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 80
+            },
+            {
+                "symbol": "H",
+                "ref": "80-19061",
+                "name": "Kiwi Lime",
+                "hex": "#69b845",
+                "count": 40
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": {
+            "label": "Minecraft: Meet the Creeper",
+            "url": "https://www.minecraft.net/en-us/article/meet-creeper",
+            "description": "Hand-authored Creeper face fan art with a simplified green-and-black bead palette. The official Minecraft article is a character identity reference, not a licensed source file. This unofficial pattern is by Fuse Bead Patterns and is not approved by or associated with Mojang or Microsoft. Character rights belong to Mojang/Microsoft; permission for public redistribution is unconfirmed.",
+            "kind": "fan-art",
+            "rightsHolder": "Mojang/Microsoft",
+            "permission": "unconfirmed"
+        },
+        "assets": {
+            "preview": "/patterns/minecraft-creeper-face-v1/preview.png",
+            "grid": "/patterns/minecraft-creeper-face-v1/grid.png",
+            "pixels": "/patterns/minecraft-creeper-face-v1/pixels.png",
+            "project": "/patterns/minecraft-creeper-face-v1/pattern.bead-pattern.json",
+            "pdf": "/patterns/minecraft-creeper-face-v1/pattern.pdf",
+            "pdfLetter": "/patterns/minecraft-creeper-face-v1/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-10"
     }
 ];
 

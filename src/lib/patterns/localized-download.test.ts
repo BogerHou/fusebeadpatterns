@@ -138,13 +138,14 @@ describe('complete native-language library downloads', () => {
                 }
             }
         }
-        expect(destinations.size).toBe(109);
+        expect(destinations.size).toBe(110);
     });
 
-    it('offers actual native US Letter PDFs only for the reviewed original additions', () => {
-        const reviewedIds = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake'];
+    it('offers actual native US Letter PDFs only for individually reviewed Santa, winter and Creeper additions', () => {
+        const reviewedIds = ['original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'minecraft-creeper-face-v1'];
         const reviewed = patterns.filter(pattern => reviewedIds.includes(pattern.id));
         expect(reviewed.map(pattern => pattern.id)).toEqual(reviewedIds);
+        expect(reviewed.find(pattern => pattern.id === 'minecraft-creeper-face-v1')?.kind).toBe('fan-art');
         for (const pattern of patterns.filter(pattern => !reviewedIds.includes(pattern.id))) {
             expect(pattern.assets.pdfLetter).toBeUndefined();
             for (const locale of locales) expect(getLocalizedPatternLetterPdf(pattern, locale)).toBeUndefined();
@@ -166,7 +167,7 @@ describe('complete native-language library downloads', () => {
         }
     });
 
-    it('uses the reviewed original project colors, symbols and actual pixel quantities for every downloadable motif', () => {
+    it('uses the reviewed Perler project colors, symbols and actual pixel quantities for every downloadable motif', () => {
         for (const pattern of patterns) {
             const draft = parseEditorProject(readFileSync(publicFile(pattern.assets.project), 'utf8'));
             expect(draft?.selectedPaletteIds).toEqual(['perler']);

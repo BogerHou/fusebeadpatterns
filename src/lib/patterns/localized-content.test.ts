@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { patterns } from './catalog';
 import { getLibraryProject } from './project-links';
 import slugs from './route-slugs.json';
-import { getLocalizedPatternName, getLocalizedPatternIntro, localizePatternNote } from './localized-content';
+import { getLocalizedPatternName, getLocalizedSubjectName, getLocalizedPatternIntro, localizePatternNote } from './localized-content';
 import { getLocalizedPatternPdf } from './localized-download';
 import { getLocaleDestination } from '../i18n/routes';
 
@@ -50,7 +50,7 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 109, fr: 109, ja: 109 });
+        expect(counts).toEqual({ de: 110, fr: 110, ja: 110 });
     });
     it('names the Santa Hat consistently across native details and editor imports', () => {
         const pattern = patterns.find(pattern => pattern.id === 'original-santa-hat')!;
@@ -88,5 +88,11 @@ describe('full localized pattern coverage', () => {
         expect(getLocalizedPatternName(gengar, 'fr')).toContain('Ectoplasma');
         expect(getLocalizedPatternName(gengar, 'ja')).toContain('ゲンガー');
         expect(getLocalizedPatternName(gengar, 'de')).toContain('Gengar');
+    });
+    it('names the actual Creeper face subject across the three localized journeys', () => {
+        const pattern = { id: 'minecraft-creeper-face-v1', title: 'Creeper Face' };
+        expect(getLocalizedSubjectName(pattern, 'de')).toBe('Creeper-Gesicht');
+        expect(getLocalizedSubjectName(pattern, 'fr')).toBe('Visage du Creeper');
+        expect(getLocalizedSubjectName(pattern, 'ja')).toBe('クリーパーの顔');
     });
 });

@@ -1,10 +1,8 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { getLocalizedPatternName, type PatternLocale } from '@/lib/patterns/localized-content';
-import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import { fewestColorsText, type LocalizedPatternSection as Section } from '@/lib/patterns/localized-sections';
 import { localizedPatternUi } from '@/lib/patterns/localized-ui';
 import { sectionUi } from '@/lib/patterns/section-messages';
@@ -14,16 +12,7 @@ import PatternSectionNav from './PatternSectionNav';
 import PatternLibraryHelp from './PatternLibraryHelp';
 
 const siteUrl = 'https://fusebeadpatterns.art';
-export function localizedSectionMetadata(section: Section, locale: PatternLocale): Metadata {
-    const title = `${section.title} | Fuse Bead Patterns`;
-    const image = section.patterns[0].assets.preview;
-    return {
-        title, description: section.description,
-        alternates: { canonical: section.href, languages: patternLanguageAlternates(section.slug) },
-        openGraph: { title, description: section.description, locale: { de: 'de_DE', fr: 'fr_FR', ja: 'ja_JP' }[locale], type: 'website', url: `${siteUrl}${section.href}`, images: [{ url: image, width: 580, height: 580, alt: section.title }] },
-        twitter: { card: 'summary_large_image', title, description: section.description, images: [image] },
-    };
-}
+export { localizedSectionMetadata } from '@/lib/patterns/localized-sections';
 
 export default function LocalizedPatternSection({ section, locale }: { section: Section; locale: PatternLocale }) {
     const ui = sectionUi[locale];

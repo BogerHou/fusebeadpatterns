@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
+import { fanArtAddition, fanArtDescription, fanArtSource, reviewedFanArtRowsHash, fanArtPublishedCatalogBaseline, assembleFanArtPromotion, validateFanArtEditorial, validateFanArtPerlerProject, assertFanArtPackPdfReady } from './lib/fan-art-pattern.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const promotedId = 'original-santa-hat';
@@ -22,6 +23,7 @@ const publishedCatalogCount = 106;
 const publishedCatalogHash = '50e6158feef88d3280a786f8dbb51569542e635bb47d3073c55649d422bdb68b';
 const defaultInputs = ['artifacts/pattern-samples/2026-09-22/library-v2', 'artifacts/pattern-samples/2026-09-22/expansion-v3', 'artifacts/pattern-samples/2026-09-22/expansion-v4', 'artifacts/pattern-samples/2026-09-22/expansion-v5', 'artifacts/pattern-samples/2026-09-22/expansion-v6-pokemon', 'artifacts/pattern-samples/2026-09-22/expansion-v7-minecraft', 'artifacts/pattern-samples/2026-09-22/expansion-v8-classics', 'artifacts/pattern-samples/2026-10-08/soccer-ball', 'artifacts/pattern-samples/2026-10-08/original-seasonal-v1', 'artifacts/pattern-samples/2026-10-08/original-halloween-bat-v1', 'artifacts/pattern-samples/2026-10-08/original-christmas-v1', 'artifacts/pattern-samples/2026-10-09/original-santa-hat-v1'];
 const winterInputs = [...defaultInputs, 'artifacts/pattern-samples/2026-10-09/original-winter-v1'];
+const fanArtInputs = [...winterInputs, 'artifacts/pattern-samples/2026-10-10/creeper-face-fan-art-v1'];
 const winterAdditions = {
     'original-christmas-stocking': { slug: 'christmas-stocking', title: 'Christmas Stocking', kind: 'original', version: 'Original Christmas stocking design v1' },
     'original-snowflake': { slug: 'snowflake', title: 'Snowflake', kind: 'original', version: 'Original six-branch snowflake design v1' },
@@ -55,11 +57,13 @@ export function parsePromotionOptions(args, projectRoot = root) {
         } else if (argument.startsWith('--')) throw new Error(`Unknown option: ${argument}`);
         else options.inputs.push(path.resolve(projectRoot, argument));
     }
-    if (!options.ids.length || options.ids.some(id => id !== promotedId && !Object.hasOwn(winterAdditions, id))) {
-        throw new Error(`Explicit --promote-id ${promotedId}, original-christmas-stocking or original-snowflake is required; published IDs cannot be regenerated.`);
+    if (!options.ids.length || options.ids.some(id => id !== promotedId && id !== fanArtAddition.id && !Object.hasOwn(winterAdditions, id))) {
+        throw new Error(`Explicit --promote-id ${promotedId}, original-christmas-stocking, original-snowflake or ${fanArtAddition.id} is required; published IDs cannot be regenerated.`);
     }
+    options.fanArt = options.ids.includes(fanArtAddition.id);
+    if (options.fanArt && options.ids.length !== 1) throw new Error('Creeper fan-art, Santa Hat and winter promotion modes cannot be mixed.');
     if (options.ids.includes(promotedId) && options.ids.length !== 1) throw new Error('Santa Hat and winter promotion modes cannot be mixed.');
-    options.winter = options.ids[0] !== promotedId;
+    options.winter = !options.fanArt && options.ids[0] !== promotedId;
     if (options.winter) options.ids.sort((a, b) => Object.keys(winterAdditions).indexOf(a) - Object.keys(winterAdditions).indexOf(b));
     options.id = options.ids.length === 1 ? options.ids[0] : undefined;
     if (!options.checkOnly && !options.outputRoot) throw new Error('Writing requires --output-root pointing to a new staging directory.');
@@ -67,7 +71,7 @@ export function parsePromotionOptions(args, projectRoot = root) {
         options.outputRoot = path.resolve(projectRoot, options.outputRoot);
         if (options.outputRoot === path.resolve(projectRoot)) throw new Error('Output must use a new staging directory, not the project root.');
     }
-    if (!options.inputs.length) options.inputs = (options.winter ? winterInputs : defaultInputs).map(directory => path.resolve(projectRoot, directory));
+    if (!options.inputs.length) options.inputs = (options.fanArt ? fanArtInputs : options.winter ? winterInputs : defaultInputs).map(directory => path.resolve(projectRoot, directory));
     return options;
 }
 
@@ -268,13 +272,14 @@ export function selectedPdfPages(source, selection = promotedId) {
     const ids = Array.isArray(selection) ? selection : [selection];
     return source.patterns.map(({ id, title, beads }, index) => ({ id, title, beads, index }))
         .filter(entry => ids.includes(entry.id))
-        .map(entry => Object.hasOwn(winterAdditions, entry.id) ? { ...entry, detailUrl: `https://fusebeadpatterns.art/patterns/${winterAdditions[entry.id].slug}` } : entry);
+        .map(entry => entry.id === fanArtAddition.id ? { ...entry, detailUrl: `https://fusebeadpatterns.art/patterns/${fanArtAddition.slug}` }
+            : Object.hasOwn(winterAdditions, entry.id) ? { ...entry, detailUrl: `https://fusebeadpatterns.art/patterns/${winterAdditions[entry.id].slug}` } : entry);
 }
 
 export function selectedPromotionEntries(entries, ids) {
     if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length
-        || ids.some(id => id !== promotedId && !Object.hasOwn(winterAdditions, id))
-        || (ids.includes(promotedId) && ids.length !== 1)) {
+        || ids.some(id => id !== promotedId && id !== fanArtAddition.id && !Object.hasOwn(winterAdditions, id))
+        || ((ids.includes(promotedId) || ids.includes(fanArtAddition.id)) && ids.length !== 1)) {
         throw new Error('Only explicitly reviewed additions can have their resources staged.');
     }
     const selected = entries.filter(({ pattern }) => ids.includes(pattern.id));
@@ -312,24 +317,44 @@ export async function copyExclusive(source, destination) {
     await copyFile(source, destination, fsConstants.COPYFILE_EXCL);
 }
 
+// Shared by every promotion mode; fan art must never weaken the old source gates.
+export async function validateAdaptedPatternSource(input, pattern) {
+    if (!pattern.source?.sha256 || pattern.fidelity?.silhouetteChanges !== 0 || pattern.fidelity?.colorMerges !== 0 || pattern.fidelity?.interpolated || pattern.fidelity?.redrawn) {
+        throw new Error(`Unreviewed fidelity for ${pattern.id}`);
+    }
+    const original = await readFile(path.join(input, pattern.source.file));
+    if (createHash('sha256').update(original).digest('hex') !== pattern.source.sha256) throw new Error(`Source hash changed for ${pattern.id}`);
+    if (pattern.source.isComposite) {
+        if (!pattern.source.layers?.length || !pattern.source.compositionEvidence) throw new Error(`Missing composition record for ${pattern.id}`);
+        await readFile(path.join(input, pattern.source.compositionEvidence));
+        for (const layer of pattern.source.layers) {
+            const bytes = await readFile(path.join(input, layer.file));
+            if (createHash('sha256').update(bytes).digest('hex') !== layer.sha256) throw new Error(`Source layer changed for ${pattern.id}: ${layer.role}`);
+        }
+    }
+}
+
 export async function main(args = process.argv.slice(2)) {
 const options = parsePromotionOptions(args);
 const inputs = options.inputs;
 const outputRoot = options.outputRoot;
-const requiredInputs = options.winter ? winterInputs : defaultInputs;
-if (inputs.length !== requiredInputs.length) throw new Error(`Expected all ${requiredInputs.length} sourcepack directories, including the 11 published packs, Santa Hat${options.winter ? ' and the reviewed winter pack' : ''}.`);
+const requiredInputs = options.fanArt ? fanArtInputs : options.winter ? winterInputs : defaultInputs;
+if (inputs.length !== requiredInputs.length) throw new Error(`Expected all ${requiredInputs.length} sourcepack directories, including the 11 published packs, Santa Hat${options.winter || options.fanArt ? ' and the reviewed winter pack' : ''}${options.fanArt ? ' and the reviewed Creeper fan-art pack' : ''}.`);
 const currentCatalog = parsePublishedCatalog(await readFile(path.join(root, 'src/lib/patterns/catalog.ts'), 'utf8'));
-const published = options.winter ? winterPublishedCatalogBaseline(currentCatalog) : publishedCatalogBaseline(currentCatalog);
+const published = options.fanArt ? fanArtPublishedCatalogBaseline(currentCatalog) : options.winter ? winterPublishedCatalogBaseline(currentCatalog) : publishedCatalogBaseline(currentCatalog);
 const packs = [];
 for (const directory of inputs) {
     const input = path.resolve(root, directory);
     packs.push({ input, source: JSON.parse(await readFile(path.join(input, 'manifest.json'), 'utf8')) });
 }
-if (options.winter) {
-    const winterPack = packs.at(-1);
+if (options.winter || options.fanArt) {
+    const winterPack = packs[12];
     if (!isDeepStrictEqual(winterPack.source.patterns.map(({ id }) => id), Object.keys(winterAdditions))) {
         throw new Error('The thirteenth pack must contain exactly the two reviewed winter originals in their recorded order.');
     }
+}
+if (options.fanArt && !isDeepStrictEqual(packs.at(-1).source.patterns.map(({ id }) => id), [fanArtAddition.id])) {
+    throw new Error('The fourteenth pack must contain only the reviewed Creeper face fan-art ID.');
 }
 const specs = {
     'sdv-blue-chicken': ['stardew-valley/blue-chicken', 'Stardew Valley Blue Chicken with blue feathers and a curled tail. Download the printable pattern or open it in the editor.'],
@@ -374,7 +399,11 @@ for (const { input, source } of packs) {
     for (const entry of additions) {
         const pattern = source.patterns.find(({ id }) => id === entry.id);
         if (Object.hasOwn(specs, entry.id) || !pattern) throw new Error(`Duplicate or unknown editorial ID: ${entry.id}`);
-        if (!['original', 'source-adapted'].includes(pattern.kind)) throw new Error(`Unknown pattern kind: ${entry.id}`);
+        if (!['original', 'source-adapted', 'fan-art'].includes(pattern.kind)) throw new Error(`Unknown pattern kind: ${entry.id}`);
+        if (pattern.kind === 'fan-art') {
+            if (!options.fanArt) throw new Error('Fan-art entries require the explicit separate Creeper promotion mode.');
+            validateFanArtEditorial(pattern, entry);
+        }
         const original = pattern.kind === 'original';
         const slugFormat = original ? /^[a-z0-9]+(?:-[a-z0-9]+)*$/ : /^(pokemon|minecraft|super-mario|kirby|stardew-valley)\/[a-z0-9-]+$/;
         if (typeof entry.slug !== 'string' || !slugFormat.test(entry.slug) || typeof entry.description !== 'string' || !entry.description.trim()) throw new Error(`Invalid editorial content: ${entry.id}`);
@@ -404,7 +433,8 @@ const reviewedAdditions = {
     'original-snowman': { slug: 'snowman', kind: 'original' },
     'original-gingerbread-man': { slug: 'gingerbread-man', kind: 'original' },
     'original-santa-hat': { slug: 'santa-hat', kind: 'original', title: 'Santa Hat' },
-    ...(options.winter ? winterAdditions : {}),
+    ...(options.winter || options.fanArt ? winterAdditions : {}),
+    ...(options.fanArt ? { [fanArtAddition.id]: fanArtAddition } : {}),
 };
 const expectedCount = publishedCount + Object.keys(reviewedAdditions).length;
 if (ids.length !== expectedCount || ids.length !== Object.keys(specs).length || new Set(ids).size !== ids.length || ids.some((id) => !Object.hasOwn(specs, id))) {
@@ -460,34 +490,22 @@ function referenceDetails(pattern, collectionId) {
 
 let patterns = [];
 const provenance = [];
-const perlerRows = options.winter ? (await readFile(path.join(root, 'public/palettes/perler.csv'), 'utf8')).trim().split(/\r?\n/).map(row => row.split(',')) : undefined;
+const perlerRows = options.winter || options.fanArt ? (await readFile(path.join(root, 'public/palettes/perler.csv'), 'utf8')).trim().split(/\r?\n/).map(row => row.split(',')) : undefined;
 
 for (const { input, source, pattern } of entries) {
     const adapted = pattern.kind === 'source-adapted';
+    const fanArt = pattern.kind === 'fan-art';
     const collectionId = specs[pattern.id][0].includes('/') ? specs[pattern.id][0].split('/')[0] : null;
     const review = editorial.get(pattern.id);
-    const reference = !adapted && review ? { version: review.version } : review?.reference ?? referenceDetails(pattern, collectionId);
-    if (pattern.id === promotedId || Object.hasOwn(winterAdditions, pattern.id)) {
+    const reference = !adapted && !fanArt && review ? { version: review.version } : review?.reference ?? referenceDetails(pattern, collectionId);
+    if (pattern.id === promotedId || Object.hasOwn(winterAdditions, pattern.id) || fanArt) {
         const project = JSON.parse(await readFile(path.join(input, 'projects', `${pattern.id}.bead-pattern.json`), 'utf8'));
         if (pattern.id === promotedId) validateOriginalPerlerProject(pattern, project);
+        else if (fanArt) validateFanArtPerlerProject(pattern, project, perlerRows);
         else validateWinterOriginalPerlerProject(pattern, project, perlerRows);
     }
     if (adapted) {
-        if (!pattern.source?.sha256 || pattern.fidelity?.silhouetteChanges !== 0 || pattern.fidelity?.colorMerges !== 0 || pattern.fidelity?.interpolated || pattern.fidelity?.redrawn) {
-            throw new Error(`Unreviewed fidelity for ${pattern.id}`);
-        }
-        const original = await readFile(path.join(input, pattern.source.file));
-        if (createHash('sha256').update(original).digest('hex') !== pattern.source.sha256) {
-            throw new Error(`Source hash changed for ${pattern.id}`);
-        }
-        if (pattern.source.isComposite) {
-            if (!pattern.source.layers?.length || !pattern.source.compositionEvidence) throw new Error(`Missing composition record for ${pattern.id}`);
-            await readFile(path.join(input, pattern.source.compositionEvidence));
-            for (const layer of pattern.source.layers) {
-                const bytes = await readFile(path.join(input, layer.file));
-                if (createHash('sha256').update(bytes).digest('hex') !== layer.sha256) throw new Error(`Source layer changed for ${pattern.id}: ${layer.role}`);
-            }
-        }
+        await validateAdaptedPatternSource(input, pattern);
     }
 
     const notes = ['Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.', 'Print the PDF at 100% / Actual size and check its 50 mm scale line before use.', 'This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate.'];
@@ -512,6 +530,7 @@ for (const { input, source, pattern } of entries) {
         collectionId,
         version: reference.version,
         description: specs[pattern.id][1],
+        ...(fanArt ? { kind: 'fan-art' } : {}),
         beads: pattern.beads,
         colorCount: pattern.colorCount,
         gridWidth: pattern.width,
@@ -520,13 +539,16 @@ for (const { input, source, pattern } of entries) {
         motifHeight: pattern.bounds.height,
         palette: Object.values(pattern.palette).map(({ symbol, ref, name, hex, count }) => ({ symbol, ref, name, hex, count })),
         notes,
-        source: adapted ? {
+        source: fanArt ? {
+            label: fanArtSource.label, url: fanArtSource.pageUrl, description: fanArtDescription,
+            kind: 'fan-art', rightsHolder: fanArtSource.rightsHolder, permission: 'unconfirmed',
+        } : adapted ? {
             label: reference.label,
             url: pattern.source.pageUrl,
             description: reference.description,
         } : null,
         assets: { preview: `${base}/preview.png`, grid: `${base}/grid.png`, pixels: `${base}/pixels.png`, project: `${base}/pattern.bead-pattern.json`, pdf: `${base}/pattern.pdf`,
-            ...(pattern.id === promotedId || Object.hasOwn(winterAdditions, pattern.id) ? { pdfLetter: `${base}/pattern-letter.pdf` } : {}) },
+            ...(pattern.id === promotedId || Object.hasOwn(winterAdditions, pattern.id) || fanArt ? { pdfLetter: `${base}/pattern-letter.pdf` } : {}) },
         updatedAt: source.createdAt,
     };
     patterns.push(entry);
@@ -535,7 +557,11 @@ for (const { input, source, pattern } of entries) {
 
 // All sourcepack entries and all old source hashes are reviewed before any
 // output. The existing catalog is a comparison baseline, never a source bypass.
-if (options.winter) {
+if (options.fanArt) {
+    patterns = assembleFanArtPromotion(currentCatalog, collections, patterns, options.ids);
+    await assertWinterPackPdfReady(packs[12].input, packs[12].source);
+    await assertFanArtPackPdfReady(packs.at(-1).input, packs.at(-1).source);
+} else if (options.winter) {
     patterns = assembleWinterPromotion(currentCatalog, collections, patterns, options.ids);
     await assertWinterPackPdfReady(packs.at(-1).input, packs.at(-1).source);
 } else {
@@ -560,6 +586,7 @@ export type Pattern = {
     collectionId: string | null;
     version: string;
     description: string;
+    kind?: 'fan-art';
     beads: number;
     colorCount: number;
     gridWidth: number;
@@ -568,7 +595,7 @@ export type Pattern = {
     motifHeight: number;
     palette: Array<{ symbol: string; ref: string; name: string; hex: string; count: number }>;
     notes: string[];
-    source: null | { label: string; url: string; description: string };
+    source: null | { label: string; url: string; description: string; kind?: 'fan-art'; rightsHolder?: string; permission?: 'unconfirmed' };
     assets: { preview: string; grid: string; pixels: string; project: string; pdf: string; pdfLetter?: string };
     updatedAt: string;
 };
@@ -661,7 +688,7 @@ for entry in ids:
     expected_text = writer.pages[0].extract_text()
     # This reviewed addition includes an explicit actual-size print preference.
     # Keep published PDF bytes unchanged by applying it only to the new design.
-    if entry['id'] in ('original-halloween-bat', 'original-santa-hat', 'original-christmas-stocking', 'original-snowflake'):
+    if entry['id'] in ('original-halloween-bat', 'original-santa-hat', 'original-christmas-stocking', 'original-snowflake', 'minecraft-creeper-face-v1'):
         if reader.trailer['/Root'].get('/ViewerPreferences', {}).get('/PrintScaling') != '/None':
             raise ValueError('Reviewed new PDF must disable automatic print scaling')
         writer.root_object[NameObject('/ViewerPreferences')] = reader.root_object['/ViewerPreferences'].clone(writer)
@@ -689,9 +716,10 @@ process.stdout.write(split.stdout);
 const publishedProvenance = provenance.filter(({ id }) => patterns.some(pattern => pattern.id === id));
 const adaptedCount = publishedProvenance.filter(({ kind }) => kind === 'source-adapted').length;
 const originalCount = publishedProvenance.filter(({ kind }) => kind === 'original').length;
+const fanArtCount = publishedProvenance.filter(({ kind }) => kind === 'fan-art').length;
 const guide = `# Pattern library content maintenance
 
-The ${packs.length} reviewed packs integrate ${patterns.length} local patterns in total: ${adaptedCount} game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, and ${originalCount} original designs. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
+The ${packs.length} reviewed packs integrate ${patterns.length} local patterns in total: ${adaptedCount} game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, ${originalCount} original designs${fanArtCount ? ` and ${fanArtCount} hand-authored character fan-art pattern` : ''}. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
 
 ## Content identity and versions
 
@@ -719,6 +747,7 @@ Retrieved on 2026-09-22. Hashes cover the reference PNG used before bead-grid pr
 | --- | --- | --- | --- |
 ${publishedProvenance.map(({ id, source, kind }) => kind === 'source-adapted'
     ? `| ${id} | ${source.isComposite ? source.layers.map((layer) => `[${layer.role} PNG](${layer.imageUrl}), SHA-256 \`${layer.sha256}\``).join('; ') : `[recorded PNG](${source.imageUrl})`} | \`${source.sha256}\`${source.isComposite ? ' (composite input)' : ''} | Public redistribution unconfirmed |`
+    : kind === 'fan-art' ? `| ${id} | Hand-authored Creeper face fan art; [official character identity reference](${fanArtSource.pageUrl}), not a source-texture file | JSON rows SHA-256 \`${reviewedFanArtRowsHash}\` | Non-official character fan art; character rights Mojang/Microsoft; public redistribution permission unconfirmed |`
     : `| ${id} | Original grid drawing; no third-party character reference | Not applicable | Original design; no third-party character reference |`).join('\n')}
 
 ## Asset generation and review
@@ -742,6 +771,16 @@ Select one design with \`--promote-id original-christmas-stocking\` or \`--promo
 Winter mode freezes the entire independently recorded d80fd8b 107-entry catalog and collections with SHA-256 \`822460c093675e3abd384f664035a93107c9d5672bf6e90f015159fcbe73592c\`, including Santa Hat's optional Letter URL and JSON field order. This lock is distinct from the historical Santa mode's frozen 106-entry lock, which remains unchanged. Removing only the two explicitly reviewed winter IDs from a later 108/109-entry catalog must recover the exact original 107 fingerprint; every already recorded winter entry must also match its reconstructed source object in full. Publishing stocking alone and later selecting snowflake therefore preserves the existing stocking catalog entry without staging its assets. Repeat staging uses a new output root and must retain the same catalog objects and order. Neither lock may be refreshed from a generated candidate.
 
 Winter \`--check-only\` refuses a pack whose PDF state or pending list has not been reviewed, whose A4/US Letter bundles are absent, or whose reviewed files do not have PDF headers. This preflight is not PDF acceptance. Actual staging also verifies each selected PDF's page index, recognizable title, bead total, detail-page link, en-US document language, paper geometry, print-scaling preference and unchanged extracted drawing stream. PDF authoring, cell/scale checks, rendering and visual acceptance must be completed independently before release; do not copy an old PDF or clear a pending state to manufacture an approval.
+
+## Incremental character fan-art candidate
+
+The separate \`--promote-id minecraft-creeper-face-v1\` mode requires all 13 earlier read-only sourcepacks plus \`artifacts/pattern-samples/2026-10-10/creeper-face-fan-art-v1\`. It permits only the explicit \`fan-art\` identity, \`minecraft/creeper-face\` slug and hand-authored-grid version. It cannot mix Santa, winter or other IDs, and cannot convert a downloaded official texture or its alpha mask into a claimed hand-drawn original. The earlier 100-identity, 106-object and 107-object gates remain intact.
+
+This mode independently freezes all 109 published catalog objects and collections from 95dc05c with SHA-256 \`b6e6888efb0c0f57a05bab287c80a2ae630e73ba56031ca8b569616472a92215\`, including field order. Only the explicit new entry may be removed to recover this lock. All old packs, old SHA-256 references and fidelity fields are rechecked; only the selected new assets are staged into a new output directory. The authored 29 × 29 rows have independent JSON SHA-256 \`${reviewedFanArtRowsHash}\`; project RGBA, three Perler colours, 256-bead totals and the 16 × 16 solid motif must match them. A recorded 110-entry catalog must reproduce the exact already recorded fan-art object on a later staging run.
+
+The official Minecraft article establishes character identity, not a licensed source image. This is unofficial Creeper fan art by Fuse Bead Patterns, with Minecraft/Creeper rights attributed to Mojang/Microsoft and public redistribution permission unconfirmed. Sourcepack provenance, generated catalog source and all four language pages must retain that distinction. Hand-authored rows and \`sourceTextureUsed: false\` do not establish an independently invented character, a licence or a statutory exception. Keep a visible non-official notice and contact channel on the detail page and download materials; do not use official logos or packaging. Source fidelity, PDF acceptance and a publication decision are separate checks.
+
+Fan-art \`--check-only\` requires all eight reviewed EN/DE/FR/JA A4/US Letter PDFs. It rejects pending states, absent review records, missing files and invalid PDF headers without writing inputs, staging output or granting rights. Actual staging verifies en-US language, A4/US Letter geometry, titles, quantities, detail links, print scaling and lossless PDF page extraction. Render and inspect the final download PDFs separately. The builder does not itself author or approve them and does not publish the staged candidate.
 
 ## Editor brand switching
 

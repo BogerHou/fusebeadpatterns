@@ -20,6 +20,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Golden Apple': ['Goldener Apfel', 'Pomme dorée', '金のリンゴ'],
     Apple: ['Apfel', 'Pomme', 'リンゴ'], Heart: ['Herz', 'Cœur', 'ハート'], TNT: ['TNT', 'TNT', 'TNT'],
     'Diamond Ore': ['Diamanterz', 'Minerai de diamant', 'ダイヤモンド鉱石'],
+    'Creeper Face': ['Creeper-Gesicht', 'Visage du Creeper', 'クリーパーの顔'],
     Emerald: ['Smaragd', 'Émeraude', 'エメラルド'],
     'Ender Pearl': ['Enderperle', 'Perle de l’Ender', 'エンダーパール'],
     'Eye of Ender': ['Enderauge', 'Œil de l’Ender', 'エンダーアイ'],
