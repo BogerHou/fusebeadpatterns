@@ -4,10 +4,8 @@ import { useSyncExternalStore } from 'react';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import { patternBrowserMessages } from '@/lib/patterns/browser-messages';
 import { PATTERN_FILTER_CHANGE_EVENT, readPatternFilters, writePatternFilters, type PatternFilters } from '@/lib/patterns/browser-state';
+import { filterPatterns } from '@/lib/patterns/search';
 import { PatternGrid, type PatternCardData } from './PatternCards';
-
-const normalizeSearch = (value: string) => value.normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '').replaceAll('-', ' ').toLowerCase().trim();
 
 function subscribeToFilters(callback: () => void) {
     window.addEventListener('popstate', callback);
@@ -28,11 +26,7 @@ export default function PatternBrowser({ patterns, collections, locale = 'en' }:
         window.history.replaceState(null, '', writePatternFilters(window.location.href, next));
         window.dispatchEvent(new Event(PATTERN_FILTER_CHANGE_EVENT));
     };
-    const searchWords = normalizeSearch(query).split(/\s+/).filter(Boolean);
-    const matching = patterns.filter((pattern) =>
-        (theme === 'all' || (theme === 'originals' ? pattern.collectionId === null : pattern.collectionId === theme)) &&
-        searchWords.every((word) => normalizeSearch(`${pattern.title} ${pattern.description} ${pattern.searchAliases ?? ''} ${pattern.collectionId ?? 'original'}`).includes(word))
-    );
+    const matching = filterPatterns(patterns, { query, theme });
 
     return (
         <section aria-label={copy.browse}>
