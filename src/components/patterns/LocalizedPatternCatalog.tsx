@@ -1,9 +1,12 @@
-import { patterns, patternCollections, type Pattern } from '@/lib/patterns/catalog';
+import { patternCollections, type Pattern } from '@/lib/patterns/catalog';
 import { getLocalizedPatternName, getLocalizedPatternTitle, getLocalizedPatternIntro, getPatternSearchAliases, type PatternLocale } from '@/lib/patterns/localized-content';
 import { localizedPatternUi } from '@/lib/patterns/localized-ui';
 import PatternSectionNav from './PatternSectionNav';
 import PatternBrowser from './PatternBrowser';
 import type { PatternCardData } from './PatternCards';
+import { toPatternCard } from './PatternCards';
+import type { SiteLocale } from '@/lib/i18n/locales';
+import { browsePatterns } from '@/lib/patterns/library-overview';
 
 export function toLocalizedPatternCard(pattern: Pattern, locale: PatternLocale): PatternCardData {
     return {
@@ -15,14 +18,17 @@ export function toLocalizedPatternCard(pattern: Pattern, locale: PatternLocale):
     };
 }
 
-export default function LocalizedPatternCatalog({ locale }: { locale: PatternLocale }) {
-    const copy = localizedPatternUi[locale];
+export default function LocalizedPatternCatalog({ locale }: { locale: SiteLocale }) {
+    const copy = locale === 'en' ? {
+        fullTitle: 'All free patterns',
+        intro: 'Search for a character or filter by theme. Open a picture for its printable PDF, colors and editable pattern.',
+    } : localizedPatternUi[locale];
     return (
         <section id="all-patterns" aria-labelledby="all-patterns-heading" className="mt-10 border-t border-line pt-8">
             <h2 id="all-patterns-heading" className="section-heading">{copy.fullTitle}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">{copy.intro}</p>
             <PatternSectionNav locale={locale} />
-            <PatternBrowser locale={locale} patterns={patterns.map(pattern => toLocalizedPatternCard(pattern, locale))} collections={patternCollections.map(({ id, title }) => ({ id, title: locale === 'ja' ? ({ pokemon: 'ポケモン', 'super-mario': 'スーパーマリオ', kirby: '星のカービィ' }[id] ?? title) : title }))} />
+            <PatternBrowser locale={locale} patterns={browsePatterns.map(pattern => locale === 'en' ? toPatternCard(pattern) : toLocalizedPatternCard(pattern, locale))} collections={patternCollections.map(({ id, title }) => ({ id, title: locale === 'ja' ? ({ pokemon: 'ポケモン', 'super-mario': 'スーパーマリオ', kirby: '星のカービィ' }[id] ?? title) : title }))} />
         </section>
     );
 }

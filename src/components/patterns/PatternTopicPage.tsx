@@ -1,3 +1,4 @@
+import PatternLibraryHelp from './PatternLibraryHelp';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { getPatternsForTopic, getAdditionalPatternsForTopic, type PatternTopic } from '@/lib/patterns/topics';
@@ -29,6 +30,7 @@ export default function PatternTopicPage({ topic }: { topic: PatternTopic }) {
                 </div>
             </section>
             <p className="mt-8 leading-8 text-[#43564d]"><Link href="/patterns" className="text-link">Browse all patterns</Link> for more characters and themes.</p>
+            {topic.slug === 'christmas' && <PatternLibraryHelp locale="en" id="printing" />}
         </>
     );
 }

@@ -42,6 +42,34 @@ export function getLocaleFromPath(pathname: string): SiteLocale {
 
 export type LocaleDestination = { href: string; isFallback: boolean; fallback?: 'patterns' };
 
+// Keep existing bookmarked IDs while linking to the equivalent section in each
+// language. Only these registered page groups have a shared printing section.
+const printingSectionFragments: Readonly<Record<string, Readonly<Record<SiteLocale, string>>>> = {
+    '/patterns': { en: 'printing', de: 'drucken', fr: 'printing', ja: 'printing' },
+    '/patterns/christmas': { en: 'printing', de: 'printing', fr: 'imprimer', ja: 'printing' },
+};
+
+function getLocalizedFragment(
+    group: Partial<Record<SiteLocale, string>> | undefined,
+    currentPath: string,
+    destination: string,
+    locale: SiteLocale,
+    hash: string,
+): string {
+    const fragment = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
+    if (!fragment || destination === currentPath) return fragment;
+    const sections = group?.en ? printingSectionFragments[group.en] : undefined;
+    if (!sections) return fragment;
+    try {
+        return decodeURIComponent(fragment.slice(1)) === sections[getLocaleFromPath(currentPath)]
+            ? `#${sections[locale]}`
+            : fragment;
+    } catch {
+        // A malformed fragment must not prevent the language change.
+        return fragment;
+    }
+}
+
 export function getLocaleDestination(
     pathname: string,
     locale: SiteLocale,
@@ -63,7 +91,7 @@ export function getLocaleDestination(
         return { href: localeRoutes[locale].home, isFallback: true };
     }
     const query = search ? (search.startsWith('?') ? search : `?${search}`) : '';
-    const fragment = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
+    const fragment = getLocalizedFragment(group, currentPath, destination, locale, hash);
     return { href: `${destination}${query}${fragment}`, isFallback: false };
 }
 
