@@ -27,6 +27,9 @@ const englishCopy = {
     guidesIntro: 'The generator keeps the main workflow fast. These guides help with board sizing, mini beads, beginner kits, and photo cleanup when a project needs more planning.', guidesLink: 'View All Guides',
     featuresEyebrow: 'From the first pixel to the final chart', featuresHeading: 'What You Can Do',
     faqEyebrow: 'Good to know', faqHeading: 'Frequently Asked Questions',
+    helpHeading: 'Before you print', library: 'Browse the complete pattern library',
+    help: 'Screen and printed colors can differ from real beads. Check the color references and printing instructions in the PDF. Not every export is an actual-size template; check its scale before placing it under a pegboard.',
+    editor: 'Open the editor', learn: 'Printing and making guides', learnHref: '/guides',
 };
 
 /** Every home uses the same workflow, featured designs, and content sections. */
@@ -125,17 +128,18 @@ export default function HomePage({ locale, structuredData, faqs: englishFaqs = [
                     <div className="features-grid">{features.map(feature => <div key={feature.title} className="feature-item"><h3>{feature.title}</h3><p>{feature.text}</p></div>)}</div>
                 </section>
 
-                {native && <section id="print-help" className="home-section" aria-labelledby="print-help-title">
+                <section id="print-help" className="home-section" aria-labelledby="print-help-title">
                     <div className="section-intro">
-                        <h2 id="print-help-title" className="section-heading">{native.helpHeading}</h2>
-                        <p>{native.help}</p>
+                        <h2 id="print-help-title" className="section-heading">{copy.helpHeading}</h2>
+                        <p>{copy.help}</p>
                         <div className="flex flex-wrap gap-x-6 gap-y-3">
-                            <Link href={routes.editor} prefetch={false} className="text-link">{native.editor}</Link>
-                            <Link href={native.learnHref} className="text-link">{native.learn}</Link>
-                            {(locale === 'de' || locale === 'fr') && <Link href={native.previewHref} className="text-link">{native.previewLink}</Link>}
+                            <Link href={routes.patterns} className="text-link">{copy.library}</Link>
+                            <Link href={routes.editor} prefetch={false} className="text-link">{copy.editor}</Link>
+                            <Link href={copy.learnHref} className="text-link">{copy.learn}</Link>
                         </div>
+                        {native && (locale === 'de' || locale === 'fr') && <p className="mt-3 text-sm"><Link href={native.previewHref} className="text-link">{native.previewLink}</Link></p>}
                     </div>
-                </section>}
+                </section>
 
                 <section className="home-section home-faq" aria-labelledby="faq-heading">
                     <div className="section-intro"><p className="eyebrow">{copy.faqEyebrow}</p><h2 id="faq-heading" className="section-heading">{copy.faqHeading}</h2></div>

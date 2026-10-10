@@ -12,7 +12,7 @@ export const localizedHomeCopy = {
         start: 'Vorlage erstellen', browse: 'Kostenlose Vorlagen ansehen',
         free: 'Kostenlos · Ohne Anmeldung', workspace: 'Dein Arbeitsbereich', flow: 'Bild laden → Anpassen → Gestalten',
         preview: 'Geist als Bügelperlen-Muster', previewNote: 'Digitale Vorschau einer unserer Vorlagen',
-        previewLink: 'Hama-Vorlagen ansehen', previewHref: '/de/hama-perlen-vorlagen',
+        previewLink: 'Hama Midi: 6 ausgewählte Vorlagen', previewHref: '/de/hama-perlen-vorlagen',
         patternsHeading: 'Mit einer fertigen Vorlage beginnen',
         patternsText: 'Lade eine fertige Vorlage herunter oder öffne sie zum Bearbeiten. Die Download-Seite nennt die verwendete Perlenmarke und die Sprache der Druckdatei.',
         patternsHref: '/de/patterns',
@@ -23,6 +23,7 @@ export const localizedHomeCopy = {
             ['Bearbeiten und speichern', 'Korrigiere einzelne Perlen im Editor. Speichere die Projektdatei zum Weiterarbeiten und exportiere eine PDF oder ein Bild für dein Bastelprojekt.'],
         ],
         helpHeading: 'Vor dem Drucken',
+        library: 'Alle Vorlagen in der Bibliothek ansehen',
         help: 'Bildschirmfarben können von echten Perlen abweichen. Beachte die Farbcodes und die Druckhinweise in der PDF. Nicht jede Exportdatei ist eine Vorlage in Originalgröße; prüfe den Maßstab vor dem Auflegen auf eine Steckplatte.',
         editor: 'Editor öffnen',
         learn: 'Anleitungen zum Drucken und Gestalten',
@@ -37,7 +38,7 @@ export const localizedHomeCopy = {
         start: 'Créer un modèle', browse: 'Voir les modèles gratuits',
         free: 'Gratuit · Sans inscription', workspace: 'Votre espace de création', flow: 'Importer → Ajuster → Créer',
         preview: 'Modèle de fantôme en perles à repasser', previewNote: 'Aperçu numérique d’un de nos modèles',
-        previewLink: 'Voir 6 modèles à télécharger en Perler et Hama', previewHref: '/fr/modeles-perles-a-repasser',
+        previewLink: 'Sélection par marque : 6 modèles en Perler et Hama', previewHref: '/fr/modeles-perles-a-repasser',
         patternsHeading: 'Commencer avec un modèle prêt à utiliser',
         patternsText: 'Téléchargez un modèle ou ouvrez-le dans l’éditeur pour le personnaliser. La page de téléchargement indique la marque de perles et la langue du fichier à imprimer.',
         patternsHref: '/fr/patterns',
@@ -48,6 +49,7 @@ export const localizedHomeCopy = {
             ['Retoucher et enregistrer', 'Corrigez les perles une à une dans l’éditeur. Enregistrez le projet pour continuer plus tard, puis exportez un PDF ou une image pour votre création.'],
         ],
         helpHeading: 'Avant d’imprimer',
+        library: 'Voir toute la bibliothèque de modèles',
         help: 'Les couleurs à l’écran peuvent différer des perles réelles. Consultez les références et les consignes d’impression du PDF. Tous les exports ne sont pas à taille réelle : vérifiez l’échelle avant de les utiliser sous une plaque.',
         editor: 'Ouvrir l’éditeur',
         learn: 'Guides d’impression et de création',
@@ -73,6 +75,7 @@ export const localizedHomeCopy = {
             ['修正して保存する', '編集画面でマスごとに色を直せます。続きを作るためのプロジェクトを保存し、印刷や作業用にPDFや画像を書き出しましょう。'],
         ],
         helpHeading: '印刷前に確認すること',
+        library: '図案ライブラリをすべて見る',
         help: '画面や印刷の色は実物のビーズと異なる場合があります。色番号とPDFの印刷説明を確認してください。すべての出力が原寸図案ではありません。プレートに重ねる前に、定規で倍率と間隔を確かめましょう。',
         editor: '編集画面を開く',
         learn: '画像から図案を作るガイド',
@@ -83,7 +86,7 @@ export const localizedHomeCopy = {
     start: string; browse: string; free: string; workspace: string; flow: string;
     preview: string; previewNote: string; previewLink: string; previewHref: string;
     patternsHeading: string; patternsText: string; patternsHref: string;
-    stepsHeading: string; steps: string[][]; helpHeading: string; help: string;
+    stepsHeading: string; steps: string[][]; helpHeading: string; library: string; help: string;
     editor: string; learn: string; learnHref: string;
 }>;
 

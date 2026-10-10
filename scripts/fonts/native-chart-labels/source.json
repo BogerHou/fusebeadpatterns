@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Native Chart Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Native DE/FR/JA chart labels, current names, official color names and assembly/print limitations",
+  "subsetSha256": "729b31b94339b0916af6cb210407462c9fd68825bac8705e17d98fcec4271575",
+  "glyphsSha256": "5a4f75c4b2e9ff9c1e92cb7b18a9a0d2be6050403882adc0c4a96227a8e96720",
+  "charactersSha256": "752bd8d5528e84d6d459533a9bd87727998330aac8646e932782fc12c10c62af",
+  "characterCount": 365,
+  "catalogCount": 111
+}

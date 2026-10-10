@@ -169,6 +169,12 @@ The official Minecraft article establishes character identity, not a licensed so
 
 Fan-art `--check-only` requires all eight reviewed EN/DE/FR/JA A4/US Letter PDFs. It rejects pending states, absent review records, missing files and invalid PDF headers without writing inputs, staging output or granting rights. Actual staging verifies en-US language, A4/US Letter geometry, titles, quantities, detail links, print scaling and lossless PDF page extraction. Render and inspect the final download PDFs separately. The builder does not itself author or approve them and does not publish the staged candidate.
 
+## Native-language chart images
+
+German, French and Japanese Perler chart images are published at separate `public/patterns-{locale}/{id}/grid.png` paths. Generated native SVGs remain in the staging output for validation and are not published. The existing English chart files, catalog objects, pixel art, project files and PDF downloads remain unchanged. `src/lib/patterns/localized-grid-assets.json` records each reviewed PNG's public URL and actual width and height; regenerate these values from the final files rather than assuming a square chart or adding per-pattern dimensions to page components.
+
+`getLocalizedPatternGrid` is the shared lookup for native detail-page display, image enlargement and PNG downloads, including the retained German, Japanese and French Christmas download selections. It fails for a missing entry instead of silently returning an English image. New catalog additions need all three native charts and their manifest entries before publication. The chart tests read actual PNG metadata and check the rendered language-specific links. Hama previews and pixel files retain their own brand-specific assets; the French six-pattern brand selector links to native PDFs and does not have a chart-PNG download. Explicit historical guide examples retain their recorded file URLs.
+
 ## Editor brand switching
 
 Library previews and downloads use Perler Midi by default. In the editor, applying a different brand while keeping pegboard settings unchanged remaps the current edited grid to the closest enabled colors in that brand. It preserves bead positions and transparency without resampling or dithering; similar source colors may map to the same target color. Saved projects and editor exports use the selected brand.

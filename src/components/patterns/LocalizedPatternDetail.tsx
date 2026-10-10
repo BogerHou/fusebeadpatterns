@@ -7,7 +7,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import { patterns, type Pattern } from '@/lib/patterns/catalog';
 import { getLocalizedPatternTitle, getLocalizedPatternName, getLocalizedPatternIntro, localizePatternNote, type PatternLocale } from '@/lib/patterns/localized-content';
 import { localizedPatternUi } from '@/lib/patterns/localized-ui';
-import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from '@/lib/patterns/localized-download';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf, getLocalizedPatternGrid } from '@/lib/patterns/localized-download';
 import { localizePatternSourceDescription } from '@/lib/patterns/localized-sources';
 import { patternTopics } from '@/lib/patterns/topics';
 import { getPatternSectionHref, type PatternSectionSlug } from '@/lib/patterns/section-routes';
@@ -36,6 +36,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
     const title = getLocalizedPatternTitle(pattern, locale);
     const href = `/${locale}/patterns/${pattern.slug}`;
     const pdf = getLocalizedPatternPdf(pattern, locale);
+    const grid = getLocalizedPatternGrid(pattern, locale);
     const fanArtNotice = getPatternFanArtNotice(pattern, locale);
     const letterPdf = getLocalizedPatternLetterPdf(pattern, locale);
     const related = pattern.id === 'original-santa-hat'
@@ -63,7 +64,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                         <div className="flex flex-wrap gap-3">
                             <a href={pdf.href} hrefLang={pdf.language} download {...tracking} data-pattern-format="pdf" className="button-primary">{letterPdf ? copy.a4Pdf : pdf.language === locale ? copy.pdf : copy.englishPdf}</a>
                             {letterPdf && <a href={letterPdf.href} hrefLang={letterPdf.language} download {...tracking} data-pattern-format="pdf" className="button-secondary">{copy.letterPdf}</a>}
-                            <a href={pattern.assets.grid} download {...tracking} data-pattern-format="grid_png" className="button-secondary">{copy.grid}</a>
+                            <a href={grid.href} hrefLang={grid.language} download {...tracking} data-pattern-format="grid_png" className="button-secondary">{copy.grid}</a>
                         </div>
                         <p className="mt-3 text-sm leading-7 text-muted">{copy.print}</p>
                         {letterPdf && <p className="mt-2 text-sm leading-7 text-muted">{copy.paperHelp}</p>}
@@ -75,7 +76,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                 <div className="mt-12 grid items-start gap-10 lg:grid-cols-2">
                     <section aria-labelledby="chart-heading">
                         <h2 id="chart-heading" className="section-heading mb-5">{copy.chart}</h2>
-                        <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer"><Image src={pattern.assets.grid} alt={`${name} · ${copy.chartAlt}`} width={pattern.id === 'original-retro-diamond-coaster' ? 788 : 586} height={pattern.id === 'original-retro-diamond-coaster' ? 908 : 586} unoptimized className="h-auto w-full rounded-xl border border-line" /></a>
+                        <a href={grid.href} hrefLang={grid.language} target="_blank" rel="noopener noreferrer"><Image src={grid.href} alt={`${name} · ${copy.chartAlt}`} width={grid.width} height={grid.height} unoptimized className="h-auto w-full rounded-xl border border-line" /></a>
                         <p className="mt-3 text-sm leading-7 text-muted">{copy.chartHelp}</p>
                     </section>
                     <section aria-labelledby="colors-heading">

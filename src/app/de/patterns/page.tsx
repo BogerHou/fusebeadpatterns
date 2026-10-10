@@ -10,6 +10,7 @@ import germanPatterns from '@/lib/patterns/german.json';
 import PatternQuickDownloads from '@/components/patterns/PatternQuickDownloads';
 import PatternLibraryHelp from '@/components/patterns/PatternLibraryHelp';
 import { localizedLibraryMetadata, patternLibraryCount } from '@/lib/patterns/library-overview';
+import { getLocalizedPatternGrid } from '@/lib/patterns/localized-download';
 
 const { title, description } = localizedLibraryMetadata.de;
 const preview = '/patterns/pokemon-pikachu-gen5/preview.png';
@@ -55,9 +56,10 @@ export default function GermanPatternsPage() {
                         {germanPatterns.patterns.map(({ id, name }) => {
                             const pattern = getPatternById(id);
                             if (!pattern) throw new Error(`German library pattern is missing: ${id}`);
+                            const grid = getLocalizedPatternGrid(pattern, 'de');
                             return (
                                 <article key={id} className="pattern-card" data-pattern-card={id} aria-labelledby={`${id}-title`}>
-                                    <a href={pattern.assets.grid} target="_blank" rel="noopener" className="block rounded-[10px]" aria-label={`${name}: Rasterbild vergrößern (neuer Tab)`}>
+                                    <a href={grid.href} hrefLang={grid.language} target="_blank" rel="noopener" className="block rounded-[10px]" aria-label={`${name}: Rasterbild vergrößern (neuer Tab)`}>
                                         <div className="pattern-art">
                                             <Image src={pattern.assets.preview} alt={`${name} als Bügelperlen-Vorlage`} width={580} height={580} unoptimized />
                                         </div>
@@ -69,7 +71,7 @@ export default function GermanPatternsPage() {
                                             data-pattern-event="pattern_download" data-pattern-id={id} data-pattern-palette="perler" data-pattern-entry="patterns" data-pattern-format="pdf">
                                             PDF (Deutsch)<span aria-hidden="true">↓</span>
                                         </a>
-                                        <a href={pattern.assets.grid} download={`${id}-grid.png`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
+                                        <a href={grid.href} hrefLang={grid.language} download={`${id}-grid.png`} className="text-link underline decoration-line underline-offset-4 hover:decoration-accent"
                                             aria-label={`${name}: Rasterbild als PNG herunterladen`}
                                             data-pattern-event="pattern_download" data-pattern-id={id} data-pattern-palette="perler" data-pattern-entry="patterns" data-pattern-format="grid_png">
                                             PNG<span aria-hidden="true">↓</span>

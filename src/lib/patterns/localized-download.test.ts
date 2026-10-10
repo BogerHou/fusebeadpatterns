@@ -2,13 +2,15 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { inflateSync } from 'node:zlib';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { decodeEditorPatternDraft, parseEditorProject } from '../editor/draft';
 import { patterns } from './catalog';
 import german from './german.json';
 import french from './french-patterns.json';
 import japanese from './japanese.json';
-import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf } from './localized-download';
+import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf, getLocalizedPatternGrid } from './localized-download';
+import gridAssets from './localized-grid-assets.json';
 import { getLocalizedSubjectName } from './localized-content';
 import legacyHashes from './localized-download-legacy-hashes.json';
 
@@ -109,6 +111,21 @@ function printedText(pdf: Buffer): string[] {
 const comparable = (value: string) => value.replace(/[’‘]/g, "'").replace(/[–—]/g, '-');
 
 describe('complete native-language library downloads', () => {
+    it.each(locales)('has a real %s chart for every catalog ID with its actual PNG dimensions', async locale => {
+        expect(Object.keys(gridAssets[locale]).sort()).toEqual(patterns.map(pattern => pattern.id).sort());
+        for (const pattern of patterns) {
+            const grid = getLocalizedPatternGrid(pattern, locale);
+            expect(grid.href).toBe(`/patterns-${locale}/${pattern.id}/grid.png`);
+            expect(grid.language).toBe(locale);
+            expect(grid.href).not.toBe(pattern.assets.grid);
+            const image = await sharp(publicFile(grid.href)).metadata();
+            expect(image.format).toBe('png');
+            expect({ width: grid.width, height: grid.height }).toEqual({ width: image.width, height: image.height });
+            expect(grid.width).toBeGreaterThan(0);
+            expect(grid.height).toBeGreaterThan(0);
+        }
+    });
+
     it.each(locales)('%s resolves every actual pattern to a real correctly named and tagged PDF', locale => {
         const destinations = new Set<string>();
         for (const pattern of patterns) {
