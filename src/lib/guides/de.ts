@@ -1,7 +1,9 @@
 import { photoGuideCopy } from './photo';
+import { keychainGuideCopy } from './keychains';
 import type { GuideTranslations } from './types';
 
 export const germanGuides: GuideTranslations = {
+    'how-to-make-perler-bead-keychains': keychainGuideCopy.de,
     'photo-to-perler-bead-pattern': photoGuideCopy.de,
     'perler-bead-pegboards': {
         title: 'Steckplatten und Größen für Bügelperlen-Vorlagen',

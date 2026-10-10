@@ -32,6 +32,8 @@ export function getGuideSummaries(locale: GuideLocale) {
 
 // These labels describe the retained manufacturer sources, not new local sources.
 const sourceLabels: Record<string, [string, string, string]> = {
+    'https://perler.com/blogs/projects/alien-keychain': ['Perler: Schlüsselanhänger mit Perlenloch (englische Anleitung)', 'Perler : porte-clés fixé dans un trou de perle (instructions en anglais)', 'Perler：ビーズの穴に金具を付ける作例（英語）'],
+    'https://perler.com/blogs/projects/carnival-food-keychains': ['Perler: Biegering und Schlüsselring verbinden (englische Anleitung)', 'Perler : relier l’anneau ouvert au porte-clés (instructions en anglais)', 'Perler：丸カンとキーホルダーの接続例（英語）'],
     'https://commons.wikimedia.org/wiki/File:TUXEDO_CAT.jpg': ['Quelle und Fotograf', 'Source et auteur de la photo', '写真の出典と撮影者'],
     'https://creativecommons.org/publicdomain/zero/1.0/': ['Lizenz: CC0 1.0', 'Licence : CC0 1.0', 'CC0 1.0ライセンス'],
     'https://perler.com/products/1-000-perler-beads-multi-mix': ['Perler: Standardmaße', 'Perler : dimensions standard', 'Perler：標準サイズの仕様'],

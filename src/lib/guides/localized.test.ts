@@ -72,7 +72,7 @@ describe('localized guides and source preservation', () => {
         }
     });
 
-    it('covers all seven guides and retains the existing Japanese photo URL in the equivalent group', () => {
+    it('covers every guide and retains the existing Japanese photo URL in the equivalent group', () => {
         expect([...translatedGuideSlugs].sort()).toEqual(guidePages.map(guide => guide.slug).sort());
         for (const locale of locales) {
             const summaries = getGuideSummaries(locale);

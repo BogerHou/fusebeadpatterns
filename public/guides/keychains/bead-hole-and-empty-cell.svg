@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+  <title>1 · 2 · 3</title>
+  <defs>
+    <g id="bead">
+      <circle r="34" fill="#78917f" stroke="#43564d" stroke-width="2"/>
+      <circle r="10" fill="#fafbf7" stroke="#43564d" stroke-width="2"/>
+    </g>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#263e34" stroke-width="1.5"/></marker>
+    <pattern id="grid" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" fill="none" stroke="#cbd4c7" stroke-width="1.5"/></pattern>
+  </defs>
+  <rect width="960" height="420" fill="#fafbf7"/>
+  <path d="M320 24V396M640 24V396" stroke="#d9ded5" stroke-width="2"/>
+  <g fill="#263e34" font-family="sans-serif" font-size="28" font-weight="700" text-anchor="middle">
+    <text x="46" y="57">1</text><text x="366" y="57">2</text><text x="686" y="57">3</text>
+  </g>
+  <circle cx="151" cy="211" r="88" fill="#78917f" stroke="#43564d" stroke-width="3"/>
+  <circle cx="151" cy="211" r="28" fill="#fafbf7" stroke="#43564d" stroke-width="3"/>
+  <path d="M237 119L164 198" fill="none" stroke="#263e34" stroke-width="3" marker-end="url(#arrow)"/>
+  <g transform="translate(387 118)">
+    <rect width="186" height="186" fill="url(#grid)" stroke="#cbd4c7" stroke-width="1.5"/>
+    <g fill="#78917f">
+      <rect x="31" y="20" width="124" height="22"/><rect x="31" y="144" width="124" height="22"/>
+      <rect x="20" y="31" width="22" height="124"/><rect x="144" y="31" width="22" height="124"/>
+    </g>
+    <use href="#bead" x="31" y="31"/><use href="#bead" x="93" y="31"/><use href="#bead" x="155" y="31"/>
+    <use href="#bead" x="31" y="93"/><use href="#bead" x="155" y="93"/>
+    <use href="#bead" x="31" y="155"/><use href="#bead" x="93" y="155"/><use href="#bead" x="155" y="155"/>
+    <rect x="68" y="68" width="50" height="50" fill="none" stroke="#a45f30" stroke-width="3" stroke-dasharray="6 4"/>
+  </g>
+  <g transform="translate(705 118)">
+    <rect width="186" height="186" fill="url(#grid)" stroke="#cbd4c7" stroke-width="1.5"/>
+    <g fill="#78917f"><rect x="31" y="20" width="62" height="22"/><rect x="31" y="144" width="62" height="22"/><rect x="20" y="31" width="22" height="124"/></g>
+    <use href="#bead" x="31" y="31"/><use href="#bead" x="93" y="31"/>
+    <use href="#bead" x="31" y="93"/>
+    <use href="#bead" x="31" y="155"/><use href="#bead" x="93" y="155"/>
+    <path d="M68 68H186M68 118H186" fill="none" stroke="#a45f30" stroke-width="3" stroke-dasharray="6 4"/>
+  </g>
+</svg>
