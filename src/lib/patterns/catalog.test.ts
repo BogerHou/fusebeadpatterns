@@ -20,7 +20,8 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(109);
+        expect(patterns).toHaveLength(110);
+        expect(patterns.filter(pattern => pattern.id !== 'minecraft-creeper-face-v1')).toHaveLength(109);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -46,8 +47,19 @@ describe('pattern library content integrity', () => {
                     expect(pattern.version).toBe('Wiki game depiction');
                     expect(pattern.source?.url).toMatch(/^https:\/\/stardewvalleywiki.com\/File:/);
                 } else if (pattern.collectionId === 'minecraft') {
-                    expect(pattern.version).toBe('Java Edition 1.21.1');
-                    expect(pattern.source?.url).toContain('/aef047f783f44424a591eeecf6b230d5bb0c8095/');
+                    if (pattern.id === 'minecraft-creeper-face-v1') {
+                        expect(pattern.kind).toBe('fan-art');
+                        expect(pattern.slug).toBe('minecraft/creeper-face');
+                        expect(pattern.version).toBe('Hand-drawn Creeper face fan art v1');
+                        expect(pattern.source).toMatchObject({
+                            kind: 'fan-art', label: 'Minecraft: Meet the Creeper',
+                            url: 'https://www.minecraft.net/en-us/article/meet-creeper',
+                            rightsHolder: 'Mojang/Microsoft', permission: 'unconfirmed',
+                        });
+                    } else {
+                        expect(pattern.version).toBe('Java Edition 1.21.1');
+                        expect(pattern.source?.url).toContain('/aef047f783f44424a591eeecf6b230d5bb0c8095/');
+                    }
                 } else if (pattern.collectionId === 'super-mario') {
                     expect(['Super Mario Bros. (NES)', 'Super Mario Bros. 3 (NES)']).toContain(pattern.version);
                     expect(pattern.source?.url).toMatch(/^https:\/\/www.mariowiki.com\/File:/);
@@ -78,7 +90,8 @@ describe('pattern library content integrity', () => {
         }
         expect(getPatternsForCollection('stardew-valley')).toHaveLength(6);
         expect(getPatternsForCollection('pokemon')).toHaveLength(46);
-        expect(getPatternsForCollection('minecraft')).toHaveLength(28);
+        expect(getPatternsForCollection('minecraft')).toHaveLength(29);
+        expect(getPatternsForCollection('minecraft').filter(pattern => pattern.id !== 'minecraft-creeper-face-v1')).toHaveLength(28);
         expect(getPatternsForCollection('super-mario')).toHaveLength(15);
         expect(getPatternsForCollection('kirby')).toHaveLength(3);
         expect(getPatternBySlug('missing')).toBeUndefined();

@@ -16,6 +16,7 @@ import { patternLanguageAlternates } from '@/lib/i18n/metadata';
 import { PatternGrid } from './PatternCards';
 import { toLocalizedPatternCard } from './LocalizedPatternCatalog';
 import PatternShare from './PatternShare';
+import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 export function localizedPatternMetadata(pattern: Pattern, locale: PatternLocale): Metadata {
@@ -34,6 +35,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
     const title = getLocalizedPatternTitle(pattern, locale);
     const href = `/${locale}/patterns/${pattern.slug}`;
     const pdf = getLocalizedPatternPdf(pattern, locale);
+    const fanArtNotice = getPatternFanArtNotice(pattern, locale);
     const letterPdf = getLocalizedPatternLetterPdf(pattern, locale);
     const related = pattern.id === 'original-santa-hat'
         ? patterns.filter(item => patternTopics.find(topic => topic.slug === 'christmas')?.patternIds.includes(item.id))
@@ -56,6 +58,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                         <dl className="my-6 grid grid-cols-2 gap-4 text-sm">
                             {[[copy.design, `${pattern.motifWidth} × ${pattern.motifHeight}`], [copy.board, `${pattern.gridWidth} × ${pattern.gridHeight} MIDI`], [copy.beads, pattern.beads], [copy.colors, pattern.colorCount]].map(([label, value]) => <div key={label}><dt className="text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}
                         </dl>
+                        {fanArtNotice && <p className="mb-4 text-sm leading-7 text-muted">{fanArtNotice} <a href="mailto:contact@fusebeadpatterns.art" className="text-link">contact@fusebeadpatterns.art</a></p>}
                         <div className="flex flex-wrap gap-3">
                             <a href={pdf.href} hrefLang={pdf.language} download {...tracking} data-pattern-format="pdf" className="button-primary">{letterPdf ? copy.a4Pdf : pdf.language === locale ? copy.pdf : copy.englishPdf}</a>
                             {letterPdf && <a href={letterPdf.href} hrefLang={letterPdf.language} download {...tracking} data-pattern-format="pdf" className="button-secondary">{copy.letterPdf}</a>}

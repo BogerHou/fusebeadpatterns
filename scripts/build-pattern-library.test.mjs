@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { access, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,13 +21,16 @@ import {
     stageSelectedAssets,
     validateOriginalPerlerProject,
     validateWinterOriginalPerlerProject,
+    validateAdaptedPatternSource,
     winterPublishedCatalogBaseline,
     writeExclusive,
 } from './build-pattern-library.mjs';
+import { fanArtAddition, fanArtDescription, fanArtSource, fanArtPublishedCatalogBaseline, assembleFanArtPromotion, validateFanArtEditorial, validateFanArtPerlerProject, assertFanArtPackPdfReady } from './lib/fan-art-pattern.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const current = parsePublishedCatalog(await readFile(path.join(root, 'src/lib/patterns/catalog.ts'), 'utf8'));
-const winterPublished = winterPublishedCatalogBaseline(current);
+const fanArtPublished = fanArtPublishedCatalogBaseline(current);
+const winterPublished = winterPublishedCatalogBaseline(fanArtPublished);
 const published = publishedCatalogBaseline(winterPublished);
 const selectedId = 'original-santa-hat';
 const addition = { ...structuredClone(published.patterns.at(-1)), id: selectedId, slug: 'santa-hat', title: 'Santa Hat', version: 'Original Santa hat design v1' };
@@ -309,4 +313,223 @@ test('winter original rows, Perler colours, material counts and native project p
         mutation(changed);
         assert.throws(() => validateWinterOriginalPerlerProject(pattern, changed, perlerRows), /Winter|winter/);
     }
+});
+
+const fanArtCatalogEntry = () => ({
+    ...structuredClone(fanArtPublished.patterns.at(-1)), ...fanArtAddition, collectionId: 'minecraft',
+    source: { label: fanArtSource.label, url: fanArtSource.pageUrl, description: fanArtDescription, kind: 'fan-art', rightsHolder: fanArtSource.rightsHolder, permission: 'unconfirmed' },
+});
+
+test('fan-art mode explicitly selects only Creeper with all fourteen reviewed inputs', async () => {
+    const options = parsePromotionOptions(['--promote-id', fanArtAddition.id, '--check-only']);
+    assert.equal(options.fanArt, true);
+    assert.equal(options.winter, false);
+    assert.equal(options.inputs.length, 14);
+    assert.match(options.inputs.at(-1), /2026-10-10\/creeper-face-fan-art-v1$/);
+    await assert.rejects(main(['--promote-id', fanArtAddition.id, '--check-only', '/private/new-only']), /all 14 sourcepack/);
+    for (const id of [selectedId, ...winterIds]) for (const ids of [[id, fanArtAddition.id], [fanArtAddition.id, id]]) {
+        assert.throws(() => parsePromotionOptions(ids.flatMap(id => ['--promote-id', id]).concat('--check-only')), /cannot be mixed/);
+        assert.throws(() => selectedPromotionEntries([], ids), /Only explicitly reviewed/);
+    }
+    assert.throws(() => parsePromotionOptions(['--promote-id', fanArtAddition.id, '--promote-id', fanArtAddition.id, '--check-only']), /Duplicate/);
+    assert.throws(() => parsePromotionOptions(['--promote-id', 'minecraft-creeper-face-v2', '--check-only']), /published IDs cannot be regenerated/);
+});
+
+test('the independent 95dc lock preserves every old 109 object, nested field order and collection', () => {
+    assert.equal(fanArtPublished.patterns.length, 109);
+    assert.equal(createHash('sha256').update(JSON.stringify(fanArtPublished)).digest('hex'), 'b6e6888efb0c0f57a05bab287c80a2ae630e73ba56031ca8b569616472a92215');
+    for (const mutation of [
+        c => { c.patterns[0].description += ' changed'; },
+        c => { c.patterns[0].assets.pdf += '?new'; },
+        c => { c.patterns.at(-1).assets.pdfLetter += '?new'; },
+        c => { const { pdf, ...assets } = c.patterns[0].assets; c.patterns[0].assets = { pdf, ...assets }; },
+        c => { const { id, ...rest } = c.patterns[0]; c.patterns[0] = { ...rest, id }; },
+        c => { [c.patterns[0], c.patterns[1]] = [c.patterns[1], c.patterns[0]]; },
+        c => { [c.collections[0], c.collections[1]] = [c.collections[1], c.collections[0]]; },
+        c => { c.patterns.pop(); },
+        c => { c.patterns[1] = structuredClone(c.patterns[0]); },
+        c => { c.patterns.push({ ...fanArtCatalogEntry(), id: 'unreviewed-fan-art' }); },
+    ]) {
+        const changed = structuredClone(fanArtPublished);
+        mutation(changed);
+        assert.throws(() => fanArtPublishedCatalogBaseline(changed), /109 catalog/);
+    }
+});
+
+test('fan-art assembly keeps a non-null character source and exactly one reviewed addition', () => {
+    const candidate = fanArtCatalogEntry(), reconstructed = [...structuredClone(fanArtPublished.patterns), candidate];
+    const promoted = assembleFanArtPromotion(fanArtPublished, fanArtPublished.collections, reconstructed, [fanArtAddition.id]);
+    assert.deepEqual(promoted, reconstructed);
+    const recorded = { collections: fanArtPublished.collections, patterns: promoted };
+    assert.deepEqual(fanArtPublishedCatalogBaseline(recorded), fanArtPublished);
+    assert.deepEqual(assembleFanArtPromotion(recorded, recorded.collections, reconstructed, [fanArtAddition.id]), promoted);
+    for (const mutation of [
+        p => { p.kind = 'original'; }, p => { p.kind = 'source-adapted'; },
+        p => { p.source = null; }, p => { delete p.source; },
+        p => { p.source.description = 'Based on the original Java Edition 1.21.1 item texture in the pinned archive.'; },
+        p => { p.source.permission = 'licensed'; }, p => { p.source.url += '?new'; },
+        p => { p.slug = 'creeper'; }, p => { p.title = 'Original Monster'; }, p => { p.version = 'Original scene'; },
+    ]) {
+        const changed = structuredClone(reconstructed);
+        mutation(changed.at(-1));
+        assert.throws(() => assembleFanArtPromotion(fanArtPublished, fanArtPublished.collections, changed, [fanArtAddition.id]), /explicit fan-art identity/);
+        assert.throws(() => assembleFanArtPromotion(recorded, recorded.collections, changed, [fanArtAddition.id]), /recorded fan-art entry/);
+    }
+    const changed = structuredClone(reconstructed);
+    changed[0].notes.reverse();
+    assert.throws(() => assembleFanArtPromotion(fanArtPublished, fanArtPublished.collections, changed, [fanArtAddition.id]), /Every published 109/);
+    assert.throws(() => assembleFanArtPromotion(fanArtPublished, fanArtPublished.collections, reconstructed.slice(1), [fanArtAddition.id]), /all 109 entries/);
+    assert.throws(() => assembleFanArtPromotion(fanArtPublished, fanArtPublished.collections, reconstructed, [winterIds[0]]), /only the explicit reviewed/);
+});
+
+function fanArtProjectFixture() {
+    // Independently reviewed authored face rows, not an image-derived alpha fixture.
+    const face = ['GHHGGGGGGGGGGGGG', 'GHHGGGGGGGHHGGGG', 'GGGGGGHHGGHHGGGG', 'GGGGGGHHGGGGGGGG', 'GGKKKKGGGGKKKKHH', 'GGKKKKGGGGKKKKHH', 'GGKKKKGGGGKKKKGG', 'GGKKKKGGGGKKKKGG', 'HHGGGGKKKKGGHHGG', 'HHGGGGKKKKGGHHGG', 'GGGGKKKKKKKKGGGG', 'GGGGKKKKKKKKGGGG', 'GGHHKKKKKKKKHHGG', 'GGHHKKKKKKKKHHGG', 'HHGGKKGGGGKKGGHH', 'HHGGKKGGGGKKGGHH'];
+    const rows = [...Array(6).fill('.'.repeat(29)), ...face.map(row => '.'.repeat(6) + row + '.'.repeat(7)), ...Array(7).fill('.'.repeat(29))];
+    const palette = {
+        G: { symbol: 'G', ref: '80-19080', name: 'Green', rgb: [77, 171, 100], hex: '#4dab64', count: 136 },
+        K: { symbol: 'K', ref: '80-19018', name: 'Black', rgb: [50, 50, 52], hex: '#323234', count: 80 },
+        H: { symbol: 'H', ref: '80-19061', name: 'Kiwi Lime', rgb: [105, 184, 69], hex: '#69b845', count: 40 },
+    };
+    const pattern = { ...fanArtAddition, source: { ...fanArtSource }, width: 29, height: 29, rows, palette, colorCount: 3, beads: 256, bounds: { x: 6, y: 6, width: 16, height: 16 }, components: 1, requiresBacking: false, weakBridges: [] };
+    const pixels = Buffer.alloc(29 * 29 * 4);
+    rows.forEach((row, y) => [...row].forEach((symbol, x) => { if (symbol !== '.') pixels.set([...palette[symbol].rgb, 255], (y * 29 + x) * 4); }));
+    const entries = Object.values(palette).map(colour => ({ name: colour.name, ref: colour.ref, symbol: colour.symbol, prefix: 'P', enabled: true, color: { r: colour.rgb[0], g: colour.rgb[1], b: colour.rgb[2], a: 255 } }));
+    const project = { type: 'bead-pattern-project-v1', version: 1, draft: { version: 1, selectedPaletteIds: ['perler'], boardId: 'midi', boardWidth: 1, boardHeight: 1, sourceMode: 'blank', imageSrc: null, fileName: pattern.id, pdfScaleMode: 'midi-5mm', editedPattern: { width: 29, height: 29, byteLength: pixels.length, data: pixels.toString('base64') }, activePalettes: [{ name: 'Perler Midi', entries }] } };
+    const editorial = { ...fanArtAddition, description: 'Unofficial Creeper face bead pattern.', reference: { version: fanArtAddition.version, label: fanArtSource.label, description: fanArtDescription } };
+    const perlerRows = Object.values(palette).map(colour => [colour.ref, colour.name, 'unused CSV symbol', ...colour.rgb]);
+    return { pattern, project, editorial, perlerRows };
+}
+
+test('fan-art provenance rejects official-texture relabelling, original-character claims and invented permissions', () => {
+    const { pattern, project, editorial, perlerRows } = fanArtProjectFixture();
+    assert.doesNotThrow(() => validateFanArtEditorial(pattern, editorial));
+    assert.doesNotThrow(() => validateFanArtPerlerProject(pattern, project, perlerRows));
+    for (const mutation of [
+        p => { p.kind = 'original'; }, p => { p.kind = 'source-adapted'; }, p => { p.id += '-new'; },
+        p => { p.slug = 'minecraft/creeper'; }, p => { p.title = 'Monster'; }, p => { p.version = 'Original scene'; },
+        p => { p.source = null; }, p => { delete p.source; },
+        p => { p.source.sourceTextureUsed = true; }, p => { p.source.creationMethod = 'official-alpha-extraction'; },
+        p => { p.source.redistributionPermission = 'CC0'; }, p => { p.source.unofficial = false; },
+        p => { p.source.pageUrl += '?new'; }, p => { p.source.sha256 = 'an-official-image'; },
+    ]) {
+        const changed = structuredClone(pattern); mutation(changed);
+        assert.throws(() => validateFanArtPerlerProject(changed, project, perlerRows), /authored-grid provenance/);
+    }
+    for (const mutation of [e => { e.kind = 'original'; }, e => { e.slug += '-new'; }, e => { e.title = 'Monster'; }, e => { e.version += 'x'; }, e => { e.reference.description += ' Licensed.'; }, e => { delete e.reference; }]) {
+        const changed = structuredClone(editorial); mutation(changed);
+        assert.throws(() => validateFanArtEditorial(pattern, changed), /honest character-reference/);
+    }
+});
+
+test('fan-art frozen grid, material quantities and project preserve exact RGBA including empty cells', () => {
+    const { pattern, project, perlerRows } = fanArtProjectFixture();
+    for (const mutation of [
+        p => { p.rows[6] = p.rows[6].replace('H', 'G'); }, p => { p.width = 28; },
+        p => { p.palette.G.count = 137; }, p => { p.palette.G.rgb[0]++; }, p => { p.palette.K.ref = '80-19001'; },
+        p => { p.palette.H.symbol = 'X'; }, p => { p.colorCount = 2; }, p => { p.beads = 255; },
+        p => { p.bounds.x = 5; }, p => { p.components = 2; }, p => { p.requiresBacking = true; }, p => { p.weakBridges = [{ row: 7, column: 7 }]; },
+    ]) {
+        const changed = structuredClone(pattern); mutation(changed);
+        assert.throws(() => validateFanArtPerlerProject(changed, project, perlerRows), /Fan-art/);
+    }
+    for (const mutation of [
+        p => { p.draft.selectedPaletteIds = ['hama']; }, p => { p.draft.boardWidth = 2; }, p => { p.draft.sourceMode = 'image'; }, p => { p.draft.imageSrc = '/official-texture.png'; },
+        p => { p.draft.pdfScaleMode = 'fit'; }, p => { p.draft.activePalettes[0].entries[0].enabled = false; },
+        p => { p.draft.activePalettes[0].entries[1].color.a = 0; },
+        p => { const pixels = Buffer.from(p.draft.editedPattern.data, 'base64'); pixels[0] = 1; p.draft.editedPattern.data = pixels.toString('base64'); },
+        p => { const pixels = Buffer.from(p.draft.editedPattern.data, 'base64'); pixels[3] = 255; p.draft.editedPattern.data = pixels.toString('base64'); },
+        p => { const pixels = Buffer.from(p.draft.editedPattern.data, 'base64'); pixels[(6 * 29 + 6) * 4] = 0; p.draft.editedPattern.data = pixels.toString('base64'); },
+    ]) {
+        const changed = structuredClone(project); mutation(changed);
+        assert.throws(() => validateFanArtPerlerProject(pattern, changed, perlerRows), /Fan-art/);
+    }
+});
+
+test('all promotion modes retain the original source-adapted SHA and fidelity gates', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'fusebead-source-gates-test-'));
+    try {
+        const bytes = Buffer.from('unchanged reviewed source fixture'), sha256 = createHash('sha256').update(bytes).digest('hex');
+        await writeFile(path.join(directory, 'source.png'), bytes);
+        const pattern = { id: 'existing-source-adapted', kind: 'source-adapted', source: { file: 'source.png', sha256 }, fidelity: { silhouetteChanges: 0, colorMerges: 0, interpolated: false, redrawn: false } };
+        await validateAdaptedPatternSource(directory, pattern);
+        for (const mutation of [p => { delete p.source; }, p => { delete p.source.sha256; }, p => { p.source.sha256 = 'bad'; }, p => { p.fidelity.silhouetteChanges = 1; }, p => { p.fidelity.colorMerges = 1; }, p => { p.fidelity.interpolated = true; }, p => { p.fidelity.redrawn = true; }, p => { p.source.isComposite = true; }]) {
+            const changed = structuredClone(pattern); mutation(changed);
+            await assert.rejects(validateAdaptedPatternSource(directory, changed), /Unreviewed fidelity|Source hash changed|Missing composition/);
+        }
+        const composite = { ...pattern, source: { ...pattern.source, isComposite: true, compositionEvidence: 'evidence.txt', layers: [{ file: 'source.png', sha256, role: 'layer' }] } };
+        await writeFile(path.join(directory, 'evidence.txt'), 'recorded composition evidence');
+        await validateAdaptedPatternSource(directory, composite);
+        composite.source.layers[0].sha256 = 'changed';
+        await assert.rejects(validateAdaptedPatternSource(directory, composite), /Source layer changed/);
+        await writeFile(path.join(directory, 'source.png'), 'different source bytes');
+        await assert.rejects(validateAdaptedPatternSource(directory, pattern), /Source hash changed/);
+    } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+// Independent expected contract: do not derive this list from the gate under test.
+const fanArtPdfFiles = [
+    'reference-pattern-library.pdf', 'reference-pattern-library-us-letter.pdf',
+    'localized-pdfs/de/pattern.pdf', 'localized-pdfs/de/pattern-letter.pdf',
+    'localized-pdfs/fr/pattern.pdf', 'localized-pdfs/fr/pattern-letter.pdf',
+    'localized-pdfs/ja/pattern.pdf', 'localized-pdfs/ja/pattern-letter.pdf',
+];
+// Only a signature fixture for the file/record gate; not an authored PDF document.
+const fanArtPdfSignatureFixture = '%PDF-1.7\n% Signature-only unit fixture\n';
+async function writeFanArtPdfGateFixtures(directory) {
+    for (const file of fanArtPdfFiles) {
+        await mkdir(path.dirname(path.join(directory, file)), { recursive: true });
+        await writeFile(path.join(directory, file), fanArtPdfSignatureFixture);
+    }
+}
+
+test('fan-art pending PDF states cannot manufacture review or mutate a rights declaration', async () => {
+    const source = { state: 'private-fan-art-grid-candidate-pdf-pending', pendingPdfFiles: ['reference-pattern-library.pdf'], reviewedPdfFiles: [...fanArtPdfFiles], patterns: [{ ...fanArtAddition, source: { ...fanArtSource } }] };
+    const before = JSON.stringify(source);
+    await assert.rejects(assertFanArtPackPdfReady('/unread-pending-pack', source), /pending review/);
+    assert.equal(JSON.stringify(source), before);
+    await assert.rejects(assertFanArtPackPdfReady('/unread-pending-pack', { ...source, pendingPdfFiles: [] }), /promotion is blocked/);
+    await assert.rejects(assertFanArtPackPdfReady('/unread-pending-pack', { ...source, state: 'private-reviewed-fan-art-sourcepack' }), /promotion is blocked/);
+    await assert.rejects(assertFanArtPackPdfReady('/unread-pending-pack', { state: 'private-reviewed-fan-art-sourcepack', pendingPdfFiles: [] }), /no reviewed PDF record/);
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'fusebead-fan-art-pdf-rejection-test-'));
+    try {
+        const reviewed = { ...source, state: 'private-reviewed-fan-art-sourcepack', pendingPdfFiles: [] };
+        await assert.rejects(assertFanArtPackPdfReady(directory, reviewed), /Missing reviewed fan-art PDF/);
+        await writeFile(path.join(directory, 'reference-pattern-library.pdf'), 'not a PDF');
+        await assert.rejects(assertFanArtPackPdfReady(directory, reviewed), /Invalid reviewed fan-art PDF/);
+    } finally { await rm(directory, { recursive: true, force: true }); }
+    assert.deepEqual(selectedPdfPages({ patterns: [{ ...fanArtAddition, beads: 256 }] }, fanArtAddition.id), [{ id: fanArtAddition.id, title: fanArtAddition.title, beads: 256, index: 0, detailUrl: 'https://fusebeadpatterns.art/patterns/minecraft/creeper-face' }]);
+});
+
+test('fan-art reviewed PDF gate requires all six native A4 and Letter files', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'fusebead-creeper-eight-pdf-files-test-'));
+    try {
+        const source = { state: 'private-reviewed-fan-art-sourcepack', pendingPdfFiles: [], reviewedPdfFiles: [...fanArtPdfFiles] };
+        await writeFanArtPdfGateFixtures(directory);
+        await assert.doesNotReject(assertFanArtPackPdfReady(directory, source));
+        for (const file of fanArtPdfFiles.slice(2)) {
+            const destination = path.join(directory, file);
+            await rm(destination);
+            await assert.rejects(assertFanArtPackPdfReady(directory, source), { message: `Missing reviewed fan-art PDF: ${file}` });
+            await writeFile(destination, 'not a PDF');
+            await assert.rejects(assertFanArtPackPdfReady(directory, source), { message: `Invalid reviewed fan-art PDF: ${file}` });
+            await writeFile(destination, fanArtPdfSignatureFixture);
+        }
+        await assert.doesNotReject(assertFanArtPackPdfReady(directory, source));
+    } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('fan-art reviewed PDF gate requires a separate review record for each of eight files', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'fusebead-creeper-eight-pdf-records-test-'));
+    try {
+        await writeFanArtPdfGateFixtures(directory);
+        const source = { state: 'private-reviewed-fan-art-sourcepack', pendingPdfFiles: [], reviewedPdfFiles: [...fanArtPdfFiles], patterns: [{ ...fanArtAddition, source: { ...fanArtSource } }] };
+        const before = JSON.stringify(source);
+        for (const file of fanArtPdfFiles) {
+            const incomplete = { ...source, reviewedPdfFiles: fanArtPdfFiles.filter(reviewed => reviewed !== file) };
+            await assert.rejects(assertFanArtPackPdfReady(directory, incomplete), { message: `Fan-art sourcepack has no reviewed PDF record: ${file}` });
+        }
+        await assert.doesNotReject(assertFanArtPackPdfReady(directory, source));
+        assert.equal(JSON.stringify(source), before, 'PDF readiness must not manufacture review records or mutate character rights');
+    } finally { await rm(directory, { recursive: true, force: true }); }
 });

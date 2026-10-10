@@ -6,6 +6,14 @@ type Translation = Record<PatternLocale, string>;
 // matching a few words must not silently assign it another source's provenance.
 const sources = new Map<string, Translation>([
     [
+        'Hand-authored Creeper face fan art with a simplified green-and-black bead palette. The official Minecraft article is a character identity reference, not a licensed source file. This unofficial pattern is by Fuse Bead Patterns and is not approved by or associated with Mojang or Microsoft. Character rights belong to Mojang/Microsoft; permission for public redistribution is unconfirmed.',
+        {
+            de: 'Von Hand erstellte Fan-Art des Creeper-Gesichts mit vereinfachten grünen und schwarzen Perlenfarben. Der offizielle Minecraft-Artikel dient zur Identifizierung der Figur, nicht als lizenzierte Quelldatei. Diese inoffizielle Vorlage stammt von Fuse Bead Patterns und ist weder von Mojang oder Microsoft genehmigt noch mit ihnen verbunden. Die Figurenrechte liegen bei Mojang/Microsoft; eine Erlaubnis zur öffentlichen Weiterverbreitung ist nicht bestätigt.',
+            fr: 'Fan art du visage du Creeper dessiné à la main avec une palette simplifiée de perles vertes et noires. L’article officiel de Minecraft sert à identifier le personnage, pas de fichier source sous licence. Ce modèle non officiel de Fuse Bead Patterns n’est ni approuvé par Mojang ou Microsoft, ni associé à ces sociétés. Les droits du personnage appartiennent à Mojang/Microsoft ; l’autorisation de redistribution publique n’est pas confirmée.',
+            ja: '緑と黒の簡略化したビーズ配色で、クリーパーの顔を手作業で図案化したファンアートです。Minecraft公式記事はキャラクターの確認用の参照であり、使用許諾された画像素材ではありません。Fuse Bead Patternsによる非公式図案で、MojangまたはMicrosoftの承認・提携はありません。キャラクターの権利はMojang/Microsoftに帰属し、公開再配布の許可は確認されていません。',
+        },
+    ],
+    [
         'Based on this community-maintained Wiki game depiction. The verified 3× display enlargement was reduced to its native pixel grid without interpolation.',
         {
             de: 'Grundlage ist diese von der Wiki-Community gepflegte Darstellung aus dem Spiel. Die nachweislich 3× vergrößerte Anzeige wurde ohne Interpolation auf das ursprüngliche Pixelraster zurückgeführt.',

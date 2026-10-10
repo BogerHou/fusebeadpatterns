@@ -13,6 +13,7 @@ import { patterns, patternCollections, getPatternBySlug, getCollectionBySlug, ge
 import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib/patterns/topics';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 import { brandGuideHref, getCollectionIntro, getFewestColorsPattern, getPatternIntro } from '@/lib/patterns/content';
+import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
 
 type Props = { params: Promise<{ segments: string[] }> };
 const siteUrl = 'https://fusebeadpatterns.art';
@@ -56,6 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 function PatternDetail({ pattern }: { pattern: Pattern }) {
+    const fanArtNotice = getPatternFanArtNotice(pattern);
     const collection = patternCollections.find((item) => item.id === pattern.collectionId);
     const href = getPatternHref(pattern);
     const christmasTopic = getPatternTopicBySlug('christmas');
@@ -86,6 +88,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                                 ['Colors', `${pattern.colorCount} Perler colors`],
                             ].map(([label, value]) => <div key={label}><dt className="text-[#59685d]">{label}</dt><dd className="mt-1.5 font-semibold text-[#243e36]">{value}</dd></div>)}
                         </dl>
+                        {fanArtNotice && <p className="mb-4 text-sm leading-7 text-[#59685d]">{fanArtNotice} <a href="mailto:contact@fusebeadpatterns.art" className="text-link">contact@fusebeadpatterns.art</a></p>}
                         <div className="flex flex-wrap gap-3">
                             <a href={pattern.assets.pdf} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="pdf" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="button-primary">{pattern.assets.pdfLetter ? 'Download A4 PDF' : 'Download PDF'}</a>
                             {pattern.assets.pdfLetter && <a href={pattern.assets.pdfLetter} download data-pattern-event="pattern_download" data-pattern-id={pattern.id} data-pattern-format="pdf" data-pattern-palette="perler" data-pattern-entry="pattern_detail" className="button-secondary">Download US Letter PDF</a>}

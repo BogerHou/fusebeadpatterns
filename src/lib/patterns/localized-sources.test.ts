@@ -5,6 +5,9 @@ import { localizePatternSourceDescription } from './localized-sources';
 const locales = ['de', 'fr', 'ja'] as const;
 const sourcedPatterns = patterns.filter(pattern => pattern.source !== null);
 const descriptions = [...new Set(sourcedPatterns.map(pattern => pattern.source!.description))];
+// Match an official bead/pattern claim itself, not an official identity article
+// followed by a separate sentence declaring that the authored chart is 非公式.
+const unsupportedSourceClaims = /offizielle Bügelperlen|autorisé gratuitement|modèle officiel|(?<!非)公式(?:の)?(?:アイロン)?(?:ビーズ(?:図案|パターン)?|図案|パターン)|実物.*検証済み|CC0|Creative Commons|iron-tested/i;
 
 function sourceFor(id: string): string {
     const source = patterns.find(pattern => pattern.id === id)?.source;
@@ -15,8 +18,11 @@ function sourceFor(id: string): string {
 describe('reviewed native-language pattern source descriptions', () => {
     it('covers every actual catalog source in all three languages without changing the source records', () => {
         const before = JSON.stringify(patterns.map(pattern => pattern.source));
-        expect(sourcedPatterns).toHaveLength(98);
-        expect(descriptions).toHaveLength(43);
+        expect(sourcedPatterns).toHaveLength(99);
+        expect(descriptions).toHaveLength(44);
+        const earlierSources = sourcedPatterns.filter(pattern => pattern.id !== 'minecraft-creeper-face-v1');
+        expect(earlierSources).toHaveLength(98);
+        expect(new Set(earlierSources.map(pattern => pattern.source!.description)).size).toBe(43);
         for (const pattern of sourcedPatterns) for (const locale of locales) {
             const description = pattern.source!.description;
             const translated = localizePatternSourceDescription(description, locale);
@@ -62,9 +68,20 @@ describe('reviewed native-language pattern source descriptions', () => {
             }
             for (const description of descriptions) {
                 const translated = localizePatternSourceDescription(description, locale);
-                expect(translated).not.toMatch(/offizielle Bügelperlen|autorisé gratuitement|modèle officiel|公式.*(?:ビーズ|図案)|実物.*検証済み|CC0|Creative Commons|iron-tested/i);
+                expect(translated).not.toMatch(unsupportedSourceClaims);
             }
         }
+    });
+
+    it('still rejects Japanese official-pattern claims without misreading unofficial fan-art disclosures', () => {
+        for (const claim of ['Minecraft公式図案です。', '公式のビーズ図案です。', '公式アイロンビーズ図案です。']) {
+            expect(claim).toMatch(unsupportedSourceClaims);
+        }
+        for (const disclosure of [
+            'Minecraft公式記事はキャラクターの確認用です。これは非公式図案です。',
+            'Minecraft公式記事を参照した非公式ビーズ図案です。',
+            localizePatternSourceDescription(sourceFor('minecraft-creeper-face-v1'), 'ja'),
+        ]) expect(disclosure).not.toMatch(unsupportedSourceClaims);
     });
 
     it('preserves static frames, transparency and the flat block-face limitation', () => {
@@ -97,6 +114,21 @@ describe('reviewed native-language pattern source descriptions', () => {
         ];
         for (const description of unreviewed) for (const locale of locales) {
             expect(() => localizePatternSourceDescription(description, locale)).toThrow(`Untranslated ${locale} pattern source:`);
+        }
+    });
+    it('distinguishes hand-authored Creeper fan art from a licensed official texture in every language', () => {
+        const description = 'Hand-authored Creeper face fan art with a simplified green-and-black bead palette. The official Minecraft article is a character identity reference, not a licensed source file. This unofficial pattern is by Fuse Bead Patterns and is not approved by or associated with Mojang or Microsoft. Character rights belong to Mojang/Microsoft; permission for public redistribution is unconfirmed.';
+        const concepts = {
+            de: { drawn: /Von Hand/, unofficial: /inoffizielle/, permission: /Weiterverbreitung ist nicht bestätigt/, notLicensed: /nicht als lizenzierte Quelldatei/ },
+            fr: { drawn: /dessiné à la main/, unofficial: /non officiel/, permission: /redistribution publique n’est pas confirmée/, notLicensed: /pas de fichier source sous licence/ },
+            ja: { drawn: /手作業/, unofficial: /非公式/, permission: /再配布の許可は確認されていません/, notLicensed: /使用許諾された画像素材ではありません/ },
+        };
+        for (const locale of locales) {
+            const translated = localizePatternSourceDescription(description, locale);
+            for (const word of Object.values(concepts[locale])) expect(translated).toMatch(word);
+            for (const name of ['Minecraft', 'Fuse Bead Patterns', 'Mojang', 'Microsoft']) expect(translated).toContain(name);
+            expect(() => localizePatternSourceDescription(description.replace('unconfirmed', 'confirmed'), locale)).toThrow('Untranslated');
+            expect(() => localizePatternSourceDescription(description.replace('Hand-authored', 'Official'), locale)).toThrow('Untranslated');
         }
     });
 });
