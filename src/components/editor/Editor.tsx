@@ -654,6 +654,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const pendingColorSelectionRef = useRef<ColorPickerSelection | null>(null);
     const pendingEditedPatternRef = useRef<EditorPatternDraft | null>(null);
     const restoredPaletteIdsRef = useRef<string[] | null>(null);
+    const resolvedPaletteIdsRef = useRef<string[] | null>(null);
     const paletteSyncAbortRef = useRef<AbortController | null>(null);
     const activeEditorColorValueRef = useRef<string | null>(null);
     const editorColorSelectionModeRef = useRef<'auto' | 'manual'>('auto');
@@ -1106,6 +1107,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             restoredPaletteIdsRef.current = draft.activePalettes.length > 0
                 ? draft.selectedPaletteIds
                 : null;
+            resolvedPaletteIdsRef.current = draft.activePalettes.length > 0
+                ? draft.selectedPaletteIds
+                : null;
             setSelectedPaletteIds(draft.selectedPaletteIds);
             setActivePalettes(draft.activePalettes);
             setBoardId(draft.boardId);
@@ -1310,6 +1314,62 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         };
     }, [previewDataUrl]);
 
+    const applySelectedPalettes = React.useEffectEvent(async (
+        loadedPalettes: Palette[], controller: AbortController, paletteIds: string[]
+    ) => {
+        if (controller.signal.aborted || settingsUpdateRef.current) return;
+        const nextPalettes = mergePaletteEnabledState(loadedPalettes, activePalettes);
+        const project = currentProjectRef.current;
+        const pixels = reducedColorRef.current;
+        const canvas = canvasRef.current;
+        if (project && pixels && canvas && !imageGenerationRef.current && !settingsUpdateRef.current) {
+            finishActiveStroke();
+            const width = canvas.width, height = canvas.height;
+            const history = patternHistoryRef.current;
+            const pixelSnapshot = pixels.slice();
+            const sourcePalettes = clonePalettes(project.paletteConfiguration.palettes);
+            const convert = (data: Uint8ClampedArray, w: number, h: number) => remapPatternPalette(
+                data, w, h, nextPalettes, matchingId,
+                { signal: controller.signal, sourcePalettes }
+            );
+            const [nextPixels, nextHistory] = await Promise.all([
+                convert(pixelSnapshot, width, height),
+                history.remapPixels(data => convert(data, data.length / 4, 1)),
+            ]);
+            if (controller.signal.aborted || currentProjectRef.current !== project ||
+                reducedColorRef.current !== pixels || patternHistoryRef.current !== history ||
+                canvas.width !== width || canvas.height !== height) return;
+            if (pixels.some((channel, index) => channel !== pixelSnapshot[index])) {
+                throw new Error('Pattern changed while colors were being converted. Try selecting the palette again.');
+            }
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Canvas 2D context is unavailable.');
+            const imageData = context.createImageData(width, height);
+            imageData.data.set(nextPixels);
+            const usage = computeUsage(nextPixels, nextPalettes);
+            const preview = createPatternPreviewDataUrl(nextPixels, width, height,
+                project.boardConfiguration.board.nbBeadPerRow, rendererSettings.showGrid);
+            // Completed image and imported/blank grids use the same transaction.
+            // Convert the existing pixels rather than regenerating an image and
+            // losing edits. Exports and UI usage must share this exact palette.
+            context.putImageData(imageData, 0, 0);
+            reducedColorRef.current = nextPixels;
+            project.paletteConfiguration.palettes = clonePalettes(nextPalettes);
+            patternHistoryRef.current = nextHistory;
+            skipNextPaletteRebuildRef.current = sourceMode === 'image';
+            setBeadsUsage(usage);
+            setPreviewDataUrl(preview);
+            syncEditorColorAfterPatternBuild(usage, nextPalettes);
+            setManualPatternRevision(previous => previous + 1);
+            setHistoryRevision(previous => previous + 1);
+        }
+        if (controller.signal.aborted) return;
+        resolvedPaletteIdsRef.current = paletteIds;
+        paletteHistoryRef.current = [];
+        setActivePalettes(nextPalettes);
+        setErrorMessage(null);
+    });
+
     useEffect(() => {
         if (!isEditorDraftReady) {
             return;
@@ -1328,20 +1388,22 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     return;
                 }
 
-                paletteHistoryRef.current = [];
-                setActivePalettes((previousPalettes) =>
-                    controller.signal.aborted
-                        ? previousPalettes
-                        : mergePaletteEnabledState(loadedPalettes, previousPalettes)
-                );
-                setErrorMessage(null);
+                await applySelectedPalettes(loadedPalettes, controller, selectedPaletteIds);
             } catch (error) {
                 if (controller.signal.aborted) return;
+                const previousIds = resolvedPaletteIdsRef.current;
+                if (previousIds) {
+                    restoredPaletteIdsRef.current = previousIds;
+                    setSelectedPaletteIds(previousIds);
+                }
                 const nextMessage =
                     error instanceof Error
                         ? error.message
                         : 'Unexpected palette loading error.';
                 setErrorMessage(nextMessage);
+            } finally {
+                if (!controller.signal.aborted && paletteSyncAbortRef.current === controller &&
+                    !imageGenerationRef.current && !settingsUpdateRef.current) setProcessing(false);
             }
         }
 
@@ -1350,6 +1412,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
 
         restoredPaletteIdsRef.current = null;
+        setProcessing(true);
         void syncSelectedPalettes();
 
         return () => {
@@ -2176,6 +2239,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             const nextPalette = await loadPalette(
                 pendingPrimaryPaletteId, controller.signal
             );
+            if (controller.signal.aborted || settingsUpdateRef.current !== controller) return;
             const nextPalettes = mergePaletteEnabledState(
                 [nextPalette],
                 activePalettes
@@ -2194,7 +2258,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     }
                 );
 
-                if (controller.signal.aborted || currentProjectRef.current !== currentProject ||
+                if (controller.signal.aborted || settingsUpdateRef.current !== controller || currentProjectRef.current !== currentProject ||
                     reducedColorRef.current !== currentPattern) {
                     return;
                 }
@@ -2236,6 +2300,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             // This palette was already loaded above. A second fetch could rebuild
             // the image and replace the grid that was just converted.
             restoredPaletteIdsRef.current = nextPaletteIds;
+            resolvedPaletteIdsRef.current = nextPaletteIds;
             setSelectedPaletteIds(nextPaletteIds);
             setActivePalettes(nextPalettes);
             setColorPickerPaletteId(pendingPrimaryPaletteId);
@@ -2269,6 +2334,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     };
 
     const handlePaletteSelection = (paletteId: string) => {
+        finishActiveStroke();
         setSelectedPaletteIds((previousPaletteIds) => {
             const isSelected = previousPaletteIds.includes(paletteId);
 
@@ -2283,12 +2349,20 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                       return [...previousPaletteIds, paletteId].includes(option.id);
                   }).map((option) => option.id);
 
+            cancelSettingsUpdate();
+            paletteSyncAbortRef.current?.abort();
+            setProcessing(true);
             setErrorMessage(null);
             return nextPaletteIds;
         });
     };
 
     const handlePrimaryPaletteChange = (paletteId: string) => {
+        if (selectedPaletteIds.length === 1 && selectedPaletteIds[0] === paletteId) return;
+        finishActiveStroke();
+        cancelSettingsUpdate();
+        paletteSyncAbortRef.current?.abort();
+        setProcessing(true);
         setSelectedPaletteIds([paletteId]);
         setPendingPrimaryPaletteId(paletteId);
         setErrorMessage(null);

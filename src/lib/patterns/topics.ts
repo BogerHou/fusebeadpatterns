@@ -96,6 +96,7 @@ export const patternTopics: readonly PatternTopic[] = [
             'original-halloween-bat',
             'ghost-cat-pumpkin',
         ],
+        additionalPatternIds: ['original-black-cat'],
         selectionHeading: 'Choosing your Halloween pattern',
         selectionNotes: [
             'For a short color list, choose the ghost with black and white beads or the bat with three colors. The ghost cat and pumpkin use seven colors for the face, pumpkin and shaded details. Check the individual color list against your supplies.',

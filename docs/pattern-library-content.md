@@ -1,6 +1,6 @@
 # Pattern library content maintenance
 
-The 15 reviewed packs integrate 111 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 12 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
+The catalog integrates 113 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 14 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
 
 ## Content identity and versions
 
@@ -218,3 +218,11 @@ Both paper sizes keep one page, a 29 × 29 grid with 5 mm pitch, one matching sy
 ## Deferred and retired designs
 
 The first six unverified named concepts remain retired. Stardrop (interpolated reference), Strawberry Seeds (native grid not confirmed) and Prismatic Shard (38 native colors, pending a larger palette review) are excluded. Charizard is also deferred: its verified Gen V motif is 30 × 22 and must not be squeezed into a 29-column board. Do not recreate uncertain pixels to fill the collection. New collections should be added only when they contain useful reviewed content; the original designs do not yet require a separate collection landing page.
+
+### Original black cat
+
+`original-black-cat` is an ordinary front-facing sitting cat independently drawn from an empty grid. It is not a substitute for any named character. Its canonical private pack is `artifacts/pattern-samples/2026-10-11/original-black-cat-v1`; see `scripts/README-original-black-cat-sourcepack.md` and `scripts/README-black-cat-downloads.md`. Only this additional catalog object and its new resources are promoted. All earlier 112 objects, indexed-page metadata, resources and complete sitemap records stay preserved.
+
+The 16 × 16 motif starts at zero-based `(6,6)` on a 29 × 29 Midi canvas. It has 181 beads: 177 Black (`80-19018`) and 4 ordinary Yellow (`80-19003`). Row SHA-256 is `fc6a0bd7a4d4f67ea7c5b2cec7afc9e813d74db901b64a3d1b0e4afb2aa3822f`; RGBA SHA-256 is `fbf706e0c20bde55d98825408c5f2e1b94bc4be7a8ab298c1d8b248b99accb2d`. Empty RGBA cells are all zero. One digital component and zero digital cut points are layout checks, not a physical strength guarantee. Physical assembly and ironing have not been tested.
+
+English, German, French and Japanese detail pages use their own language and A4/US Letter PDFs. The native charts retain the original drawing and exact pixels; the dedicated `black-cat-labels` font contains only their shared reviewed text inventory and does not change old fonts. The new card is appended to the Halloween section; its original three-pattern selection and metadata remain intact. The separate Small collection retains its explicitly selected ten patterns.

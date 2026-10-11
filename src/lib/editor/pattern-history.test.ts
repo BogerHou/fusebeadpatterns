@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Color } from '../core/model/color/color.model';
 import { Palette, PaletteEntry } from '../core/model/palette/palette.model';
 import { computeUsage } from '../core/utils/utils';
+import { remapPatternPalette } from './pattern-palette';
 import {
     applyPatternPatch,
     createPatternPatch,
@@ -219,6 +220,84 @@ describe('PatternHistory', () => {
         expect(history.byteLength).toBe(0);
         expect(history.canUndo).toBe(false);
         expect(history.canRedo).toBe(false);
+    });
+});
+
+describe('PatternHistory palette conversion', () => {
+    const entry = (name: string, ref: string, rgba: [number, number, number, number]) => {
+        const value = new PaletteEntry(name, new Color(...rgba)); value.ref = ref; return value;
+    };
+    const source = [new Palette('Perler', [
+        entry('Black', 'B', [50, 50, 52, 255]), entry('White', 'W', [234, 239, 238, 255]), entry('Yellow', 'Y', [231, 206, 62, 255]),
+    ])];
+    const target = [new Palette('Hama', [
+        entry('Black', 'H18', [20, 19, 21, 255]), entry('White', 'H01', [233, 238, 234, 255]), entry('Yellow', 'H03', [233, 199, 4, 255]),
+    ])];
+    const convert = (pixels: Uint8ClampedArray) => remapPatternPalette(pixels, pixels.length / 4, 1, target, 'euclidean', { sourcePalettes: source });
+
+    it('maps colors absent from the current grid while preserving both stack orders and transparency', async () => {
+        const pixels = new Uint8ClampedArray([50, 50, 52, 255, 0, 0, 0, 0]);
+        const history = new PatternHistory();
+        for (const [index, color] of [[0, [234, 239, 238, 255]], [0, [231, 206, 62, 255]], [4, [50, 50, 52, 255]]] as const) {
+            const stroke = new PatternStroke(pixels); stroke.setPixel(index, color); history.push(stroke.finish());
+        }
+        history.undo(pixels);
+        const before = history.capture(pixels, 2, 1);
+        const next = await history.remapPixels(convert), mapped = await convert(pixels);
+        expect(next.capture(mapped, 2, 1)).not.toBeNull();
+        expect(history.capture(pixels, 2, 1)).toEqual(before);
+        expect(next.canUndo).toBe(true); expect(next.canRedo).toBe(true);
+        next.undo(mapped); expect([...mapped.subarray(0, 4)]).toEqual([233, 238, 234, 255]);
+        next.undo(mapped); expect([...mapped.subarray(0, 4)]).toEqual([20, 19, 21, 255]);
+        next.redo(mapped); expect([...mapped.subarray(0, 4)]).toEqual([233, 238, 234, 255]);
+        next.redo(mapped); expect([...mapped.subarray(0, 4)]).toEqual([233, 199, 4, 255]);
+        next.redo(mapped); expect([...mapped.subarray(4, 8)]).toEqual([20, 19, 21, 255]);
+    });
+
+    it('drops only merged no-op colors and retains the remaining edit positions', async () => {
+        const pixels = new Uint8ClampedArray([100, 100, 100, 255, 0, 0, 0, 0]);
+        const history = new PatternHistory();
+        for (const [index, color] of [[0, [110, 110, 110, 255]], [4, [50, 50, 52, 255]], [0, [120, 120, 120, 255]]] as const) {
+            const stroke = new PatternStroke(pixels); stroke.setPixel(index, color); history.push(stroke.finish());
+        }
+        history.undo(pixels);
+        const oneColor = [new Palette('one', [entry('Black', 'H18', [20, 19, 21, 255])])];
+        const convertToOne = (data: Uint8ClampedArray) => remapPatternPalette(data, data.length / 4, 1, oneColor, 'euclidean');
+        const next = await history.remapPixels(convertToOne), mapped = await convertToOne(pixels);
+        expect(next.capture(mapped, 2, 1)).not.toBeNull();
+        expect(next.canUndo).toBe(true); expect(next.canRedo).toBe(false);
+        const patch = next.undo(mapped)!;
+        expect([...patch.indices]).toEqual([4]);
+        expect([...mapped]).toEqual([20, 19, 21, 255, 0, 0, 0, 0]);
+        next.redo(mapped); expect([...mapped.subarray(4, 8)]).toEqual([20, 19, 21, 255]);
+    });
+
+    it('keeps both original stacks when conversion fails, aborts or changes alpha', async () => {
+        const pixels = new Uint8ClampedArray(8), history = new PatternHistory();
+        history.push(paint(pixels, 50)); history.push(paint(pixels, 100)); history.undo(pixels);
+        const before = history.capture(pixels, 2, 1);
+        for (const error of [new Error('load failed'), new DOMException('cancelled', 'AbortError')]) {
+            await expect(history.remapPixels(async () => { throw error; })).rejects.toBe(error);
+            expect(history.capture(pixels, 2, 1)).toEqual(before);
+        }
+        await expect(history.remapPixels(async data => { data[3] = 255; return data; })).rejects.toThrow('transparency');
+        expect(history.capture(pixels, 2, 1)).toEqual(before);
+    });
+
+    it('converts history wider than a browser canvas using the actual array-only quantization path', async () => {
+        const cells = 70_000, before = new Uint8ClampedArray(cells * 4), after = before.slice();
+        for (let offset = 0; offset < after.length; offset += 4) after.set([50, 50, 52, 255], offset);
+        const history = new PatternHistory(); history.push(createPatternPatch(before, after));
+        let packedWidth = 0;
+        const next = await history.remapPixels(async pixels => {
+            packedWidth = pixels.length / 4;
+            return convert(pixels);
+        });
+        expect(packedWidth).toBe(140_000);
+        const mapped = await convert(after);
+        expect(next.canUndo).toBe(true);
+        next.undo(mapped); expect(mapped).toEqual(before);
+        next.redo(mapped); expect([...mapped.subarray(-4)]).toEqual([20, 19, 21, 255]);
     });
 });
 

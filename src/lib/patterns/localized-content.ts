@@ -59,6 +59,7 @@ const subjects: Record<string, [string, string, string]> = {
     Snowflake: ['Schneeflocke', 'Flocon de neige', '雪の結晶'],
     'Christmas Bauble Ornament': ['Weihnachtskugel mit Aufhängeöffnung', 'Boule de Noël à suspendre', '吊り下げ穴付きクリスマスオーナメント'],
     'Retro Diamond Coaster': ['Retro-Untersetzer mit Rautenmuster', 'Dessous de verre rétro à losanges', 'レトロなひし形コースター'],
+    'Black Cat': ['Schwarze Katze', 'Chat noir', '黒猫'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -84,6 +85,15 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-black-cat') {
+        const black = pattern.palette.find(color => color.ref === '80-19018')!.count;
+        const yellow = pattern.palette.find(color => color.ref === '80-19003')!.count;
+        return locale === 'de'
+            ? `${name}: eine unabhängig entworfene Vorlage einer sitzenden schwarzen Katze. Sie verwendet ${beads} Perler-Midi-Perlen in ${colorCount} Farben: ${black} schwarze und ${yellow} gelbe Perlen. Das ${w} × ${h}-Motiv passt auf eine ${gw} × ${gh}-Midi-Steckplatte. Lade die Vorlage herunter oder bearbeite sie im deutschen Editor.`
+            : locale === 'fr'
+            ? `${name} : un dessin original et indépendant de chat noir assis, avec ${beads} perles Perler Midi en ${colorCount} couleurs : ${black} noires et ${yellow} jaunes. Le motif de ${w} × ${h} perles tient sur une plaque Midi de ${gw} × ${gh} cases. Téléchargez le modèle ou modifiez-le dans l’éditeur en français.`
+            : `${name}のオリジナル図案です。座った黒猫を独自に描きました。${colorCount}色のPerlerミディビーズを${beads}個使い、黒${black}個・黄色${yellow}個で作ります。${gw}×${gh}マスのミディ用プレート上に横${w}×縦${h}マスの図柄を作ります。図案を保存するか、日本語エディターで編集できます。`;
+    }
     if (pattern.id === 'original-christmas-bauble-ornament') {
         return locale === 'de'
             ? `${name}: eine originale Bügelperlen-Weihnachtskugel-Vorlage mit ${beads} Perler-Midi-Perlen in ${colorCount} Farben. Das flache ${w} × ${h}-Motiv passt auf eine ${gw} × ${gh}-Steckplatte. Lade die Vorlage herunter und lies die Anleitung für ein Band durch die vorgesehene Öffnung.`
@@ -106,6 +116,9 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'This ordinary sitting cat is an independently drawn original design.': ['Diese sitzende Katze ist ein unabhängig gezeichnetes Originalmotiv.', 'Ce chat assis est un dessin original réalisé indépendamment.', '座った普通の猫を独自に描いたオリジナル図案です。'],
+    'The motif uses Black 80-19018 and ordinary Yellow 80-19003; screen colors are approximate.': ['Das Motiv verwendet Black 80-19018 und das normale Yellow 80-19003. Die Bildschirmfarben sind Näherungen.', 'Le motif utilise Black 80-19018 et le Yellow standard 80-19003. Les couleurs à l’écran sont approximatives.', 'Black 80-19018と通常のYellow 80-19003を使います。画面の色は目安です。'],
+    'This is a small 16 × 16 motif on a Midi board, not a Mini-bead template. The PNG chart is for counting, not actual-size placement.': ['Dies ist ein kleines 16 × 16-Motiv auf einer Midi-Steckplatte, keine Vorlage für Mini-Perlen. Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe.', 'Il s’agit d’un petit motif de 16 × 16 perles sur une plaque Midi, pas d’un modèle pour perles Mini. La grille PNG sert à compter les cases, pas à placer les perles à taille réelle.', '図柄は16×16マスと小さく、ミディ用プレートを使います。ミニビーズ用の図案ではありません。PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。'],
     'Leave columns 14–16 and rows 5–7 empty for the planned hanging opening. Coordinates start at 1.': ['Lass die Spalten 14–16 und Zeilen 5–7 für die vorgesehene Aufhängeöffnung frei. Die Koordinaten beginnen bei 1.', 'Laissez vides les colonnes 14–16 et les lignes 5–7 pour l’ouverture de suspension prévue. Les coordonnées commencent à 1.', '吊り下げ用の開口部として14–16列・5–7行を空けておきます。列と行は1から数えます。'],
     'Physical assembly, ironing, cord fit and hanging strength have not been tested. Perler screen colors are approximate.': ['Die praktische Herstellung, das Bügeln, die Passung der Schnur und die Festigkeit beim Aufhängen wurden nicht getestet. Die Perler-Farben am Bildschirm sind Näherungen.', 'La réalisation, le repassage, le passage de la ficelle et la résistance en suspension n’ont pas été testés. Les couleurs Perler à l’écran sont approximatives.', '実物の制作・アイロン仕上げ・ひもの適合・吊り下げ強度は検証していません。画面上のPerlerの色は目安です。'],
     'Fine one-bead snowflake branches need gentle handling. Consider mounting the finished piece on a backing.': ['Die feinen Zweige der Schneeflocke sind nur eine Perle breit. Behandle sie vorsichtig und erwäge, das fertige Motiv auf einer Trägerplatte zu befestigen.', 'Les branches fines du flocon font une perle de large. Manipulez-les avec soin et envisagez de fixer la pièce terminée sur un support.', '雪の結晶の枝はビーズ一個幅の細い部分があります。慎重に扱い、完成後は台紙などに固定することも検討してください。'],
@@ -138,6 +151,7 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
     'stardew-valley': ['スターデューバレー'],
 };
 const subjectSearchAliases: Record<string, readonly string[]> = {
+    'original-black-cat': ['black cat perler beads', 'Bügelperlen schwarze Katze', 'perles à repasser chat noir', 'アイロンビーズ 黒猫 図案'],
     'original-christmas-bauble-ornament': ['perler bead ornament patterns', 'Bügelperlen Weihnachtskugel Vorlage', 'modèle perles à repasser boule de Noël', 'アイロンビーズ クリスマス オーナメント 図案'],
     'sdv-void-chicken': ['Schattenhuhn', 'Poulet vide', 'Poulet du vide', 'Poule du vide', '闇ニワトリ'],
     'smb-blooper': ['Bloups'],

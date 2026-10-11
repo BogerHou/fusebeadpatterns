@@ -20,8 +20,8 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(112);
-        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament'].includes(pattern.id))).toHaveLength(109);
+        expect(patterns).toHaveLength(113);
+        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat'].includes(pattern.id))).toHaveLength(109);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -85,6 +85,7 @@ describe('pattern library content integrity', () => {
                     'original-snowflake': 'Original six-branch snowflake design v1',
                     'original-retro-diamond-coaster': 'Original retro diamond coaster design v1',
                     'original-christmas-bauble-ornament': 'Original Christmas bauble ornament design v1',
+                    'original-black-cat': 'Original Black Cat design v1',
                 };
                 expect(originalVersions[pattern.id]).toBeDefined();
                 expect(pattern.version).toBe(originalVersions[pattern.id]);
@@ -100,6 +101,13 @@ describe('pattern library content integrity', () => {
         expect(getPatternById('missing')).toBeUndefined();
         expect(getCollectionBySlug('missing')).toBeUndefined();
         expect(getPatternsForCollection('missing')).toEqual([]);
+    });
+
+    it('preserves all 112 preexisting catalog records byte-for-byte after adding the black cat', () => {
+        const previous = patterns.filter(pattern => pattern.id !== 'original-black-cat');
+        expect(previous).toHaveLength(112);
+        // Frozen canonical objects from 86db85c: includes all old descriptions, assets and timestamps.
+        expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('853569c5b388b5da418a90fb999a69000b3ad3e4badd65e26da8d029763f4d17');
     });
 
     it('allows only known local projects into the editor', () => {
@@ -141,6 +149,11 @@ describe('pattern library content integrity', () => {
             id: 'original-christmas-bauble-ornament', slug: 'christmas-bauble-ornament', motif: [21, 25], beads: 362,
             rgbaSha256: 'f5490475146d52acef508c9660bcc1beaf829ba78aa3573088e9f71168ab2773',
             colors: [['80-19005', 'Red', '#b0353c', 249], ['80-19001', 'White', '#eaefee', 60], ['80-19057', 'Cheddar', '#fbb146', 53]],
+        },
+        {
+            id: 'original-black-cat', slug: 'black-cat', motif: [16, 16], beads: 181,
+            rgbaSha256: 'fbf706e0c20bde55d98825408c5f2e1b94bc4be7a8ab298c1d8b248b99accb2d',
+            colors: [['80-19018', 'Black', '#323234', 177], ['80-19003', 'Yellow', '#e7ce3e', 4]],
         },
     ])('$id keeps its reviewed native grid and Perler material list', async ({ id, slug, motif, beads, rgbaSha256, colors }) => {
         const pattern = getPatternById(id)!;

@@ -173,7 +173,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         }))),
         ...['de', 'fr', 'ja'].flatMap(locale => patterns.map(pattern => ({
             url: `https://fusebeadpatterns.art/${locale}/patterns/${pattern.slug}`,
-            lastModified: new Date('2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(pattern.id === 'original-black-cat' ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
             images: [`https://fusebeadpatterns.art${pattern.assets.preview}`],
         }))),
         ...patterns.map((pattern) => ({

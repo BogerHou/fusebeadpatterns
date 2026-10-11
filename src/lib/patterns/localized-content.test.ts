@@ -52,7 +52,35 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 112, fr: 112, ja: 112 });
+        expect(counts).toEqual({ de: 113, fr: 113, ja: 113 });
+    });
+    it('keeps the independently drawn ordinary black cat and frozen Midi pixels across native editor journeys', async () => {
+        const pattern = patterns.find(pattern => pattern.id === 'original-black-cat')!;
+        expect(pattern).toBeDefined();
+        const names = { de: 'Schwarze Katze', fr: 'Chat noir', ja: '黒猫' };
+        const contents = readFileSync(`public${pattern.assets.project}`, 'utf8');
+        const source = parseEditorProject(contents)!;
+        const sourcePixels = decodeEditorPatternDraft(source.editedPattern)!;
+        for (const locale of locales) {
+            expect(getLocalizedSubjectName(pattern, locale)).toBe(names[locale]);
+            expect(getLocalizedPatternName(pattern, locale)).toBe(names[locale]);
+            const intro = getLocalizedPatternIntro(pattern, locale);
+            for (const count of ['181', '177', '4', '16', '29']) expect(intro).toContain(count);
+            expect(intro).not.toMatch(/Jiji|Luna|Ghibli|Sailor Moon/i);
+            for (const note of pattern.notes) expect(localizePatternNote(note, locale)).not.toBe(note);
+            const localizedProject = getLibraryProject(pattern.id, locale)!;
+            expect(localizedProject).toEqual({ id: pattern.id, title: names[locale], projectUrl: pattern.assets.project });
+            expect(getLocaleDestination('/patterns/black-cat', locale)).toEqual({ href: `/${locale}/patterns/black-cat`, isFallback: false });
+            const fetchProject = vi.fn<typeof fetch>().mockResolvedValue(new Response(contents));
+            const restored = await loadLibraryEditorProject(pattern.id, new AbortController().signal, fetchProject);
+            expect(fetchProject).toHaveBeenCalledWith(pattern.assets.project, expect.objectContaining({ credentials: 'omit', redirect: 'error' }));
+            expect(restored.selectedPaletteIds).toEqual(['perler']);
+            expect([restored.boardId, restored.boardWidth, restored.boardHeight]).toEqual(['midi', 1, 1]);
+            expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(sourcePixels);
+            expect(restored.activePalettes.flatMap(palette => palette.entries).map(color => [color.ref, color.name, color.symbol])).toEqual([
+                ['80-19018', 'Black', 'B'], ['80-19003', 'Yellow', 'Y'],
+            ]);
+        }
     });
     it('keeps the ornament identity, project and opening across native editor journeys', async () => {
         const pattern = patterns.find(pattern => pattern.id === 'original-christmas-bauble-ornament')!;

@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseEditorProject } from '../editor/draft';
@@ -19,6 +20,17 @@ describe('curated pattern topics', () => {
             expect(new Set(allIds).size).toBe(allIds.length);
         }
         expect(getPatternTopicBySlug('missing')).toBeUndefined();
+    });
+
+    it('adds the ordinary black cat after the three published Halloween selections without changing their copy', () => {
+        const topic = getPatternTopicBySlug('halloween')!;
+        const { additionalPatternIds, ...published } = topic;
+        expect(additionalPatternIds).toEqual(['original-black-cat']);
+        expect(getAdditionalPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-black-cat']);
+        expect(getPatternsForTopic(topic).map(pattern => pattern.id)).toEqual(['original-friendly-ghost', 'original-halloween-bat', 'ghost-cat-pumpkin']);
+        // The primary selection, title, description, introduction, notes, links and timestamp stay frozen.
+        expect(createHash('sha256').update(JSON.stringify(published)).digest('hex')).toBe('371c2a0c2b567638bd61c62e4087ce9423fc55519ed3ab413981b7079181cf1d');
+        expect(getPatternTopicBySlug('small')!.patternIds).not.toContain('original-black-cat');
     });
 
     it('keeps every easy selection within four colors and one midi board, with no detached pieces', async () => {
