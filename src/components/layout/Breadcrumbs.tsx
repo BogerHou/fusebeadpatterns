@@ -64,6 +64,7 @@ export default function Breadcrumbs({ items, label = 'Breadcrumb' }: Breadcrumbs
                                 ) : (
                                     <Link
                                         href={item.href}
+                                        prefetch={false}
                                         className="inline-flex min-h-10 items-center px-1.5 text-muted hover:text-accent hover:underline decoration-2 underline-offset-4"
                                     >
                                         {item.label}

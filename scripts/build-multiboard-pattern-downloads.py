@@ -253,7 +253,7 @@ def wrapped(value,size,max_width,font):
     return lines
 
 
-def path_text(value,x,baseline,size,font,fill='#25342e',anchor='left'):
+def path_text(value,x,baseline,size,font,fill='#25342e',anchor='left',glyph_ids=None):
     width=text_width(value,size,font)
     if anchor=='middle': x-=width/2
     if anchor=='right': x-=width
@@ -261,7 +261,12 @@ def path_text(value,x,baseline,size,font,fill='#25342e',anchor='left'):
     for char in value:
         glyph=font['glyphs'][char]
         if glyph['path']:
-            svg.append(f'<path d="{glyph["path"]}" transform="translate({x:.6f} {baseline:.6f}) scale({scale:.8f} {-scale:.8f})" fill="{fill}"/>')
+            transform=f'translate({x:.6f} {baseline:.6f}) scale({scale:.8f} {-scale:.8f})'
+            if glyph_ids is None:
+                svg.append(f'<path d="{glyph["path"]}" transform="{transform}" fill="{fill}"/>')
+            else:
+                glyph_id=glyph_ids.setdefault(char,f'g{ord(char):x}')
+                svg.append(f'<use href="#{glyph_id}" transform="{transform}" fill="{fill}"/>')
         x+=glyph['advance']*scale
     return ''.join(svg)
 
@@ -588,11 +593,11 @@ def validate_pdf(p, locale, paper, destination):
 
 def chart_svg(p,locale,font):
     width,margin,cell,top=1484,46,24,54
-    end=top+58*cell;body=[];labels=[]
+    end=top+58*cell;body=[];labels=[];glyph_ids={}
     def label(value,x,y,size=16,max_width=1392,anchor='left',fill='#25342e'):
         assert text_width(value,size,font)<=max_width,(locale,value)
         labels.append(dict(text=value,x=x,baseline=y,size=size,anchor=anchor))
-        body.append(path_text(value,x,y,size,font,fill,anchor))
+        body.append(path_text(value,x,y,size,font,fill,anchor,glyph_ids))
     label(IDS[ID][locale],46,28,23)
     for (x,y),c in p['occupied'].items():
         body.append(f'<rect x="{margin+x*cell}" y="{top+y*cell}" width="24" height="24" fill="{c["hex"]}"/>')
@@ -621,7 +626,8 @@ def chart_svg(p,locale,font):
         y+=5
     height=int(y+15)
     title=IDS[ID][locale]+' - '+COPY[locale]['type']
-    svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" xml:lang="{locale}" role="img"><title>{escape(title)}</title><desc>{escape(copy_text(p,locale,"grid"))}</desc><rect width="100%" height="100%" fill="white"/>'+''.join(body)+'</svg>'
+    definitions='<defs>'+''.join(f'<path id="{glyph_id}" d="{font["glyphs"][char]["path"]}"/>' for char,glyph_id in glyph_ids.items())+'</defs>'
+    svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" xml:lang="{locale}" role="img"><title>{escape(title)}</title><desc>{escape(copy_text(p,locale,"grid"))}</desc>{definitions}<rect width="100%" height="100%" fill="white"/>'+''.join(body)+'</svg>'
     assert '<text' not in svg and '<image' not in svg and '<script' not in svg
     return svg.encode(),dict(width=width,height=height,labels=labels,gridX=margin,gridTop=top,cellSize=cell)
 

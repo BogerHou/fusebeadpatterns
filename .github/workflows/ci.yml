@@ -36,3 +36,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Vercel cost guard
+        run: npm run cost:check

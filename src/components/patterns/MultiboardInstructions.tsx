@@ -19,8 +19,8 @@ export default function MultiboardInstructions({ patternId, locale = 'en' }: { p
         </table>
         <p className="mt-5 leading-8 text-muted">{copy.printing}</p>
         <p className="mt-5 flex flex-wrap gap-x-6 gap-y-2 leading-8">
-            <Link href={`${prefix}/guides/perler-bead-pegboards`} className="text-link">{copy.guides[0]}</Link>
-            <Link href={`${prefix}/guides/how-to-iron-perler-beads`} className="text-link">{copy.guides[1]}</Link>
+            <Link href={`${prefix}/guides/perler-bead-pegboards`} prefetch={false} className="text-link">{copy.guides[0]}</Link>
+            <Link href={`${prefix}/guides/how-to-iron-perler-beads`} prefetch={false} className="text-link">{copy.guides[1]}</Link>
         </p>
     </section>;
 }
