@@ -60,6 +60,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Christmas Bauble Ornament': ['Weihnachtskugel mit Aufhängeöffnung', 'Boule de Noël à suspendre', '吊り下げ穴付きクリスマスオーナメント'],
     'Retro Diamond Coaster': ['Retro-Untersetzer mit Rautenmuster', 'Dessous de verre rétro à losanges', 'レトロなひし形コースター'],
     'Black Cat': ['Schwarze Katze', 'Chat noir', '黒猫'],
+    Cross: ['Kreuz', 'Croix', '十字架'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -85,6 +86,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-latin-cross') {
+        return locale === 'de'
+            ? `${name}: eine originale Vorlage für ein schlichtes lateinisches (christliches) Kreuz mit längerem unteren Arm. Sie verwendet ${beads} Perler-Midi-Perlen in Brown. Das ${w} × ${h}-Motiv passt auf eine ${gw} × ${gh}-Midi-Steckplatte. Lade die Vorlage herunter oder bearbeite sie im deutschen Editor.`
+            : locale === 'fr'
+            ? `${name} : un modèle original de croix latine (chrétienne) simple, au bras inférieur plus long. Il utilise ${beads} perles Perler Midi de couleur Brown. Le motif de ${w} × ${h} perles tient sur une plaque Midi de ${gw} × ${gh} cases. Téléchargez le modèle ou modifiez-le dans l’éditeur en français.`
+            : `${name}のオリジナル図案です。下側が長い、シンプルなラテン十字（キリスト教の十字架）を独自に描きました。BrownのPerlerミディビーズを${beads}個使い、${gw}×${gh}マスのミディ用プレート上に横${w}×縦${h}マスの図柄を作ります。図案を保存するか、日本語エディターで編集できます。`;
+    }
     if (pattern.id === 'original-black-cat') {
         const black = pattern.palette.find(color => color.ref === '80-19018')!.count;
         const yellow = pattern.palette.find(color => color.ref === '80-19003')!.count;
@@ -116,6 +124,9 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'An original plain Latin cross with a longer lower arm.': ['Ein originales, schlichtes lateinisches Kreuz mit längerem unteren Arm.', 'Une croix latine simple et originale, au bras inférieur plus long.', '下側が長い、シンプルなラテン十字のオリジナル図案です。'],
+    'The motif uses Brown 80-19012; screen colors are approximate.': ['Das Motiv verwendet Brown 80-19012. Die Bildschirmfarben sind Näherungen.', 'Le motif utilise Brown 80-19012. Les couleurs à l’écran sont approximatives.', 'Brown 80-19012を使います。画面の色は目安です。'],
+    'The 13 × 19 motif sits on a Midi board. The PNG chart is for counting, not actual-size placement.': ['Das 13 × 19-Motiv liegt auf einer Midi-Steckplatte. Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe.', 'Le motif de 13 × 19 perles se place sur une plaque Midi. La grille PNG sert à compter les cases, pas à placer les perles à taille réelle.', '横13×縦19マスの図柄をミディ用プレート上に作ります。PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。'],
     'This ordinary sitting cat is an independently drawn original design.': ['Diese sitzende Katze ist ein unabhängig gezeichnetes Originalmotiv.', 'Ce chat assis est un dessin original réalisé indépendamment.', '座った普通の猫を独自に描いたオリジナル図案です。'],
     'The motif uses Black 80-19018 and ordinary Yellow 80-19003; screen colors are approximate.': ['Das Motiv verwendet Black 80-19018 und das normale Yellow 80-19003. Die Bildschirmfarben sind Näherungen.', 'Le motif utilise Black 80-19018 et le Yellow standard 80-19003. Les couleurs à l’écran sont approximatives.', 'Black 80-19018と通常のYellow 80-19003を使います。画面の色は目安です。'],
     'This is a small 16 × 16 motif on a Midi board, not a Mini-bead template. The PNG chart is for counting, not actual-size placement.': ['Dies ist ein kleines 16 × 16-Motiv auf einer Midi-Steckplatte, keine Vorlage für Mini-Perlen. Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe.', 'Il s’agit d’un petit motif de 16 × 16 perles sur une plaque Midi, pas d’un modèle pour perles Mini. La grille PNG sert à compter les cases, pas à placer les perles à taille réelle.', '図柄は16×16マスと小さく、ミディ用プレートを使います。ミニビーズ用の図案ではありません。PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。'],
@@ -151,6 +162,7 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
     'stardew-valley': ['スターデューバレー'],
 };
 const subjectSearchAliases: Record<string, readonly string[]> = {
+    'original-latin-cross': ['cross perler bead pattern', 'perler bead cross pattern', 'Latin cross', 'Christian cross', 'Bügelperlen Kreuz Vorlage', 'modèle perles à repasser croix', 'アイロンビーズ 十字架 図案'],
     'original-black-cat': ['black cat perler beads', 'Bügelperlen schwarze Katze', 'perles à repasser chat noir', 'アイロンビーズ 黒猫 図案'],
     'original-christmas-bauble-ornament': ['perler bead ornament patterns', 'Bügelperlen Weihnachtskugel Vorlage', 'modèle perles à repasser boule de Noël', 'アイロンビーズ クリスマス オーナメント 図案'],
     'sdv-void-chicken': ['Schattenhuhn', 'Poulet vide', 'Poulet du vide', 'Poule du vide', '闇ニワトリ'],

@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Cross Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Original Latin cross EN/DE/FR/JA PDFs and native chart labels; no old-font refresh",
+  "subsetSha256": "eb2ae2dbf3caccdcb13592eb5beaf0f25a840ab7ab70eb351b106ecac0329617",
+  "glyphsSha256": "ab279543997bcb35304590f7b8eed3f1d89c5659a01af88c977d329d5c8d0fad",
+  "charactersSha256": "a006a4203acbbc933734999a275dd57442507439aeb0be599d6da05520085646",
+  "characterCount": 229,
+  "patternIds": [
+    "original-latin-cross"
+  ],
+  "chartCount": 3,
+  "pdfCount": 8,
+  "chartCharactersSha256": "19ae343723535d1beca97c2d20ce421539eca8e3003b17b845f938990f4f82d1",
+  "pdfCharactersSha256": "1ba4bebeb3321bf694ff9852e5973f3fd587f794f47451f6920f6ece8973b08d"
+}

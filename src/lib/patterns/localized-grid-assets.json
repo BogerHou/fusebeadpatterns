@@ -564,6 +564,11 @@
       "href": "/patterns-de/original-black-cat/grid.png",
       "width": 788,
       "height": 1351
+    },
+    "original-latin-cross": {
+      "href": "/patterns-de/original-latin-cross/grid.png",
+      "width": 788,
+      "height": 1304
     }
   },
   "fr": {
@@ -1131,6 +1136,11 @@
       "href": "/patterns-fr/original-black-cat/grid.png",
       "width": 788,
       "height": 1329
+    },
+    "original-latin-cross": {
+      "href": "/patterns-fr/original-latin-cross/grid.png",
+      "width": 788,
+      "height": 1304
     }
   },
   "ja": {
@@ -1698,6 +1708,11 @@
       "href": "/patterns-ja/original-black-cat/grid.png",
       "width": 788,
       "height": 1284
+    },
+    "original-latin-cross": {
+      "href": "/patterns-ja/original-latin-cross/grid.png",
+      "width": 788,
+      "height": 1259
     }
   }
 }

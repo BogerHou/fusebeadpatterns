@@ -1,6 +1,6 @@
 # Pattern library content maintenance
 
-The catalog integrates 113 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 14 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
+The catalog integrates 114 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 15 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
 
 ## Content identity and versions
 
@@ -226,3 +226,11 @@ The first six unverified named concepts remain retired. Stardrop (interpolated r
 The 16 × 16 motif starts at zero-based `(6,6)` on a 29 × 29 Midi canvas. It has 181 beads: 177 Black (`80-19018`) and 4 ordinary Yellow (`80-19003`). Row SHA-256 is `fc6a0bd7a4d4f67ea7c5b2cec7afc9e813d74db901b64a3d1b0e4afb2aa3822f`; RGBA SHA-256 is `fbf706e0c20bde55d98825408c5f2e1b94bc4be7a8ab298c1d8b248b99accb2d`. Empty RGBA cells are all zero. One digital component and zero digital cut points are layout checks, not a physical strength guarantee. Physical assembly and ironing have not been tested.
 
 English, German, French and Japanese detail pages use their own language and A4/US Letter PDFs. The native charts retain the original drawing and exact pixels; the dedicated `black-cat-labels` font contains only their shared reviewed text inventory and does not change old fonts. The new card is appended to the Halloween section; its original three-pattern selection and metadata remain intact. The separate Small collection retains its explicitly selected ten patterns.
+
+### Original Latin cross
+
+`original-latin-cross` is a plain Latin/Christian cross independently drawn from an empty 29 × 29 grid. Its upper arm is shorter than its lower arm; it is not a plus sign, cross-stitch technique or Jesus figure. The private immutable source pack is `artifacts/pattern-samples/2026-10-11/original-latin-cross-v1`; see `scripts/README-original-latin-cross-sourcepack.md`. Only this new catalog object, four detail URLs and its separately reviewed resources are added. All earlier 113 catalog objects, five collections, indexed metadata and sitemap records remain unchanged. Topic lists and the fixed ten-pattern Small selection are unchanged; the cross is 19 rows tall and does not meet the strict 16 × 16 Small rule.
+
+The motif bounds are zero-based `(8,5)`, width13, height19. Vertical bar x=13–15/y=5–23 and horizontal bar x=8–20/y=10–12 are three cells thick, with five vertical rows above the crossbar and eleven below. The actual drawing uses 87 Brown Perler Midi beads (`80-19012`, RGB103,76,68), with symbol `B`. Rows SHA-256 is `0dab2c3f61bd9756001beb2b1cbd3f9ddb5530a35e714ea90e4f85fb87624322`; RGBA SHA-256 is `4516a5ad71d0f5b36953124d757ebd85904c05b98676509b686854f460358bd5`. Empty cells are all-zero RGBA. One digital component and zero single-bead cut points are geometry checks, not physical strength validation. Physical assembly and ironing remain untested.
+
+The source pack contains ten files and no PDF. Its four private notes stay frozen; the public detail uses six concise making and printing notes. English/German/French/Japanese subjects are Cross/Kreuz/Croix/十字架, with same-language details, editor links, grid PNGs and separately generated A4/US Letter PDFs. The English counting chart is 788 × 908 and is not an actual-size placement template. Public download files need their own digital and rendered review before release; source-pack placeholder paths do not establish download availability.

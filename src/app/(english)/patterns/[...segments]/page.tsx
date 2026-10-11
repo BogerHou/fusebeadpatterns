@@ -87,7 +87,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                                 ['Design size', `${pattern.motifWidth} × ${pattern.motifHeight} beads`],
                                 ['Pegboard', `${pattern.gridWidth} × ${pattern.gridHeight} MIDI · 1 board`],
                                 ['Beads needed', String(pattern.beads)],
-                                ['Colors', `${pattern.colorCount} Perler colors`],
+                                ['Colors', `${pattern.colorCount} Perler color${pattern.colorCount === 1 ? '' : 's'}`],
                             ].map(([label, value]) => <div key={label}><dt className="text-[#59685d]">{label}</dt><dd className="mt-1.5 font-semibold text-[#243e36]">{value}</dd></div>)}
                         </dl>
                         {fanArtNotice && <p className="mb-4 text-sm leading-7 text-[#59685d]">{fanArtNotice} <a href="mailto:contact@fusebeadpatterns.art" className="text-link">contact@fusebeadpatterns.art</a></p>}
@@ -107,7 +107,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     <section aria-labelledby="pattern-chart-heading">
                         <h2 id="pattern-chart-heading" className="section-heading mb-5">Pattern chart</h2>
                         <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-[#d9ded5] bg-white transition-colors hover:border-[#78917f]" aria-label={`Open full-size ${pattern.title} pattern chart`}>
-                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={['original-retro-diamond-coaster', 'original-christmas-bauble-ornament'].includes(pattern.id) ? 788 : 586} height={['original-retro-diamond-coaster', 'original-christmas-bauble-ornament'].includes(pattern.id) ? 908 : 586} unoptimized className="h-auto w-full" />
+                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 788 : 586} height={['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 908 : 586} unoptimized className="h-auto w-full" />
                         </a>
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Blank cells are empty. Tap the chart to view it at full size.</p>
                     </section>

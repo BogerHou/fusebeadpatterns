@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { patterns } from './catalog';
 import { getLibraryProject } from './project-links';
@@ -52,7 +53,49 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 113, fr: 113, ja: 113 });
+        expect(counts).toEqual({ de: 114, fr: 114, ja: 114 });
+    });
+    it('preserves all earlier localized names, introductions and complete making notes', () => {
+        const previous = patterns.filter(pattern => pattern.id !== 'original-latin-cross').map(pattern => ({
+            id: pattern.id,
+            locales: locales.map(locale => ({
+                name: getLocalizedSubjectName(pattern, locale),
+                intro: getLocalizedPatternIntro(pattern, locale),
+                notes: pattern.notes.map(note => localizePatternNote(note, locale)),
+            })),
+        }));
+        expect(previous).toHaveLength(113);
+        expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('6dc329c2b7525259fa44f394b88dbae5cd821080184c9f0392d22dc1d611799f');
+    });
+    it('keeps the plain Latin cross and exact single-color Midi grid across native editor journeys', async () => {
+        const pattern = patterns.find(pattern => pattern.id === 'original-latin-cross')!;
+        const names = { de: 'Kreuz', fr: 'Croix', ja: '十字架' };
+        const shape = { de: 'lateinisches (christliches) Kreuz', fr: 'croix latine (chrétienne)', ja: 'ラテン十字（キリスト教の十字架）' };
+        const contents = readFileSync(`public${pattern.assets.project}`, 'utf8');
+        const source = parseEditorProject(contents)!;
+        const sourcePixels = decodeEditorPatternDraft(source.editedPattern)!;
+        expect(pattern.notes).toHaveLength(6);
+        for (const locale of locales) {
+            expect(getLocalizedSubjectName(pattern, locale)).toBe(names[locale]);
+            const intro = getLocalizedPatternIntro(pattern, locale);
+            for (const fact of [shape[locale], '87', 'Brown', '13', '19', '29']) expect(intro).toContain(fact);
+            expect(getLibraryProject(pattern.id, locale)).toEqual({ id: pattern.id, title: names[locale], projectUrl: pattern.assets.project });
+            expect(getLocaleDestination('/patterns/cross', locale)).toEqual({ href: `/${locale}/patterns/cross`, isFallback: false });
+            for (const note of pattern.notes) {
+                const localized = localizePatternNote(note, locale);
+                expect(localized).not.toBe(note);
+                if (/80-19012|13 × 19|50 mm/.test(note)) expect(localized.match(/\d+/g)).toEqual(note.match(/\d+/g));
+            }
+            const fetchProject = vi.fn<typeof fetch>().mockResolvedValue(new Response(contents));
+            const restored = await loadLibraryEditorProject(pattern.id, new AbortController().signal, fetchProject);
+            expect(fetchProject).toHaveBeenCalledWith(pattern.assets.project, expect.objectContaining({ credentials: 'omit', redirect: 'error' }));
+            expect(restored.selectedPaletteIds).toEqual(['perler']);
+            expect([restored.boardId, restored.boardWidth, restored.boardHeight]).toEqual(['midi', 1, 1]);
+            expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(sourcePixels);
+            expect(restored.activePalettes.flatMap(palette => palette.entries).map(color => [color.ref, color.name, color.symbol])).toEqual([
+                ['80-19012', 'Brown', 'B'],
+            ]);
+        }
     });
     it('keeps the independently drawn ordinary black cat and frozen Midi pixels across native editor journeys', async () => {
         const pattern = patterns.find(pattern => pattern.id === 'original-black-cat')!;
