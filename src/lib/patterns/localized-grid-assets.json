@@ -584,6 +584,11 @@
       "href": "/patterns-de/original-rave-moon-mushroom/grid.png",
       "width": 788,
       "height": 1093
+    },
+    "original-sunset-mountain-lake": {
+      "href": "/patterns-de/original-sunset-mountain-lake/grid.png",
+      "width": 1484,
+      "height": 2003
     }
   },
   "fr": {
@@ -1171,6 +1176,11 @@
       "href": "/patterns-fr/original-rave-moon-mushroom/grid.png",
       "width": 788,
       "height": 1093
+    },
+    "original-sunset-mountain-lake": {
+      "href": "/patterns-fr/original-sunset-mountain-lake/grid.png",
+      "width": 1484,
+      "height": 2003
     }
   },
   "ja": {
@@ -1758,6 +1768,11 @@
       "href": "/patterns-ja/original-rave-moon-mushroom/grid.png",
       "width": 788,
       "height": 1093
+    },
+    "original-sunset-mountain-lake": {
+      "href": "/patterns-ja/original-sunset-mountain-lake/grid.png",
+      "width": 1484,
+      "height": 2003
     }
   }
 }

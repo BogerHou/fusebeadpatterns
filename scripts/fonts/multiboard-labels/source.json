@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Multiboard Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Original multiboard EN/DE/FR/JA PDF and count charts; no old-font refresh",
+  "subsetSha256": "ebb50befc5765dbff643114e7fe1f3a7461103a66fcc62b9a9f77100b68bbb31",
+  "glyphsSha256": "cc5f1c8aca817b07fb51bf104e8a8b50a002af69cfc564d045efc11e7874b4a2",
+  "charactersSha256": "4126d3fa73e1820b16277f6eda6ca9f37e446e3ebff2add5720086e36a085dca",
+  "characterCount": 221,
+  "patternIds": [
+    "original-sunset-mountain-lake"
+  ],
+  "chartCount": 4,
+  "pdfCount": 8,
+  "pdfCharactersSha256": "8041a77b92f00a3797b47e4f3a0aba28b0ef9f00e9437bdf849ffef32cfbf3e9",
+  "chartCharactersSha256": "ac81b9e68745d43f2ab99a8c8d670d6ea1984af285e15d316cbc78d60b125a8a"
+}

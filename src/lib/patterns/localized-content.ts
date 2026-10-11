@@ -64,6 +64,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Alien Head': ['Alien-Kopf', 'Tête d’alien', 'エイリアンの顔'],
     'Rainbow Smiley': ['Regenbogen-Smiley', 'Smiley arc-en-ciel', '虹色スマイル'],
     'Crescent Moon Mushroom': ['Mondsichel mit Pilz', 'Croissant de lune et champignon', '三日月ときのこ'],
+    'Sunset Mountain Lake': ['Sonnenuntergang am Bergsee', 'Lac de montagne au coucher du soleil', '山と湖の夕景'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -89,6 +90,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-sunset-mountain-lake') {
+        return locale === 'de'
+            ? `${name}: eine große, unabhängig gezeichnete Landschaft mit Sonne, Bergketten und Spiegelungen im See. Das ${w} × ${h}-Motiv verwendet ${beads} Perler-Midi-Perlen in ${colorCount} Farben auf vier 29 × 29-Steckplatten, angeordnet als 2 × 2. Lade das fünfseitige A4- oder US-Letter-PDF herunter oder bearbeite die Farben im deutschen Editor.`
+            : locale === 'fr'
+            ? `${name} : un grand paysage original avec soleil, montagnes et reflets dans le lac. Le motif de ${w} × ${h} perles utilise ${beads} perles Perler Midi en ${colorCount} couleurs sur quatre plaques de 29 × 29 cases, disposées en 2 × 2. Téléchargez le PDF A4 ou US Letter de cinq pages, ou modifiez les couleurs dans l’éditeur en français.`
+            : `${name}の大きなオリジナル図案です。夕日、山並み、湖の反射を独自に描いています。横${w}×縦${h}マスの図柄に${colorCount}色のPerlerミディビーズを${beads}個使い、29×29マスのプレート4枚を縦2枚・横2枚に並べます。全5ページのA4・US Letter PDFを保存するか、日本語エディターで配色を変更できます。`;
+    }
     if (pattern.id === 'original-latin-cross') {
         return locale === 'de'
             ? `${name}: eine originale Vorlage für ein schlichtes lateinisches (christliches) Kreuz mit längerem unteren Arm. Sie verwendet ${beads} Perler-Midi-Perlen in Brown. Das ${w} × ${h}-Motiv passt auf eine ${gw} × ${gh}-Midi-Steckplatte. Lade die Vorlage herunter oder bearbeite sie im deutschen Editor.`
@@ -127,6 +135,11 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'Use four 29 × 29 Midi pegboards arranged 2 × 2. The complete grid has 58 columns and 58 rows.': ['Verwende vier Midi-Steckplatten mit je 29 × 29 Feldern in einer 2 × 2-Anordnung. Das gesamte Raster hat 58 Spalten und 58 Zeilen.', 'Utilisez quatre plaques Midi de 29 × 29 cases, disposées en 2 × 2. La grille complète compte 58 colonnes et 58 lignes.', '29×29マスのミディ用プレート4枚を縦2枚・横2枚に並べます。図案全体は58列・58行です。'],
+    'The 52 × 48 landscape is drawn at this size, not enlarged from a single-board pattern.': ['Die Landschaft wurde als 52 × 48-Motiv gezeichnet und nicht aus einer Ein-Platten-Vorlage vergrößert.', 'Ce paysage a été dessiné en 52 × 48 cases, sans agrandir un modèle prévu pour une seule plaque.', '横52×縦48マスの風景をこの大きさで描いています。プレート1枚用の図案を拡大したものではありません。'],
+    'The first PDF page is a reduced overview; pages 2–5 show boards 1–4 at 5 mm spacing. Print at 100% / Actual size and check both 50 mm rulers.': ['Die erste PDF-Seite zeigt eine verkleinerte Übersicht; Seiten 2–5 zeigen die Platten 1–4 mit 5 mm Rasterabstand. Drucke mit 100 % / tatsächlicher Größe und prüfe beide 50-mm-Messlinien.', 'La première page du PDF est une vue réduite ; les pages 2–5 montrent les plaques 1–4 avec un espacement de 5 mm. Imprimez à 100 % / taille réelle et vérifiez les deux repères de 50 mm.', 'PDFの1ページ目は縮小した全体図で、2〜5ページ目はプレート1〜4をマスの間隔5 mmで表示します。100％・実際のサイズで印刷し、縦横の50 mm目盛りを確認してください。'],
+    'Empty grid cells do not need beads. The PNG is a counting chart, not an actual-size placement template.': ['Leere Rasterfelder bleiben ohne Perle. Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe.', 'Les cases vides restent sans perle. Le PNG sert à compter, pas à placer les perles à taille réelle.', '空白のマスにはビーズを置きません。PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。'],
+    'Physical assembly, ironing and cross-board join strength have not been tested. Perler screen colors are approximate.': ['Bau, Bügeln und Festigkeit der Verbindungen zwischen den Platten wurden nicht praktisch getestet. Die Perler-Farben am Bildschirm sind Näherungen.', 'Assemblage, repassage et solidité des jonctions entre plaques n’ont pas été testés avec de vraies perles. Les couleurs Perler à l’écran sont approximatives.', '実物の制作・アイロン仕上げ・プレートをまたぐ接合部の強度は検証していません。画面上のPerlerの色は目安です。'],
     'An independently drawn festival-inspired design.': ['Ein unabhängig entworfenes, festivalinspiriertes Motiv.', 'Un motif original dessiné indépendamment, inspiré des festivals.', 'フェスをイメージして独自に描いたオリジナル図柄です。'],
     'Physical assembly, ironing, attachment and wearing have not been tested.': ['Bau, Bügeln, Befestigung und Tragen wurden nicht praktisch getestet.', 'Assemblage, repassage, fixation et port n’ont pas été testés avec de vraies perles.', '実物制作・アイロン仕上げ・取り付け・身に着けた状態は検証していません。'],
     'The PNG is a counting chart, not an actual-size placement template. These downloads use Midi beads, not Mini beads.': ['Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe. Diese Dateien verwenden Midi-Perlen, keine Mini-Perlen.', 'Le PNG sert à compter les cases, pas à placer les perles à taille réelle. Les fichiers utilisent des perles Midi, pas des perles Mini.', 'PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。ファイルはミディビーズ用で、ミニビーズ用ではありません。'],
@@ -168,6 +181,7 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
     'stardew-valley': ['スターデューバレー'],
 };
 const subjectSearchAliases: Record<string, readonly string[]> = {
+    'original-sunset-mountain-lake': ['large perler bead patterns', 'landscape perler bead pattern', 'sunset mountain lake', 'Bügelperlen Landschaft Vorlage', 'grande modèle paysage perles à repasser', 'アイロンビーズ 風景 図案', 'アイロンビーズ 大きい 図案'],
     'original-rave-alien-head': ['alien perler bead pattern', 'rave perler bead patterns', 'Alien Bügelperlen', 'alien perles à repasser', 'アイロンビーズ エイリアン'],
     'original-rave-rainbow-smiley': ['rainbow smiley perler bead pattern', 'rave perler bead patterns', 'Regenbogen Smiley Bügelperlen', 'smiley arc-en-ciel perles à repasser', 'アイロンビーズ 虹 スマイル'],
     'original-rave-moon-mushroom': ['moon mushroom perler bead pattern', 'rave perler bead patterns', 'Mondsichel Pilz Bügelperlen', 'lune champignon perles à repasser', 'アイロンビーズ 三日月 きのこ'],
