@@ -33,6 +33,29 @@ async function loadPalette(id: string): Promise<Palette> {
 }
 
 describe('remapPatternPalette', () => {
+    it('only replaces unavailable RGB for owned-color edits, including a duplicate enabled ref and partial alpha', async () => {
+        const sourceBlack = entry('Black', [50, 50, 52]);
+        const sourceWhite = entry('White', [230, 231, 232]);
+        const nextBlack = entry('Black', [50, 50, 52]); nextBlack.enabled = false;
+        const nextWhite = entry('White', [230, 231, 232]); nextWhite.enabled = false;
+        const next = palette(nextBlack, nextWhite,
+            entry('Silver', [50, 50, 52]), entry('Black', [20, 19, 21]),
+            entry('White', [229, 236, 241]));
+        const pixels = new Uint8ClampedArray([
+            50, 50, 52, 255, 50, 50, 52, 77, 230, 231, 232, 255, 3, 5, 7, 0,
+        ]);
+        const before = pixels.slice();
+        const sourcePalettes = palette(sourceBlack, sourceWhite);
+        const result = await remapPatternPalette(pixels, 4, 1, next, 'delta_e_cie2000',
+            { sourcePalettes, preserveEnabledColors: true });
+        expect(result).toEqual(new Uint8ClampedArray([
+            50, 50, 52, 255, 50, 50, 52, 77, 229, 236, 241, 255, 3, 5, 7, 0,
+        ]));
+        expect(pixels).toEqual(before);
+        const brandChange = await remapPatternPalette(pixels, 4, 1, next, 'delta_e_cie2000', { sourcePalettes });
+        expect([...brandChange.subarray(0, 4)]).toEqual([20, 19, 21, 255]);
+    });
+
     it('keeps the grid shape, transparent bytes and every original alpha', async () => {
         const pixels = new Uint8ClampedArray([
             17, 9, 21, 255, 77, 12, 98, 0, 240, 245, 250, 128,
