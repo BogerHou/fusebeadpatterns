@@ -1317,6 +1317,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const applySelectedPalettes = React.useEffectEvent(async (
         loadedPalettes: Palette[], controller: AbortController, paletteIds: string[]
     ) => {
+        if (controller.signal.aborted || settingsUpdateRef.current) return;
         const nextPalettes = mergePaletteEnabledState(loadedPalettes, activePalettes);
         const project = currentProjectRef.current;
         const pixels = reducedColorRef.current;
@@ -2238,6 +2239,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             const nextPalette = await loadPalette(
                 pendingPrimaryPaletteId, controller.signal
             );
+            if (controller.signal.aborted || settingsUpdateRef.current !== controller) return;
             const nextPalettes = mergePaletteEnabledState(
                 [nextPalette],
                 activePalettes
@@ -2256,7 +2258,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     }
                 );
 
-                if (controller.signal.aborted || currentProjectRef.current !== currentProject ||
+                if (controller.signal.aborted || settingsUpdateRef.current !== controller || currentProjectRef.current !== currentProject ||
                     reducedColorRef.current !== currentPattern) {
                     return;
                 }
@@ -2347,6 +2349,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                       return [...previousPaletteIds, paletteId].includes(option.id);
                   }).map((option) => option.id);
 
+            cancelSettingsUpdate();
             paletteSyncAbortRef.current?.abort();
             setProcessing(true);
             setErrorMessage(null);
@@ -2357,6 +2360,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const handlePrimaryPaletteChange = (paletteId: string) => {
         if (selectedPaletteIds.length === 1 && selectedPaletteIds[0] === paletteId) return;
         finishActiveStroke();
+        cancelSettingsUpdate();
         paletteSyncAbortRef.current?.abort();
         setProcessing(true);
         setSelectedPaletteIds([paletteId]);
