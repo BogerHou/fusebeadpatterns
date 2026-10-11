@@ -14,6 +14,7 @@ import * as downloads from '../../lib/patterns/localized-download';
 import * as ui from '../../lib/patterns/localized-ui';
 import * as sources from '../../lib/patterns/localized-sources';
 import * as fanArt from '../../lib/patterns/fan-art';
+import * as rave from '../../lib/patterns/rave';
 import * as topics from '../../lib/patterns/topics';
 import * as sectionRoutes from '../../lib/patterns/section-routes';
 import * as sectionMessages from '../../lib/patterns/section-messages';
@@ -49,6 +50,7 @@ const modules: Record<string, unknown> = {
     './PatternCards': { PatternGrid: (): null => null }, './CoasterInstructions': defaultModule(CoasterInstructions), './OrnamentInstructions': defaultModule(OrnamentInstructions),
     '@/lib/patterns/catalog': catalog, '@/lib/patterns/localized-content': content, '@/lib/patterns/localized-download': downloads,
     '@/lib/patterns/localized-ui': ui, '@/lib/patterns/localized-sources': sources, '@/lib/patterns/fan-art': fanArt,
+    '@/lib/patterns/rave': rave,
     '@/lib/patterns/topics': topics, '@/lib/patterns/section-routes': sectionRoutes, '@/lib/patterns/section-messages': sectionMessages,
     '@/lib/i18n/metadata': metadata, '@/lib/patterns/library-overview': overview,
     '@/lib/hama-maker/routes': hamaMakerRoutes, '@/lib/guides/routes': guideRoutes, '@/lib/site-pages/routes': sitePageRoutes,
@@ -157,7 +159,7 @@ describe('native pattern chart journeys', () => {
             'https://fusebeadpatterns.art/guides/beadifier-alternative',
         ]);
         for (const record of comparisonGuides) expect(record.lastModified.toISOString()).toBe('2026-10-11T00:00:00.000Z');
-        const previous = records.filter(record => !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative'));
+        const previous = records.filter(record => !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 

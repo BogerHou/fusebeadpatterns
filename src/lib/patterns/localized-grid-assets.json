@@ -569,6 +569,21 @@
       "href": "/patterns-de/original-latin-cross/grid.png",
       "width": 788,
       "height": 1304
+    },
+    "original-rave-alien-head": {
+      "href": "/patterns-de/original-rave-alien-head/grid.png",
+      "width": 788,
+      "height": 1093
+    },
+    "original-rave-rainbow-smiley": {
+      "href": "/patterns-de/original-rave-rainbow-smiley/grid.png",
+      "width": 788,
+      "height": 1093
+    },
+    "original-rave-moon-mushroom": {
+      "href": "/patterns-de/original-rave-moon-mushroom/grid.png",
+      "width": 788,
+      "height": 1093
     }
   },
   "fr": {
@@ -1141,6 +1156,21 @@
       "href": "/patterns-fr/original-latin-cross/grid.png",
       "width": 788,
       "height": 1304
+    },
+    "original-rave-alien-head": {
+      "href": "/patterns-fr/original-rave-alien-head/grid.png",
+      "width": 788,
+      "height": 1093
+    },
+    "original-rave-rainbow-smiley": {
+      "href": "/patterns-fr/original-rave-rainbow-smiley/grid.png",
+      "width": 788,
+      "height": 1093
+    },
+    "original-rave-moon-mushroom": {
+      "href": "/patterns-fr/original-rave-moon-mushroom/grid.png",
+      "width": 788,
+      "height": 1093
     }
   },
   "ja": {
@@ -1713,6 +1743,21 @@
       "href": "/patterns-ja/original-latin-cross/grid.png",
       "width": 788,
       "height": 1259
+    },
+    "original-rave-alien-head": {
+      "href": "/patterns-ja/original-rave-alien-head/grid.png",
+      "width": 788,
+      "height": 1093
+    },
+    "original-rave-rainbow-smiley": {
+      "href": "/patterns-ja/original-rave-rainbow-smiley/grid.png",
+      "width": 788,
+      "height": 1093
+    },
+    "original-rave-moon-mushroom": {
+      "href": "/patterns-ja/original-rave-moon-mushroom/grid.png",
+      "width": 788,
+      "height": 1093
     }
   }
 }

@@ -30,8 +30,9 @@ import { fanArtAddition, fanArtDescription, fanArtSource, fanArtPublishedCatalog
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const current = parsePublishedCatalog(await readFile(path.join(root, 'src/lib/patterns/catalog.ts'), 'utf8'));
 // These are historical Santa/winter/Creeper promotion tests. The independently
-// authored coaster, bauble, black cat and Latin cross use their own generators and must not refresh any legacy lock.
-const independentOriginalIds = ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross'];
+// authored originals use their own generators and must not refresh any legacy lock.
+const raveIds = ['original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'];
+const independentOriginalIds = ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', ...raveIds];
 const historicalCatalog = {
     collections: current.collections,
     patterns: current.patterns.filter(pattern => !independentOriginalIds.includes(pattern.id)),
@@ -53,12 +54,12 @@ const winterPatterns = winterIds.map((id, index) => ({
 const reconstructedWinter = () => [...structuredClone(winterPublished.patterns), ...structuredClone(winterPatterns)];
 
 test('independent original additions preserve the complete published 110 and 111 catalogs', () => {
-    assert.equal(current.patterns.length - historicalCatalog.patterns.length, 4);
-    assert.deepEqual(current.patterns.slice(-4).map(pattern => pattern.id), independentOriginalIds);
+    assert.equal(current.patterns.length - historicalCatalog.patterns.length, 7);
+    assert.deepEqual(current.patterns.slice(-7).map(pattern => pattern.id), independentOriginalIds);
     assert.equal(historicalCatalog.patterns.length, 110);
     assert.equal(createHash('sha256').update(JSON.stringify(historicalCatalog)).digest('hex'),
         '70163c19034985395498762a6ff1beadefdfc2056b03f89e625e2a0e526fd9a7');
-    const published111 = { collections: current.collections, patterns: current.patterns.filter(pattern => !['original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross'].includes(pattern.id)) };
+    const published111 = { collections: current.collections, patterns: current.patterns.filter(pattern => !['original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', ...raveIds].includes(pattern.id)) };
     assert.equal(published111.patterns.length, 111);
     assert.equal(createHash('sha256').update(JSON.stringify(published111)).digest('hex'),
         '2df28e6a91daf9f8eb3574477fef3b89ac50eed4da3b22e51d4e0b8d25f21a41');
@@ -68,7 +69,7 @@ test('the historical fan-art gate still rejects the independently generated cros
     const cross = current.patterns.find(pattern => pattern.id === 'original-latin-cross');
     assert.ok(cross);
     assert.equal(cross.source, null);
-    for (const extra of [cross, { ...cross, id: 'unreviewed-original-extra' }]) {
+    for (const extra of [cross, ...current.patterns.filter(pattern => raveIds.includes(pattern.id)), { ...cross, id: 'unreviewed-original-extra' }]) {
         assert.throws(() => fanArtPublishedCatalogBaseline({
             collections: historicalCatalog.collections,
             patterns: [...historicalCatalog.patterns, extra],

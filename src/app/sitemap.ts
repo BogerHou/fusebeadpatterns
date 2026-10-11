@@ -169,11 +169,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: 'https://fusebeadpatterns.art/fr/patterns', lastModified: new Date('2026-10-09T00:00:00.000Z') },
         ...(['de', 'fr', 'ja'] as const).flatMap(locale => patternSectionSlugs.filter(slug => !(locale === 'fr' && slug === 'christmas')).map(slug => ({
             url: `https://fusebeadpatterns.art${getPatternSectionHref(slug, locale)}`,
-            lastModified: new Date(slug === 'small' ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(['small', 'rave'].includes(slug) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
         }))),
         ...['de', 'fr', 'ja'].flatMap(locale => patterns.map(pattern => ({
             url: `https://fusebeadpatterns.art/${locale}/patterns/${pattern.slug}`,
-            lastModified: new Date(['original-black-cat', 'original-latin-cross'].includes(pattern.id) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
             images: [`https://fusebeadpatterns.art${pattern.assets.preview}`],
         }))),
         ...patterns.map((pattern) => ({

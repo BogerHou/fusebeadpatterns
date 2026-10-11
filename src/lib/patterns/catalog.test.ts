@@ -21,8 +21,8 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(114);
-        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross'].includes(pattern.id))).toHaveLength(109);
+        expect(patterns).toHaveLength(117);
+        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id))).toHaveLength(109);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -88,6 +88,9 @@ describe('pattern library content integrity', () => {
                     'original-christmas-bauble-ornament': 'Original Christmas bauble ornament design v1',
                     'original-black-cat': 'Original Black Cat design v1',
                     'original-latin-cross': 'Original Latin Cross design v1',
+                    'original-rave-alien-head': 'Original Rave design v1',
+                    'original-rave-rainbow-smiley': 'Original Rave design v1',
+                    'original-rave-moon-mushroom': 'Original Rave design v1',
                 };
                 expect(originalVersions[pattern.id]).toBeDefined();
                 expect(pattern.version).toBe(originalVersions[pattern.id]);
@@ -106,19 +109,19 @@ describe('pattern library content integrity', () => {
     });
 
     it('preserves all 112 preexisting catalog records byte-for-byte after adding the black cat', () => {
-        const previous = patterns.filter(pattern => !['original-black-cat', 'original-latin-cross'].includes(pattern.id));
+        const previous = patterns.filter(pattern => !['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id));
         expect(previous).toHaveLength(112);
         // Frozen canonical objects from 86db85c: includes all old descriptions, assets and timestamps.
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('853569c5b388b5da418a90fb999a69000b3ad3e4badd65e26da8d029763f4d17');
     });
 
     it('preserves the earlier 113 catalog objects, all five collections and every curated topic when adding the cross', () => {
-        const previous = patterns.filter(pattern => pattern.id !== 'original-latin-cross');
+        const previous = patterns.filter(pattern => !['original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id));
         expect(previous).toHaveLength(113);
         // Frozen b8da385 objects include every earlier URL, description, asset and timestamp.
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('2125b186180a18318f8764f433a9c403765ec8fc1ce1cf3bf316d65e6c2a2ad4');
         expect(createHash('sha256').update(JSON.stringify(patternCollections)).digest('hex')).toBe('b98ca4ac8197f4710c81b3a89da673d5941986ea9a04efd4dab225e952d6998b');
-        expect(createHash('sha256').update(JSON.stringify(patternTopics)).digest('hex')).toBe('315a2c3ec25b75209e59b31b786bba3a9e24215474d3b15e00a98e7ed7db8b92');
+        expect(createHash('sha256').update(JSON.stringify(patternTopics.filter(topic => topic.slug !== 'rave'))).digest('hex')).toBe('315a2c3ec25b75209e59b31b786bba3a9e24215474d3b15e00a98e7ed7db8b92');
         for (const topic of patternTopics) expect([...topic.patternIds, ...(topic.additionalPatternIds ?? [])]).not.toContain('original-latin-cross');
         expect(patternTopics.find(topic => topic.slug === 'small')!.patternIds).toHaveLength(10);
     });

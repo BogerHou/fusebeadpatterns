@@ -9410,6 +9410,218 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-latin-cross/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-11"
+    },
+    {
+        "id": "original-rave-alien-head",
+        "slug": "alien-head",
+        "title": "Alien Head",
+        "collectionId": null,
+        "version": "Original Rave design v1",
+        "description": "An original lime-green alien head with long black almond eyes. Download the free printable pattern or edit its Perler Midi colors.",
+        "beads": 268,
+        "colorCount": 4,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 19,
+        "motifHeight": 20,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 107
+            },
+            {
+                "symbol": "K",
+                "ref": "80-19061",
+                "name": "Kiwi Lime",
+                "hex": "#69b845",
+                "count": 136
+            },
+            {
+                "symbol": "S",
+                "ref": "80-19053",
+                "name": "Pastel Green",
+                "hex": "#6dcc94",
+                "count": 12
+            },
+            {
+                "symbol": "G",
+                "ref": "80-19080",
+                "name": "Green",
+                "hex": "#4dab64",
+                "count": 13
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "An independently drawn festival-inspired design.",
+            "The PNG is a counting chart, not an actual-size placement template. These downloads use Midi beads, not Mini beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "Physical assembly, ironing, attachment and wearing have not been tested."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-rave-alien-head/preview.png",
+            "grid": "/patterns/original-rave-alien-head/grid.png",
+            "pixels": "/patterns/original-rave-alien-head/pixels.png",
+            "project": "/patterns/original-rave-alien-head/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-rave-alien-head/pattern.pdf",
+            "pdfLetter": "/patterns/original-rave-alien-head/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-11"
+    },
+    {
+        "id": "original-rave-rainbow-smiley",
+        "slug": "rainbow-smiley",
+        "title": "Rainbow Smiley",
+        "collectionId": null,
+        "version": "Original Rave design v1",
+        "description": "An original round smiley with six horizontal rainbow bands and a black smiling face. Download the free printable pattern or edit its Perler Midi colors.",
+        "beads": 429,
+        "colorCount": 7,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 23,
+        "motifHeight": 23,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 108
+            },
+            {
+                "symbol": "R",
+                "ref": "80-15211",
+                "name": "Tomato",
+                "hex": "#d14337",
+                "count": 50
+            },
+            {
+                "symbol": "O",
+                "ref": "80-19004",
+                "name": "Orange",
+                "hex": "#eb7b31",
+                "count": 57
+            },
+            {
+                "symbol": "Y",
+                "ref": "80-19003",
+                "name": "Yellow",
+                "hex": "#e7ce3e",
+                "count": 66
+            },
+            {
+                "symbol": "K",
+                "ref": "80-19061",
+                "name": "Kiwi Lime",
+                "hex": "#69b845",
+                "count": 72
+            },
+            {
+                "symbol": "L",
+                "ref": "80-19009",
+                "name": "Light Blue",
+                "hex": "#278cc9",
+                "count": 43
+            },
+            {
+                "symbol": "P",
+                "ref": "80-19007",
+                "name": "Purple",
+                "hex": "#684b86",
+                "count": 33
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "An independently drawn festival-inspired design.",
+            "The PNG is a counting chart, not an actual-size placement template. These downloads use Midi beads, not Mini beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "Physical assembly, ironing, attachment and wearing have not been tested."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-rave-rainbow-smiley/preview.png",
+            "grid": "/patterns/original-rave-rainbow-smiley/grid.png",
+            "pixels": "/patterns/original-rave-rainbow-smiley/pixels.png",
+            "project": "/patterns/original-rave-rainbow-smiley/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-rave-rainbow-smiley/pattern.pdf",
+            "pdfLetter": "/patterns/original-rave-rainbow-smiley/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-11"
+    },
+    {
+        "id": "original-rave-moon-mushroom",
+        "slug": "crescent-moon-mushroom",
+        "title": "Crescent Moon Mushroom",
+        "collectionId": null,
+        "version": "Original Rave design v1",
+        "description": "An original pale crescent behind a purple mushroom with magenta cap spots and a white stem. Download the free printable pattern or edit its Perler Midi colors.",
+        "beads": 253,
+        "colorCount": 5,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 25,
+        "motifHeight": 25,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 95
+            },
+            {
+                "symbol": "C",
+                "ref": "80-19056",
+                "name": "Pastel Yellow",
+                "hex": "#e9e290",
+                "count": 42
+            },
+            {
+                "symbol": "P",
+                "ref": "80-19007",
+                "name": "Purple",
+                "hex": "#684b86",
+                "count": 64
+            },
+            {
+                "symbol": "M",
+                "ref": "80-19038",
+                "name": "Magenta",
+                "hex": "#e04284",
+                "count": 22
+            },
+            {
+                "symbol": "W",
+                "ref": "80-19001",
+                "name": "White",
+                "hex": "#eaefee",
+                "count": 30
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "Thin one-bead connections at row 3, column 10, row 3, column 11, row 4, column 10. Handle these areas carefully and consider a backing.",
+            "An independently drawn festival-inspired design.",
+            "The PNG is a counting chart, not an actual-size placement template. These downloads use Midi beads, not Mini beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "Physical assembly, ironing, attachment and wearing have not been tested."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-rave-moon-mushroom/preview.png",
+            "grid": "/patterns/original-rave-moon-mushroom/grid.png",
+            "pixels": "/patterns/original-rave-moon-mushroom/pixels.png",
+            "project": "/patterns/original-rave-moon-mushroom/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-rave-moon-mushroom/pattern.pdf",
+            "pdfLetter": "/patterns/original-rave-moon-mushroom/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-11"
     }
 ];
 

@@ -16,6 +16,7 @@ import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 import { brandGuideHref, getCollectionIntro, getFewestColorsPattern, getPatternIntro } from '@/lib/patterns/content';
 import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
+import { isRavePattern } from '@/lib/patterns/rave';
 
 type Props = { params: Promise<{ segments: string[] }> };
 const siteUrl = 'https://fusebeadpatterns.art';
@@ -60,11 +61,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 function PatternDetail({ pattern }: { pattern: Pattern }) {
     const fanArtNotice = getPatternFanArtNotice(pattern);
-    const collection = patternCollections.find((item) => item.id === pattern.collectionId);
+    const collection = isRavePattern(pattern.id) ? { title: 'Rave patterns', slug: 'rave' } : patternCollections.find((item) => item.id === pattern.collectionId);
     const href = getPatternHref(pattern);
     const christmasTopic = getPatternTopicBySlug('christmas');
     const hasChristmasTopic = christmasTopic?.patternIds.includes(pattern.id) || christmasTopic?.additionalPatternIds?.includes(pattern.id);
-    const related = pattern.id === 'original-santa-hat'
+    const related = isRavePattern(pattern.id)
+        ? patterns.filter(item => item.id !== pattern.id && isRavePattern(item.id))
+        : pattern.id === 'original-santa-hat'
         ? patterns.filter(item => christmasTopic?.patternIds.includes(item.id))
         : patterns.filter((item) => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
     const structuredData = {
@@ -107,7 +110,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     <section aria-labelledby="pattern-chart-heading">
                         <h2 id="pattern-chart-heading" className="section-heading mb-5">Pattern chart</h2>
                         <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-[#d9ded5] bg-white transition-colors hover:border-[#78917f]" aria-label={`Open full-size ${pattern.title} pattern chart`}>
-                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 788 : 586} height={['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 908 : 586} unoptimized className="h-auto w-full" />
+                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={pattern.id.startsWith('original-rave-') || ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 788 : 586} height={pattern.id.startsWith('original-rave-') ? 1040 : ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 908 : 586} unoptimized className="h-auto w-full" />
                         </a>
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Blank cells are empty. Tap the chart to view it at full size.</p>
                     </section>
@@ -138,7 +141,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                 </details>
                 {hasChristmasTopic && <p className="mt-6"><Link href="/patterns/christmas" className="text-link">More Christmas patterns</Link></p>}
             </article>
-            {related.length > 0 && <section className="mt-16 border-t border-[#d9ded5] pt-8 sm:pt-10"><h2 className="section-heading mb-7">More {collection?.title ?? 'original'} patterns</h2><PatternGrid patterns={related.map(toPatternCard)} headingLevel={3} /></section>}
+            {related.length > 0 && <section className="mt-16 border-t border-[#d9ded5] pt-8 sm:pt-10"><h2 className="section-heading mb-7">{isRavePattern(pattern.id) ? 'More Rave patterns' : `More ${collection?.title ?? 'original'} patterns`}</h2><PatternGrid patterns={related.map(toPatternCard)} headingLevel={3} /></section>}
         </>
     );
 }

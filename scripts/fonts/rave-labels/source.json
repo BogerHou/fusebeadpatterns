@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Rave Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Original Rave EN/DE/FR/JA PDF and count charts; no old-font refresh",
+  "subsetSha256": "fdbefdd6ae32952671077e36cdb1bdf8ee2e699c41743b763c65ede0c12a13e9",
+  "glyphsSha256": "14203928fbd7863fc735e79b714a09a18d27d14a16986435f7b903b652b1da89",
+  "charactersSha256": "9cf0b86435c337b432e48467cabe356a57f8390cb71e84e488ad3311bdade4a3",
+  "characterCount": 199,
+  "patternIds": [
+    "original-rave-alien-head",
+    "original-rave-rainbow-smiley",
+    "original-rave-moon-mushroom"
+  ],
+  "chartCount": 12,
+  "pdfCount": 24,
+  "pdfCharactersSha256": "950c9092925a7c7ff57b72d59e256d34ca27d401bf40754092d2706b84911dae",
+  "chartCharactersSha256": "f5c201e8e3519def43bda592154a71fa663a1b909effe79f5f1bb1d4f30512e7"
+}
