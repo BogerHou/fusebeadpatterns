@@ -9321,7 +9321,55 @@ export const patterns: Pattern[] = [
       "pdfLetter": "/patterns/original-christmas-bauble-ornament/pattern-letter.pdf"
     },
     "updatedAt": "2026-10-10"
-  }
+  },
+    {
+        "id": "original-black-cat",
+        "slug": "black-cat",
+        "title": "Black Cat",
+        "collectionId": null,
+        "version": "Original Black Cat design v1",
+        "description": "Make an independently designed sitting black cat with 181 Perler Midi beads: 177 Black and 4 Yellow. The 16 × 16 motif fits one 29 × 29 board. Download the printable grid or edit the pattern.",
+        "beads": 181,
+        "colorCount": 2,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 16,
+        "motifHeight": 16,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-19018",
+                "name": "Black",
+                "hex": "#323234",
+                "count": 177
+            },
+            {
+                "symbol": "Y",
+                "ref": "80-19003",
+                "name": "Yellow",
+                "hex": "#e7ce3e",
+                "count": 4
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "This ordinary sitting cat is an independently drawn original design.",
+            "The motif uses Black 80-19018 and ordinary Yellow 80-19003; screen colors are approximate.",
+            "This is a small 16 × 16 motif on a Midi board, not a Mini-bead template. The PNG chart is for counting, not actual-size placement.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-black-cat/preview.png",
+            "grid": "/patterns/original-black-cat/grid.png",
+            "pixels": "/patterns/original-black-cat/pixels.png",
+            "project": "/patterns/original-black-cat/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-black-cat/pattern.pdf",
+            "pdfLetter": "/patterns/original-black-cat/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-11"
+    }
 ];
 
 export function getPatternBySlug(slug: string): Pattern | undefined {

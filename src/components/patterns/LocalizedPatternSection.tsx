@@ -38,7 +38,7 @@ export default function LocalizedPatternSection({ section, locale }: { section: 
             <PatternSectionNav locale={locale} current={section.slug} />
             <div className="mt-8"><PatternGrid patterns={section.patterns.map(pattern => toLocalizedPatternCard(pattern, locale))} /></div>
             {!!section.additionalPatterns?.length && <section className="mt-12 border-t border-line pt-8" aria-labelledby="additional-patterns-heading">
-                <h2 id="additional-patterns-heading" className="section-heading mb-6">{ui.additional}</h2>
+                <h2 id="additional-patterns-heading" className="section-heading mb-6">{section.slug === 'halloween' ? ui.additionalHalloween : ui.additional}</h2>
                 <PatternGrid patterns={section.additionalPatterns.map(pattern => toLocalizedPatternCard(pattern, locale))} />
             </section>}
             <section aria-labelledby="choosing-pattern-heading" className="mt-14 max-w-3xl border-t border-line pt-8">

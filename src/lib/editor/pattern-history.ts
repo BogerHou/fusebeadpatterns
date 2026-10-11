@@ -339,6 +339,51 @@ export class PatternHistory {
         return this.retainedBytes;
     }
 
+    /** Prepare converted undo/redo colors without changing the live history. */
+    async remapPixels(convert: (pixels: Uint8ClampedArray) => Promise<Uint8ClampedArray>): Promise<PatternHistory> {
+        const stacks = [this.undoStack, this.redoStack].map(stack => stack.map(patch => ({
+            indices: patch.indices.slice(), before: patch.before.slice(), after: patch.after.slice(),
+        })));
+        const length = stacks.flat().reduce((sum, patch) => sum + patch.before.length + patch.after.length, 0);
+        const next = new PatternHistory({ byteBudget: this.byteBudget, maxSteps: this.maxSteps });
+        if (length === 0) return next;
+        const packed = new Uint8ClampedArray(length);
+        let cursor = 0;
+        for (const patch of stacks.flat()) {
+            packed.set(patch.before, cursor);
+            cursor += patch.before.length;
+            packed.set(patch.after, cursor);
+            cursor += patch.after.length;
+        }
+        const mapped = await convert(packed.slice());
+        if (!(mapped instanceof Uint8ClampedArray) || mapped.length !== length) {
+            throw new RangeError('History color conversion cannot change patch dimensions.');
+        }
+        for (let offset = 3; offset < length; offset += 4) {
+            if (mapped[offset] !== packed[offset] ||
+                (packed[offset] === 0 && !pixelsMatch(mapped, offset - 3, packed, offset - 3))) {
+                throw new RangeError('History color conversion cannot change transparency.');
+            }
+        }
+        cursor = 0;
+        stacks.forEach((stack, index) => {
+            for (const patch of stack) {
+                const before = mapped.slice(cursor, cursor + patch.before.length);
+                cursor += patch.before.length;
+                const after = mapped.slice(cursor, cursor + patch.after.length);
+                cursor += patch.after.length;
+                const converted = createPatternPatch(before, after);
+                // Two source colors may become the same target bead. Omit only
+                // those no-op cells; remaining edit positions and stack order stay.
+                if (!converted) continue;
+                converted.indices = converted.indices.map(offset => patch.indices[offset / 4]);
+                (index === 0 ? next.undoStack : next.redoStack).push(converted);
+                next.retainedBytes += patchByteLength(converted);
+            }
+        });
+        return next;
+    }
+
     /** Captures both stacks without retaining references to live pattern/history data. */
     capture(data: Uint8ClampedArray, width: number, height: number): PatternHistorySnapshot | null {
         if (

@@ -559,6 +559,11 @@
       "href": "/patterns-de/original-christmas-bauble-ornament/grid.png",
       "width": 788,
       "height": 1420
+    },
+    "original-black-cat": {
+      "href": "/patterns-de/original-black-cat/grid.png",
+      "width": 788,
+      "height": 1351
     }
   },
   "fr": {
@@ -1121,6 +1126,11 @@
       "href": "/patterns-fr/original-christmas-bauble-ornament/grid.png",
       "width": 788,
       "height": 1420
+    },
+    "original-black-cat": {
+      "href": "/patterns-fr/original-black-cat/grid.png",
+      "width": 788,
+      "height": 1329
     }
   },
   "ja": {
@@ -1683,6 +1693,11 @@
       "href": "/patterns-ja/original-christmas-bauble-ornament/grid.png",
       "width": 788,
       "height": 1308
+    },
+    "original-black-cat": {
+      "href": "/patterns-ja/original-black-cat/grid.png",
+      "width": 788,
+      "height": 1284
     }
   }
 }

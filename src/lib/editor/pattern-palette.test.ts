@@ -310,8 +310,8 @@ describe('remapPatternPalette', () => {
     );
 
     it('remaps every library project to Hama and Artkal without losing beads', async () => {
-        expect(patterns).toHaveLength(112);
-        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament'].includes(pattern.id))).toHaveLength(109);
+        expect(patterns).toHaveLength(113);
+        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat'].includes(pattern.id))).toHaveLength(109);
         const targets = await Promise.all(['hama', 'artkal_a'].map(async (id) => {
             const target = await loadPalette(id);
             const allowedColors = new Set(target.entries

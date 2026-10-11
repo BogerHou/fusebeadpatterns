@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Black Cat Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Original black cat EN/DE/FR/JA PDFs and native chart labels; no old-font refresh",
+  "subsetSha256": "1e1b515afb44ba2e56a14523e05813385bef8a9795802e318e7586b5a43eddf8",
+  "glyphsSha256": "e8ef49b52aa3a27ee068729da0623f9deed9d520164999e0158d6f3493b9d7d6",
+  "charactersSha256": "e3e3a8613fc7bbbeb8c2165de50f77c4b0a4202f79c544c427bdf27e7cd684d5",
+  "characterCount": 232,
+  "patternIds": [
+    "original-black-cat"
+  ],
+  "chartCount": 3,
+  "pdfCount": 8,
+  "chartCharactersSha256": "ea96d64ffc5929ffb148334fed263c24a785c8482406f06e8636f814cfc71a79",
+  "pdfCharactersSha256": "e1b52900ac35a0cff47e26fd494fb166ed3aa8727466f248f0d1fd822bca5255"
+}

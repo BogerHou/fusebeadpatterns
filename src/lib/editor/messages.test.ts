@@ -49,6 +49,12 @@ describe('full editor translations', () => {
         expect(getEditorErrorMessage('Failed to load palette file: hama.csv', 'fr')).toBe('Impossible de charger la palette de couleurs.');
         expect(getEditorErrorMessage('SecurityError: DOM Exception', 'de')).not.toContain('SecurityError');
         expect(getEditorErrorMessage('SecurityError: DOM Exception', 'en')).toBe('SecurityError: DOM Exception');
+        const changedDuringConversion = 'Pattern changed while colors were being converted. Try selecting the palette again.';
+        for (const locale of ['de', 'fr', 'ja'] as const) {
+            expect(getEditorErrorMessage(changedDuringConversion, locale)).toBe(getEditorTranslator(locale)(changedDuringConversion));
+            expect(getEditorErrorMessage(changedDuringConversion, locale)).not.toBe(changedDuringConversion);
+            expect(getEditorErrorMessage(changedDuringConversion, locale)).not.toBe(getEditorErrorMessage('unknown browser exception', locale));
+        }
     });
 
     it('has no untranslated JSX interface text and resolves every static message key', () => {
