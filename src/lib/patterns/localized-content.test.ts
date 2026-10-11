@@ -53,10 +53,10 @@ describe('full localized pattern coverage', () => {
             expect(pdf.language).toBe(locale);
             counts[locale] += 1;
         }
-        expect(counts).toEqual({ de: 114, fr: 114, ja: 114 });
+        expect(counts).toEqual({ de: 117, fr: 117, ja: 117 });
     });
     it('preserves all earlier localized names, introductions and complete making notes', () => {
-        const previous = patterns.filter(pattern => pattern.id !== 'original-latin-cross').map(pattern => ({
+        const previous = patterns.filter(pattern => !['original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id)).map(pattern => ({
             id: pattern.id,
             locales: locales.map(locale => ({
                 name: getLocalizedSubjectName(pattern, locale),

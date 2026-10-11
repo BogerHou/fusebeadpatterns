@@ -19,6 +19,7 @@ import PatternShare from './PatternShare';
 import CoasterInstructions from './CoasterInstructions';
 import OrnamentInstructions from './OrnamentInstructions';
 import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
+import { isRavePattern, ravePatternCopy } from '@/lib/patterns/rave';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 export function localizedPatternMetadata(pattern: Pattern, locale: PatternLocale): Metadata {
@@ -40,10 +41,14 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
     const grid = getLocalizedPatternGrid(pattern, locale);
     const fanArtNotice = getPatternFanArtNotice(pattern, locale);
     const letterPdf = getLocalizedPatternLetterPdf(pattern, locale);
-    const related = pattern.id === 'original-santa-hat'
+    const related = isRavePattern(pattern.id)
+        ? patterns.filter(item => item.id !== pattern.id && isRavePattern(item.id))
+        : pattern.id === 'original-santa-hat'
         ? patterns.filter(item => patternTopics.find(topic => topic.slug === 'christmas')?.patternIds.includes(item.id))
         : patterns.filter(item => item.id !== pattern.id && item.collectionId === pattern.collectionId).slice(0, 4);
-    const collection = pattern.collectionId ? { label: sectionLabels[locale][pattern.collectionId as PatternSectionSlug], href: getPatternSectionHref(pattern.collectionId, locale) } : null;
+    const collection = isRavePattern(pattern.id)
+        ? { label: ravePatternCopy[locale].label, href: getPatternSectionHref('rave', locale) }
+        : pattern.collectionId ? { label: sectionLabels[locale][pattern.collectionId as PatternSectionSlug], href: getPatternSectionHref(pattern.collectionId, locale) } : null;
     const topics = patternTopics.filter(topic => topic.patternIds.includes(pattern.id) || topic.additionalPatternIds?.includes(pattern.id));
     const tracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': pattern.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'pattern_detail' };
     const structuredData = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description: getLocalizedPatternIntro(pattern, locale), url: `${siteUrl}${href}`, inLanguage: locale, primaryImageOfPage: `${siteUrl}${pattern.assets.preview}` };

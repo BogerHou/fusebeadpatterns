@@ -61,6 +61,9 @@ const subjects: Record<string, [string, string, string]> = {
     'Retro Diamond Coaster': ['Retro-Untersetzer mit Rautenmuster', 'Dessous de verre rétro à losanges', 'レトロなひし形コースター'],
     'Black Cat': ['Schwarze Katze', 'Chat noir', '黒猫'],
     Cross: ['Kreuz', 'Croix', '十字架'],
+    'Alien Head': ['Alien-Kopf', 'Tête d’alien', 'エイリアンの顔'],
+    'Rainbow Smiley': ['Regenbogen-Smiley', 'Smiley arc-en-ciel', '虹色スマイル'],
+    'Crescent Moon Mushroom': ['Mondsichel mit Pilz', 'Croissant de lune et champignon', '三日月ときのこ'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -124,6 +127,9 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'An independently drawn festival-inspired design.': ['Ein unabhängig entworfenes, festivalinspiriertes Motiv.', 'Un motif original dessiné indépendamment, inspiré des festivals.', 'フェスをイメージして独自に描いたオリジナル図柄です。'],
+    'Physical assembly, ironing, attachment and wearing have not been tested.': ['Bau, Bügeln, Befestigung und Tragen wurden nicht praktisch getestet.', 'Assemblage, repassage, fixation et port n’ont pas été testés avec de vraies perles.', '実物制作・アイロン仕上げ・取り付け・身に着けた状態は検証していません。'],
+    'The PNG is a counting chart, not an actual-size placement template. These downloads use Midi beads, not Mini beads.': ['Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe. Diese Dateien verwenden Midi-Perlen, keine Mini-Perlen.', 'Le PNG sert à compter les cases, pas à placer les perles à taille réelle. Les fichiers utilisent des perles Midi, pas des perles Mini.', 'PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。ファイルはミディビーズ用で、ミニビーズ用ではありません。'],
     'An original plain Latin cross with a longer lower arm.': ['Ein originales, schlichtes lateinisches Kreuz mit längerem unteren Arm.', 'Une croix latine simple et originale, au bras inférieur plus long.', '下側が長い、シンプルなラテン十字のオリジナル図案です。'],
     'The motif uses Brown 80-19012; screen colors are approximate.': ['Das Motiv verwendet Brown 80-19012. Die Bildschirmfarben sind Näherungen.', 'Le motif utilise Brown 80-19012. Les couleurs à l’écran sont approximatives.', 'Brown 80-19012を使います。画面の色は目安です。'],
     'The 13 × 19 motif sits on a Midi board. The PNG chart is for counting, not actual-size placement.': ['Das 13 × 19-Motiv liegt auf einer Midi-Steckplatte. Das PNG dient zum Zählen, nicht zum Auflegen in tatsächlicher Größe.', 'Le motif de 13 × 19 perles se place sur une plaque Midi. La grille PNG sert à compter les cases, pas à placer les perles à taille réelle.', '横13×縦19マスの図柄をミディ用プレート上に作ります。PNGはマスを数えるための画像で、実寸でビーズを重ねる型紙ではありません。'],
@@ -162,6 +168,9 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
     'stardew-valley': ['スターデューバレー'],
 };
 const subjectSearchAliases: Record<string, readonly string[]> = {
+    'original-rave-alien-head': ['alien perler bead pattern', 'rave perler bead patterns', 'Alien Bügelperlen', 'alien perles à repasser', 'アイロンビーズ エイリアン'],
+    'original-rave-rainbow-smiley': ['rainbow smiley perler bead pattern', 'rave perler bead patterns', 'Regenbogen Smiley Bügelperlen', 'smiley arc-en-ciel perles à repasser', 'アイロンビーズ 虹 スマイル'],
+    'original-rave-moon-mushroom': ['moon mushroom perler bead pattern', 'rave perler bead patterns', 'Mondsichel Pilz Bügelperlen', 'lune champignon perles à repasser', 'アイロンビーズ 三日月 きのこ'],
     'original-latin-cross': ['cross perler bead pattern', 'perler bead cross pattern', 'Latin cross', 'Christian cross', 'Bügelperlen Kreuz Vorlage', 'modèle perles à repasser croix', 'アイロンビーズ 十字架 図案'],
     'original-black-cat': ['black cat perler beads', 'Bügelperlen schwarze Katze', 'perles à repasser chat noir', 'アイロンビーズ 黒猫 図案'],
     'original-christmas-bauble-ornament': ['perler bead ornament patterns', 'Bügelperlen Weihnachtskugel Vorlage', 'modèle perles à repasser boule de Noël', 'アイロンビーズ クリスマス オーナメント 図案'],

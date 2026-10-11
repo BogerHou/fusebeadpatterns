@@ -1,5 +1,6 @@
 import { getPatternById, type Pattern } from './catalog';
 import { smallPatternCopy, smallPatternIds } from './small';
+import { ravePatternCopy, ravePatternIds } from './rave';
 
 export type PatternTopic = {
     slug: string;
@@ -152,6 +153,22 @@ export const patternTopics: readonly PatternTopic[] = [
             { href: '/guides/perler-bead-pegboards', label: smallPatternCopy.en.boardGuide },
             { href: '/patterns/easy', label: smallPatternCopy.en.easy },
             { href: '/patterns/cute', label: smallPatternCopy.en.cute },
+        ],
+        updatedAt: '2026-10-11',
+    },
+    {
+        slug: 'rave',
+        label: ravePatternCopy.en.label,
+        title: ravePatternCopy.en.title,
+        description: ravePatternCopy.en.description,
+        intro: ravePatternCopy.en.intro,
+        patternIds: ravePatternIds,
+        selectionHeading: ravePatternCopy.en.heading,
+        selectionNotes: ravePatternCopy.en.notes,
+        relatedLinks: [
+            { href: '/guides/perler-to-hama-artkal', label: 'Change bead colors and brands' },
+            { href: '/guides/how-to-iron-perler-beads', label: 'Ironing guide' },
+            { href: '/guides/mini-perler-beads', label: 'Midi and Mini bead sizes' },
         ],
         updatedAt: '2026-10-11',
     },

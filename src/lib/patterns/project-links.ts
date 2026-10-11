@@ -576,6 +576,21 @@ const libraryProjects: LibraryProject[] = [
         "id": "original-latin-cross",
         "title": "Cross",
         "projectUrl": "/patterns/original-latin-cross/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-rave-alien-head",
+        "title": "Alien Head",
+        "projectUrl": "/patterns/original-rave-alien-head/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-rave-rainbow-smiley",
+        "title": "Rainbow Smiley",
+        "projectUrl": "/patterns/original-rave-rainbow-smiley/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-rave-moon-mushroom",
+        "title": "Crescent Moon Mushroom",
+        "projectUrl": "/patterns/original-rave-moon-mushroom/pattern.bead-pattern.json"
     }
 ];
 
