@@ -158,6 +158,7 @@ export const EDITOR_MESSAGE_ROWS: readonly (readonly [string, string, string, st
     ['{palettes} palettes selected • {colors} enabled colors', '{palettes} Paletten ausgewählt • {colors} aktive Farben', '{palettes} palettes sélectionnées • {colors} couleurs activées', '{palettes} パレット選択中 • {colors} 色が有効'],
     ['{enabled} / {total} enabled', '{enabled} / {total} aktiviert', '{enabled} / {total} activées', '{total} 色中 {enabled} 色が有効'],
     ['Enable All', 'Alle aktivieren', 'Tout activer', 'すべて有効にする'],
+    ['New palettes start with some transparent and effect colors disabled. Enable the colors you want below.', 'Bei neu geladenen Paletten sind einige transparente Farben und Effektfarben deaktiviert. Aktiviere unten die gewünschten Farben.', 'Les nouvelles palettes ont certaines couleurs transparentes ou à effet désactivées. Activez ci-dessous les couleurs souhaitées.', '新しく読み込むパレットでは、一部の透明色・特殊効果色が無効です。使いたい色を下で有効にしてください。'],
     ['Select Color', 'Farbe auswählen', 'Choisir une couleur', '色を選択'],
     ['Pick a bead color from the loaded palettes', 'Wähle eine Perlenfarbe aus den geladenen Paletten', 'Choisissez une couleur de perle dans les palettes chargées', '読み込んだパレットからビーズの色を選びます'],
     ['Close color picker', 'Farbauswahl schließen', 'Fermer le sélecteur de couleur', '色の選択を閉じる'],

@@ -1,9 +1,11 @@
 import { getPatternById, type Pattern } from './catalog';
+import { smallPatternCopy, smallPatternIds } from './small';
 
 export type PatternTopic = {
     slug: string;
     label: string;
     title: string;
+    metadataTitle?: string;
     description: string;
     intro: string;
     patternIds: readonly string[];
@@ -44,6 +46,7 @@ export const patternTopics: readonly PatternTopic[] = [
             { href: '/guides/perler-bead-kits-and-storage', label: 'Beginner supplies guide' },
             { href: '/guides/perler-bead-pegboards', label: 'Choose a pegboard' },
             { href: '/patterns/cute', label: 'Cute pattern ideas' },
+            { href: '/patterns/small', label: 'Small patterns by bead count' },
         ],
         updatedAt: '2026-10-08',
     },
@@ -78,6 +81,7 @@ export const patternTopics: readonly PatternTopic[] = [
             { href: '/patterns/easy', label: 'Patterns with fewer colors' },
             { href: '/guides/mini-perler-beads', label: 'Mini bead size guide' },
             { href: '/guides/perler-to-hama-artkal', label: 'Switch bead brands' },
+            { href: '/patterns/small', label: 'Small patterns by bead count' },
         ],
         updatedAt: '2026-10-08',
     },
@@ -131,6 +135,24 @@ export const patternTopics: readonly PatternTopic[] = [
             { href: '/guides/perler-to-hama-artkal', label: 'Switch bead brands' },
         ],
         updatedAt: '2026-10-08',
+    },
+    {
+        slug: 'small',
+        label: smallPatternCopy.en.label,
+        title: smallPatternCopy.en.title,
+        metadataTitle: smallPatternCopy.en.metadataTitle,
+        description: smallPatternCopy.en.description,
+        intro: smallPatternCopy.en.intro,
+        patternIds: smallPatternIds,
+        selectionHeading: smallPatternCopy.en.heading,
+        selectionNotes: smallPatternCopy.en.notes,
+        relatedLinks: [
+            { href: '/guides/mini-perler-beads', label: smallPatternCopy.en.miniGuide },
+            { href: '/guides/perler-bead-pegboards', label: smallPatternCopy.en.boardGuide },
+            { href: '/patterns/easy', label: smallPatternCopy.en.easy },
+            { href: '/patterns/cute', label: smallPatternCopy.en.cute },
+        ],
+        updatedAt: '2026-10-11',
     },
 ];
 

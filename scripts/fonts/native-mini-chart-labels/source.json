@@ -1,0 +1,36 @@
+{
+  "purpose": "Missing DE/FR/JA Mini Ghost counting-chart outlines from existing approved fonts; no new font",
+  "fonttoolsVersion": "4.60.1",
+  "glyphsSha256": "972c118dc7528452eafa5eea9761363c1600f65acadabd8cb8cc8a85884b603b",
+  "characters": "うェ型左版読間隔",
+  "fonts": [
+    {
+      "path": "scripts/fonts/mini-ghost-jp/FuseBeadMiniGhostJapanese-Regular.ttf",
+      "sha256": "cde473782ddd8852567a6e419d69efd8a549610c4ec00f40140b7d0b0b9f1320",
+      "licensePath": "scripts/fonts/mini-ghost-jp/OFL.txt",
+      "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+    },
+    {
+      "path": "scripts/fonts/calibration/FuseBeadCalibration-Regular.ttf",
+      "sha256": "bf8461c74e9b76be6e4eda854a4381e0e69a4c962701033cd8c639d1c4920f40",
+      "licensePath": "scripts/fonts/calibration/OFL.txt",
+      "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+    },
+    {
+      "path": "scripts/fonts/photo-guide-jp/FuseBeadGuideJapanese-Regular.ttf",
+      "sha256": "1608e5c3a4dff0927ae10cfa7749e1a9ee2549053695d13487cc803d3a2bc121",
+      "licensePath": "scripts/fonts/photo-guide-jp/OFL.txt",
+      "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+    }
+  ],
+  "glyphSources": {
+    "う": "scripts/fonts/mini-ghost-jp/FuseBeadMiniGhostJapanese-Regular.ttf",
+    "ェ": "scripts/fonts/mini-ghost-jp/FuseBeadMiniGhostJapanese-Regular.ttf",
+    "型": "scripts/fonts/mini-ghost-jp/FuseBeadMiniGhostJapanese-Regular.ttf",
+    "左": "scripts/fonts/photo-guide-jp/FuseBeadGuideJapanese-Regular.ttf",
+    "版": "scripts/fonts/mini-ghost-jp/FuseBeadMiniGhostJapanese-Regular.ttf",
+    "読": "scripts/fonts/mini-ghost-jp/FuseBeadMiniGhostJapanese-Regular.ttf",
+    "間": "scripts/fonts/calibration/FuseBeadCalibration-Regular.ttf",
+    "隔": "scripts/fonts/calibration/FuseBeadCalibration-Regular.ttf"
+  }
+}

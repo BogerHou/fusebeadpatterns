@@ -1,11 +1,12 @@
 import type { PatternLocale } from './localized-content';
 import type { PatternSectionSlug } from './section-routes';
+import { smallPatternCopy } from './small';
 
-export type TopicCopy = { label: string; title: string; description: string; intro: string; heading: string; notes: readonly string[] };
+export type TopicCopy = { label: string; title: string; metadataTitle?: string; description: string; intro: string; heading: string; notes: readonly string[] };
 export const sectionLabels: Record<PatternLocale, Record<PatternSectionSlug, string>> = {
-    de: { 'stardew-valley': 'Stardew Valley', pokemon: 'Pokémon', minecraft: 'Minecraft', 'super-mario': 'Super Mario', kirby: 'Kirby', easy: 'Einfache Vorlagen', cute: 'Niedliche Motive', halloween: 'Halloween', christmas: 'Weihnachten' },
-    fr: { 'stardew-valley': 'Stardew Valley', pokemon: 'Pokémon', minecraft: 'Minecraft', 'super-mario': 'Super Mario', kirby: 'Kirby', easy: 'Modèles faciles', cute: 'Motifs mignons', halloween: 'Halloween', christmas: 'Noël' },
-    ja: { 'stardew-valley': 'Stardew Valley', pokemon: 'ポケモン', minecraft: 'Minecraft', 'super-mario': 'スーパーマリオ', kirby: '星のカービィ', easy: '簡単な図案', cute: 'かわいい図案', halloween: 'ハロウィン', christmas: 'クリスマス' },
+    de: { 'stardew-valley': 'Stardew Valley', pokemon: 'Pokémon', minecraft: 'Minecraft', 'super-mario': 'Super Mario', kirby: 'Kirby', easy: 'Einfache Vorlagen', cute: 'Niedliche Motive', small: smallPatternCopy.de.label, halloween: 'Halloween', christmas: 'Weihnachten' },
+    fr: { 'stardew-valley': 'Stardew Valley', pokemon: 'Pokémon', minecraft: 'Minecraft', 'super-mario': 'Super Mario', kirby: 'Kirby', easy: 'Modèles faciles', cute: 'Motifs mignons', small: smallPatternCopy.fr.label, halloween: 'Halloween', christmas: 'Noël' },
+    ja: { 'stardew-valley': 'Stardew Valley', pokemon: 'ポケモン', minecraft: 'Minecraft', 'super-mario': 'スーパーマリオ', kirby: '星のカービィ', easy: '簡単な図案', cute: 'かわいい図案', small: smallPatternCopy.ja.label, halloween: 'ハロウィン', christmas: 'クリスマス' },
 };
 
 export const sectionUi = {
@@ -40,6 +41,7 @@ export const collectionSubjects: Record<PatternLocale, Record<string, string>> =
 
 export const topicMessages: Record<PatternLocale, Record<string, TopicCopy>> = {
     de: {
+        small: smallPatternCopy.de,
         easy: {
             label: 'Einfache Vorlagen', title: 'Einfache Bügelperlen-Vorlagen', description: 'Bügelperlen-Vorlagen mit höchstens vier Farben für eine 29 × 29-Midi-Platte: Kirby, Ditto, Mario-Motive und mehr. Kostenlose Raster und Druckdateien.',
             intro: 'Beginne mit wenigen Farben und einer einzelnen Steckplatte. Diese Vorlagen verwenden höchstens vier Farben auf einem 29 × 29-Midi-Raster. Wähle ein Motiv für PDF, Farbliste und bearbeitbare Vorlage.', heading: 'Deine erste Vorlage auswählen',
@@ -62,6 +64,7 @@ export const topicMessages: Record<PatternLocale, Record<string, TopicCopy>> = {
         },
     },
     fr: {
+        small: smallPatternCopy.fr,
         easy: {
             label: 'Modèles faciles', title: 'Modèles faciles en perles à repasser', description: 'Des modèles gratuits avec quatre couleurs maximum sur une plaque Midi de 29 × 29 cases : Kirby, Métamorph, Mario et d’autres motifs à imprimer.',
             intro: 'Commencez avec peu de couleurs et une seule plaque. Ces modèles utilisent quatre couleurs maximum sur une plaque Midi de 29 × 29 cases. Choisissez une image pour son PDF, ses couleurs et son projet modifiable.', heading: 'Choisir son premier modèle',
@@ -84,6 +87,7 @@ export const topicMessages: Record<PatternLocale, Record<string, TopicCopy>> = {
         },
     },
     ja: {
+        small: smallPatternCopy.ja,
         easy: {
             label: '簡単な図案', title: '少ない色で作る簡単なアイロンビーズ図案', description: '4色以内・29×29マスのミディプレート1枚で作る図案。カービィ、メタモン、マリオのモチーフなど、無料の図案と印刷用ファイルを選べます。',
             intro: '少ない色とプレート1枚から始めたい方向けの図案です。いずれも4色以内で、29×29マスのミディ用プレートに収まります。画像を選ぶと、PDF・色表・編集用プロジェクトを開けます。', heading: '最初の図案の選び方',

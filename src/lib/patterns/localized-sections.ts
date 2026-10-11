@@ -11,6 +11,7 @@ import { getPatternSectionHref, type PatternSectionSlug } from './section-routes
 export type LocalizedPatternSection = {
     slug: string; href: string; label: string; title: string; description: string; intro: string;
     metadataDescription?: string;
+    metadataTitle?: string;
     heading: string; notes: readonly string[]; patterns: Pattern[]; fewest?: Pattern;
     additionalPatterns?: Pattern[];
     relatedLinks: Array<{ href: string; label: string; language: string }>;
@@ -31,7 +32,7 @@ const indexedMinecraftDescriptions: Record<PatternLocale, string> = {
 
 export function localizedSectionMetadata(section: LocalizedPatternSection, locale: PatternLocale): Metadata {
     const siteUrl = 'https://fusebeadpatterns.art';
-    const title = `${section.title} | Fuse Bead Patterns`;
+    const title = `${section.metadataTitle ?? section.title} | Fuse Bead Patterns`;
     const image = section.patterns[0].assets.preview;
     const description = section.metadataDescription ?? section.description;
     return {

@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const slug = (await params).segments.join('/');
     const topic = getPatternTopicBySlug(slug);
     if (topic) {
-        const title = `${topic.title} | Fuse Bead Patterns`;
+        const title = `${topic.metadataTitle ?? topic.title} | Fuse Bead Patterns`;
         const previewPattern = getPatternsForTopic(topic)[0];
         const image = previewPattern.assets.preview;
         return {
