@@ -2,7 +2,8 @@ import type { Palette } from '../core/model/palette/palette.model';
 import { computeUsage, createPaletteEntryColorMap, drawImageInsideCanvas, getPaletteEntryColorKey } from '../core/utils/utils';
 import { getBoardOption, getPaletteOption, parsePaletteCsv } from '../editor/config';
 import { createEditorDraft, decodeEditorPatternDraft, encodeEditorProjectPattern, parseEditorProject, serializeEditorProject } from '../editor/draft';
-import { clonePalettes } from '../editor/palette-state';
+import { clonePalettes, mergePaletteEnabledState } from '../editor/palette-state';
+import { applyFreshPaletteDefaults } from '../editor/palette-defaults';
 import { remapPatternPalette } from '../editor/pattern-palette';
 import { quantizePattern } from '../editor/pattern-quantization';
 import { buildEditorProject } from '../editor/project';
@@ -85,7 +86,7 @@ export async function loadJapanesePalette(paletteId: JapanesePaletteId, signal?:
         const palette = parsePaletteCsv(csv, option);
         if (!palette.entries.length || palette.entries.some(entry => !entry.ref || ![entry.color.r, entry.color.g, entry.color.b].every(channel => Number.isInteger(channel) && channel >= 0 && channel <= 255))) throw new JapaneseGeneratorError('palette');
         checkAbort(signal);
-        return palette;
+        return applyFreshPaletteDefaults(paletteId, palette);
     } catch (error) { checkAbort(signal); throw error instanceof JapaneseGeneratorError ? error : new JapaneseGeneratorError('palette'); }
 }
 
@@ -215,8 +216,13 @@ export function restoreJapaneseProject(raw: string, palette: Palette): JapaneseP
         const expected = expectedRefs.get(entry.ref);
         if (!expected || ['r', 'g', 'b', 'a'].some((channel: 'r'|'g'|'b'|'a') => entry.color[channel] !== expected.color[channel])) throw new JapaneseGeneratorError('project_colors');
     }
+    // Recovered enabled flags take precedence over fresh defaults, after the
+    // saved refs/RGBA passed validation. Names and RGB still come from the CSV.
+    const restoredPalettes = mergePaletteEnabledState([palette], [{
+        ...draft.activePalettes[0], name: palette.name,
+    }]);
     const pixels = decodeEditorPatternDraft(draft.editedPattern)!;
-    const restored: JapanesePattern = { paletteId, palette: clonePalettes([palette])[0], boardWidth: draft.boardWidth, boardHeight: draft.boardHeight, width: draft.editedPattern.width, height: draft.editedPattern.height, pixels, usage: computeUsage(pixels, [palette]), fileName: draft.fileName || 'bead-pattern', imageSrc: draft.imageSrc };
+    const restored: JapanesePattern = { paletteId, palette: restoredPalettes[0], boardWidth: draft.boardWidth, boardHeight: draft.boardHeight, width: draft.editedPattern.width, height: draft.editedPattern.height, pixels, usage: computeUsage(pixels, restoredPalettes), fileName: draft.fileName || 'bead-pattern', imageSrc: draft.imageSrc };
     validateJapanesePattern(restored);
     return restored;
 }

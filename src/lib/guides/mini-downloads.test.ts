@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { getGuideBySlug } from '../../app/(english)/guides/guide-data';
 import { getLocalizedGuide, localizeGuideLink } from './localized';
 import { miniGhostAssetRoot, miniGhostProjectId } from '../patterns/mini';
+import { MINI_GRID_PIXEL_HEIGHT, MINI_RETAINED_HASHES } from '../../../scripts/build-localized-mini-ghost-charts.mjs';
 
 const locales = ['de', 'fr', 'ja'] as const;
 const source = getGuideBySlug('mini-perler-beads')!;
@@ -28,12 +31,12 @@ describe('Mini guide native downloads', () => {
         expect(words).toBeLessThanOrEqual(130);
     });
 
-    it('localizes only the exact new PDFs and editor alias, retaining the shared PNG and project', () => {
+    it('uses native PDFs and counting PNGs while retaining the shared original project and preview', () => {
         for (const locale of locales) {
             const links = miniSection.links!.map(link => localizeGuideLink(link, locale));
             expect(links.map(link => link.href)).toEqual([
                 `${miniGhostAssetRoot}/${locale}/pattern-a4.pdf`, `${miniGhostAssetRoot}/${locale}/pattern-letter.pdf`,
-                `${miniGhostAssetRoot}/grid.png`, `${miniGhostAssetRoot}/pattern.bead-pattern.json`,
+                `${miniGhostAssetRoot}/${locale}/grid.png`, `${miniGhostAssetRoot}/pattern.bead-pattern.json`,
                 `/${locale}/editor?pattern=${miniGhostProjectId}`,
                 'https://perler.com/blogs/projects/football-silhouettes',
             ]);
@@ -57,5 +60,39 @@ describe('Mini guide native downloads', () => {
                 else expect(JSON.parse(bytes.toString()).draft.selectedPaletteIds).toEqual(['perler_mini']);
             }
         }
+    });
+
+    it('preserves the original English PNG, project, pixels, preview and all eight PDFs byte for byte', () => {
+        for (const [name, hash] of Object.entries(MINI_RETAINED_HASHES)) {
+            expect(createHash('sha256').update(readFileSync(`public${miniGhostAssetRoot}/${name}`)).digest('hex')).toBe(hash);
+        }
+    });
+
+    it.each(locales)('%s counting PNG retains every original grid, symbol and coordinate pixel', async locale => {
+        const old = await sharp(`public${miniGhostAssetRoot}/grid.png`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+        const native = await sharp(`public${miniGhostAssetRoot}/${locale}/grid.png`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+        expect(old.info.width).toBe(788);
+        expect(native.info.width).toBe(old.info.width);
+        expect(native.info.height).toBeGreaterThan(MINI_GRID_PIXEL_HEIGHT);
+        const gridBytes = old.info.width * MINI_GRID_PIXEL_HEIGHT * 4;
+        expect(native.data.subarray(0, gridBytes).equals(old.data.subarray(0, gridBytes))).toBe(true);
+        // The native labels must replace the old English footer, rather than
+        // just append more text below it. The retained region ends below row 29.
+        expect(MINI_GRID_PIXEL_HEIGHT).toBeGreaterThan(46 + 29 * 24);
+        expect(MINI_GRID_PIXEL_HEIGHT).toBeLessThan(789 - 19);
+        const source = await sharp('public/patterns/original-friendly-ghost/pixels.png').ensureAlpha().raw().toBuffer();
+        const counts = new Map<string, number>();
+        for (let row = 0; row < 29; row++) for (let column = 0; column < 29; column++) {
+            const offset = (row * 29 + column) * 4;
+            const rgba = source.subarray(offset, offset + 4);
+            const gridOffset = ((46 + row * 24 + 5) * native.info.width + 46 + column * 24 + 5) * 4;
+            const expected = rgba[3] ? rgba : Buffer.from([255, 255, 255, 255]);
+            expect(native.data.subarray(gridOffset, gridOffset + 4).equals(expected)).toBe(true);
+            if (rgba[3]) {
+                const hex = rgba.subarray(0, 3).toString('hex');
+                counts.set(hex, (counts.get(hex) ?? 0) + 1);
+            }
+        }
+        expect(counts).toEqual(new Map([['eaefee', 293], ['323234', 18]]));
     });
 });

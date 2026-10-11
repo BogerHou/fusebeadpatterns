@@ -3,8 +3,10 @@ import Link from 'next/link';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { getPatternsForTopic, getAdditionalPatternsForTopic, type PatternTopic } from '@/lib/patterns/topics';
 import { PatternGrid, toPatternCard } from './PatternCards';
+import SmallPatternContent from './SmallPatternContent';
 
 export default function PatternTopicPage({ topic }: { topic: PatternTopic }) {
+    if (topic.slug === 'small') return <SmallPatternContent locale="en" />;
     const selectedPatterns = getPatternsForTopic(topic);
     const additionalPatterns = getAdditionalPatternsForTopic(topic);
 

@@ -1,7 +1,7 @@
 import type { SiteLocale } from '../i18n/locales';
 
 // Lightweight route identities: shared by the language switcher, metadata and sitemap.
-export const patternSectionSlugs = ['stardew-valley', 'pokemon', 'minecraft', 'super-mario', 'kirby', 'easy', 'cute', 'halloween', 'christmas'] as const;
+export const patternSectionSlugs = ['stardew-valley', 'pokemon', 'minecraft', 'super-mario', 'kirby', 'easy', 'cute', 'small', 'halloween', 'christmas'] as const;
 export type PatternSectionSlug = typeof patternSectionSlugs[number];
 
 export function getPatternSectionHref(slug: string, locale: SiteLocale): string {

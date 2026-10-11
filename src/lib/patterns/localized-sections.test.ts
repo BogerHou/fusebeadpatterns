@@ -6,9 +6,23 @@ import { getLocalizedPatternSection, localizedSectionMetadata } from './localize
 import { patternLanguageAlternates } from '../i18n/metadata';
 import { getLocaleDestination } from '../i18n/routes';
 import frenchChristmas from './french-christmas.json';
+import { smallPatternCopy } from './small';
 
 const locales = ['de', 'fr', 'ja'] as const;
 describe('localized collection and topic continuity', () => {
+    it('adds local small-page metadata without English fallback', () => {
+        for (const locale of locales) {
+            const section = getLocalizedPatternSection('small', locale)!;
+            const copy = smallPatternCopy[locale];
+            expect(section.title).toBe(copy.title);
+            expect(section.patterns).toHaveLength(10);
+            const metadata = localizedSectionMetadata(section, locale);
+            expect(metadata.title).toBe(`${copy.metadataTitle} | Fuse Bead Patterns`);
+            expect(metadata.description).toBe(copy.description);
+            expect(metadata.alternates?.canonical).toBe(`/${locale}/patterns/small`);
+            expect(metadata.alternates?.languages).toEqual(patternLanguageAlternates('small'));
+        }
+    });
     it('keeps indexed Minecraft snippets while the visible section includes the new face', () => {
         const indexed = {
             de: '28 kostenlose Minecraft-Bügelperlen-Vorlagen. Raster, Farben und Druckdateien ansehen oder im deutschen Editor bearbeiten.',

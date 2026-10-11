@@ -90,6 +90,7 @@ import { drawGridExportPattern } from '@/lib/editor/grid-export';
 import { exportEditorPattern } from '@/lib/editor/pattern-export';
 import { quantizePattern } from '@/lib/editor/pattern-quantization';
 import { remapPatternPalette } from '@/lib/editor/pattern-palette';
+import { applyFreshPaletteDefaults } from '@/lib/editor/palette-defaults';
 import {
     getEditorShortcutAction,
     type EditorShortcutTool as EditorTool,
@@ -313,7 +314,9 @@ async function loadPalette(paletteId: string, signal?: AbortSignal): Promise<Pal
         throw new Error(`Failed to load palette file: ${paletteOption.file}`);
     }
 
-    return parsePaletteCsv(await response.text(), paletteOption);
+    return applyFreshPaletteDefaults(
+        paletteId, parsePaletteCsv(await response.text(), paletteOption)
+    );
 }
 
 function parseBoardCount(value: string): number {
@@ -5907,6 +5910,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     restoreFocusFallback={isEditorPage ? mobileColorsNavButtonRef : undefined}
                 >
                 <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        {t('New palettes start with some transparent and effect colors disabled. Enable the colors you want below.')}
+                    </p>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {PALETTE_OPTIONS.map((option) => {
                             const selected =

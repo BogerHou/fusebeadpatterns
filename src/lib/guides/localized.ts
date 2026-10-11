@@ -89,7 +89,7 @@ export function localizeGuideLink<T extends { href: string; label: string }>(lin
     if (miniLabel) {
         const href = link.href === `/editor?pattern=${miniGhostProjectId}`
             ? `${localeRoutes[locale].editor}?pattern=${miniGhostProjectId}`
-            : link.href.endsWith('.pdf') ? link.href.replace(`${miniGhostAssetRoot}/`, `${miniGhostAssetRoot}/${locale}/`) : link.href;
+            : link.href.endsWith('.pdf') || link.href === `${miniGhostAssetRoot}/grid.png` ? link.href.replace(`${miniGhostAssetRoot}/`, `${miniGhostAssetRoot}/${locale}/`) : link.href;
         return { ...link, href, label: miniLabel };
     }
     if (link.href === '/#generator') return { ...link, href: `${localeRoutes[locale].home}#generator`, label: siteNavigation[locale].generator };
