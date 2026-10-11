@@ -591,6 +591,11 @@ const libraryProjects: LibraryProject[] = [
         "id": "original-rave-moon-mushroom",
         "title": "Crescent Moon Mushroom",
         "projectUrl": "/patterns/original-rave-moon-mushroom/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-sunset-mountain-lake",
+        "title": "Sunset Mountain Lake",
+        "projectUrl": "/patterns/original-sunset-mountain-lake/pattern.bead-pattern.json"
     }
 ];
 

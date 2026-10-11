@@ -5,6 +5,13 @@
 Names and assembly notes therefore match the public localized detail pages.
 It does not maintain an independent list of invented localized character names.
 
+This historical builder supports single-board downloads. It skips only the
+reviewed `original-sunset-mountain-lake` 58 × 58 entry and rejects an explicit
+`--id` request for that entry. Its four-board, five-page A4/US Letter downloads
+use the separate builder in `README-multiboard-pattern-downloads.md`; arbitrary
+new multi-board entries still fail the single-board geometry check. The 117
+earlier entries, existing output geometry and old font inventory stay intact.
+
 The original Perler project and 29 × 29 PNG must agree byte for byte. The
 printed color reference, original English manufacturer color name, symbol,
 quantity and individual cell are validated against that source. Japanese Hama

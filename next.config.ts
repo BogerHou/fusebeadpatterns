@@ -78,6 +78,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
     poweredByHeader: false,
+    // Public artwork and the small brand mark are prepared at build time.
+    // Do not turn arbitrary public image URLs into metered transformations.
+    images: { unoptimized: true },
     // Unmatched routes need one 404 document across the English and Japanese roots.
     experimental: { globalNotFound: true },
     async redirects() {
@@ -100,6 +103,10 @@ const nextConfig: NextConfig = {
             {
                 source: '/:path*',
                 headers: securityHeaders,
+            },
+            {
+                source: '/brand/logo-108-1550e3d22f75.webp',
+                headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
             },
             ...loomPatternLibrary.patterns.flatMap(({ id }) =>
                 Object.keys(loomPatternLibrary.libraryPaths).map((locale) => ({

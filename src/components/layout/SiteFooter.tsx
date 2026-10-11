@@ -130,7 +130,7 @@ export default function SiteFooter({
                                             // with beforeunload, as well as its in-page link guard.
                                             <a href={link.href} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</a>
                                         ) : (
-                                            <Link href={link.href} prefetch={link.prefetch} lang={locale === 'en' ? link.lang : undefined} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
+                                            <Link href={link.href} prefetch={false} lang={locale === 'en' ? link.lang : undefined} hrefLang={link.lang} aria-current={active === link.id ? 'page' : undefined}>{link.label}</Link>
                                         )}
                                     </li>
                                 ))}

@@ -9622,6 +9622,95 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-rave-moon-mushroom/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-11"
+    },
+    {
+        "id": "original-sunset-mountain-lake",
+        "slug": "sunset-mountain-lake",
+        "title": "Sunset Mountain Lake",
+        "collectionId": null,
+        "version": "Original Sunset Landscape design v1",
+        "description": "An original sunset over layered mountains and a lake, with warm water reflections and dark foreground pines.",
+        "beads": 2496,
+        "colorCount": 8,
+        "gridWidth": 58,
+        "gridHeight": 58,
+        "motifWidth": 52,
+        "motifHeight": 48,
+        "palette": [
+            {
+                "symbol": "N",
+                "ref": "80-15201",
+                "name": "Midnight",
+                "hex": "#2f3c55",
+                "count": 374
+            },
+            {
+                "symbol": "P",
+                "ref": "80-19007",
+                "name": "Purple",
+                "hex": "#684b86",
+                "count": 284
+            },
+            {
+                "symbol": "L",
+                "ref": "80-19070",
+                "name": "Periwinkle Blue",
+                "hex": "#6683b7",
+                "count": 736
+            },
+            {
+                "symbol": "A",
+                "ref": "80-15182",
+                "name": "Lavender",
+                "hex": "#af9fce",
+                "count": 312
+            },
+            {
+                "symbol": "C",
+                "ref": "80-19059",
+                "name": "Hot Coral",
+                "hex": "#dd595b",
+                "count": 336
+            },
+            {
+                "symbol": "G",
+                "ref": "80-19057",
+                "name": "Cheddar",
+                "hex": "#fbb146",
+                "count": 224
+            },
+            {
+                "symbol": "Y",
+                "ref": "80-19056",
+                "name": "Pastel Yellow",
+                "hex": "#e9e290",
+                "count": 138
+            },
+            {
+                "symbol": "T",
+                "ref": "80-19058",
+                "name": "Toothpaste",
+                "hex": "#96d1d4",
+                "count": 92
+            }
+        ],
+        "notes": [
+            "Use four 29 × 29 Midi pegboards arranged 2 × 2. The complete grid has 58 columns and 58 rows.",
+            "The 52 × 48 landscape is drawn at this size, not enlarged from a single-board pattern.",
+            "The first PDF page is a reduced overview; pages 2–5 show boards 1–4 at 5 mm spacing. Print at 100% / Actual size and check both 50 mm rulers.",
+            "Empty grid cells do not need beads. The PNG is a counting chart, not an actual-size placement template.",
+            "Physical assembly, ironing and cross-board join strength have not been tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-sunset-mountain-lake/preview.png",
+            "grid": "/patterns/original-sunset-mountain-lake/grid.png",
+            "pixels": "/patterns/original-sunset-mountain-lake/pixels.png",
+            "project": "/patterns/original-sunset-mountain-lake/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-sunset-mountain-lake/pattern.pdf",
+            "pdfLetter": "/patterns/original-sunset-mountain-lake/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-11"
     }
 ];
 

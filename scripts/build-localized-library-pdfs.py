@@ -129,10 +129,15 @@ def catalog(node):
     assert len({p['slug'] for p in patterns}) == len(patterns)
     for pattern in patterns:
         assert re.fullmatch(r'[a-z0-9-]+', pattern['id']), pattern['id']
+        if pattern['id'] == 'original-sunset-mountain-lake':
+            assert (pattern['gridWidth'], pattern['gridHeight']) == (58, 58), 'Unexpected reviewed multiboard geometry'
+            continue
         assert (pattern['gridWidth'], pattern['gridHeight']) == (29, 29)
         assert set(pattern['locales']) == set(LOCALES)
         assert all(len(p['notes']) == len(pattern['notes']) for p in pattern['locales'].values())
-    return patterns
+    # This historical renderer retains its single-board geometry and outputs.
+    # The reviewed four-board original has a separate, independently checked builder.
+    return [pattern for pattern in patterns if pattern['id'] != 'original-sunset-mountain-lake']
 
 
 def retained_ids(locale):
@@ -581,6 +586,8 @@ def main():
     parser.add_argument('--check-only', action='store_true', help='Verify selected existing new downloads without publishing or replacing files')
     parser.add_argument('--qa-report', type=Path)
     args = parser.parse_args()
+    if args.id and 'original-sunset-mountain-lake' in args.id:
+        parser.error('Use build-multiboard-pattern-downloads.py for original-sunset-mountain-lake; this renderer supports single-board downloads only')
     if not args.node:
         parser.error('Node is required to evaluate the site translation source; supply --node')
     patterns = catalog(args.node)

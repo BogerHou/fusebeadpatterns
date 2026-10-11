@@ -15,6 +15,7 @@ import * as ui from '../../lib/patterns/localized-ui';
 import * as sources from '../../lib/patterns/localized-sources';
 import * as fanArt from '../../lib/patterns/fan-art';
 import * as rave from '../../lib/patterns/rave';
+import * as multiboard from '../../lib/patterns/multiboard';
 import * as topics from '../../lib/patterns/topics';
 import * as sectionRoutes from '../../lib/patterns/section-routes';
 import * as sectionMessages from '../../lib/patterns/section-messages';
@@ -51,6 +52,7 @@ const modules: Record<string, unknown> = {
     '@/lib/patterns/catalog': catalog, '@/lib/patterns/localized-content': content, '@/lib/patterns/localized-download': downloads,
     '@/lib/patterns/localized-ui': ui, '@/lib/patterns/localized-sources': sources, '@/lib/patterns/fan-art': fanArt,
     '@/lib/patterns/rave': rave,
+    '@/lib/patterns/multiboard': multiboard,
     '@/lib/patterns/topics': topics, '@/lib/patterns/section-routes': sectionRoutes, '@/lib/patterns/section-messages': sectionMessages,
     '@/lib/i18n/metadata': metadata, '@/lib/patterns/library-overview': overview,
     '@/lib/hama-maker/routes': hamaMakerRoutes, '@/lib/guides/routes': guideRoutes, '@/lib/site-pages/routes': sitePageRoutes,
@@ -70,6 +72,11 @@ function load(file: string) {
     new Script(compiled).runInNewContext({ exports, require: (id: string) => modules[id] ?? require(id) });
     return exports;
 }
+// Load the real component through the same wrapper-aware transpiler; it uses a
+// production alias which standalone Vitest does not resolve automatically.
+const MultiboardInstructions = load('./MultiboardInstructions.tsx').default;
+modules['./MultiboardInstructions'] = defaultModule(MultiboardInstructions);
+modules['@/components/patterns/MultiboardInstructions'] = defaultModule(MultiboardInstructions);
 const Detail = load('./LocalizedPatternDetail.tsx').default as ComponentType<{ pattern: catalog.Pattern; locale: content.PatternLocale }>;
 const GermanLibrary = load('../../app/de/patterns/page.tsx').default as ComponentType;
 const JapaneseLibrary = load('./JapanesePatternLibrary.tsx').default as ComponentType;
@@ -80,6 +87,48 @@ const englishMetadata = englishRoute.generateMetadata as (props: DetailProps) =>
 const sitemap = load('../../app/sitemap.ts').default as () => Array<{ url: string; lastModified: Date; images?: string[] }>;
 
 describe('native pattern chart journeys', () => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('%s renders the real four-board detail, global coordinates and correct native downloads', async locale => {
+        const pattern = catalog.getPatternById('original-sunset-mountain-lake')!;
+        const html = renderToStaticMarkup(locale === 'en'
+            ? await EnglishDetail({ params: Promise.resolve({ segments: ['sunset-mountain-lake'] }) })
+            : createElement(Detail, { pattern, locale }));
+        const copy = multiboard.multiboardCopy[locale];
+        expect(html).toContain(copy.board);
+        const section = html.match(/<section\b[^>]*aria-labelledby="multiboard-heading"[\s\S]*?<\/section>/)?.[0];
+        expect(section).toBeDefined();
+        expect(section).toContain('id="multiboard-heading"');
+        for (const text of [copy.heading, copy.instruction, copy.printing]) expect(section).toContain(text);
+        const body = section!.match(/<tbody>([\s\S]*?)<\/tbody>/)![1];
+        const rows = [...body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].map(match =>
+            [...match[1].matchAll(/<(?:th|td)\b[^>]*>([\s\S]*?)<\/(?:th|td)>/g)].map(cell => cell[1]));
+        expect(rows).toEqual([
+            ['1', copy.positions[0], '1–29', '1–29'],
+            ['2', copy.positions[1], '30–58', '1–29'],
+            ['3', copy.positions[2], '1–29', '30–58'],
+            ['4', copy.positions[3], '30–58', '30–58'],
+        ]);
+        const prefix = locale === 'en' ? '' : `/${locale}`;
+        for (const href of [`${prefix}/guides/perler-bead-pegboards`, `${prefix}/guides/how-to-iron-perler-beads`]) {
+            expect(section).toContain(`href="${href}"`);
+        }
+        const grid = locale === 'en' ? { href: pattern.assets.grid, width: 1484, height: 2003 } : downloads.getLocalizedPatternGrid(pattern, locale);
+        expect([grid.width, grid.height]).toEqual([1484, 2003]);
+        const image = [...html.matchAll(/<img\b[^>]*>/g)].map(match => match[0]).find(image => image.includes(`src="${grid.href}"`))!;
+        expect(image).toContain('width="1484"');
+        expect(image).toContain('height="2003"');
+        const pdf = locale === 'en' ? pattern.assets.pdf : downloads.getLocalizedPatternPdf(pattern, locale).href;
+        const letter = locale === 'en' ? pattern.assets.pdfLetter! : downloads.getLocalizedPatternLetterPdf(pattern, locale)!.href;
+        for (const href of [pdf, letter, grid.href, pattern.assets.project, pattern.assets.pixels, `${prefix}/editor?pattern=${pattern.id}`]) {
+            expect(html).toContain(`href="${href}"`);
+        }
+        // Actual earlier detail rendering must remain single-board.
+        const old = catalog.getPatternById('original-latin-cross')!;
+        const oldHtml = renderToStaticMarkup(locale === 'en'
+            ? await EnglishDetail({ params: Promise.resolve({ segments: ['cross'] }) })
+            : createElement(Detail, { pattern: old, locale }));
+        expect(oldHtml).not.toContain('multiboard-heading');
+    });
+
     it.each(['de', 'fr', 'ja'] as const)('%s details show and download the same native chart while retaining PDF, preview and project links', locale => {
         for (const id of ['pokemon-pikachu-gen5', 'original-soccer-ball', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross']) {
             const pattern = catalog.getPatternById(id)!;
@@ -159,7 +208,18 @@ describe('native pattern chart journeys', () => {
             'https://fusebeadpatterns.art/guides/beadifier-alternative',
         ]);
         for (const record of comparisonGuides) expect(record.lastModified.toISOString()).toBe('2026-10-11T00:00:00.000Z');
-        const previous = records.filter(record => !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const large = records.filter(record => record.url.endsWith('/patterns/sunset-mountain-lake'));
+        expect(large.map(record => record.url)).toEqual([
+            'https://fusebeadpatterns.art/de/patterns/sunset-mountain-lake',
+            'https://fusebeadpatterns.art/fr/patterns/sunset-mountain-lake',
+            'https://fusebeadpatterns.art/ja/patterns/sunset-mountain-lake',
+            'https://fusebeadpatterns.art/patterns/sunset-mountain-lake',
+        ]);
+        for (const record of large) {
+            expect(record.lastModified.toISOString()).toBe('2026-10-11T00:00:00.000Z');
+            expect(record.images).toEqual(['https://fusebeadpatterns.art/patterns/original-sunset-mountain-lake/preview.png']);
+        }
+        const previous = records.filter(record => !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 

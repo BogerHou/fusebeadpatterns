@@ -21,8 +21,8 @@ const publicPath = (url: string) => path.join(process.cwd(), 'public', url);
 
 describe('pattern library content integrity', () => {
     it('has unique stable routes, valid collections and explicit reference versions', () => {
-        expect(patterns).toHaveLength(117);
-        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id))).toHaveLength(109);
+        expect(patterns).toHaveLength(118);
+        expect(patterns.filter(pattern => !['minecraft-creeper-face-v1', 'original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id))).toHaveLength(109);
         expect(new Set(patterns.map(({ id }) => id)).size).toBe(patterns.length);
         expect(new Set(patterns.map(({ slug }) => slug)).size).toBe(patterns.length);
         expect(new Set(patternCollections.map(({ slug }) => slug)).size).toBe(patternCollections.length);
@@ -91,6 +91,7 @@ describe('pattern library content integrity', () => {
                     'original-rave-alien-head': 'Original Rave design v1',
                     'original-rave-rainbow-smiley': 'Original Rave design v1',
                     'original-rave-moon-mushroom': 'Original Rave design v1',
+                    'original-sunset-mountain-lake': 'Original Sunset Landscape design v1',
                 };
                 expect(originalVersions[pattern.id]).toBeDefined();
                 expect(pattern.version).toBe(originalVersions[pattern.id]);
@@ -109,14 +110,14 @@ describe('pattern library content integrity', () => {
     });
 
     it('preserves all 112 preexisting catalog records byte-for-byte after adding the black cat', () => {
-        const previous = patterns.filter(pattern => !['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id));
+        const previous = patterns.filter(pattern => !['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id));
         expect(previous).toHaveLength(112);
         // Frozen canonical objects from 86db85c: includes all old descriptions, assets and timestamps.
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('853569c5b388b5da418a90fb999a69000b3ad3e4badd65e26da8d029763f4d17');
     });
 
     it('preserves the earlier 113 catalog objects, all five collections and every curated topic when adding the cross', () => {
-        const previous = patterns.filter(pattern => !['original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'].includes(pattern.id));
+        const previous = patterns.filter(pattern => !['original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id));
         expect(previous).toHaveLength(113);
         // Frozen b8da385 objects include every earlier URL, description, asset and timestamp.
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('2125b186180a18318f8764f433a9c403765ec8fc1ce1cf3bf316d65e6c2a2ad4');
@@ -213,11 +214,11 @@ describe('pattern library content integrity', () => {
             expect(draft!.sourceMode).toBe('blank');
             expect(draft!.imageSrc).toBeNull();
             expect(draft!.boardId).toBe('midi');
-            expect([draft!.boardWidth, draft!.boardHeight]).toEqual([1, 1]);
+            expect([draft!.boardWidth, draft!.boardHeight]).toEqual(pattern.id === 'original-sunset-mountain-lake' ? [2, 2] : [1, 1]);
             expect(draft!.imageAdjustments).toEqual({ brightness: 100, contrast: 100, saturation: 100, grayscale: 0 });
             const project = draft!.editedPattern!;
             expect([project.width, project.height]).toEqual([pattern.gridWidth, pattern.gridHeight]);
-            expect([pattern.gridWidth, pattern.gridHeight]).toEqual([29, 29]);
+            expect([pattern.gridWidth, pattern.gridHeight]).toEqual(pattern.id === 'original-sunset-mountain-lake' ? [58, 58] : [29, 29]);
             const data = Buffer.from(project.data, 'base64');
             expect(data.length).toBe(project.width * project.height * 4);
             expect(project.byteLength).toBe(data.length);
@@ -265,7 +266,7 @@ describe('pattern library content integrity', () => {
             }
             const pdf = await readFile(publicPath(pattern.assets.pdf));
             expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
-            expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+            expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(pattern.id === 'original-sunset-mountain-lake' ? 5 : 1);
         });
     }
 });

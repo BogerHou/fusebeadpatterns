@@ -17,6 +17,8 @@ import { getPatternDisplayName } from '@/lib/patterns/presentation';
 import { brandGuideHref, getCollectionIntro, getFewestColorsPattern, getPatternIntro } from '@/lib/patterns/content';
 import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
 import { isRavePattern } from '@/lib/patterns/rave';
+import { isMultiboardPattern, multiboardCopy } from '@/lib/patterns/multiboard';
+import MultiboardInstructions from '@/components/patterns/MultiboardInstructions';
 
 type Props = { params: Promise<{ segments: string[] }> };
 const siteUrl = 'https://fusebeadpatterns.art';
@@ -88,7 +90,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                         <dl className="my-6 grid grid-cols-2 gap-x-5 gap-y-5 border-y border-[#d9ded5] py-6 text-sm">
                             {[
                                 ['Design size', `${pattern.motifWidth} × ${pattern.motifHeight} beads`],
-                                ['Pegboard', `${pattern.gridWidth} × ${pattern.gridHeight} MIDI · 1 board`],
+                                ['Pegboard', isMultiboardPattern(pattern.id) ? multiboardCopy.en.board : `${pattern.gridWidth} × ${pattern.gridHeight} MIDI · 1 board`],
                                 ['Beads needed', String(pattern.beads)],
                                 ['Colors', `${pattern.colorCount} Perler color${pattern.colorCount === 1 ? '' : 's'}`],
                             ].map(([label, value]) => <div key={label}><dt className="text-[#59685d]">{label}</dt><dd className="mt-1.5 font-semibold text-[#243e36]">{value}</dd></div>)}
@@ -110,7 +112,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     <section aria-labelledby="pattern-chart-heading">
                         <h2 id="pattern-chart-heading" className="section-heading mb-5">Pattern chart</h2>
                         <a href={pattern.assets.grid} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-[#d9ded5] bg-white transition-colors hover:border-[#78917f]" aria-label={`Open full-size ${pattern.title} pattern chart`}>
-                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={pattern.id.startsWith('original-rave-') || ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 788 : 586} height={pattern.id.startsWith('original-rave-') ? 1040 : ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 908 : 586} unoptimized className="h-auto w-full" />
+                            <Image src={pattern.assets.grid} alt={`${pattern.title} printable grid with row numbers, column numbers, and color symbols`} width={isMultiboardPattern(pattern.id) ? 1484 : pattern.id.startsWith('original-rave-') || ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 788 : 586} height={isMultiboardPattern(pattern.id) ? 2003 : pattern.id.startsWith('original-rave-') ? 1040 : ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-latin-cross'].includes(pattern.id) ? 908 : 586} unoptimized className="h-auto w-full" />
                         </a>
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Blank cells are empty. Tap the chart to view it at full size.</p>
                     </section>
@@ -127,6 +129,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                         <p className="mt-3 text-sm leading-6 text-[#59685d]">Colors are matched to the Perler palette. Screen colors and physical beads may differ.</p>
                     </section>
                 </div>
+                <MultiboardInstructions patternId={pattern.id} />
                 <section className="mt-12 max-w-[70ch] border-t border-[#d9ded5] pt-8">
                     <h2 className="section-heading">Making this pattern</h2>
                     <ul className="mt-5 list-disc space-y-3 pl-5 leading-8 text-[#43564d] marker:text-[#78917f]">{pattern.notes.map((note) => <li key={note}>{note}</li>)}</ul>

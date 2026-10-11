@@ -1,6 +1,6 @@
 # Pattern library content maintenance
 
-The catalog integrates 114 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 15 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
+The catalog integrates 118 local patterns in total: 98 game-derived patterns across Stardew Valley, Pokémon, Minecraft, Super Mario and Kirby, 19 original designs and 1 hand-authored character fan-art pattern. They add no search-performance exports. Source files and internal QA remain in the ignored local artifact packs; only the selected display and download assets are promoted to the application.
 
 ## Content identity and versions
 
@@ -234,3 +234,13 @@ English, German, French and Japanese detail pages use their own language and A4/
 The motif bounds are zero-based `(8,5)`, width13, height19. Vertical bar x=13–15/y=5–23 and horizontal bar x=8–20/y=10–12 are three cells thick, with five vertical rows above the crossbar and eleven below. The actual drawing uses 87 Brown Perler Midi beads (`80-19012`, RGB103,76,68), with symbol `B`. Rows SHA-256 is `0dab2c3f61bd9756001beb2b1cbd3f9ddb5530a35e714ea90e4f85fb87624322`; RGBA SHA-256 is `4516a5ad71d0f5b36953124d757ebd85904c05b98676509b686854f460358bd5`. Empty cells are all-zero RGBA. One digital component and zero single-bead cut points are geometry checks, not physical strength validation. Physical assembly and ironing remain untested.
 
 The source pack contains ten files and no PDF. Its four private notes stay frozen; the public detail uses six concise making and printing notes. English/German/French/Japanese subjects are Cross/Kreuz/Croix/十字架, with same-language details, editor links, grid PNGs and separately generated A4/US Letter PDFs. The English counting chart is 788 × 908 and is not an actual-size placement template. Public download files need their own digital and rendered review before release; source-pack placeholder paths do not establish download availability.
+
+## Original four-board sunset landscape
+
+`original-sunset-mountain-lake` adds one independently drawn 58 × 58 landscape, not an enlarged single-board pattern or a named character. The 52 × 48 occupied panel uses 2496 exact Perler Midi colors across four 29 × 29 boards arranged 2 × 2. Board order is top left, top right, bottom left, bottom right, with global columns and rows 1–29 / 30–58. The unique private source pack is `artifacts/pattern-samples/2026-10-11/original-large-landscape-v1`; use `scripts/README-original-sunset-landscape-sourcepack.md` and the separate `scripts/README-multiboard-pattern-downloads.md` builder.
+
+Eight English/German/French/Japanese A4 and US Letter PDFs each contain a reduced overview and four actual-size 5 mm board pages. The overview is not an actual-size template. Every board page keeps its global coordinates and separate horizontal/vertical 50 mm calibration lines. Page division is for printing, not an instruction to iron four pieces separately. Count charts in all four languages are 1484 × 2003 pixels with dedicated outlined labels. New `multiboard-labels` font sources are pinned and do not refresh older subsets.
+
+Only this new ID receives the four-board description and instructions; old detail output remains unchanged. Its project retains the existing v1 schema with `boardWidth: 2`, `boardHeight: 2` and 58 × 58 RGBA. Native language routes and ordinary editor brand changes use that same reviewed grid. Physical assembly, ironing, cross-board join strength, mounting and measured print output remain unverified; digital pixel agreement does not establish those properties.
+
+The historical single-board localized builder excludes only this exact reviewed ID and rejects explicit attempts to generate it. Other unknown large patterns still fail its original geometry gate. Preserve the full 117 earlier catalog objects, five collections, 599 old page records, 1738 resource/font hashes and 593 literal sitemap entries when adding this batch. Private source packs, research, GSC data and QA records must not enter Git.

@@ -20,6 +20,8 @@ import CoasterInstructions from './CoasterInstructions';
 import OrnamentInstructions from './OrnamentInstructions';
 import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
 import { isRavePattern, ravePatternCopy } from '@/lib/patterns/rave';
+import { isMultiboardPattern, multiboardCopy } from '@/lib/patterns/multiboard';
+import MultiboardInstructions from './MultiboardInstructions';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 export function localizedPatternMetadata(pattern: Pattern, locale: PatternLocale): Metadata {
@@ -64,7 +66,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                         <h1 className="page-heading leading-snug">{title}</h1>
                         <p className="mt-4 max-w-3xl leading-7 text-muted">{getLocalizedPatternIntro(pattern, locale)}</p>
                         <dl className="my-6 grid grid-cols-2 gap-4 text-sm">
-                            {[[copy.design, `${pattern.motifWidth} × ${pattern.motifHeight}`], [copy.board, `${pattern.gridWidth} × ${pattern.gridHeight} MIDI`], [copy.beads, pattern.beads], [copy.colors, pattern.colorCount]].map(([label, value]) => <div key={label}><dt className="text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}
+                            {[[copy.design, `${pattern.motifWidth} × ${pattern.motifHeight}`], [copy.board, isMultiboardPattern(pattern.id) ? multiboardCopy[locale].board : `${pattern.gridWidth} × ${pattern.gridHeight} MIDI`], [copy.beads, pattern.beads], [copy.colors, pattern.colorCount]].map(([label, value]) => <div key={label}><dt className="text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}
                         </dl>
                         {fanArtNotice && <p className="mb-4 text-sm leading-7 text-muted">{fanArtNotice} <a href="mailto:contact@fusebeadpatterns.art" className="text-link">contact@fusebeadpatterns.art</a></p>}
                         <div className="flex flex-wrap gap-3">
@@ -96,6 +98,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
                         <p className="mt-3 text-sm leading-7 text-muted">{copy.colorHelp}</p>
                     </section>
                 </div>
+                <MultiboardInstructions patternId={pattern.id} locale={locale} />
                 <section className="mt-12 max-w-3xl border-t border-line pt-8">
                     <h2 className="section-heading">{copy.make}</h2>
                     <ul className="mt-5 list-disc space-y-3 pl-5 leading-8 text-muted">{pattern.notes.map(note => <li key={note}>{localizePatternNote(note, locale)}</li>)}</ul>
