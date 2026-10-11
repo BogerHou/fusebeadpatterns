@@ -9369,6 +9369,47 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-black-cat/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-11"
+    },
+    {
+        "id": "original-latin-cross",
+        "slug": "cross",
+        "title": "Cross",
+        "collectionId": null,
+        "version": "Original Latin Cross design v1",
+        "description": "Download or edit this original plain Latin/Christian cross pattern. The 13 × 19 motif uses 87 Brown Perler Midi beads on one 29 × 29 board.",
+        "beads": 87,
+        "colorCount": 1,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 13,
+        "motifHeight": 19,
+        "palette": [
+            {
+                "symbol": "B",
+                "ref": "80-19012",
+                "name": "Brown",
+                "hex": "#674c44",
+                "count": 87
+            }
+        ],
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "An original plain Latin cross with a longer lower arm.",
+            "The motif uses Brown 80-19012; screen colors are approximate.",
+            "The 13 × 19 motif sits on a Midi board. The PNG chart is for counting, not actual-size placement.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-latin-cross/preview.png",
+            "grid": "/patterns/original-latin-cross/grid.png",
+            "pixels": "/patterns/original-latin-cross/pixels.png",
+            "project": "/patterns/original-latin-cross/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-latin-cross/pattern.pdf",
+            "pdfLetter": "/patterns/original-latin-cross/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-11"
     }
 ];
 
