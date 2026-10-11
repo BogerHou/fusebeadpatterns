@@ -136,7 +136,7 @@ describe('native pattern chart journeys', () => {
         }
     });
 
-    it('adds only four October 11 Cross sitemap records and preserves every earlier complete record', () => {
+    it('retains Cross and four Beadifier guide entries while preserving every earlier complete sitemap record', () => {
         const records = sitemap();
         const added = records.filter(record => record.url.endsWith('/patterns/cross'));
         expect(added.map(record => record.url)).toEqual([
@@ -149,7 +149,15 @@ describe('native pattern chart journeys', () => {
             expect(record.lastModified.toISOString()).toBe('2026-10-11T00:00:00.000Z');
             expect(record.images).toEqual(['https://fusebeadpatterns.art/patterns/original-latin-cross/preview.png']);
         }
-        const previous = records.filter(record => !record.url.endsWith('/patterns/cross'));
+        const comparisonGuides = records.filter(record => record.url.endsWith('/guides/beadifier-alternative'));
+        expect(comparisonGuides.map(record => record.url)).toEqual([
+            'https://fusebeadpatterns.art/de/guides/beadifier-alternative',
+            'https://fusebeadpatterns.art/fr/guides/beadifier-alternative',
+            'https://fusebeadpatterns.art/ja/guides/beadifier-alternative',
+            'https://fusebeadpatterns.art/guides/beadifier-alternative',
+        ]);
+        for (const record of comparisonGuides) expect(record.lastModified.toISOString()).toBe('2026-10-11T00:00:00.000Z');
+        const previous = records.filter(record => !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative'));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 

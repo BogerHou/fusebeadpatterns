@@ -1,8 +1,10 @@
 import { photoGuideCopy } from './photo';
 import { keychainGuideCopy } from './keychains';
+import { beadifierAlternativeCopy } from './beadifier-alternative-copy';
 import type { GuideTranslations } from './types';
 
 export const frenchGuides: GuideTranslations = {
+    'beadifier-alternative': beadifierAlternativeCopy.fr,
     'how-to-make-perler-bead-keychains': keychainGuideCopy.fr,
     'photo-to-perler-bead-pattern': photoGuideCopy.fr,
     'perler-bead-pegboards': {
