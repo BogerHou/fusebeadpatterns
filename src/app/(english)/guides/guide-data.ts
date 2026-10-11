@@ -1,4 +1,5 @@
 import { keychainGuide } from '../../../lib/guides/keychains';
+import { beadifierAlternativeGuide } from '../../../lib/guides/beadifier-alternative';
 
 export type GuideSection = {
     heading: string;
@@ -663,6 +664,7 @@ export const guidePages: GuidePage[] = [
         ],
     },
     keychainGuide,
+    beadifierAlternativeGuide,
 ];
 
 export function getGuideBySlug(slug: string): GuidePage | undefined {

@@ -32,6 +32,8 @@ export function getGuideSummaries(locale: GuideLocale) {
 
 // These labels describe the retained manufacturer sources, not new local sources.
 const sourceLabels: Record<string, [string, string, string]> = {
+    'https://beadifier.eremes.xyz/': ['Beadifier von Eremes', 'Beadifier d’Eremes', 'EremesのBeadifier'],
+    'https://github.com/maxcleme/beadifier': ['Offizieller Beadifier-Quellcode', 'Code source officiel de Beadifier', 'Beadifierの公式ソースコード'],
     'https://perler.com/blogs/projects/alien-keychain': ['Perler: Schlüsselanhänger mit Perlenloch (englische Anleitung)', 'Perler : porte-clés fixé dans un trou de perle (instructions en anglais)', 'Perler：ビーズの穴に金具を付ける作例（英語）'],
     'https://perler.com/blogs/projects/carnival-food-keychains': ['Perler: Biegering und Schlüsselring verbinden (englische Anleitung)', 'Perler : relier l’anneau ouvert au porte-clés (instructions en anglais)', 'Perler：丸カンとキーホルダーの接続例（英語）'],
     'https://commons.wikimedia.org/wiki/File:TUXEDO_CAT.jpg': ['Quelle und Fotograf', 'Source et auteur de la photo', '写真の出典と撮影者'],
@@ -94,6 +96,7 @@ export function localizeGuideLink<T extends { href: string; label: string }>(lin
     }
     if (link.href === '/#generator') return { ...link, href: `${localeRoutes[locale].home}#generator`, label: siteNavigation[locale].generator };
     if (link.href === '/editor') return { ...link, href: localeRoutes[locale].editor, label: siteNavigation[locale].editor };
+    if (link.href === '/pixel-art-grid') return { ...link, href: localeRoutes[locale].pixelGrid!, label: siteNavigation[locale].pixelGrid };
     if (link.href === '/') return { ...link, href: localeRoutes[locale].home, label: siteNavigation[locale].generator };
     if (link.href.startsWith('/guides/')) {
         const slug = link.href.slice('/guides/'.length);
