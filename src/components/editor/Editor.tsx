@@ -641,6 +641,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
     const imageGenerationRef = useRef<AbortController | null>(null);
     const settingsUpdateRef = useRef<AbortController | null>(null);
+    const pendingPaletteUpdateRef = useRef<Palette[] | null>(null);
     const paletteHistoryRef = useRef<Palette[][]>([]);
     const patternHistoryRef = useRef(new PatternHistory());
     const activeStrokeRef = useRef<{
@@ -987,20 +988,129 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             clonePalettes(palettes);
     }, []);
 
+    const publishPatternChange = useCallback((patch: PatternPatch, direction: 'undo' | 'redo') => {
+        const palettes = currentProjectRef.current?.paletteConfiguration.palettes;
+
+        if (palettes) {
+            setBeadsUsage((usage) => updatePatternUsage(usage, palettes, patch, direction));
+        }
+
+        setManualPatternRevision((previous) => previous + 1);
+        setHistoryRevision((previous) => previous + 1);
+    }, []);
+
+    const commitPatternChange = useCallback((patch: PatternPatch | null) => {
+        if (!patch) {
+            return;
+        }
+
+        patternHistoryRef.current.push(patch);
+        publishPatternChange(patch, 'redo');
+    }, [publishPatternChange]);
+
+    const finishActiveStroke = useCallback(() => {
+        const activeStroke = activeStrokeRef.current;
+        activeStrokeRef.current = null;
+
+        if (activeStroke && activeStroke.data === reducedColorRef.current) {
+            commitPatternChange(activeStroke.stroke.finish());
+        }
+    }, [commitPatternChange]);
+
     const updatePalettes = useCallback((
         updater: (palettes: Palette[]) => Palette[],
         saveHistory = false
     ) => {
-        setActivePalettes((previousPalettes) => {
-            if (saveHistory) {
-                paletteHistoryRef.current.push(clonePalettes(previousPalettes));
-            }
+        // Successive color clicks are based on the latest requested palette,
+        // even when its conversion has not yet committed to React state.
+        if (settingsUpdateRef.current && !pendingPaletteUpdateRef.current) return;
+        if (resolvedPaletteIdsRef.current && JSON.stringify(resolvedPaletteIdsRef.current) !==
+            JSON.stringify(selectedPaletteIds)) return;
+        const previousPalettes = pendingPaletteUpdateRef.current ?? activePalettes;
+        const nextPalettes = updater(previousPalettes);
+        if (JSON.stringify(nextPalettes) === JSON.stringify(previousPalettes)) return;
+        if (countEnabledEntries(nextPalettes) === 0) return;
+        settingsUpdateRef.current?.abort();
 
-            const nextPalettes = updater(previousPalettes);
+        const project = currentProjectRef.current;
+        const pixels = reducedColorRef.current;
+        const canvas = canvasRef.current;
+        if (!project || !pixels || !canvas || imageGenerationRef.current) {
+            // No completed grid yet: the image effect uses the new candidates
+            // immediately invalidate its old async work before React cleanup.
+            imageGenerationRef.current?.abort();
+            if (saveHistory) paletteHistoryRef.current.push(clonePalettes(previousPalettes));
             syncProjectPalettes(nextPalettes);
-            return nextPalettes;
-        });
-    }, [syncProjectPalettes]);
+            pendingPaletteUpdateRef.current = nextPalettes;
+            setActivePalettes(nextPalettes);
+            return;
+        }
+
+        finishActiveStroke();
+        const controller = new AbortController();
+        settingsUpdateRef.current = controller;
+        pendingPaletteUpdateRef.current = nextPalettes;
+        const width = canvas.width, height = canvas.height;
+        const history = patternHistoryRef.current;
+        const snapshot = pixels.slice();
+        const sourcePalettes = clonePalettes(project.paletteConfiguration.palettes);
+        setProcessing(true);
+        setErrorMessage(null);
+        const convert = (data: Uint8ClampedArray, w: number, h: number) => remapPatternPalette(
+            data, w, h, nextPalettes, matchingId,
+            { signal: controller.signal, sourcePalettes, preserveEnabledColors: true }
+        );
+        void (async () => {
+            try {
+                const [nextPixels, nextHistory] = await Promise.all([
+                    convert(snapshot, width, height),
+                    history.remapPixels(data => convert(data, data.length / 4, 1)),
+                ]);
+                if (controller.signal.aborted || settingsUpdateRef.current !== controller ||
+                    currentProjectRef.current !== project || reducedColorRef.current !== pixels ||
+                    patternHistoryRef.current !== history || canvas.width !== width || canvas.height !== height) return;
+                if (pixels.some((channel, index) => channel !== snapshot[index])) {
+                    throw new Error('Pattern changed while colors were being converted. Try selecting the palette again.');
+                }
+                const context = canvas.getContext('2d');
+                if (!context) throw new Error('Canvas 2D context is unavailable.');
+                const imageData = context.createImageData(width, height);
+                imageData.data.set(nextPixels);
+                const usage = computeUsage(nextPixels, nextPalettes);
+                const preview = createPatternPreviewDataUrl(nextPixels, width, height,
+                    project.boardConfiguration.board.nbBeadPerRow, rendererSettings.showGrid);
+                context.putImageData(imageData, 0, 0);
+                reducedColorRef.current = nextPixels;
+                patternHistoryRef.current = nextHistory;
+                if (saveHistory) paletteHistoryRef.current.push(sourcePalettes);
+                syncProjectPalettes(nextPalettes);
+                skipNextPaletteRebuildRef.current = sourceMode === 'image';
+                setBeadsUsage(usage);
+                setPreviewDataUrl(preview);
+                syncEditorColorAfterPatternBuild(usage, nextPalettes);
+                setManualPatternRevision(previous => previous + 1);
+                setHistoryRevision(previous => previous + 1);
+                setActivePalettes(nextPalettes);
+            } catch (error) {
+                if (!controller.signal.aborted && settingsUpdateRef.current === controller) {
+                    setErrorMessage(error instanceof Error ? error.message : 'Unexpected palette conversion error.');
+                }
+            } finally {
+                if (settingsUpdateRef.current === controller) {
+                    settingsUpdateRef.current = null;
+                    pendingPaletteUpdateRef.current = null;
+                    setProcessing(false);
+                }
+            }
+        })();
+    }, [activePalettes, finishActiveStroke, matchingId, rendererSettings.showGrid, selectedPaletteIds, sourceMode,
+        syncEditorColorAfterPatternBuild, syncProjectPalettes]);
+
+    useEffect(() => {
+        if (!settingsUpdateRef.current && pendingPaletteUpdateRef.current === activePalettes) {
+            pendingPaletteUpdateRef.current = null;
+        }
+    }, [activePalettes]);
 
     const createCurrentEditorDraft = useCallback((forProject = false) => {
         return createEditorDraft({
@@ -1066,6 +1176,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const cancelSettingsUpdate = useCallback(() => {
         settingsUpdateRef.current?.abort();
         settingsUpdateRef.current = null;
+        pendingPaletteUpdateRef.current = null;
         setProcessing(false);
     }, []);
 
@@ -1421,6 +1532,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     }, [isEditorDraftReady, selectedPaletteIds]);
 
     useEffect(() => {
+        // The picker may select a disabled/new-brand color while its palette
+        // transaction is still preparing. Keep that explicit choice until the
+        // transaction commits, or processing ends and the old palette wins.
+        if (activeEditorColorRef && settingsUpdateRef.current &&
+            pendingPaletteUpdateRef.current?.some(palette => palette.entries.some(entry =>
+                entry.enabled && entry.ref === activeEditorColorRef
+            ))) return;
         if (
             activeEditorColorRef &&
             allPaletteEntries.some((entry) => {
@@ -1435,6 +1553,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         activeEditorColorEntry,
         activeEditorColorRef,
         allPaletteEntries,
+        processing,
         setAutomaticEditorColorRef,
     ]);
 
@@ -2588,35 +2707,6 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     rendererSettings.showGrid
                 )
             );
-        }
-    };
-
-    const publishPatternChange = (patch: PatternPatch, direction: 'undo' | 'redo') => {
-        const palettes = currentProjectRef.current?.paletteConfiguration.palettes;
-
-        if (palettes) {
-            setBeadsUsage((usage) => updatePatternUsage(usage, palettes, patch, direction));
-        }
-
-        setManualPatternRevision((previous) => previous + 1);
-        setHistoryRevision((previous) => previous + 1);
-    };
-
-    const commitPatternChange = (patch: PatternPatch | null) => {
-        if (!patch) {
-            return;
-        }
-
-        patternHistoryRef.current.push(patch);
-        publishPatternChange(patch, 'redo');
-    };
-
-    const finishActiveStroke = () => {
-        const activeStroke = activeStrokeRef.current;
-        activeStrokeRef.current = null;
-
-        if (activeStroke && activeStroke.data === reducedColorRef.current) {
-            commitPatternChange(activeStroke.stroke.finish());
         }
     };
 
@@ -6090,7 +6180,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                                                     palettes,
                                                                     palette.name,
                                                                     entry.ref,
-                                                                    !entry.enabled
+                                                                    !palettes.find((item) => item.name === palette.name)
+                                                                        ?.entries.find((item) => item.ref === entry.ref)?.enabled
                                                                 ),
                                                             true
                                                         )

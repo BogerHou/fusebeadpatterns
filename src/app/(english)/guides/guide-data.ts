@@ -110,7 +110,7 @@ export const guidePages: GuidePage[] = [
                 body: [
                     'The 29 × 29 version uses 667 beads; the 58 × 58 version uses 2,726. The larger version adds a few highlights, but the eye colors and fine whiskers are still largely missing. Dark fur merges with the background. For this photo, the extra beads do not produce a clear pet portrait. Try a brighter source with a simpler background, crop closer to the face, or plan to redraw key features in the editor.',
                     'These are the files exported by the generator with Use Symbols In Printable Exports checked. The smaller PDF has a color list and one chart page. The larger PDF has an overview, a color list and four board charts. Match each chart symbol to its color code and quantity in the list. Grid PNG is useful for inspecting the layout. These exports are not verified life-size pegboard templates and do not include the library PDFs’ 50 mm calibration line.',
-                    'These downloads are practice conversions, not finished portrait patterns. To work on either example, save its project file and choose Open Project in the generator or editor. Review the bead colors you own and clean up the eyes, background and outlines before making it. The examples have not been physically assembled or iron-tested.',
+                    'These downloads are practice conversions, not finished portrait patterns. To try either example, save its project file and choose Open Project in the generator or editor. Use only the bead colors you own before hand-editing. Select your Color Brand; in the editor, use Pattern Setup (Setup on a smaller screen) and Apply Changes. Open Colors, or Colors then Manage Palettes on a narrow editor screen. Match color codes to your bead bags: keep the colors you own enabled and disable the others one at a time, keeping at least one enabled. Check the result and color quantities before cleanup, then choose Save (Save Project in the generator). The examples have not been physically assembled or iron-tested.',
                 ],
                 links: [
                     { href: '/guides/photo-to-pattern/cat-perler-29.pdf', label: '29 × 29 PDF', download: true },
@@ -450,7 +450,7 @@ export const guidePages: GuidePage[] = [
             {
                 heading: 'Download a Ghost chart prepared for Perler Mini',
                 body: [
-                    'Make our original Ghost with 311 Perler Mini beads in White (W) and Black (B). Read the 29 × 29 counting chart by rows and columns; blank squares stay empty. W and B are chart symbols, not purchasing codes. Choose an A4 or US Letter PDF, or the grid PNG.',
+                    'Make our original Ghost with 311 Perler Mini beads: 293 White (W) and 18 Black (B). Read the 29 × 29 counting chart by rows and columns; blank squares stay empty. W and B are chart symbols, not purchasing codes. Choose an A4 or US Letter PDF, or the grid PNG.',
                     'The editable project centers the same design on a 57 × 57 grid with 14 empty rows and columns on each side: chart coordinates 1–29 become project coordinates 15–43. Save your current work before opening it. Use a physical Mini pegboard matching your beads. These files are counting references, not actual-size placement templates. The design has not been physically assembled or iron-tested.',
                 ],
                 figureFirst: true,

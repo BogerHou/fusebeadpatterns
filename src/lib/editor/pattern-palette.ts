@@ -9,6 +9,8 @@ import { quantizePattern } from './pattern-quantization';
 type PatternPaletteOptions = {
     signal?: AbortSignal;
     sourcePalettes?: Palette[];
+    /** Owned-color changes only replace colors absent from the enabled RGB set. */
+    preserveEnabledColors?: boolean;
 };
 
 function neutralName(entry: PaletteEntry): 'black' | 'white' | null {
@@ -59,7 +61,7 @@ export async function remapPatternPalette(
     height: number,
     palettes: Palette[],
     matchingId: string,
-    { signal, sourcePalettes = [] }: PatternPaletteOptions = {}
+    { signal, sourcePalettes = [], preserveEnabledColors = false }: PatternPaletteOptions = {}
 ): Promise<Uint8ClampedArray> {
     if (signal?.aborted) {
         throw new DOMException('Pattern conversion cancelled.', 'AbortError');
@@ -93,11 +95,17 @@ export async function remapPatternPalette(
         clonePalettes(sourcePalettes), opaquePalettes, matchingId
     );
     const source = new Uint8ClampedArray(pixels);
+    const preserved = preserveEnabledColors ? source.slice() : null;
+    const enabledKeys = preserveEnabledColors ? new Set(opaquePalettes.flatMap(palette =>
+        palette.entries.map(entry => getPaletteEntryColorKey(entry.color.r, entry.color.g, entry.color.b))
+    )) : null;
     const alpha = new Uint8Array(pixelCount);
     for (let index = 0; index < pixelCount; index++) {
         const offset = index * 4;
         alpha[index] = source[offset + 3];
         if (alpha[index] === 0) continue;
+
+        if (enabledKeys?.has(getPaletteEntryColorKey(source[offset], source[offset + 1], source[offset + 2]))) continue;
 
         const neutral = neutralRemaps.get(getPaletteEntryColorKey(
             source[offset], source[offset + 1], source[offset + 2]
@@ -126,7 +134,11 @@ export async function remapPatternPalette(
     // Quantization skips fully transparent cells and leaves all their bytes intact.
     // Restore partial alpha too, since its usual image path uses the target alpha.
     for (let index = 0; index < pixelCount; index++) {
-        result[index * 4 + 3] = alpha[index];
+        const offset = index * 4;
+        if (preserved && enabledKeys?.has(getPaletteEntryColorKey(
+            preserved[offset], preserved[offset + 1], preserved[offset + 2]
+        ))) result.set(preserved.subarray(offset, offset + 4), offset);
+        result[offset + 3] = alpha[index];
     }
     return result;
 }
