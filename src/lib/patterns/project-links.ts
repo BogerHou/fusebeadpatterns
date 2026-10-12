@@ -3,6 +3,7 @@ import type { SiteLocale } from '../i18n/locales';
 import { getLocalizedSubjectName } from './localized-content';
 import { hamaPatterns } from './hama';
 import { getMiniLibraryProject } from './mini';
+import { getHamaCharacterLibraryProject } from './hama-character-variants';
 
 export type LibraryProject = { id: string; title: string; projectUrl: string };
 
@@ -604,6 +605,8 @@ export function getLibraryProject(id: string, locale: SiteLocale = 'en'): Librar
     if (original) return locale === 'en' ? original : { ...original, title: getLocalizedSubjectName(original, locale) };
     const mini = getMiniLibraryProject(id, locale);
     if (mini) return mini;
+    const characterHama = getHamaCharacterLibraryProject(id, locale);
+    if (characterHama) return characterHama;
     const hama = hamaPatterns.find((pattern) => pattern.projectId === id);
     if (!hama) return undefined;
     const base = libraryProjects.find(project => project.id === hama.id);

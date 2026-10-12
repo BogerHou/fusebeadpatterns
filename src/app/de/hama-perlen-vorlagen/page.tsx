@@ -5,6 +5,7 @@ import Link from 'next/link';
 import GermanHamaDownloads from '@/components/patterns/GermanHamaDownloads';
 import { germanHamaPath, germanHamaPatterns } from '@/lib/patterns/german-hama';
 import { hamaLanguageAlternates } from '@/lib/i18n/metadata';
+import { HamaCharacterLink } from '@/components/patterns/HamaCharacterDownloads';
 
 const title = 'Hama-Perlen-Vorlagen kostenlos: 6 PDFs | Fuse Bead Patterns';
 const description = 'Sechs kostenlose Hama-Midi-Vorlagen: Fußball, Geist, Fledermaus und Weihnachtsmotive. Deutsche A4-PDFs mit Hama-Farbnummern, Symbolraster und Druckanleitung.';
@@ -70,6 +71,7 @@ export default function GermanHamaPatternsPage() {
                     Jedes Motiv passt auf ein Raster mit 29 × 29 Feldern. Die Druckvorlagen sind für Midi-Perlen mit 5 mm vorgesehen. Prüfe den Ausdruck an deiner Steckplatte, bevor du ihn als Unterlage verwendest.
                 </p>
                 <GermanHamaDownloads patterns={germanHamaPatterns} />
+                <HamaCharacterLink locale="de" />
                 <p className="mt-6 max-w-3xl text-sm leading-7 text-muted">
                     Die PDFs im A4- und US-Letter-Format sind beide auf Deutsch. Zum Ausdrucken nutze das Format, das zu deinem Papier passt. Das Pixel-PNG ist ein Bild mit 29 × 29 Pixeln ohne Rasterlinien oder Farbliste. Das Projekt enthält das bearbeitbare Motiv und seine Hama-Palette.
                 </p>

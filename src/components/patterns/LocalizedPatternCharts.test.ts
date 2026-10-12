@@ -33,6 +33,7 @@ import german from '../../lib/patterns/german.json';
 import japanese from '../../lib/patterns/japanese.json';
 import CoasterInstructions from './CoasterInstructions';
 import OrnamentInstructions from './OrnamentInstructions';
+import HamaCharacterDownloads from './HamaCharacterDownloads';
 
 // Render the actual page components. Only unrelated navigation, card browsing,
 // and the Next image/link wrappers are replaced for the Node environment.
@@ -42,6 +43,8 @@ const empty = defaultModule((): null => null);
 const quickDownloads = defaultModule(({ children }: { children: ReactNode }) => createElement('div', null, children));
 const patternCatalog = { ...empty, toLocalizedPatternCard: (pattern: catalog.Pattern) => ({ id: pattern.id }) };
 const modules: Record<string, unknown> = {
+    './HamaCharacterDownloads': defaultModule(HamaCharacterDownloads),
+    '@/components/patterns/HamaCharacterDownloads': defaultModule(HamaCharacterDownloads),
     'next/image': defaultModule(({ src, alt, width, height }: Record<string, unknown>) => createElement('img', { src, alt, width, height })),
     'next/link': defaultModule(({ children, prefetch, ...props }: { children: ReactNode; prefetch?: unknown }) => { void prefetch; return createElement('a', props, children); }),
     '@/components/layout/Breadcrumbs': empty, '@/components/layout/SiteHeader': empty, '@/components/layout/SiteFooter': empty,
