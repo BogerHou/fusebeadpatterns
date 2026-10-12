@@ -15,6 +15,7 @@ import { patterns, patternCollections, getPatternBySlug, getCollectionBySlug, ge
 import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib/patterns/topics';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 import { brandGuideHref, getCollectionIntro, getFewestColorsPattern, getPatternIntro } from '@/lib/patterns/content';
+import HamaCharacterDownloads from '@/components/patterns/HamaCharacterDownloads';
 import { getPatternFanArtNotice } from '@/lib/patterns/fan-art';
 import { isRavePattern } from '@/lib/patterns/rave';
 import { isMultiboardPattern, multiboardCopy } from '@/lib/patterns/multiboard';
@@ -130,6 +131,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
                     </section>
                 </div>
                 <MultiboardInstructions patternId={pattern.id} />
+                <HamaCharacterDownloads patternId={pattern.id} />
                 <section className="mt-12 max-w-[70ch] border-t border-[#d9ded5] pt-8">
                     <h2 className="section-heading">Making this pattern</h2>
                     <ul className="mt-5 list-disc space-y-3 pl-5 leading-8 text-[#43564d] marker:text-[#78917f]">{pattern.notes.map((note) => <li key={note}>{note}</li>)}</ul>

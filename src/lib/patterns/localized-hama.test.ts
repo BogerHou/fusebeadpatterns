@@ -17,6 +17,7 @@ import { getPatternById } from './catalog';
 import { getLocalizedPatternName } from './localized-content';
 import { getLibraryProject } from './project-links';
 import { parseEditorProject } from '../editor/draft';
+import { HamaCharacterLink } from '../../components/patterns/HamaCharacterDownloads';
 // Render the actual shared card component; layout is separately exercised by Next's build/browser QA.
 const source = readFileSync(new URL('../../components/patterns/LocalizedHamaPatterns.tsx', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
@@ -24,6 +25,7 @@ const loaded: Record<string, unknown> = {}, require = createRequire(import.meta.
 new Script(compiled).runInNewContext({ exports: loaded, require: (id: string) => {
     if (id === '@/lib/patterns/localized-hama') return localizedData;
     if (id === '@/lib/i18n/metadata') return { hamaLanguageAlternates };
+    if (id === './HamaCharacterDownloads') return { HamaCharacterLink };
     if (id.startsWith('@/components/layout/')) return { __esModule: true, default: (): null => null };
     return require(id);
 } });

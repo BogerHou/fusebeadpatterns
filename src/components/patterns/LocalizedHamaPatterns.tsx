@@ -6,6 +6,7 @@ import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { hamaLanguageAlternates } from '@/lib/i18n/metadata';
 import { localizedHamaCopy, localizedHamaPatterns, localizedHamaGuideLinks, type HamaDownloadLocale } from '@/lib/patterns/localized-hama';
+import { HamaCharacterLink } from './HamaCharacterDownloads';
 const siteUrl = 'https://fusebeadpatterns.art';
 const preview = '/patterns-hama/original-friendly-ghost/preview.png';
 export function localizedHamaMetadata(locale: HamaDownloadLocale): Metadata {
@@ -56,6 +57,7 @@ export default function LocalizedHamaPatterns({ locale }: { locale: HamaDownload
             <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">{copy.intro}</p>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">{copy.sizeHelp}</p>
             <LocalizedHamaDownloads locale={locale} />
+            <HamaCharacterLink locale={locale} />
             <p className="mt-6 max-w-3xl text-sm leading-7 text-muted">{copy.fileHelp}</p>
             <section aria-labelledby="hama-colours" className="mt-14 max-w-3xl border-t border-line pt-8">
                 <h2 id="hama-colours" className="section-heading">{copy.coloursHeading}</h2>
