@@ -66,6 +66,22 @@ function fixture(largeSource = false): PixelLocaleSnapshot {
     };
 }
 
+function expectExactSnapshot(actual: PixelLocaleSnapshot | null, expected: PixelLocaleSnapshot) {
+    expect(actual).not.toBeNull();
+    const { source: actualSource, ...actualWorkspace } = actual!;
+    const { source: expectedSource, ...expectedWorkspace } = expected;
+    expect(actualWorkspace).toEqual(expectedWorkspace);
+    expect(actualSource).not.toBeNull();
+    expect(expectedSource).not.toBeNull();
+    const { pixels: actualPixels, ...actualSourceInfo } = actualSource!;
+    const { pixels: expectedPixels, ...expectedSourceInfo } = expectedSource!;
+    expect(actualSourceInfo).toEqual(expectedSourceInfo);
+    expect(actualPixels.constructor).toBe(expectedPixels.constructor);
+    expect(actualPixels.length).toBe(expectedPixels.length);
+    // Compare every source byte natively; generic deep equality enumerates large RGBA arrays.
+    expect(Buffer.from(actualPixels).equals(Buffer.from(expectedPixels))).toBe(true);
+}
+
 function deferred() {
     let resolve!: () => void;
     const promise = new Promise<void>(done => { resolve = done; });
@@ -111,8 +127,8 @@ describe('pixel drawing → whole-board bead project and exact return', () => {
         snapshot.grid.pixels.fill(1); sourcePixels.fill(2); snapshot.history.undo[0].pixels.fill(3);
         ackPixelBeadTransfer(result.key, session);
         const restored = (await readPixelBeadReturn(result.returnHref, session, { store: bulk.store, now: NOW }))!;
-        expect(restored).toEqual(expected);
-        expect(await readPixelBeadReturn(result.returnHref, session, { store: bulk.store, now: NOW })).toEqual(expected);
+        expectExactSnapshot(restored, expected);
+        expectExactSnapshot(await readPixelBeadReturn(result.returnHref, session, { store: bulk.store, now: NOW }), expected);
         expect(bulk.store.take).not.toHaveBeenCalled();
         const history = new GridHistory(50); history.restore(restored.history);
         const redone = history.redo(restored.grid)!;
