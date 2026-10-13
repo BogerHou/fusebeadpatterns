@@ -11,6 +11,7 @@ import { clonePalettes, countEnabledEntries, enablePaletteEntry, getAutomaticEdi
 import { PatternHistory, PatternStroke } from '../../lib/editor/pattern-history';
 import { remapPatternPalette } from '../../lib/editor/pattern-palette';
 import { normalizeSourceCrop, type EditorSourceCrop } from '../../lib/core/utils/image-crop';
+import { normalizeSourceBackground } from '../../lib/editor/source-background';
 
 // Execute the actual checkbox/dropdown handlers and selected-palette effect.
 // Only React scheduling/canvas I/O are modeled; CSV loading, matching, pixels,
@@ -114,7 +115,7 @@ function harness(id = 'original-black-cat', mode: 'blank' | 'image' = 'blank', f
             useCallback: (callback: unknown) => callback,
             getBoardOption, getPaletteOption, parsePaletteCsv, applyFreshPaletteDefaults, PALETTE_OPTIONS,
             clonePalettes, countEnabledEntries, enablePaletteEntry, getAutomaticEditorColorRef, mergePaletteEnabledState, remapPatternPalette: convert, computeUsage,
-            normalizeSourceCrop, sourceCrop: null, maxBeadColors: null,
+            normalizeSourceCrop, sourceCrop: null, normalizeSourceBackground, sourceBackground: null, maxBeadColors: null,
             fetch: fetchPalette, isEditorDraftReady: true, selectedPaletteIds: state.ids, activePalettes: state.active,
             matchingId: draft.matchingId, rendererSettings: { ...draft.rendererSettings, showGrid: true }, sourceMode: mode,
             currentProjectRef: refs.project, reducedColorRef: refs.pixels, patternHistoryRef: refs.history,

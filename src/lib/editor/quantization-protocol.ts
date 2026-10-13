@@ -13,6 +13,8 @@ export type QuantizationRequest = {
     dithering: { enable: boolean; hardness: number };
     drawingPosition: { x: number; y: number; width: number; height: number };
     maxBeadColors?: number | null;
+    /** Original-image masking must leave empty RGBA cells untouched, including during diffusion. */
+    protectEmptyCells?: boolean;
     /** Internal current-grid operation; never resamples or diffuses pixels. */
     preservePatternAlpha?: true;
 };
@@ -24,7 +26,7 @@ export type QuantizationResponse =
 
 /** Both execution paths use the same algorithm and configuration mapping. */
 export function runPatternQuantization(request: QuantizationRequest): Uint8ClampedArray {
-    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha) {
+    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha || request.protectEmptyCells) {
         return runBrandColorLimit(request);
     }
     return reduceColorPixels(request.pixels, request.width, request.height, {

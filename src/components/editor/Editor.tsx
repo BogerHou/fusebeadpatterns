@@ -24,6 +24,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { EditorDialog } from './EditorDialog';
 import { SourceCropDialog } from './SourceCropDialog';
+import { SourceBackgroundDialog } from './SourceBackgroundDialog';
 import { PixelBeadEntry } from './PixelBeadEntry';
 import { preparePixelBeadEditorDraft } from '@/lib/editor/pixel-bead-entry';
 import { getPixelBeadReturnHref } from '@/lib/pixel-grid/bead-transfer';
@@ -47,6 +48,8 @@ import { resolvePdfPaperSize, type PdfPaperSize } from '@/lib/editor/pdf-paper';
 import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
 import { normalizeSourceCrop, type EditorSourceCrop } from '@/lib/core/utils/image-crop';
 import { getSourceCropCopy } from '@/lib/editor/source-crop-copy';
+import { normalizeSourceBackground, SourceBackgroundError, type SourceBackground } from '@/lib/editor/source-background';
+import { getSourceBackgroundCopy } from '@/lib/editor/source-background-copy';
 import { getBeadColorLimitCopy } from '@/lib/editor/bead-color-limit-copy';
 import type { CraftPattern } from '@/lib/editor/craft-progress';
 import { getCraftProgressCopy } from '@/lib/editor/craft-progress-copy';
@@ -219,7 +222,7 @@ type EditorSourceMode = 'image' | 'blank';
 type AcceptedSourceConfiguration = Pick<EditorDraft,
     'boardId' | 'boardWidth' | 'boardHeight' | 'matchingId' | 'ditheringId' |
     'imageAdjustments' | 'selectedPaletteIds' | 'activePalettes'> & {
-    center: boolean; fit: boolean; crop: EditorSourceCrop | null; maxBeadColors: number | null;
+    center: boolean; fit: boolean; crop: EditorSourceCrop | null; maxBeadColors: number | null; background: SourceBackground | null;
 };
 type EditorMobilePanel = 'file' | 'edit' | 'colors' | 'setup' | null;
 type HomeMobilePanel =
@@ -566,6 +569,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [sourceMode, setSourceMode] = useState<EditorSourceMode>('image');
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [sourceCrop, setSourceCrop] = useState<EditorSourceCrop | null>(null);
+    const [sourceBackground, setSourceBackground] = useState<SourceBackground | null>(null);
+    const [isSourceBackgroundOpen, setIsSourceBackgroundOpen] = useState(false);
+    const [sourceBackgroundError, setSourceBackgroundError] = useState<string | null>(null);
     const [maxBeadColors, setMaxBeadColors] = useState<number | null>(null);
     const [pendingMaxBeadColorsText, setPendingMaxBeadColorsText] = useState('');
     const [isColorLimitOpen, setIsColorLimitOpen] = useState(false);
@@ -577,7 +583,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [colorLimitBusy, setColorLimitBusy] = useState(false);
     const [isSourceCropOpen, setIsSourceCropOpen] = useState(false);
     const [sourceCropError, setSourceCropError] = useState<string | null>(null);
-    const [sourceTransactionKind, setSourceTransactionKind] = useState<'upload' | 'crop' | 'limit-source' | 'limit-current' | null>(null);
+    const [sourceTransactionKind, setSourceTransactionKind] = useState<'upload' | 'crop' | 'limit-source' | 'limit-current' | 'background' | null>(null);
     const [fileName, setFileName] = useState('bead-pattern');
     const [selectedPaletteIds, setSelectedPaletteIds] = useState<string[]>([
         initialConfiguration.paletteId,
@@ -1166,19 +1172,21 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
     }, [activePalettes]);
 
-    const sourceProcessingKey = useCallback((crop: EditorSourceCrop | null, colorLimit: number | null = maxBeadColors) => JSON.stringify({
+    const sourceProcessingKey = useCallback((crop: EditorSourceCrop | null, colorLimit: number | null = maxBeadColors, background: SourceBackground | null = sourceBackground) => JSON.stringify({
         boardId, boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
         center: rendererSettings.center, fit: rendererSettings.fit,
         sourceCrop: normalizeSourceCrop(crop),
         ...(colorLimit !== null ? { maxBeadColors: colorLimit } : {}),
+        ...(background !== null ? { sourceBackground: normalizeSourceBackground(background) } : {}),
     }), [boardId, boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
-        rendererSettings.center, rendererSettings.fit, maxBeadColors]);
+        rendererSettings.center, rendererSettings.fit, maxBeadColors, sourceBackground]);
 
     const createCurrentEditorDraft = useCallback((forProject = false) => {
         return createEditorDraft({
             sourceMode,
             imageSrc,
             ...(sourceCrop ? { sourceCrop: { ...sourceCrop } } : {}),
+            ...(sourceBackground ? { sourceBackground: normalizeSourceBackground(sourceBackground) } : {}),
             ...(maxBeadColors !== null ? { maxBeadColors } : {}),
             fileName,
             selectedPaletteIds,
@@ -1213,6 +1221,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         imageAdjustments,
         imageSrc,
         sourceCrop,
+        sourceBackground,
         maxBeadColors,
         matchingId,
         previewZoom,
@@ -1301,11 +1310,14 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 imageAdjustments: { ...draft.imageAdjustments }, selectedPaletteIds: [...draft.selectedPaletteIds],
                 activePalettes: clonePalettes(draft.activePalettes), center: draft.rendererSettings.center,
                 fit: draft.rendererSettings.fit, crop: normalizeSourceCrop(draft.sourceCrop),
-                maxBeadColors: draft.maxBeadColors ?? null,
+                maxBeadColors: draft.maxBeadColors ?? null, background: normalizeSourceBackground(draft.sourceBackground),
             } : null;
             setSourceMode(nextSourceMode);
             setImageSrc(draft.imageSrc);
             setSourceCrop(normalizeSourceCrop(draft.sourceCrop));
+            setSourceBackground(normalizeSourceBackground(draft.sourceBackground));
+            setIsSourceBackgroundOpen(false);
+            setSourceBackgroundError(null);
             setMaxBeadColors(draft.maxBeadColors ?? null);
             setPendingMaxBeadColorsText(draft.maxBeadColors == null ? '' : String(draft.maxBeadColors));
             setFileName(draft.fileName);
@@ -1812,6 +1824,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         setRendererSettings(previous => ({ ...previous, center: accepted.center, fit: accepted.fit }));
         setSourceCrop(accepted.crop ? { ...accepted.crop } : null);
         setMaxBeadColors(accepted.maxBeadColors);
+        setSourceBackground(normalizeSourceBackground(accepted.background));
         skipNextPaletteRebuildRef.current = true;
     }, []);
 
@@ -1883,7 +1896,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 const saved = pendingEditedPatternRef.current;
                 const restoredPixels = saved && saved.width === width && saved.height === height ? decodeEditorPatternDraft(saved) : null;
                 const prepared = await prepareSourceImagePattern({ src: imageSrc, fileName: outputSettings.fileName,
-                    crop: sourceCrop, project, width, height, matchingId, maxBeadColors, restoredPixels }, controller.signal);
+                    crop: sourceCrop, background: sourceBackground, project, width, height, matchingId, maxBeadColors, restoredPixels }, controller.signal);
                 if (controller.signal.aborted || imageGenerationRef.current !== controller) return;
                 const latest = getImageOutputSettings();
                 project.image.name = latest.fileName;
@@ -1899,7 +1912,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     imageAdjustments: { ...imageAdjustments }, selectedPaletteIds: [...(resolvedPaletteIdsRef.current ?? [])],
                     activePalettes: clonePalettes(activePalettes), center: rendererSettings.center,
                     fit: rendererSettings.fit, crop: normalizeSourceCrop(sourceCrop),
-                    maxBeadColors,
+                    maxBeadColors, background: normalizeSourceBackground(sourceBackground),
                 };
                 lastProcessedImageSrcRef.current = imageSrc;
                 lastProcessedImageSettingsKeyRef.current = imageProcessingSettingsKey;
@@ -1928,7 +1941,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             if (imageGenerationRef.current === controller) imageGenerationRef.current = null;
         };
     }, [activePalettes, boardHeight, boardId, boardWidth, ditheringId, imageAdjustments,
-        imageSrc, sourceCrop, maxBeadColors, matchingId, rendererSettings.center, rendererSettings.fit,
+        imageSrc, sourceCrop, sourceBackground, maxBeadColors, matchingId, rendererSettings.center, rendererSettings.fit,
         selectedBoard, sourceProcessingKey, publishPreparedSource, restoreAcceptedSourceConfiguration, isEditorDraftReady]);
 
     useEffect(() => {
@@ -2258,7 +2271,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         // Capture every generation input before reading or decoding the file.
         const paletteIds = [...selectedPaletteIds], paletteSnapshot = clonePalettes(activePalettes);
         const board = selectedBoard, width = boardWidth * board.beadsPerRow, height = boardHeight * board.beadsPerRow;
-        const settingsKey = sourceProcessingKey(normalized, candidateColorLimit);
+        const candidateBackground = kind === 'upload' ? null : normalizeSourceBackground(sourceBackground);
+        const settingsKey = sourceProcessingKey(normalized, candidateColorLimit, candidateBackground);
         const configuration = { boardOption: board, boardWidth, boardHeight, matchingId, ditheringId,
             imageAdjustments: { ...imageAdjustments }, rendererSettings: { ...rendererSettings }, useSymbols };
         try {
@@ -2268,7 +2282,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 if (signal.aborted) throw new DOMException('Source image operation cancelled.', 'AbortError');
                 const project = buildEditorProject({ ...configuration, palettes });
                 const prepared = await prepareSourceImagePattern({ src, fileName: name, crop: normalized,
-                    project, width, height, matchingId: configuration.matchingId, maxBeadColors: candidateColorLimit }, signal);
+                    project, width, height, matchingId: configuration.matchingId, maxBeadColors: candidateColorLimit, background: candidateBackground }, signal);
                 const usage = computeUsage(prepared.pixels, project.paletteConfiguration.palettes);
                 const preview = createPatternPreviewDataUrl(prepared.pixels, width, height,
                     board.beadsPerRow, configuration.rendererSettings.showGrid);
@@ -2280,7 +2294,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     ditheringId: configuration.ditheringId, imageAdjustments: { ...configuration.imageAdjustments },
                     selectedPaletteIds: paletteIds, activePalettes: clonePalettes(palettes),
                     center: configuration.rendererSettings.center, fit: configuration.rendererSettings.fit, crop: normalized,
-                    maxBeadColors: candidateColorLimit,
+                    maxBeadColors: candidateColorLimit, background: candidateBackground,
                 };
                 libraryPatternIdRef.current = null;
                 pendingLocaleContextRef.current = null;
@@ -2296,6 +2310,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 setSourceMode('image');
                 setImageSrc(src);
                 setSourceCrop(normalized);
+                setSourceBackground(candidateBackground);
                 setMaxBeadColors(candidateColorLimit);
                 setFileName(name);
                 setPreviewZoom(1);
@@ -2332,6 +2347,110 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         if (file) void runSourceCandidate(file, null, 'upload');
     };
 
+    const prepareBackgroundCandidate = async (background: SourceBackground | null, signal: AbortSignal) => {
+        if (!imageSrc || sourceMode !== 'image' || !selectedBoard) throw new Error('Original image unavailable.');
+        const output = getImageOutputSettings();
+        const width = boardWidth * selectedBoard.beadsPerRow, height = boardHeight * selectedBoard.beadsPerRow;
+        const project = buildEditorProject({ palettes: clonePalettes(activePalettes), boardOption: selectedBoard,
+            boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments: { ...imageAdjustments },
+            rendererSettings: { center: rendererSettings.center, fit: rendererSettings.fit, showGrid: output.showGrid },
+            useSymbols: output.useSymbols });
+        const prepared = await prepareSourceImagePattern({ src: imageSrc, fileName: output.fileName,
+            crop: sourceCrop, background, project, width, height, matchingId, maxBeadColors }, signal);
+        if (signal.aborted) throw new DOMException('Background conversion cancelled.', 'AbortError');
+        const usage = computeUsage(prepared.pixels, project.paletteConfiguration.palettes);
+        return { prepared, usage };
+    };
+
+    const previewSourceBackground = async (background: SourceBackground | null, signal: AbortSignal) => {
+        const { prepared, usage } = await prepareBackgroundCandidate(normalizeSourceBackground(background), signal);
+        return { pixels: prepared.pixels, width: prepared.width, height: prepared.height, totalBeads: countBeads(usage) };
+    };
+
+    const openSourceBackground = () => {
+        if (!imageSrc || sourceMode !== 'image' || !hasEditablePattern || !isEditorDraftReady ||
+            isSourceBackgroundOpen || craftPattern || craftEntryBusyRef.current || processing || exportingId !== null ||
+            exportInProgressRef.current || sourceTransactionsRef.current.pending || imageGenerationRef.current ||
+            settingsUpdateRef.current || isLibraryPatternLoading || localeTransferPending || localeContextInstalling ||
+            (isEditorPage && hasPendingPatternSettings) ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds)) return;
+        finishActiveStroke();
+        setSourceBackgroundError(null);
+        setIsSourceCropOpen(false);
+        setIsColorLimitOpen(false);
+        setIsSourceBackgroundOpen(true);
+    };
+
+    const applySourceBackground = async (candidate: SourceBackground | null): Promise<boolean> => {
+        if (!imageSrc || sourceMode !== 'image' || !isEditorDraftReady || processing ||
+            sourceTransactionsRef.current.pending || imageGenerationRef.current || settingsUpdateRef.current ||
+            isLibraryPatternLoading || exportInProgressRef.current || localeTransferPending || localeContextInstalling ||
+            (isEditorPage && hasPendingPatternSettings) ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds)) return false;
+        let background: SourceBackground | null;
+        try { background = normalizeSourceBackground(candidate); }
+        catch { setSourceBackgroundError(getSourceBackgroundCopy(locale).invalid); return false; }
+        finishActiveStroke();
+        const project = currentProjectRef.current, pixels = reducedColorRef.current, canvas = canvasRef.current;
+        if (!project || !pixels || !canvas || !isEditorPatternSnapshotReady(pixels, canvas, previewSize)) return false;
+        if (!confirmLargePatternAction(currentPatternBeadCount, locale)) return false;
+        const before = pixels.slice(), history = patternHistoryRef.current;
+        const width = canvas.width, height = canvas.height, src = imageSrc;
+        const jobs = sourceTransactionsRef.current, controller = jobs.begin();
+        sourceCandidateControllerRef.current = controller;
+        imageGenerationRef.current = controller;
+        setSourceTransactionKind('background');
+        setProcessing(true);
+        setSourceBackgroundError(null);
+        const settingsKey = sourceProcessingKey(sourceCrop, maxBeadColors, background);
+        try {
+            return await jobs.prepare(controller, async signal => {
+                const { prepared, usage } = await prepareBackgroundCandidate(background, signal);
+                const patch = createPatternPatch(before, prepared.pixels);
+                const preview = createPatternPreviewDataUrl(prepared.pixels, prepared.width, prepared.height,
+                    prepared.project.boardConfiguration.board.nbBeadPerRow, rendererSettings.showGrid);
+                return { prepared, usage, patch, preview };
+            }, ({ prepared, usage, patch, preview }) => {
+                if (currentProjectRef.current !== project || reducedColorRef.current !== pixels ||
+                    patternHistoryRef.current !== history || canvas.width !== width || canvas.height !== height ||
+                    prepared.width !== width || prepared.height !== height ||
+                    pixels.some((value, index) => value !== before[index])) throw new Error('Pattern changed.');
+                // Commit pixels before parameters/history. Failed canvas writes
+                // restore the old raster; a cancelled/late result never publishes.
+                commitSourceImageCanvas(canvas, prepared, pixels);
+                currentProjectRef.current = prepared.project;
+                reducedColorRef.current = prepared.pixels;
+                if (patch) {
+                    history.push(patch);
+                    setManualPatternRevision(previous => previous + 1);
+                    setHistoryRevision(previous => previous + 1);
+                }
+                pendingEditedPatternRef.current = null;
+                if (acceptedSourceConfigurationRef.current) acceptedSourceConfigurationRef.current.background = background;
+                lastProcessedImageSrcRef.current = src;
+                lastProcessedImageSettingsKeyRef.current = settingsKey;
+                skipNextPaletteRebuildRef.current = true;
+                setSourceBackground(background);
+                setBeadsUsage(usage);
+                setPreviewDataUrl(preview);
+                syncEditorColorAfterPatternBuild(usage, prepared.project.paletteConfiguration.palettes);
+                setErrorMessage(null);
+                setIsSourceBackgroundOpen(false);
+            });
+        } catch (error) {
+            if (jobs.isCurrent(controller)) setSourceBackgroundError(error instanceof SourceBackgroundError && error.code === 'IMAGE_TOO_LARGE'
+                ? getSourceBackgroundCopy(locale).limitError : getSourceBackgroundCopy(locale).error);
+            return false;
+        } finally {
+            if (jobs.finish(controller)) {
+                sourceCandidateControllerRef.current = null;
+                if (imageGenerationRef.current === controller) imageGenerationRef.current = null;
+                setSourceTransactionKind(null);
+                setProcessing(false);
+            }
+        }
+    };
+
     const openSourceCrop = () => {
         if (!imageSrc || sourceMode !== 'image' || processing || exportingId !== null ||
             isLibraryPatternLoading || !isEditorDraftReady) return;
@@ -2349,6 +2468,12 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 className="min-h-11 w-full rounded-lg border border-[#768b7c] bg-white px-3 py-2 text-xs font-semibold text-brutal-black hover:bg-brand-cyan disabled:opacity-50">
                 {getSourceCropCopy(locale).open}
             </button>
+            <button type="button" onClick={openSourceBackground}
+                disabled={processing || exportingId !== null || isLibraryPatternLoading || !hasEditablePattern || (isEditorPage && hasPendingPatternSettings)}
+                className="min-h-11 w-full rounded-lg border border-[#768b7c] bg-white px-3 py-2 text-xs font-semibold text-brutal-black hover:bg-brand-cyan disabled:opacity-50">
+                {getSourceBackgroundCopy(locale).open}
+            </button>
+            {sourceBackground ? <p className="text-xs leading-5 text-muted">{getSourceBackgroundCopy(locale).applied}</p> : null}
             {sourceCrop ? <p className="text-xs leading-5 text-muted">{getSourceCropCopy(locale).applied} · {sourceCrop.width} × {sourceCrop.height} {getSourceCropCopy(locale).pixelUnit}</p> : null}
         </div>
     ) : null;
@@ -2469,7 +2594,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const canOpenCraftProgress = hasEditablePattern && isEditorDraftReady && !processing &&
         exportingId === null && !isLibraryPatternLoading && !craftEntryBusy && !craftPattern &&
-        !isSourceCropOpen && !isColorLimitOpen && !(isEditorPage && hasPendingPatternSettings);
+        !isSourceCropOpen && !isColorLimitOpen && !isSourceBackgroundOpen && !(isEditorPage && hasPendingPatternSettings);
     const openCraftProgress = async () => {
         if (!canOpenCraftProgress || craftEntryBusyRef.current || sourceTransactionsRef.current.pending ||
             imageGenerationRef.current || settingsUpdateRef.current || exportInProgressRef.current ||
@@ -2549,6 +2674,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         setSourceMode('blank');
         setImageSrc(null);
         setSourceCrop(null);
+        setSourceBackground(null);
+        setIsSourceBackgroundOpen(false);
+        setSourceBackgroundError(null);
         setMaxBeadColors(null);
         setPendingMaxBeadColorsText('');
         setFileName('blank-pattern');
@@ -3505,7 +3633,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const handleEditorShortcuts = React.useEffectEvent(
         (event: KeyboardEvent) => {
-            if (craftPattern || craftEntryBusyRef.current || isLibraryPatternLoading || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
+            if (craftPattern || craftEntryBusyRef.current || isLibraryPatternLoading || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
             const target = event.target as HTMLElement | null;
             const isTypingTarget =
                 target instanceof HTMLInputElement ||
@@ -3555,7 +3683,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
         const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
         if (!detail?.href) return;
-        if (craftPattern || craftEntryBusyRef.current || !isEditorDraftReady || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending ||
+        if (craftPattern || craftEntryBusyRef.current || !isEditorDraftReady || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || sourceTransactionsRef.current.pending ||
             (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
             event.preventDefault();
             setErrorMessage('Please wait for the current operation to finish before changing language.');
@@ -3683,7 +3811,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
-            <div className="contents" inert={Boolean(craftPattern) || craftEntryBusy || isSourceCropOpen || isColorLimitOpen || sourceTransactionKind !== null}>
+            <div className="contents" inert={Boolean(craftPattern) || craftEntryBusy || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || sourceTransactionKind !== null}>
             {localeRestoreBlocked ? (
                 <div role="alert" className="flex min-h-48 flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#d9ded5] bg-brutal-bg p-6 font-sans text-brutal-black">
                     <p>{t('Your saved language change could not be restored. Retry or open a saved project to continue.')}</p>
@@ -3723,7 +3851,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                         locale={locale}
                         hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
-                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern)}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceBackgroundOpen}
                         onOpen={(draft, patternId) => {
                             restoreEditorDraft(draft);
                             libraryPatternIdRef.current = patternId;
@@ -3740,7 +3868,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     <PixelBeadEntry locale={locale}
                         hasCurrentPattern={hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
-                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen}
                         onOpen={installPixelBeadDraft}
                         onSave={handleSaveProject}
                         onLoadingChange={setIsLibraryPatternLoading}
@@ -6925,6 +7053,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-line bg-white p-3 shadow-sm">
                     <button type="button" className="min-h-11 px-4 text-sm font-semibold text-accent" onClick={cancelSourceOperation}>{getSourceCropCopy(locale).cancel}</button>
                 </div>
+            ) : null}
+            {isSourceBackgroundOpen && imageSrc ? (
+                <SourceBackgroundDialog imageSrc={imageSrc} sourceCrop={sourceCrop} initialBackground={sourceBackground}
+                    locale={locale} error={sourceBackgroundError} onPreview={previewSourceBackground} onApply={applySourceBackground}
+                    onCancel={() => { cancelSourceOperation(); setIsSourceBackgroundOpen(false); setSourceBackgroundError(null); }} />
             ) : null}
             {isSourceCropOpen && imageSrc ? (
                 <SourceCropDialog imageSrc={imageSrc} initialCrop={sourceCrop} locale={locale} error={sourceCropError}

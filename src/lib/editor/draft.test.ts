@@ -7,6 +7,7 @@ import { mergePaletteEnabledState, togglePaletteEntry } from './palette-state';
 
 import {
     createEditorDraft,
+    createEditorProjectFile,
     decodeEditorPatternDraft,
     EDITOR_DRAFT_PATTERN_MAX_BYTES,
     EDITOR_DRAFT_STORAGE_KEY,
@@ -18,7 +19,9 @@ import {
     parseEditorProject,
     saveEditorDraft,
     serializeEditorProject,
+    type EditorDraft,
 } from './draft';
+import type { SourceBackground } from './source-background';
 
 function createTestDraft() {
     return createEditorDraft({
@@ -372,5 +375,166 @@ describe('editor draft storage', () => {
         vi.stubGlobal('window', undefined);
 
         expect(saveEditorDraft(createTestDraft())).toBe(false);
+    });
+});
+
+describe('source background project persistence', () => {
+    const background: SourceBackground = {
+        color: { r: 255, g: 254, b: 253 }, tolerance: 18, mode: 'edge-connected',
+    };
+    const imageDraft = () => ({
+        ...createTestDraft(), sourceMode: 'image' as const,
+        imageSrc: 'data:image/png;base64,b3JpZ2luYWw=',
+        editedPattern: encodeEditorProjectPattern(new Uint8ClampedArray([4, 5, 6, 0, 7, 8, 9, 128, 10, 11, 12, 255]), 3, 1),
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it.each(['edge-connected', 'all-matching'] as const)('round trips %s parameters without changing source, crop, settings or edited RGBA', (mode) => {
+        const values = new Map<string, string>();
+        vi.stubGlobal('window', { sessionStorage: {
+            setItem: (key: string, value: string) => values.set(key, value),
+            getItem: (key: string) => values.get(key) ?? null,
+        } });
+        const input = {
+            ...imageDraft(), sourceCrop: { sourceWidth: 120, sourceHeight: 80, x: 17, y: 9, width: 60, height: 30 },
+            maxBeadColors: 6, sourceBackground: { ...background, color: { ...background.color }, mode },
+        };
+        const before = JSON.stringify(input);
+        const draft = createEditorDraft(input);
+        const project = createEditorProjectFile(draft);
+        expect(draft).toEqual(input);
+        expect(draft.sourceBackground).not.toBe(input.sourceBackground);
+        expect(draft.sourceBackground!.color).not.toBe(input.sourceBackground.color);
+        expect(project.draft.sourceBackground).not.toBe(draft.sourceBackground);
+        expect(saveEditorDraft(draft)).toBe(true);
+        expect(values.get(EDITOR_DRAFT_STORAGE_KEY)).toBe(before);
+        expect(loadEditorDraft()).toEqual(input);
+        expect(parseEditorProject(serializeEditorProject(draft))).toEqual(input);
+        expect(decodeEditorPatternDraft(loadEditorDraft()!.editedPattern)).toEqual(decodeEditorPatternDraft(input.editedPattern));
+        input.sourceBackground.color.r = 0;
+        draft.sourceBackground!.tolerance = 99;
+        expect(loadEditorDraft()!.sourceBackground).toEqual({ ...background, mode });
+        expect(project.draft.sourceBackground).toEqual({ ...background, mode });
+    });
+
+    it('preserves the previous bytes and optional shape for missing, undefined and null values, including blank projects', () => {
+        for (const source of [createTestDraft(), imageDraft()]) {
+            for (const optional of [{}, { sourceBackground: undefined }, { sourceBackground: null }]) {
+                const input = { ...source, ...optional };
+                const expected = JSON.stringify(input);
+                const draft = createEditorDraft(input);
+                expect(Object.hasOwn(draft, 'sourceBackground')).toBe(Object.hasOwn(input, 'sourceBackground'));
+                expect(JSON.stringify(draft)).toBe(expected);
+                expect(JSON.stringify(parseEditorProject(serializeEditorProject(draft)))).toBe(expected);
+                const setItem = vi.fn();
+                vi.stubGlobal('window', { sessionStorage: { setItem } });
+                expect(saveEditorDraft(draft)).toBe(true);
+                expect(setItem).toHaveBeenCalledWith(EDITOR_DRAFT_STORAGE_KEY, expected);
+            }
+        }
+    });
+
+    it('retains legacy image projects that have no sourceMode and accepts the tolerance endpoints', () => {
+        for (const tolerance of [0, 255]) {
+            const input: EditorDraft = { ...imageDraft(), sourceBackground: { ...background, tolerance } };
+            delete input.sourceMode;
+            const restored = parseEditorProject(serializeEditorProject(createEditorDraft(input)))!;
+            expect(restored).toEqual(input);
+            expect(Object.hasOwn(restored, 'sourceMode')).toBe(false);
+        }
+    });
+
+    const invalidBackgrounds: Array<{ label: string; value: unknown }> = [
+        { label: 'negative tolerance', value: { ...background, tolerance: -1 } },
+        { label: 'large tolerance', value: { ...background, tolerance: 256 } },
+        { label: 'fractional tolerance', value: { ...background, tolerance: 1.5 } },
+        { label: 'string tolerance', value: { ...background, tolerance: '18' } },
+        { label: 'missing tolerance', value: { color: background.color, mode: background.mode } },
+        { label: 'wrong mode', value: { ...background, mode: 'automatic' } },
+        { label: 'negative RGB', value: { ...background, color: { r: -1, g: 0, b: 0 } } },
+        { label: 'large RGB', value: { ...background, color: { r: 0, g: 256, b: 0 } } },
+        { label: 'fractional RGB', value: { ...background, color: { r: 0, g: 0, b: 1.5 } } },
+        { label: 'extra alpha', value: { ...background, color: { ...background.color, a: 255 } } },
+        { label: 'stored mask', value: { ...background, mask: [1, 0] } },
+        { label: 'missing color channel', value: { ...background, color: { r: 0, g: 0 } } },
+        { label: 'array', value: [] }, { label: 'boolean', value: true },
+    ];
+    it.each(invalidBackgrounds)('rejects $label in files and storage instead of silently dropping it', ({ value }) => {
+        const candidate = { ...imageDraft(), sourceBackground: value } as EditorDraft;
+        const raw = JSON.stringify(candidate);
+        const setItem = vi.fn();
+        vi.stubGlobal('window', { sessionStorage: { getItem: () => raw, setItem } });
+        expect(loadEditorDraft()).toBeNull();
+        expect(parseEditorProject(JSON.stringify({ type: EDITOR_PROJECT_FILE_TYPE, version: 1, draft: candidate }))).toBeNull();
+        expect(() => createEditorDraft(candidate)).toThrow(RangeError);
+        expect(() => serializeEditorProject(candidate)).toThrow(RangeError);
+        expect(saveEditorDraft(candidate)).toBe(false);
+        expect(setItem).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        { sourceMode: 'blank' }, { imageSrc: null }, { imageSrc: '' }, { imageSrc: undefined },
+    ])('rejects active parameters when their original image is unavailable: %j', (patch) => {
+        const candidate = { ...imageDraft(), sourceBackground: background, ...patch } as EditorDraft;
+        const raw = JSON.stringify(candidate);
+        const setItem = vi.fn();
+        vi.stubGlobal('window', { sessionStorage: { getItem: () => raw, setItem } });
+        expect(loadEditorDraft()).toBeNull();
+        expect(parseEditorProject(JSON.stringify({ type: EDITOR_PROJECT_FILE_TYPE, version: 1, draft: candidate }))).toBeNull();
+        expect(() => createEditorDraft(candidate)).toThrow(RangeError);
+        expect(() => serializeEditorProject(candidate)).toThrow(RangeError);
+        expect(saveEditorDraft(candidate)).toBe(false);
+        expect(setItem).not.toHaveBeenCalled();
+    });
+
+    it('rejects accessors before invocation and refuses fields that JSON would silently erase', () => {
+        const getter = vi.fn(() => background);
+        const nestedGetter = vi.fn(() => 255);
+        const sourceGetter = vi.fn(() => 'data:image/png;base64,b3JpZ2luYWw=');
+        const modeGetter = vi.fn(() => 'image');
+        const make = () => ({ ...imageDraft(), sourceBackground: structuredClone(background) });
+        const candidates = [
+            Object.defineProperty(make(), 'sourceBackground', { enumerable: true, get: getter }),
+            { ...make(), sourceBackground: { ...background, color: Object.defineProperty({ ...background.color }, 'r', { enumerable: true, get: nestedGetter }) } },
+            Object.defineProperty(make(), 'imageSrc', { enumerable: true, get: sourceGetter }),
+            Object.defineProperty(make(), 'sourceMode', { enumerable: true, get: modeGetter }),
+            Object.defineProperty(make(), 'sourceBackground', { enumerable: false, value: background }),
+            { ...make(), sourceBackground: { ...background, [Symbol('mask')]: [] } },
+            { ...make(), sourceBackground: Object.defineProperty({ ...background }, 'mask', { enumerable: false, value: [] }) },
+            { ...make(), sourceBackground: { ...background, tolerance: Infinity } },
+            { ...make(), sourceBackground: Object.assign(Object.create({ inherited: true }), background) },
+            Object.assign(Object.create({ sourceBackground: background }), imageDraft()),
+        ] as EditorDraft[];
+        const values = new Map([[EDITOR_DRAFT_STORAGE_KEY, JSON.stringify(imageDraft())]]);
+        const previous = values.get(EDITOR_DRAFT_STORAGE_KEY);
+        vi.stubGlobal('window', { sessionStorage: { setItem: (key: string, value: string) => values.set(key, value) } });
+        for (const candidate of candidates) {
+            expect(() => createEditorDraft(candidate)).toThrow(RangeError);
+            expect(() => createEditorProjectFile(candidate)).toThrow(RangeError);
+            expect(() => serializeEditorProject(candidate)).toThrow(RangeError);
+            expect(saveEditorDraft(candidate)).toBe(false);
+            expect(values.get(EDITOR_DRAFT_STORAGE_KEY)).toBe(previous);
+        }
+        expect(getter).not.toHaveBeenCalled();
+        expect(nestedGetter).not.toHaveBeenCalled();
+        expect(sourceGetter).not.toHaveBeenCalled();
+        expect(modeGetter).not.toHaveBeenCalled();
+    });
+
+    it.each(['cat-perler-29.bead-pattern.json', 'rocket-perler-29-cleanup.bead-pattern.json'])('keeps the actual original source and pixels in %s unchanged', async (file) => {
+        const original = parseEditorProject(await readFile(path.join(process.cwd(), 'public/guides/photo-to-pattern', file), 'utf8'))!;
+        expect(original).not.toBeNull();
+        const before = JSON.stringify(original);
+        expect(Object.hasOwn(original, 'sourceBackground')).toBe(false);
+        expect(JSON.stringify(parseEditorProject(serializeEditorProject(original)))).toBe(before);
+        const draft = createEditorDraft({ ...original, sourceBackground: background });
+        const restored = parseEditorProject(serializeEditorProject(draft))!;
+        expect(restored.sourceBackground).toEqual(background);
+        expect(restored.imageSrc).toBe(original.imageSrc);
+        const { sourceBackground: restoredBackground, ...unchanged } = restored;
+        expect(restoredBackground).toEqual(background);
+        expect(JSON.stringify(unchanged)).toBe(before);
+        expect(Buffer.from(decodeEditorPatternDraft(restored.editedPattern)!).equals(Buffer.from(decodeEditorPatternDraft(original.editedPattern)!))).toBe(true);
+        expect(JSON.stringify(original)).toBe(before);
     });
 });

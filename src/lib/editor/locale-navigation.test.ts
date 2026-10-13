@@ -85,6 +85,45 @@ function assertWorkingRecovery(recovered: ReturnType<typeof consumeEditorLocaleD
 }
 
 describe('editor language navigation recovery', () => {
+    it('preserves source background and working context through the large-transfer entry point', async () => {
+        const fixture = workingFixture();
+        const draft = createEditorDraft({ ...fixture.draft,
+            sourceBackground: { color: { r: 250, g: 251, b: 252 }, tolerance: 0, mode: 'all-matching' },
+        });
+        const session = storage();
+        const { store, records } = largeStorage();
+        expect(await saveLargeEditorLocaleDraft(draft, '/fr/editor', session, 1000, null, fixture.context, store)).toBe(true);
+        expect(records.size).toBe(1);
+        const recovered = await consumeLargeEditorLocaleDraft('/fr/editor', session, 1001, store);
+        assertWorkingRecovery(recovered, { ...fixture, draft: { ...fixture.draft, sourceBackground: draft.sourceBackground } });
+        expect(recovered!.draft.sourceBackground).toEqual(draft.sourceBackground);
+        expect(records.size).toBe(0);
+    });
+
+    it('rejects accessor, symbol and hidden background fields before either transfer can serialize them away', async () => {
+        const getter = vi.fn(() => ({ color: { r: 255, g: 255, b: 255 }, tolerance: 8, mode: 'edge-connected' }));
+        const background = { color: { r: 255, g: 255, b: 255 }, tolerance: 8, mode: 'edge-connected' };
+        const candidates = [
+            Object.defineProperty(editedDraft(), 'sourceBackground', { enumerable: true, get: getter }),
+            { ...editedDraft(), sourceBackground: { ...background, [Symbol('mask')]: [] } },
+            { ...editedDraft(), sourceBackground: Object.defineProperty({ ...background }, 'mask', { value: [], enumerable: false }) },
+        ] as EditorDraft[];
+        for (const draft of candidates) {
+            const session = storage();
+            const previous = JSON.stringify(editedDraft());
+            session.setItem(EDITOR_DRAFT_STORAGE_KEY, previous);
+            const { store, records } = largeStorage();
+            expect(saveEditorLocaleDraft(draft, '/ja/editor', session, 1000)).toBe(false);
+            expect(session.getItem(EDITOR_DRAFT_STORAGE_KEY)).toBe(previous);
+            expect(session.getItem(EDITOR_LOCALE_RESTORE_KEY)).toBeNull();
+            expect(await saveLargeEditorLocaleDraft(draft, '/ja/editor', session, 1000, null, null, store)).toBe(false);
+            expect(records.size).toBe(0);
+            expect(session.getItem(EDITOR_DRAFT_STORAGE_KEY)).toBe(previous);
+            expect(session.getItem(EDITOR_LOCALE_RESTORE_KEY)).toBeNull();
+        }
+        expect(getter).not.toHaveBeenCalled();
+    });
+
     it('preserves an automatic limit through four language handoffs without reducing saved pixels or undo/redo branches', () => {
         const fixture = workingFixture();
         fixture.draft.maxBeadColors = 1;

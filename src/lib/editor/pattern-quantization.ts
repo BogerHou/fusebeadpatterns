@@ -27,7 +27,7 @@ async function runFallback(
     if (signal?.aborted) {
         throw abortError();
     }
-    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha) {
+    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha || request.protectEmptyCells) {
         const steps = createBrandColorLimitSteps(request);
         let step = steps.next();
         while (!step.done) {
@@ -158,7 +158,7 @@ export async function quantizePattern(
     if (options.signal?.aborted) {
         throw abortError();
     }
-    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha) {
+    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha || request.protectEmptyCells) {
         validateBrandColorLimitRequest(request);
     }
     if (request.width * request.height < WORKER_MIN_PATTERN_PIXELS ||

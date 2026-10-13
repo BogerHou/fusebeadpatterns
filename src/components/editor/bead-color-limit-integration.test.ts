@@ -4,6 +4,7 @@ import ts from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
 import { getBoardOption, getPaletteOption, parsePaletteCsv } from '../../lib/editor/config';
 import { normalizeSourceCrop } from '../../lib/core/utils/image-crop';
+import { normalizeSourceBackground } from '../../lib/editor/source-background';
 import { computeUsage } from '../../lib/core/utils/utils';
 import { buildEditorProject } from '../../lib/editor/project';
 import { clonePalettes } from '../../lib/editor/palette-state';
@@ -61,8 +62,8 @@ function harness(limitText = '1', convert = limitPatternBeadColors, oldLimit: nu
     const canvas = { width: 29, height: 29, getContext: () => context };
     const conversion = vi.fn(convert), loaded = { exports: {} };
     new Script(compiled).runInNewContext({ module: loaded, AbortController, RangeError, Error, JSON,
-        useCallback: (value: unknown) => value, normalizeSourceCrop, normalizeMaxBeadColors,
-        pendingMaxBeadColorsText: limitText, maxBeadColors: oldLimit, processing: false, sourceMode: 'image', sourceCrop: crop,
+        useCallback: (value: unknown) => value, normalizeSourceCrop, normalizeSourceBackground, normalizeMaxBeadColors,
+        pendingMaxBeadColorsText: limitText, maxBeadColors: oldLimit, processing: false, sourceMode: 'image', sourceCrop: crop, sourceBackground: null,
         boardId: 'midi', boardWidth: 1, boardHeight: 1, matchingId: 'euclidean', ditheringId: 'none',
         imageAdjustments: { brightness: 100, contrast: 100, saturation: 100, grayscale: 0 }, rendererSettings: { center: true, fit: true, showGrid: false },
         locale: 'en', previewSize: { width: 29, height: 29 }, currentPatternBeadCount: 841,
