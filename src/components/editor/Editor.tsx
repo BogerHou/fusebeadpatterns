@@ -25,6 +25,7 @@ import { Card } from '../ui/Card';
 import { EditorDialog } from './EditorDialog';
 import { EditorSection } from './EditorSection';
 import { PdfScaleField } from './PdfScaleField';
+import { PdfPaperField } from './PdfPaperField';
 import { useDialogFocus } from './useDialogFocus';
 import './editor-studio.css';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
@@ -34,6 +35,7 @@ import { formatEditorNumber, getEditorErrorMessage, getEditorTranslator } from '
 import { clearRestoredPatternQuery, consumeEditorLocaleDraft, consumeLargeEditorLocaleDraft, hasLargeEditorLocaleDraft, EDITOR_LOCALE_RESTORE_KEY, getEditorLocaleRestoreHref, saveEditorLocaleDraft, saveLargeEditorLocaleDraft, type EditorLocaleRecovery } from '@/lib/editor/locale-navigation';
 import { isEditorLanguageArrival, parseEditorLocaleContext, type EditorLocaleContext } from '@/lib/editor/locale-context';
 import { getInitialPdfScaleMode, isMidiActualSizeSupported, resolvePdfScaleMode, type PdfScaleMode } from '@/lib/editor/pdf-scale';
+import { resolvePdfPaperSize, type PdfPaperSize } from '@/lib/editor/pdf-paper';
 import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
 import { DEFAULT_EDITOR_PALETTE_ID as DEFAULT_PALETTE_ID, getInitialEditorConfiguration } from '@/lib/editor/initial-configuration';
 
@@ -562,6 +564,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [exportFormatId, setExportFormatId] = useState(DEFAULT_EXPORT_ID);
     const initialLocaleRef = useRef(locale);
     const [pdfScaleMode, setPdfScaleMode] = useState<PdfScaleMode>(() => getInitialPdfScaleMode(locale));
+    const [pdfPaperSize, setPdfPaperSize] = useState<PdfPaperSize>('a4');
     const [imageAdjustments, setImageAdjustments] = useState<ImageAdjustments>(
         DEFAULT_IMAGE_ADJUSTMENTS
     );
@@ -1127,6 +1130,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             useSymbols,
             exportFormatId,
             pdfScaleMode,
+            pdfPaperSize,
             imageAdjustments,
             rendererSettings,
             showReference,
@@ -1142,6 +1146,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         ditheringId,
         exportFormatId,
         pdfScaleMode,
+        pdfPaperSize,
         fileName,
         getCurrentEditedPatternDraft,
         imageAdjustments,
@@ -1237,6 +1242,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             setUseSymbols(draft.useSymbols);
             setExportFormatId(draft.exportFormatId);
             setPdfScaleMode(resolvePdfScaleMode(draft.pdfScaleMode, initialLocaleRef.current));
+            setPdfPaperSize(resolvePdfPaperSize(draft.pdfPaperSize));
             setImageAdjustments(draft.imageAdjustments);
             setRendererSettings(draft.rendererSettings);
             setShowReference(draft.showReference ?? true);
@@ -3162,6 +3168,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 exportId,
                 locale,
                 pdfScaleMode,
+                pdfPaperSize,
                 reducedColor: pattern,
                 beadsUsage: usage,
                 project,
@@ -5320,6 +5327,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                                 )}
                                             </select>
                                         </label>
+                                        <PdfPaperField locale={locale} id="home-pdf-paper" value={pdfPaperSize} onChange={setPdfPaperSize} />
                                         <PdfScaleField locale={locale} id="home-pdf-scale" value={pdfScaleMode} supportsActualSize={supportsMidiActualSize} onChange={setPdfScaleMode} />
                                         <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold">
                                             <input
@@ -6454,6 +6462,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                 </select>
                             </div>
 
+                            <PdfPaperField locale={locale} id="export-pdf-paper" value={pdfPaperSize} onChange={setPdfPaperSize} />
                             <PdfScaleField locale={locale} id="export-pdf-scale" value={pdfScaleMode} supportsActualSize={supportsMidiActualSize} onChange={setPdfScaleMode} />
 
                             <label

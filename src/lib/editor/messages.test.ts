@@ -59,7 +59,7 @@ describe('full editor translations', () => {
 
     it('has no untranslated JSX interface text and resolves every static message key', () => {
         const violations: string[] = [];
-        for (const filename of ['Editor.tsx', 'EditorDialog.tsx', 'PdfScaleField.tsx']) {
+        for (const filename of ['Editor.tsx', 'EditorDialog.tsx', 'PdfScaleField.tsx', 'PdfPaperField.tsx']) {
             const source = ts.createSourceFile(filename, readFileSync(`src/components/editor/${filename}`, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
             function containsTranslation(node: ts.Node): boolean {
                 if (ts.isCallExpression(node) && node.expression.getText(source) === 't') return true;

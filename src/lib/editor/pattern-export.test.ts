@@ -2,12 +2,41 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { Project } from '../core/model/project/project.model';
 import type { Printer } from '../core/printer/printer';
+import type { PdfPaperSize } from './pdf-paper';
 import {
     exportEditorPattern,
     type EditorPrinterLoader,
 } from './pattern-export';
 
 describe('editor pattern export helpers', () => {
+    it.each([null, false, 210, '', 'A4', 'legal', {}, []])('rejects malformed PDF paper %j before loading a printer or downloading', async paper => {
+        const load = vi.fn(async () => { throw new Error('Printer must not load'); });
+        await expect(exportEditorPattern({ exportId: 'pdf', pdfPaperSize: paper as PdfPaperSize, reducedColor: new Uint8ClampedArray(), beadsUsage: new Map(), project: {} as Project, fileName: 'invalid', exportGridPng: () => undefined, printerLoaders: { pdf: load } })).rejects.toThrow('Unsupported PDF paper size.');
+        expect(load).not.toHaveBeenCalled();
+    });
+    it.each(['en', 'de', 'fr', 'ja'] as const)('forwards actual Letter PDF output in %s', async locale => {
+        const print = vi.fn(async () => undefined);
+        class TestPrinter implements Printer { name = () => 'Test'; print = print; }
+        const reducedColor = new Uint8ClampedArray([1, 2, 3, 255]);
+        const beadsUsage = new Map([['H01', 1]]), project = {} as Project;
+        await exportEditorPattern({ exportId: 'pdf', locale, pdfScaleMode: 'midi-5mm', pdfPaperSize: 'letter', reducedColor, beadsUsage, project, fileName: 'test', exportGridPng: () => undefined, printerLoaders: { pdf: async () => TestPrinter } });
+        expect(print).toHaveBeenCalledWith(reducedColor, beadsUsage, project, 'test', { locale, pdfScaleMode: 'midi-5mm', pdfPaperSize: 'letter' });
+    });
+
+    it('retains the old English A4 fit-page call and never passes paper selection to other formats', async () => {
+        const print = vi.fn(async () => undefined);
+        class TestPrinter implements Printer { name = () => 'Test'; print = print; }
+        const reducedColor = new Uint8ClampedArray([1, 2, 3, 255]);
+        const beadsUsage = new Map([['H01', 1]]), project = {} as Project;
+        for (const [exportId, paper] of [['pdf', 'a4'], ['svg', 'letter'], ['png', 'letter'], ['jpg', 'letter'], ['xlsx', 'letter']] as const) {
+            print.mockClear();
+            await exportEditorPattern({ exportId, pdfScaleMode: 'fit-page', pdfPaperSize: paper, reducedColor, beadsUsage, project, fileName: 'test', exportGridPng: () => undefined, printerLoaders: { [exportId]: async () => TestPrinter } });
+            expect(print).toHaveBeenCalledWith(reducedColor, beadsUsage, project, 'test');
+        }
+        print.mockClear();
+        await exportEditorPattern({ exportId: 'xlsx', locale: 'ja', pdfScaleMode: 'fit-page', pdfPaperSize: 'letter', reducedColor, beadsUsage, project, fileName: 'test', exportGridPng: () => undefined, printerLoaders: { xlsx: async () => TestPrinter } });
+        expect(print).toHaveBeenCalledWith(reducedColor, beadsUsage, project, 'test', { locale: 'ja', pdfScaleMode: 'fit-page' });
+    });
     it.each(['de', 'fr', 'ja'] as const)('forwards %s to the complete printer without changing project data', async (locale) => {
         const print = vi.fn(async () => undefined);
         class TestPrinter implements Printer {

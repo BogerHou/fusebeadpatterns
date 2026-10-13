@@ -58,7 +58,7 @@ function workingFixture() {
     next.setPixel(4, [7, 8, 9, 127]);
     history.push(next.finish());
     history.undo(pixels);
-    const draft = { ...editedDraft(), activePalettes: [palette], editedPattern: encodeEditorProjectPattern(pixels, 29, 29) };
+    const draft = { ...editedDraft(), pdfPaperSize: 'letter' as const, activePalettes: [palette], editedPattern: encodeEditorProjectPattern(pixels, 29, 29) };
     const context: EditorLocaleContext = {
         history: history.capture(pixels, 29, 29)!, tool: 'erase', colorRef: 'P01', colorSelection: 'manual',
         pendingPaletteId: 'hama', pendingBoardId: 'mini', pendingBoardWidth: 2, pendingBoardHeight: 3,
