@@ -3,12 +3,35 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Project } from '../core/model/project/project.model';
 import type { Printer } from '../core/printer/printer';
 import type { PdfPaperSize } from './pdf-paper';
+import type { BoardSelection } from './board-materials';
 import {
     exportEditorPattern,
     type EditorPrinterLoader,
 } from './pattern-export';
 
 describe('editor pattern export helpers', () => {
+    const boardProject = { boardConfiguration: { board: { nbBeadPerRow: 29 }, nbBoardWidth: 2, nbBoardHeight: 1 } } as Project;
+    it('forwards a copied PDF board selection, even with default English print options', async () => {
+        const selection = { row: 0, column: 1 };
+        const print = vi.fn(async () => undefined);
+        class TestPrinter implements Printer { name = () => 'Test'; print = print; }
+        const pixels = new Uint8ClampedArray(29 ** 2 * 2 * 4), usage = new Map([['global', 22]]);
+        const load = async () => { selection.column = 0; return TestPrinter; };
+        await exportEditorPattern({ exportId: 'pdf', pdfBoard: selection, reducedColor: pixels, beadsUsage: usage, project: boardProject, fileName: 'board', exportGridPng: () => undefined, printerLoaders: { pdf: load } });
+        expect(print).toHaveBeenCalledWith(pixels, usage, boardProject, 'board', { locale: 'en', pdfBoard: { row: 0, column: 1 } });
+    });
+    it.each([null, {}, { row: -1, column: 0 }, { row: 0, column: 2 }, { row: 0.1, column: 0 }])('rejects PDF board %j before loading a printer', async selection => {
+        const load = vi.fn(async () => { throw new Error('Must not load'); });
+        await expect(exportEditorPattern({ exportId: 'pdf', pdfBoard: selection as BoardSelection, reducedColor: new Uint8ClampedArray(29 ** 2 * 2 * 4), beadsUsage: new Map(), project: boardProject, fileName: 'invalid', exportGridPng: () => undefined, printerLoaders: { pdf: load } })).rejects.toThrow('Invalid board selection.');
+        expect(load).not.toHaveBeenCalled();
+    });
+    it.each(['svg', 'png', 'jpg', 'xlsx'] as const)('never validates or passes a PDF board to %s', async exportId => {
+        const print = vi.fn(async () => undefined);
+        class TestPrinter implements Printer { name = () => 'Test'; print = print; }
+        const pixels = new Uint8ClampedArray(), usage = new Map(), project = {} as Project;
+        await exportEditorPattern({ exportId, locale: 'ja', pdfBoard: null as unknown as BoardSelection, reducedColor: pixels, beadsUsage: usage, project, fileName: 'whole', exportGridPng: () => undefined, printerLoaders: { [exportId]: async () => TestPrinter } });
+        expect(print).toHaveBeenCalledWith(pixels, usage, project, 'whole', { locale: 'ja' });
+    });
     it.each([null, false, 210, '', 'A4', 'legal', {}, []])('rejects malformed PDF paper %j before loading a printer or downloading', async paper => {
         const load = vi.fn(async () => { throw new Error('Printer must not load'); });
         await expect(exportEditorPattern({ exportId: 'pdf', pdfPaperSize: paper as PdfPaperSize, reducedColor: new Uint8ClampedArray(), beadsUsage: new Map(), project: {} as Project, fileName: 'invalid', exportGridPng: () => undefined, printerLoaders: { pdf: load } })).rejects.toThrow('Unsupported PDF paper size.');

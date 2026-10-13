@@ -59,7 +59,7 @@ export const beadifierAlternativeCopy: Record<'de' | 'fr' | 'ja', GuideCopy> = {
                 body: [
                     'Beginne mit deinem ursprünglichen Bild und wandle es hier erneut um. Wir bieten keinen Import von Beadifier-Projekten an und rekonstruieren keine bearbeitbare Vorlage aus einer Beadifier-PDF. „Projekt öffnen“ akzeptiert unser eigenes Projektformat.',
                     'Unser Perleneditor verwendet Abmessungen auf Grundlage ganzer Platten und vorgegebene Paletten. Du kannst weder eine beliebige eigene RGB-Palette noch ein frei gewähltes exaktes Raster wie 62 × 62 eingeben. Für frei wählbare Pixelabmessungen ohne Zuordnung zu einer Perlenmarke kannst du unser separates Pixel-Art-Werkzeug verwenden.',
-                    'Wähle A4 oder US Letter für PDF-Exporte aus dem Editor. Das Papierformat wird im Projekt gespeichert; eine Änderung erhält Perlen und Plattenanordnung. Es gibt keine Material-Zwischensumme pro Platte. Prüfe Bildschirmfarben und digitale Vorlagen anhand deiner echten Perlen und Steckplatte.',
+                    'Wähle A4 oder US Letter für PDF-Exporte aus dem Editor. Das Papierformat wird im Projekt gespeichert; eine Änderung erhält Perlen und Plattenanordnung. Öffne unter „Exportieren“ den Bereich „Material pro Platte“ und wähle eine Platte, um ihre Farben und Mengen anzusehen oder ein eigenes PDF herunterzuladen. Prüfe Bildschirmfarben und digitale Vorlagen anhand deiner echten Perlen und Steckplatte.',
                 ],
             },
         ],
@@ -122,7 +122,7 @@ export const beadifierAlternativeCopy: Record<'de' | 'fr' | 'ja', GuideCopy> = {
                 body: [
                     'Repartez de votre image d’origine et convertissez-la à nouveau ici. Nous ne proposons pas d’importateur de projets Beadifier et ne reconstruisons pas un modèle modifiable à partir de son PDF. Le bouton « Ouvrir un projet » accepte notre propre format de projet.',
                     'Notre éditeur de perles utilise des dimensions fondées sur les plaques et des palettes prédéfinies : il n’accepte ni palette RVB personnalisée arbitraire ni grille de dimensions exactes au choix, comme 62 × 62. Pour choisir librement les dimensions en pixels sans correspondance avec une marque de perles, utilisez notre outil de pixel art séparé.',
-                    'Choisissez A4 ou US Letter pour les PDF de l’éditeur. Ce choix est enregistré dans le projet ; le changer conserve les perles et la disposition des plaques. Il n’y a pas de sous-total des matériaux par plaque. Vérifiez les couleurs et les grilles numériques avec vos perles et votre plaque réelles.',
+                    'Choisissez A4 ou US Letter pour les PDF de l’éditeur. Ce choix est enregistré dans le projet ; le changer conserve les perles et la disposition des plaques. Dans « Exporter », ouvrez « Matériel par plaque » et choisissez une plaque pour voir ses couleurs et quantités ou télécharger son PDF. Vérifiez les couleurs et les grilles numériques avec vos perles et votre plaque réelles.',
                 ],
             },
         ],
@@ -185,7 +185,7 @@ export const beadifierAlternativeCopy: Record<'de' | 'fr' | 'ja', GuideCopy> = {
                 body: [
                     '元の画像から始めて、当サイトでもう一度変換してください。Beadifierのプロジェクトを取り込む機能や、そのPDFから編集可能な図案を復元する機能はありません。「プロジェクトを開く」が対応するのは当サイト独自のプロジェクト形式です。',
                     '当サイトのビーズエディターは、プレート単位のサイズと既存のパレットを使います。自由に作成したRGBパレットや、62 × 62のような任意の正確なグリッドサイズは指定できません。ビーズブランドの色合わせをせず、自由なピクセル数で作成する場合は、別のピクセルアートツールを使ってください。',
-                    'エディターのPDFはA4とUS Letterから選べます。用紙サイズはプロジェクトに保存され、変えてもビーズやプレートの配置はそのままです。プレートごとの材料数の小計はありません。画面の色やデジタル図案は、実物のビーズとプレートでも確認してください。',
+                    'エディターのPDFはA4とUS Letterから選べます。用紙サイズはプロジェクトに保存され、変えてもビーズやプレートの配置はそのままです。「書き出し」で「プレートごとの材料数」を開き、プレートを選ぶと、その色と個数を確認したり、プレートだけのPDFを保存したりできます。画面の色やデジタル図案は、実物のビーズとプレートでも確認してください。',
                 ],
             },
         ],
