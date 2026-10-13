@@ -23,6 +23,7 @@ import {
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { EditorDialog } from './EditorDialog';
+import { SourceCropDialog } from './SourceCropDialog';
 import { EditorSection } from './EditorSection';
 import { PdfScaleField } from './PdfScaleField';
 import { PdfPaperField } from './PdfPaperField';
@@ -40,6 +41,9 @@ import { isEditorLanguageArrival, parseEditorLocaleContext, type EditorLocaleCon
 import { getInitialPdfScaleMode, isMidiActualSizeSupported, resolvePdfScaleMode, type PdfScaleMode } from '@/lib/editor/pdf-scale';
 import { resolvePdfPaperSize, type PdfPaperSize } from '@/lib/editor/pdf-paper';
 import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
+import { normalizeSourceCrop, type EditorSourceCrop } from '@/lib/core/utils/image-crop';
+import { getSourceCropCopy } from '@/lib/editor/source-crop-copy';
+import { SourceImageTransactions, readSourceImageFile, prepareSourceImagePattern, commitSourceImageCanvas, type PreparedSourceImage } from '@/lib/editor/source-image-transaction';
 import { DEFAULT_EDITOR_PALETTE_ID as DEFAULT_PALETTE_ID, getInitialEditorConfiguration } from '@/lib/editor/initial-configuration';
 
 import {
@@ -93,7 +97,6 @@ import {
 } from '@/lib/editor/pattern-history';
 import { drawGridExportPattern } from '@/lib/editor/grid-export';
 import { exportEditorPattern } from '@/lib/editor/pattern-export';
-import { quantizePattern } from '@/lib/editor/pattern-quantization';
 import { remapPatternPalette } from '@/lib/editor/pattern-palette';
 import { applyFreshPaletteDefaults } from '@/lib/editor/palette-defaults';
 import {
@@ -125,7 +128,6 @@ import {
     computeUsage,
     createPaletteEntryRefMap,
     countBeads,
-    drawImageInsideCanvas,
 } from '@/lib/core/utils/utils';
 
 const DEFAULT_MATCHING_ID = 'delta_e_cie2000';
@@ -205,6 +207,11 @@ const DEFAULT_REFERENCE_OPACITY = 100;
 type ImageAdjustments = typeof DEFAULT_IMAGE_ADJUSTMENTS;
 type RendererSettings = typeof DEFAULT_RENDERER_SETTINGS;
 type EditorSourceMode = 'image' | 'blank';
+type AcceptedSourceConfiguration = Pick<EditorDraft,
+    'boardId' | 'boardWidth' | 'boardHeight' | 'matchingId' | 'ditheringId' |
+    'imageAdjustments' | 'selectedPaletteIds' | 'activePalettes'> & {
+    center: boolean; fit: boolean; crop: EditorSourceCrop | null;
+};
 type EditorMobilePanel = 'file' | 'edit' | 'colors' | 'setup' | null;
 type HomeMobilePanel =
     | 'image'
@@ -549,6 +556,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [initialConfiguration] = useState(() => getInitialEditorConfiguration(initialPaletteId));
     const [sourceMode, setSourceMode] = useState<EditorSourceMode>('image');
     const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [sourceCrop, setSourceCrop] = useState<EditorSourceCrop | null>(null);
+    const [isSourceCropOpen, setIsSourceCropOpen] = useState(false);
+    const [sourceCropError, setSourceCropError] = useState<string | null>(null);
+    const [sourceTransactionKind, setSourceTransactionKind] = useState<'upload' | 'crop' | null>(null);
     const [fileName, setFileName] = useState('bead-pattern');
     const [selectedPaletteIds, setSelectedPaletteIds] = useState<string[]>([
         initialConfiguration.paletteId,
@@ -649,6 +660,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const localeSaveMountedRef = useRef(true);
     const reducedColorRef = useRef<Uint8ClampedArray | null>(null);
     const imageGenerationRef = useRef<AbortController | null>(null);
+    const sourceTransactionsRef = useRef(new SourceImageTransactions());
+    const sourceCandidateControllerRef = useRef<AbortController | null>(null);
+    const acceptedSourceConfigurationRef = useRef<AcceptedSourceConfiguration | null>(null);
     const settingsUpdateRef = useRef<AbortController | null>(null);
     const pendingPaletteUpdateRef = useRef<Palette[] | null>(null);
     const paletteHistoryRef = useRef<Palette[][]>([]);
@@ -996,6 +1010,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
         currentProjectRef.current.paletteConfiguration.palettes =
             clonePalettes(palettes);
+        if (acceptedSourceConfigurationRef.current) acceptedSourceConfigurationRef.current.activePalettes = clonePalettes(palettes);
     }, []);
 
     const publishPatternChange = useCallback((patch: PatternPatch, direction: 'undo' | 'redo') => {
@@ -1122,10 +1137,18 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
     }, [activePalettes]);
 
+    const sourceProcessingKey = useCallback((crop: EditorSourceCrop | null) => JSON.stringify({
+        boardId, boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
+        center: rendererSettings.center, fit: rendererSettings.fit,
+        sourceCrop: normalizeSourceCrop(crop),
+    }), [boardId, boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
+        rendererSettings.center, rendererSettings.fit]);
+
     const createCurrentEditorDraft = useCallback((forProject = false) => {
         return createEditorDraft({
             sourceMode,
             imageSrc,
+            ...(sourceCrop ? { sourceCrop: { ...sourceCrop } } : {}),
             fileName,
             selectedPaletteIds,
             activePalettes,
@@ -1158,6 +1181,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         getCurrentEditedPatternDraft,
         imageAdjustments,
         imageSrc,
+        sourceCrop,
         matchingId,
         previewZoom,
         referenceOpacity,
@@ -1194,10 +1218,23 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     useEffect(() => () => {
         settingsUpdateRef.current?.abort();
+        sourceTransactionsRef.current.cancel();
+    }, []);
+
+    const cancelSourceOperation = useCallback(() => {
+        const candidate = sourceCandidateControllerRef.current;
+        sourceTransactionsRef.current.cancel();
+        sourceCandidateControllerRef.current = null;
+        if (candidate && imageGenerationRef.current === candidate) imageGenerationRef.current = null;
+        setSourceTransactionKind(null);
+        setProcessing(false);
     }, []);
 
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft) => {
+            cancelSourceOperation();
+            setIsSourceCropOpen(false);
+            setSourceCropError(null);
             pendingLocaleContextRef.current = null;
             pendingLocaleViewportRef.current = null;
             setMaterialsBoard(null);
@@ -1223,8 +1260,16 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             lastProcessedImageSrcRef.current = null;
             lastProcessedImageSettingsKeyRef.current = null;
 
+            acceptedSourceConfigurationRef.current = nextSourceMode === 'image' ? {
+                boardId: draft.boardId, boardWidth: draft.boardWidth, boardHeight: draft.boardHeight,
+                matchingId: draft.matchingId, ditheringId: draft.ditheringId,
+                imageAdjustments: { ...draft.imageAdjustments }, selectedPaletteIds: [...draft.selectedPaletteIds],
+                activePalettes: clonePalettes(draft.activePalettes), center: draft.rendererSettings.center,
+                fit: draft.rendererSettings.fit, crop: normalizeSourceCrop(draft.sourceCrop),
+            } : null;
             setSourceMode(nextSourceMode);
             setImageSrc(draft.imageSrc);
+            setSourceCrop(normalizeSourceCrop(draft.sourceCrop));
             setFileName(draft.fileName);
             // The saved palettes are the project's color snapshot. Reloading
             // them could regenerate the image after its edited pixels restore.
@@ -1285,7 +1330,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 setBlankPatternRevision((previous) => previous + 1);
             }
         },
-        [cancelSettingsUpdate, setAutomaticEditorColorRef]
+        [cancelSettingsUpdate, cancelSourceOperation, setAutomaticEditorColorRef]
     );
 
     useEffect(() => {
@@ -1482,6 +1527,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             reducedColorRef.current = nextPixels;
             project.paletteConfiguration.palettes = clonePalettes(nextPalettes);
             patternHistoryRef.current = nextHistory;
+            if (acceptedSourceConfigurationRef.current) {
+                acceptedSourceConfigurationRef.current.selectedPaletteIds = [...paletteIds];
+                acceptedSourceConfigurationRef.current.activePalettes = clonePalettes(nextPalettes);
+            }
             skipNextPaletteRebuildRef.current = sourceMode === 'image';
             setBeadsUsage(usage);
             setPreviewDataUrl(preview);
@@ -1701,293 +1750,146 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
     }, [isEditorPage, rendererSettings.showGrid]);
 
+
+
+    const restoreAcceptedSourceConfiguration = useCallback(() => {
+        const accepted = acceptedSourceConfigurationRef.current;
+        if (!accepted || !currentProjectRef.current || !reducedColorRef.current) return;
+        paletteSyncAbortRef.current?.abort();
+        const paletteIds = [...accepted.selectedPaletteIds];
+        restoredPaletteIdsRef.current = paletteIds;
+        resolvedPaletteIdsRef.current = paletteIds;
+        setSelectedPaletteIds(paletteIds);
+        setActivePalettes(clonePalettes(accepted.activePalettes));
+        setBoardId(accepted.boardId);
+        setBoardWidth(accepted.boardWidth);
+        setBoardHeight(accepted.boardHeight);
+        setPendingPrimaryPaletteId(accepted.selectedPaletteIds[0] ?? DEFAULT_PALETTE_ID);
+        setPendingBoardId(accepted.boardId);
+        setPendingBoardWidth(accepted.boardWidth);
+        setPendingBoardHeight(accepted.boardHeight);
+        setMatchingId(accepted.matchingId);
+        setDitheringId(accepted.ditheringId);
+        setImageAdjustments({ ...accepted.imageAdjustments });
+        setRendererSettings(previous => ({ ...previous, center: accepted.center, fit: accepted.fit }));
+        setSourceCrop(accepted.crop ? { ...accepted.crop } : null);
+        skipNextPaletteRebuildRef.current = true;
+    }, []);
+
+    const publishPreparedSource = useCallback((
+        prepared: PreparedSourceImage,
+        usage: Map<string, number>,
+        preview: string,
+        restored: boolean,
+    ) => {
+        const canvas = canvasRef.current;
+        if (!canvas) throw new Error('Canvas 2D context is unavailable.');
+        commitSourceImageCanvas(canvas, prepared, reducedColorRef.current);
+        currentProjectRef.current = prepared.project;
+        reducedColorRef.current = prepared.pixels;
+        patternHistoryRef.current.clear();
+        paletteHistoryRef.current = [];
+        activeStrokeRef.current = null;
+        pendingEditedPatternRef.current = null;
+        setManualPatternRevision(restored ? 1 : 0);
+        setHistoryRevision(previous => previous + 1);
+        syncEditorColorAfterPatternBuild(usage, prepared.project.paletteConfiguration.palettes);
+        setBeadsUsage(usage);
+        setPreviewSize({ width: prepared.width, height: prepared.height });
+        setPreviewDataUrl(preview);
+        restorePendingLocaleContext(prepared.pixels, prepared.width, prepared.height);
+    }, [syncEditorColorAfterPatternBuild, restorePendingLocaleContext]);
+
     useEffect(() => {
-        if (settingsUpdateRef.current) {
-            return;
-        }
-
-        if (!isEditorDraftReady) {
+        if (settingsUpdateRef.current || sourceCandidateControllerRef.current) return;
+        if (!isEditorDraftReady || !imageSrc || !selectedBoard || activePalettes.length === 0) {
             setProcessing(false);
             return;
         }
-
-        if (!imageSrc || !selectedBoard || activePalettes.length === 0) {
-            setProcessing(false);
-            return;
-        }
-
-        const imageProcessingSettingsKey = JSON.stringify({
-            boardId,
-            boardWidth,
-            boardHeight,
-            matchingId,
-            ditheringId,
-            imageAdjustments,
-            center: rendererSettings.center,
-            fit: rendererSettings.fit,
-        });
-        const shouldSkipPaletteOnlyRebuild =
-            skipNextPaletteRebuildRef.current &&
+        const imageProcessingSettingsKey = sourceProcessingKey(sourceCrop);
+        const shouldSkipPaletteOnlyRebuild = skipNextPaletteRebuildRef.current &&
             lastProcessedImageSrcRef.current === imageSrc &&
-            lastProcessedImageSettingsKeyRef.current ===
-                imageProcessingSettingsKey;
-
-        if (skipNextPaletteRebuildRef.current) {
-            skipNextPaletteRebuildRef.current = false;
-        }
-
-        if (shouldSkipPaletteOnlyRebuild) {
-            setProcessing(false);
-            return;
-        }
+            lastProcessedImageSettingsKeyRef.current === imageProcessingSettingsKey;
+        skipNextPaletteRebuildRef.current = false;
+        if (shouldSkipPaletteOnlyRebuild) { setProcessing(false); return; }
 
         const controller = new AbortController();
-
         async function processImage(): Promise<void> {
             const outputSettings = getImageOutputSettings();
-            const plannedBeadCount = getPatternBeadCount(
-                selectedBoard,
-                boardWidth,
-                boardHeight
-            );
-            const largeGenerationKey = getLargePatternGenerationKey(
-                outputSettings.fileName,
-                imageSrc,
-                boardId,
-                boardWidth,
-                boardHeight,
-                ditheringId
-            );
-
-            if (
-                plannedBeadCount >= LARGE_PATTERN_CONFIRM_BEAD_COUNT &&
+            const plannedBeadCount = getPatternBeadCount(selectedBoard, boardWidth, boardHeight);
+            const largeGenerationKey = getLargePatternGenerationKey(outputSettings.fileName,
+                imageSrc, boardId, boardWidth, boardHeight, ditheringId);
+            if (plannedBeadCount >= LARGE_PATTERN_CONFIRM_BEAD_COUNT &&
                 confirmedLargeGenerationKeyRef.current !== largeGenerationKey &&
-                // A verified language transfer already contains this exact grid.
-                // It is restoration, so cancelling a new-generation prompt must
-                // never discard previously completed work.
                 !(pendingLocaleContextRef.current &&
                     pendingEditedPatternRef.current?.width === boardWidth * selectedBoard.beadsPerRow &&
-                    pendingEditedPatternRef.current?.height === boardHeight * selectedBoard.beadsPerRow)
-            ) {
+                    pendingEditedPatternRef.current?.height === boardHeight * selectedBoard.beadsPerRow)) {
                 if (!confirmImageGeneration(plannedBeadCount)) {
-                    setErrorMessage(
-                        'Large pattern generation cancelled. Reduce boards or turn off dithering for a faster build.'
-                    );
-                    setBeadsUsage(new Map());
-                    setPreviewDataUrl(null);
-                    setPreviewSize({ width: 1, height: 1 });
-                    currentProjectRef.current = null;
-                    reducedColorRef.current = null;
-                    patternHistoryRef.current.clear();
-                    activeStrokeRef.current = null;
+                    restoreAcceptedSourceConfiguration();
+                    setErrorMessage('Large pattern generation cancelled. Reduce boards or turn off dithering for a faster build.');
                     setProcessing(false);
                     return;
                 }
-
                 confirmedLargeGenerationKeyRef.current = largeGenerationKey;
             }
-
             imageGenerationRef.current = controller;
             setProcessing(true);
             setErrorMessage(null);
-
             try {
-                const project = buildEditorProject({
-                    palettes: activePalettes,
-                    boardOption: selectedBoard,
-                    boardWidth,
-                    boardHeight,
-                    matchingId,
-                    ditheringId,
-                    imageAdjustments,
-                    rendererSettings: {
-                        center: rendererSettings.center,
-                        fit: rendererSettings.fit,
-                        showGrid: outputSettings.showGrid,
-                    },
-                    useSymbols: outputSettings.useSymbols,
-                });
-
-                const image = new window.Image();
-                image.style.filter = project.imageConfiguration.css();
-
-                await new Promise<void>((resolve, reject) => {
-                    image.onload = () => resolve();
-                    image.onerror = () =>
-                        reject(new Error('Unable to load selected image.'));
-                    image.src = imageSrc;
-                });
-
-                if (controller.signal.aborted) {
-                    return;
-                }
-
-                project.srcWidth = image.width;
-                project.srcHeight = image.height;
-
-                // Keep the current pattern intact until this generation finishes.
-                const sourceCanvas = document.createElement('canvas');
-                sourceCanvas.width = boardWidth * selectedBoard.beadsPerRow;
-                sourceCanvas.height = boardHeight * selectedBoard.beadsPerRow;
-                const sourceContext = sourceCanvas.getContext('2d', {
-                    willReadFrequently: true,
-                });
-
-                if (!sourceContext) {
-                    throw new Error('Canvas 2D context is unavailable.');
-                }
-
-                const imagePosition = drawImageInsideCanvas(
-                    sourceCanvas,
-                    image,
-                    project.rendererConfiguration
-                );
-                const resultImageData = sourceContext.getImageData(
-                    0, 0, sourceCanvas.width, sourceCanvas.height
-                );
-                const restoredPatternData = takePendingEditedPattern(
-                    sourceCanvas.width,
-                    sourceCanvas.height
-                );
-
-                if (restoredPatternData) {
-                    resultImageData.data.set(restoredPatternData);
-                } else {
-                    const pixels = await quantizePattern({
-                        pixels: resultImageData.data,
-                        width: sourceCanvas.width,
-                        height: sourceCanvas.height,
-                        palettes: project.paletteConfiguration.palettes,
-                        matchingId,
-                        dithering: {
-                            enable: project.ditheringConfiguration.enable,
-                            hardness: project.ditheringConfiguration.hardness,
-                        },
-                        drawingPosition: {
-                            x: imagePosition.xStart,
-                            y: imagePosition.yStart,
-                            width: imagePosition.width,
-                            height: imagePosition.height,
-                        },
-                    }, { signal: controller.signal });
-                    if (controller.signal.aborted) {
-                        return;
-                    }
-                    resultImageData.data.set(pixels);
-                }
-
-                const latestOutputSettings = getImageOutputSettings();
-                project.image = { name: latestOutputSettings.fileName, src: image } as LoadImage;
-                project.exportConfiguration.useSymbols = latestOutputSettings.useSymbols;
-                project.rendererConfiguration.showGrid = latestOutputSettings.showGrid;
-
-                const canvas = canvasRef.current;
-                if (!canvas) {
-                    return;
-                }
-                canvas.width = sourceCanvas.width;
-                canvas.height = sourceCanvas.height;
-                const context = canvas.getContext('2d', { willReadFrequently: true });
-                if (!context) {
-                    throw new Error('Canvas 2D context is unavailable.');
-                }
-                context.putImageData(resultImageData, 0, 0);
-
-                currentProjectRef.current = project;
-                reducedColorRef.current = resultImageData.data;
-                patternHistoryRef.current.clear();
-                activeStrokeRef.current = null;
-                setManualPatternRevision(restoredPatternData ? 1 : 0);
-                setHistoryRevision((previous) => previous + 1);
-
-                const nextUsage = computeUsage(
-                    resultImageData.data,
-                    project.paletteConfiguration.palettes
-                );
-
-                syncEditorColorAfterPatternBuild(
-                    nextUsage,
-                    project.paletteConfiguration.palettes
-                );
-                setBeadsUsage(nextUsage);
-                setPreviewSize({
-                    width: canvas.width,
-                    height: canvas.height,
-                });
-                setPreviewDataUrl(
-                    createPatternPreviewDataUrl(
-                        resultImageData.data,
-                        canvas.width,
-                        canvas.height,
-                        selectedBoard.beadsPerRow,
-                        project.rendererConfiguration.showGrid
-                    )
-                );
+                const project = buildEditorProject({ palettes: activePalettes, boardOption: selectedBoard,
+                    boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
+                    rendererSettings: { center: rendererSettings.center, fit: rendererSettings.fit, showGrid: outputSettings.showGrid },
+                    useSymbols: outputSettings.useSymbols });
+                const width = boardWidth * selectedBoard.beadsPerRow, height = boardHeight * selectedBoard.beadsPerRow;
+                const saved = pendingEditedPatternRef.current;
+                const restoredPixels = saved && saved.width === width && saved.height === height ? decodeEditorPatternDraft(saved) : null;
+                const prepared = await prepareSourceImagePattern({ src: imageSrc, fileName: outputSettings.fileName,
+                    crop: sourceCrop, project, width, height, matchingId, restoredPixels }, controller.signal);
+                if (controller.signal.aborted || imageGenerationRef.current !== controller) return;
+                const latest = getImageOutputSettings();
+                project.image.name = latest.fileName;
+                project.exportConfiguration.useSymbols = latest.useSymbols;
+                project.rendererConfiguration.showGrid = latest.showGrid;
+                const usage = computeUsage(prepared.pixels, project.paletteConfiguration.palettes);
+                const preview = createPatternPreviewDataUrl(prepared.pixels, width, height,
+                    selectedBoard.beadsPerRow, latest.showGrid);
+                if (controller.signal.aborted || imageGenerationRef.current !== controller) return;
+                publishPreparedSource(prepared, usage, preview, Boolean(restoredPixels));
+                acceptedSourceConfigurationRef.current = {
+                    boardId, boardWidth, boardHeight, matchingId, ditheringId,
+                    imageAdjustments: { ...imageAdjustments }, selectedPaletteIds: [...(resolvedPaletteIdsRef.current ?? [])],
+                    activePalettes: clonePalettes(activePalettes), center: rendererSettings.center,
+                    fit: rendererSettings.fit, crop: normalizeSourceCrop(sourceCrop),
+                };
                 lastProcessedImageSrcRef.current = imageSrc;
-                lastProcessedImageSettingsKeyRef.current =
-                    imageProcessingSettingsKey;
-                restorePendingLocaleContext(resultImageData.data, canvas.width, canvas.height);
+                lastProcessedImageSettingsKeyRef.current = imageProcessingSettingsKey;
             } catch (error) {
-                if (controller.signal.aborted) {
-                    return;
-                }
+                if (controller.signal.aborted || imageGenerationRef.current !== controller) return;
                 if (pendingLocaleContextRef.current) {
                     setLocaleRestoreBlocked(true);
                     setIsEditorDraftReady(false);
                     setLocaleContextInstalling(false);
                     return;
                 }
-                const nextMessage =
-                    error instanceof Error
-                        ? error.message
-                        : 'Unexpected editor error.';
-                setErrorMessage(nextMessage);
-                setBeadsUsage(new Map());
-                setPreviewDataUrl(null);
-                setPreviewSize({ width: 1, height: 1 });
-                currentProjectRef.current = null;
-                reducedColorRef.current = null;
-                patternHistoryRef.current.clear();
-                activeStrokeRef.current = null;
-                pendingEditedPatternRef.current = null;
-                setManualPatternRevision(0);
-                setHistoryRevision((previous) => previous + 1);
+                // Preparation cannot discard a completed source/grid/history or
+                // save newly requested settings against old accepted pixels.
+                restoreAcceptedSourceConfiguration();
+                setErrorMessage(error instanceof Error ? error.message : 'Unexpected editor error.');
             } finally {
-                if (!controller.signal.aborted) {
-                    if (imageGenerationRef.current === controller) {
-                        imageGenerationRef.current = null;
-                    }
+                if (imageGenerationRef.current === controller) {
+                    imageGenerationRef.current = null;
                     setProcessing(false);
                 }
             }
         }
-
         void processImage();
-
         return () => {
             controller.abort();
-            if (imageGenerationRef.current === controller) {
-                imageGenerationRef.current = null;
-            }
+            if (imageGenerationRef.current === controller) imageGenerationRef.current = null;
         };
-    }, [
-        activePalettes,
-        boardHeight,
-        boardId,
-        boardWidth,
-        ditheringId,
-        imageAdjustments,
-        imageSrc,
-        matchingId,
-        rendererSettings.center,
-        rendererSettings.fit,
-        selectedBoard,
-        setAutomaticEditorColorRef,
-        syncEditorColorAfterPatternBuild,
-        takePendingEditedPattern,
-        restorePendingLocaleContext,
-        isEditorDraftReady,
-    ]);
+    }, [activePalettes, boardHeight, boardId, boardWidth, ditheringId, imageAdjustments,
+        imageSrc, sourceCrop, matchingId, rendererSettings.center, rendererSettings.fit,
+        selectedBoard, sourceProcessingKey, publishPreparedSource, restoreAcceptedSourceConfiguration, isEditorDraftReady]);
 
     useEffect(() => {
         if (!isEditorDraftReady) {
@@ -2193,6 +2095,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     // its settings alongside pixels from the previous completed pattern.
     useEffect(() => {
         if (!isEditorDraftReady || processing || imageGenerationRef.current ||
+            (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) ||
             settingsUpdateRef.current ||
             pendingEditedPatternRef.current || activeStrokeRef.current ||
             (sourceMode === 'image' && !currentProjectRef.current)) {
@@ -2217,47 +2120,135 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         processing,
         previewSize,
         sourceMode,
+        sourceCrop,
+        sourceProcessingKey,
     ]);
 
-    const loadSelectedFile = (file: File | null) => {
-        if (!file) {
-            return;
+    const runSourceCandidate = async (input: File | string, crop: EditorSourceCrop | null, kind: 'upload' | 'crop'): Promise<boolean> => {
+        if (!isEditorDraftReady || localeTransferPending || localeContextInstalling ||
+            isLibraryPatternLoading || exportInProgressRef.current || !selectedBoard) return false;
+        // A selected brand is not ready until its own palette has committed.
+        // Replacing our own source task is safe; interrupting a brand/settings
+        // transaction could otherwise pair new IDs with old palette entries.
+        if (!sourceCandidateControllerRef.current && (processing || imageGenerationRef.current || settingsUpdateRef.current ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds))) {
+            setErrorMessage(getSourceCropCopy(locale).wait);
+            return false;
         }
-
-        libraryPatternIdRef.current = null;
-        pendingLocaleContextRef.current = null;
-        pendingLocaleViewportRef.current = null;
+        let normalized: EditorSourceCrop | null;
+        try { normalized = normalizeSourceCrop(crop); }
+        catch { setSourceCropError(getSourceCropCopy(locale).invalid); return false; }
+        if (kind === 'crop' && sourceMode === 'image' && imageSrc === input &&
+            JSON.stringify(normalized) === JSON.stringify(sourceCrop)) {
+            setIsSourceCropOpen(false);
+            return true;
+        }
+        if (!confirmLargePatternAction(currentPatternBeadCount, locale)) {
+            setSourceCropError(getSourceCropCopy(locale).error);
+            return false;
+        }
+        finishActiveStroke();
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
-        editorColorSelectionModeRef.current = 'auto';
-        setSourceMode('image');
-        setImageSrc(null);
-        builtBlankPatternRevisionRef.current = -1;
-        currentProjectRef.current = null;
-        reducedColorRef.current = null;
-        pendingEditedPatternRef.current = null;
-        skipNextPaletteRebuildRef.current = false;
-        lastProcessedImageSrcRef.current = null;
-        lastProcessedImageSettingsKeyRef.current = null;
-        patternHistoryRef.current.clear();
-        activeStrokeRef.current = null;
-        setManualPatternRevision(0);
-        setHistoryRevision((previous) => previous + 1);
-        setFileName(file.name.replace(/\.[^.]+$/, ''));
+        const jobs = sourceTransactionsRef.current, controller = jobs.begin();
+        sourceCandidateControllerRef.current = controller;
+        imageGenerationRef.current = controller;
+        setProcessing(true);
+        setSourceTransactionKind(kind);
+        setSourceCropError(null);
         setErrorMessage(null);
-        setBeadsUsage(new Map());
-        setPreviewDataUrl(null);
-        setPreviewSize({ width: 1, height: 1 });
-        setPreviewZoom(1);
-        setAutomaticEditorColorRef(null);
-        setHomeMobilePanel(null);
-
-        const reader = new FileReader();
-        reader.onload = (loadEvent) => {
-            setImageSrc(loadEvent.target?.result as string);
-        };
-        reader.readAsDataURL(file);
+        const name = kind === 'upload' ? (input as File).name.replace(/\.[^.]+$/, '') : fileName;
+        // Capture every generation input before reading or decoding the file.
+        const paletteIds = [...selectedPaletteIds], paletteSnapshot = clonePalettes(activePalettes);
+        const board = selectedBoard, width = boardWidth * board.beadsPerRow, height = boardHeight * board.beadsPerRow;
+        const settingsKey = sourceProcessingKey(normalized);
+        const configuration = { boardOption: board, boardWidth, boardHeight, matchingId, ditheringId,
+            imageAdjustments: { ...imageAdjustments }, rendererSettings: { ...rendererSettings }, useSymbols };
+        try {
+            return await jobs.prepare(controller, async signal => {
+                const src = typeof input === 'string' ? input : await readSourceImageFile(input, signal);
+                const palettes = paletteSnapshot.length ? paletteSnapshot : await Promise.all(paletteIds.map(id => loadPalette(id, signal)));
+                if (signal.aborted) throw new DOMException('Source image operation cancelled.', 'AbortError');
+                const project = buildEditorProject({ ...configuration, palettes });
+                const prepared = await prepareSourceImagePattern({ src, fileName: name, crop: normalized,
+                    project, width, height, matchingId: configuration.matchingId }, signal);
+                const usage = computeUsage(prepared.pixels, project.paletteConfiguration.palettes);
+                const preview = createPatternPreviewDataUrl(prepared.pixels, width, height,
+                    board.beadsPerRow, configuration.rendererSettings.showGrid);
+                return { src, prepared, usage, preview, palettes };
+            }, ({ src, prepared, usage, preview, palettes }) => {
+                publishPreparedSource(prepared, usage, preview, false);
+                acceptedSourceConfigurationRef.current = {
+                    boardId, boardWidth, boardHeight, matchingId: configuration.matchingId,
+                    ditheringId: configuration.ditheringId, imageAdjustments: { ...configuration.imageAdjustments },
+                    selectedPaletteIds: paletteIds, activePalettes: clonePalettes(palettes),
+                    center: configuration.rendererSettings.center, fit: configuration.rendererSettings.fit, crop: normalized,
+                };
+                libraryPatternIdRef.current = null;
+                pendingLocaleContextRef.current = null;
+                pendingLocaleViewportRef.current = null;
+                paletteHistoryRef.current = [];
+                editorColorSelectionModeRef.current = 'auto';
+                builtBlankPatternRevisionRef.current = -1;
+                lastProcessedImageSrcRef.current = src;
+                lastProcessedImageSettingsKeyRef.current = settingsKey;
+                // The accepted source/ROI change must not cause a second image
+                // build which would clear the freshly accepted pixels/history.
+                skipNextPaletteRebuildRef.current = true;
+                setSourceMode('image');
+                setImageSrc(src);
+                setSourceCrop(normalized);
+                setFileName(name);
+                setPreviewZoom(1);
+                setErrorMessage(null);
+                setSourceCropError(null);
+                if (!paletteSnapshot.length) {
+                    restoredPaletteIdsRef.current = paletteIds;
+                    resolvedPaletteIdsRef.current = paletteIds;
+                    setActivePalettes(palettes);
+                }
+                if (kind === 'upload') setMaterialsBoard(null);
+                setIsSourceCropOpen(false);
+                setHomeMobilePanel(null);
+            });
+        } catch {
+            if (jobs.isCurrent(controller)) {
+                const message = getSourceCropCopy(locale).error;
+                if (kind === 'crop') setSourceCropError(message); else setErrorMessage(getSourceCropCopy(locale).uploadError);
+            }
+            return false;
+        } finally {
+            if (jobs.finish(controller)) {
+                sourceCandidateControllerRef.current = null;
+                if (imageGenerationRef.current === controller) imageGenerationRef.current = null;
+                setSourceTransactionKind(null);
+                setProcessing(false);
+            }
+        }
     };
+
+    const loadSelectedFile = (file: File | null) => {
+        if (file) void runSourceCandidate(file, null, 'upload');
+    };
+
+    const openSourceCrop = () => {
+        if (!imageSrc || sourceMode !== 'image' || processing || exportingId !== null ||
+            isLibraryPatternLoading || !isEditorDraftReady) return;
+        finishActiveStroke();
+        setSourceCropError(null);
+        setIsSourceCropOpen(true);
+    };
+
+    const sourceCropButton = imageSrc && sourceMode === 'image' ? (
+        <div className="mt-3 space-y-2">
+            <button type="button" onClick={openSourceCrop}
+                disabled={processing || exportingId !== null || isLibraryPatternLoading}
+                className="min-h-11 w-full rounded-lg border border-[#768b7c] bg-white px-3 py-2 text-xs font-semibold text-brutal-black hover:bg-brand-cyan disabled:opacity-50">
+                {getSourceCropCopy(locale).open}
+            </button>
+            {sourceCrop ? <p className="text-xs leading-5 text-muted">{getSourceCropCopy(locale).applied} · {sourceCrop.width} × {sourceCrop.height} {getSourceCropCopy(locale).pixelUnit}</p> : null}
+        </div>
+    ) : null;
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         loadSelectedFile(getFirstImageFile(event.target.files));
@@ -2278,14 +2269,19 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             return;
         }
 
+        cancelSourceOperation();
+        setIsSourceCropOpen(false);
+        setSourceCropError(null);
         libraryPatternIdRef.current = null;
         pendingLocaleContextRef.current = null;
         pendingLocaleViewportRef.current = null;
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
         editorColorSelectionModeRef.current = 'auto';
+        acceptedSourceConfigurationRef.current = null;
         setSourceMode('blank');
         setImageSrc(null);
+        setSourceCrop(null);
         setFileName('blank-pattern');
         setErrorMessage(null);
         setBeadsUsage(new Map());
@@ -2422,8 +2418,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 if (controller.signal.aborted) {
                     return;
                 }
-                setManualPatternRevision(0);
                 if (sourceMode === 'blank') {
+                    setManualPatternRevision(0);
                     // Let the blank effect initialize once, with the new settings.
                     builtBlankPatternRevisionRef.current = -1;
                     setBlankPatternRevision((previous) => previous + 1);
@@ -2431,6 +2427,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             }
 
             const nextPaletteIds = [pendingPrimaryPaletteId];
+            if (preservePattern && acceptedSourceConfigurationRef.current) {
+                acceptedSourceConfigurationRef.current.selectedPaletteIds = [...nextPaletteIds];
+                acceptedSourceConfigurationRef.current.activePalettes = clonePalettes(nextPalettes);
+            }
             // This palette was already loaded above. A second fetch could rebuild
             // the image and replace the grid that was just converted.
             restoredPaletteIdsRef.current = nextPaletteIds;
@@ -2441,15 +2441,17 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             setBoardId(pendingBoardId);
             setBoardWidth(pendingBoardWidth);
             setBoardHeight(pendingBoardHeight);
-            // Pixel-only undo patches contain the old brand's colors. Keep the
-            // current edits, but start history again with the converted palette.
-            paletteHistoryRef.current = [];
-            patternHistoryRef.current.clear();
-            pendingLocaleContextRef.current = null;
-            pendingLocaleViewportRef.current = null;
-            activeStrokeRef.current = null;
-            pendingEditedPatternRef.current = null;
-            setHistoryRevision((previous) => previous + 1);
+            // A successful same-size brand conversion starts a new history.
+            // Shape changes keep the old history until image generation succeeds.
+            if (preservePattern || sourceMode === 'blank') {
+                paletteHistoryRef.current = [];
+                patternHistoryRef.current.clear();
+                pendingLocaleContextRef.current = null;
+                pendingLocaleViewportRef.current = null;
+                activeStrokeRef.current = null;
+                pendingEditedPatternRef.current = null;
+                setHistoryRevision((previous) => previous + 1);
+            }
         } catch (error) {
             if (controller.signal.aborted) {
                 return;
@@ -3025,7 +3027,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     };
 
     const handleSaveProject = () => {
-        if (processing || imageGenerationRef.current || settingsUpdateRef.current) {
+        if (processing || imageGenerationRef.current || settingsUpdateRef.current ||
+            (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop))) {
             return;
         }
         finishActiveStroke();
@@ -3150,7 +3153,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     }, [boardWidth, boardHeight, selectedBoard, previewSize]);
 
     const handleExport = async (exportId: string, selectedPdfBoard?: BoardSelection) => {
-        if (exportInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current) {
+        if (exportInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current ||
+            (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop))) {
             return;
         }
         if (exportId === 'pdf' && !isPdfScaleSupported) {
@@ -3229,7 +3233,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const handleEditorShortcuts = React.useEffectEvent(
         (event: KeyboardEvent) => {
-            if (localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
+            if (isSourceCropOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
             const target = event.target as HTMLElement | null;
             const isTypingTarget =
                 target instanceof HTMLInputElement ||
@@ -3279,7 +3283,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
         const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
         if (!detail?.href) return;
-        if (!isEditorDraftReady || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
+        if (!isEditorDraftReady || isSourceCropOpen || sourceTransactionsRef.current.pending ||
+            (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
             event.preventDefault();
             setErrorMessage('Please wait for the current operation to finish before changing language.');
             return;
@@ -3406,6 +3411,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
+            <div className="contents" inert={isSourceCropOpen || sourceTransactionKind !== null}>
             {localeRestoreBlocked ? (
                 <div role="alert" className="flex min-h-48 flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#d9ded5] bg-brutal-bg p-6 font-sans text-brutal-black">
                     <p>{t('Your saved language change could not be restored. Retry or open a saved project to continue.')}</p>
@@ -3975,6 +3981,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                             </div>
                             {editorMobilePanel === 'file' ? (
                                 <div className="grid grid-cols-2 gap-2">
+                                    {sourceCropButton}
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -4476,6 +4483,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                         onChange={handleImageUpload}
                                     />
                                 </label>
+                                {sourceCropButton}
                                 <div className="mt-3 space-y-3">
                                     <label
                                         htmlFor={EDITOR_SOURCE_VISIBLE_ID}
@@ -5048,6 +5056,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                         ) : null}
                                     </div>
                                 ) : null}
+                                {homeMobilePanel === 'image' ? sourceCropButton : null}
 
                                 {homeMobilePanel === 'brand' ? (
                                     <div className="space-y-3">
@@ -5502,6 +5511,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                         onChange={handleImageUpload}
                                     />
                                 </label>
+                                {sourceCropButton}
                             </EditorSection>
 
                             <EditorSection title={t("Color Brand")}>
@@ -6603,6 +6613,17 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     backgroundColor: 'white',
                 }}
             />
+            </div>
+            {sourceTransactionKind === 'upload' ? (
+                <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-line bg-white p-3 shadow-sm">
+                    <button type="button" className="min-h-11 px-4 text-sm font-semibold text-accent" onClick={cancelSourceOperation}>{getSourceCropCopy(locale).cancel}</button>
+                </div>
+            ) : null}
+            {isSourceCropOpen && imageSrc ? (
+                <SourceCropDialog imageSrc={imageSrc} initialCrop={sourceCrop} locale={locale} error={sourceCropError}
+                    onApply={crop => runSourceCandidate(imageSrc, crop, 'crop')}
+                    onCancel={() => { cancelSourceOperation(); setIsSourceCropOpen(false); setSourceCropError(null); }} />
+            ) : null}
         </div>
     );
 }

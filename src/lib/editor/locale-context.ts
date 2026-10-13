@@ -86,7 +86,7 @@ export function parseEditorLocaleContext(value: unknown, draft: EditorDraft): Ed
         for (const palettes of value.paletteHistory) {
             // Validate only this palette snapshot; do not repeatedly serialize
             // the multi-megabyte original image/current pixels for each old state.
-            const parsed = parseEditorProject(JSON.stringify({ type: EDITOR_PROJECT_FILE_TYPE, version: 1, draft: { ...draft, sourceMode: 'blank', imageSrc: null, editedPattern: null, activePalettes: palettes } }));
+            const parsed = parseEditorProject(JSON.stringify({ type: EDITOR_PROJECT_FILE_TYPE, version: 1, draft: { ...draft, sourceMode: 'blank', imageSrc: null, sourceCrop: null, editedPattern: null, activePalettes: palettes } }));
             if (!parsed) return null;
             paletteHistory.push(parsed.activePalettes);
         }

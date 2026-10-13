@@ -3,6 +3,7 @@ import { BOARDS } from '../core/model/board/board.model';
 import { Palette } from '@/lib/core/model/palette/palette.model';
 import { isPdfScaleMode, type PdfScaleMode } from './pdf-scale';
 import { isPdfPaperSize, type PdfPaperSize } from './pdf-paper';
+import { isValidSourceCrop, type EditorSourceCrop } from '../core/utils/image-crop';
 
 export const EDITOR_DRAFT_STORAGE_KEY = 'bead-pattern-editor-draft-v1';
 export const EDITOR_DRAFT_PATTERN_MAX_BYTES = 1_500_000;
@@ -26,6 +27,7 @@ export type EditorDraft = {
     version: 1;
     sourceMode?: 'image' | 'blank';
     imageSrc: string | null;
+    sourceCrop?: EditorSourceCrop | null;
     fileName: string;
     selectedPaletteIds: string[];
     activePalettes: Palette[];
@@ -233,6 +235,8 @@ function isEditorDraft(value: unknown): value is EditorDraft {
             sourceMode === 'image' ||
             sourceMode === 'blank') &&
         (typeof value.imageSrc === 'string' || value.imageSrc === null) &&
+        (value.sourceCrop === undefined || value.sourceCrop === null ||
+            (sourceMode !== 'blank' && typeof value.imageSrc === 'string' && value.imageSrc.length > 0 && isValidSourceCrop(value.sourceCrop))) &&
         typeof value.fileName === 'string' &&
         isStringArray(value.selectedPaletteIds) &&
         value.selectedPaletteIds.length > 0 &&

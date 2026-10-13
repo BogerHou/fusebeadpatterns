@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createEditorDraft, decodeEditorPatternDraft, encodeEditorProjectPattern } from './draft';
+import { createEditorDraft, decodeEditorPatternDraft, encodeEditorProjectPattern, parseEditorProject, serializeEditorProject } from './draft';
 import { getPaletteOption, parsePaletteCsv } from './config';
 import { isEditorLanguageArrival, parseEditorLocaleContext, type EditorLocaleContext } from './locale-context';
 import { PatternHistory, PatternStroke } from './pattern-history';
@@ -50,6 +50,29 @@ function fixture() {
 }
 
 describe('editor language working context', () => {
+    it('preserves crop/source/pixels across four-language project handoff without poisoning palette-history validation', () => {
+        const { draft, context, pixels } = fixture();
+        const croppedDraft = createEditorDraft({
+            ...draft, sourceMode: 'image', imageSrc: 'data:image/png;base64,b3JpZ2luYWw=',
+            sourceCrop: { sourceWidth: 120, sourceHeight: 80, x: 17, y: 9, width: 60, height: 30 },
+        });
+        const before = JSON.stringify(croppedDraft);
+        const locales = ['en', 'de', 'fr', 'ja'] as const;
+        for (let i = 0; i < locales.length; i++) {
+            const from = `https://fusebeadpatterns.art${localeRoutes[locales[i]].editor}`;
+            const to = `https://fusebeadpatterns.art${localeRoutes[locales[(i + 1) % locales.length]].editor}`;
+            expect(isEditorLanguageArrival(from, to)).toBe(true);
+            const restored = parseEditorProject(serializeEditorProject(croppedDraft))!;
+            const state = parseEditorLocaleContext(JSON.parse(JSON.stringify(context)), restored)!;
+            expect(state).not.toBeNull();
+            expect(state.paletteHistory).toEqual(JSON.parse(JSON.stringify(context.paletteHistory)));
+            expect(restored.sourceCrop).toEqual(croppedDraft.sourceCrop);
+            expect(restored.imageSrc).toBe(croppedDraft.imageSrc);
+            expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(pixels);
+        }
+        expect(JSON.stringify(croppedDraft)).toBe(before);
+    });
+
     it('keeps a valid selected material board only in the language handoff and rejects stale coordinates', () => {
         const { draft, context } = fixture();
         const before = JSON.stringify(draft);

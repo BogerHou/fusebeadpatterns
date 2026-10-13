@@ -4,6 +4,7 @@ import { Color } from '../model/color/color.model';
 import { Matching } from '../model/matching/matching.model';
 import { Project } from '../model/project/project.model';
 import { RendererConfiguration } from '../model/configuration/renderer-configuration.model';
+import { isValidSourceCrop, type EditorSourceCrop } from './image-crop';
 
 export type PaletteEntryColorKeyMode = 'rgb' | 'rgba';
 
@@ -33,13 +34,23 @@ export class ImagePosition {
 export function drawImageInsideCanvas(
     canvas: HTMLCanvasElement,
     image: HTMLImageElement,
-    rendererConfiguration: RendererConfiguration
+    rendererConfiguration: RendererConfiguration,
+    crop?: EditorSourceCrop | null
 ): ImagePosition {
     /**
      * Credit to : https://sdqali.in/blog/2013/10/03/fitting-an-image-in-to-a-canvas-object/
      */
 
-    const imageAspectRatio = image.width / image.height;
+    if (crop !== undefined && crop !== null) {
+        if (!isValidSourceCrop(crop)) throw new Error('Invalid source crop.');
+        if (crop.sourceWidth !== image.naturalWidth || crop.sourceHeight !== image.naturalHeight) {
+            throw new Error('Source crop does not match the decoded image.');
+        }
+    }
+    // With no crop, retain the existing image.width/height and 5-argument draw.
+    const imageWidth = crop ? crop.width : image.width;
+    const imageHeight = crop ? crop.height : image.height;
+    const imageAspectRatio = imageWidth / imageHeight;
     const canvasAspectRatio = canvas.width / canvas.height;
     let renderableHeight: number, renderableWidth: number;
 
@@ -48,47 +59,48 @@ export function drawImageInsideCanvas(
     if (imageAspectRatio < canvasAspectRatio) {
         renderableHeight = rendererConfiguration.fit
             ? canvas.height
-            : image.height;
+            : imageHeight;
         renderableWidth = rendererConfiguration.fit
-            ? image.width * (renderableHeight / image.height)
-            : image.width;
+            ? imageWidth * (renderableHeight / imageHeight)
+            : imageWidth;
     } else if (imageAspectRatio > canvasAspectRatio) {
         renderableWidth = rendererConfiguration.fit
             ? canvas.width
-            : image.width;
+            : imageWidth;
         renderableHeight = rendererConfiguration.fit
-            ? image.height * (renderableWidth / image.width)
-            : image.height;
+            ? imageHeight * (renderableWidth / imageWidth)
+            : imageHeight;
     } else {
         renderableHeight = rendererConfiguration.fit
             ? canvas.height
-            : image.height;
+            : imageHeight;
         renderableWidth = rendererConfiguration.fit
             ? canvas.width
-            : image.width;
+            : imageWidth;
     }
 
+    // A valid one-pixel-wide crop must not vanish when fitted to a bead board.
+    // Center cropped images using their actual integer drawing bounds; preserve
+    // the historical fractional-position rounding for uncropped images.
+    const rrenderableWidth = crop ? Math.max(1, Math.floor(renderableWidth)) : Math.floor(renderableWidth);
+    const rrenderableHeight = crop ? Math.max(1, Math.floor(renderableHeight)) : Math.floor(renderableHeight);
     const xStart = rendererConfiguration.center
-        ? (canvas.width - renderableWidth) / 2
+        ? (canvas.width - (crop ? rrenderableWidth : renderableWidth)) / 2
         : 0;
     const yStart = rendererConfiguration.center
-        ? (canvas.height - renderableHeight) / 2
+        ? (canvas.height - (crop ? rrenderableHeight : renderableHeight)) / 2
         : 0;
 
     const rxStart = Math.floor(xStart);
     const ryStart = Math.floor(yStart);
-    const rrenderableWidth = Math.floor(renderableWidth);
-    const rrenderableHeight = Math.floor(renderableHeight);
 
     const ctx = canvas.getContext('2d')!;
     ctx.filter = image.style.filter;
-    ctx.drawImage(
-        image,
-        rxStart,
-        ryStart,
-        rrenderableWidth,
-        rrenderableHeight
-    );
+    if (crop) {
+        ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, rxStart, ryStart, rrenderableWidth, rrenderableHeight);
+    } else {
+        ctx.drawImage(image, rxStart, ryStart, rrenderableWidth, rrenderableHeight);
+    }
     return new ImagePosition(
         rxStart,
         ryStart,
