@@ -246,7 +246,15 @@ describe('bounded craft progress file', () => {
         const raw = exportCraftProgress(ID, p, marks);
         expect(Buffer.byteLength(raw)).toBeLessThan(220000);
         const restored = importCraftProgress(raw, ID, p);
-        expect(Buffer.from(restored)).toEqual(Buffer.from(marks));
+        expect(restored).toBeInstanceOf(Uint8Array);
+        expect(marks).toBeInstanceOf(Uint8Array);
+        expect(restored.length).toBe(CRAFT_PROGRESS_MAX_POSITIONS);
+        expect(restored.byteLength).toBe(marks.byteLength);
+        // Compare every byte without recursively enumerating 1,299,600 values
+        // through Vitest's general-purpose object equality machinery.
+        const actualBytes = Buffer.from(restored.buffer, restored.byteOffset, restored.byteLength);
+        const expectedBytes = Buffer.from(marks.buffer, marks.byteOffset, marks.byteLength);
+        expect(actualBytes.equals(expectedBytes)).toBe(true);
         expect(getCraftSummary(p, restored, { board: { row: 19, column: 19 } }).completed).toBe(1);
     });
 });

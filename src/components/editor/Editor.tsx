@@ -2473,7 +2473,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const openCraftProgress = async () => {
         if (!canOpenCraftProgress || craftEntryBusyRef.current || sourceTransactionsRef.current.pending ||
             imageGenerationRef.current || settingsUpdateRef.current || exportInProgressRef.current ||
-            localeSaveInProgressRef.current || localeContextInstalling) return;
+            localeSaveInProgressRef.current || localeContextInstalling ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds)) return;
         finishActiveStroke();
         const project = currentProjectRef.current, pixels = reducedColorRef.current, canvas = canvasRef.current;
         if (!project || !pixels || !canvas || !isEditorPatternSnapshotReady(pixels, canvas, previewSize)) return;
