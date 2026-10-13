@@ -18,7 +18,11 @@ describe('localized collection and topic continuity', () => {
             expect(section.patterns).toHaveLength(10);
             const metadata = localizedSectionMetadata(section, locale);
             expect(metadata.title).toBe(`${copy.metadataTitle} | Fuse Bead Patterns`);
-            expect(metadata.description).toBe(copy.description);
+            expect(section.description).toBe(copy.description);
+            expect(metadata.description).toBe(section.metadataDescription ?? copy.description);
+            expect(Array.from(metadata.description as string).length).toBeLessThanOrEqual(160);
+            expect(metadata.openGraph?.description).toBe(metadata.description);
+            expect(metadata.twitter?.description).toBe(metadata.description);
             expect(metadata.alternates?.canonical).toBe(`/${locale}/patterns/small`);
             expect(metadata.alternates?.languages).toEqual(patternLanguageAlternates('small'));
         }

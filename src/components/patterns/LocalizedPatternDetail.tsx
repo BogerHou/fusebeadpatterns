@@ -6,6 +6,7 @@ import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { patterns, type Pattern } from '@/lib/patterns/catalog';
 import { getLocalizedPatternTitle, getLocalizedPatternName, getLocalizedPatternIntro, localizePatternNote, type PatternLocale } from '@/lib/patterns/localized-content';
+import { localizedPatternMetadataDescription } from '@/lib/patterns/metadata-descriptions';
 import { localizedPatternUi } from '@/lib/patterns/localized-ui';
 import { getLocalizedPatternPdf, getLocalizedPatternLetterPdf, getLocalizedPatternGrid } from '@/lib/patterns/localized-download';
 import { localizePatternSourceDescription } from '@/lib/patterns/localized-sources';
@@ -27,7 +28,7 @@ import HamaCharacterDownloads from './HamaCharacterDownloads';
 const siteUrl = 'https://fusebeadpatterns.art';
 export function localizedPatternMetadata(pattern: Pattern, locale: PatternLocale): Metadata {
     const title = `${getLocalizedPatternTitle(pattern, locale)} | Fuse Bead Patterns`;
-    const description = getLocalizedPatternIntro(pattern, locale);
+    const description = localizedPatternMetadataDescription(pattern, locale);
     const href = `/${locale}/patterns/${pattern.slug}`;
     return {
         title, description, alternates: { canonical: href, languages: patternLanguageAlternates(pattern.slug) },

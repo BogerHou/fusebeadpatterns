@@ -39,3 +39,6 @@ jobs:
 
       - name: Vercel cost guard
         run: npm run cost:check
+
+      - name: SEO metadata
+        run: npm run seo:check

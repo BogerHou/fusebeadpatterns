@@ -6,24 +6,14 @@ import '../globals.css';
 export const metadata: Metadata = {
     metadataBase: new URL('https://fusebeadpatterns.art'),
     title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns',
-    description: 'Convert photos into printable Perler bead patterns with a free browser-based fuse bead generator. Preview the pattern, adjust the size, clean it up, and export when ready.',
-    keywords: [
-        'perler bead patterns',
-        'perler bead pattern generator',
-        'printable perler bead patterns',
-        'photo to perler beads',
-        'fuse bead generator',
-        'bead pattern maker',
-        'hama beads',
-        'pixel art'
-    ],
+    description: 'Turn a photo into a Perler bead pattern for free. Choose the size and colors, edit individual beads, then download a printable PDF or image.',
     authors: [{ name: 'Fuse Bead Patterns' }],
     alternates: {
         canonical: '/',
     },
     openGraph: {
         title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns',
-        description: 'Convert photos into printable Perler bead patterns with a free browser-based fuse bead generator. Preview the pattern, adjust the size, clean it up, and export when ready.',
+        description: 'Turn a photo into a Perler bead pattern for free. Choose the size and colors, edit individual beads, then download a printable PDF or image.',
         url: 'https://fusebeadpatterns.art',
         siteName: 'Fuse Bead Patterns',
         type: 'website',
@@ -39,7 +29,7 @@ export const metadata: Metadata = {
     twitter: {
         card: 'summary_large_image',
         title: 'Free Perler Bead Pattern Generator | Fuse Bead Patterns',
-        description: 'Convert photos into printable Perler bead patterns with a free browser-based fuse bead generator. Preview the pattern, adjust the size, clean it up, and export when ready.',
+        description: 'Turn a photo into a Perler bead pattern for free. Choose the size and colors, edit individual beads, then download a printable PDF or image.',
         images: ['/opengraph-image.png'],
     },
 };

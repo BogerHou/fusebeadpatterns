@@ -12,6 +12,7 @@ import PatternShare from '@/components/patterns/PatternShare';
 import CoasterInstructions from '@/components/patterns/CoasterInstructions';
 import OrnamentInstructions from '@/components/patterns/OrnamentInstructions';
 import { patterns, patternCollections, getPatternBySlug, getCollectionBySlug, getPatternsForCollection, getPatternHref, type Pattern } from '@/lib/patterns/catalog';
+import { patternMetadataDescription, patternCollectionMetadataDescription } from '@/lib/patterns/metadata-descriptions';
 import { patternTopics, getPatternTopicBySlug, getPatternsForTopic } from '@/lib/patterns/topics';
 import { getPatternDisplayName } from '@/lib/patterns/presentation';
 import { brandGuideHref, getCollectionIntro, getFewestColorsPattern, getPatternIntro } from '@/lib/patterns/content';
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const collection = getCollectionBySlug(slug);
     if (!pattern && !collection) notFound();
     const title = pattern ? `${patternPageTitle(pattern)} | Fuse Bead Patterns` : `${collection!.title} Perler Bead Patterns | Fuse Bead Patterns`;
-    const description = (pattern ?? collection)!.description;
+    const description = pattern ? patternMetadataDescription(pattern) : patternCollectionMetadataDescription(collection!);
     const image = pattern?.assets.preview ?? getPatternsForCollection(collection!.id)[0].assets.preview;
     return {
         title, description,

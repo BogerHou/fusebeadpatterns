@@ -9,18 +9,19 @@ import { patternLibraryCount } from '@/lib/patterns/library-overview';
 const path = '/fr/modeles-perles-a-repasser';
 const title = 'Perles à repasser : 6 modèles gratuits à imprimer';
 const description = 'Six modèles originaux de perles à repasser gratuits : ballon, fantôme, chauve-souris et Noël. PDF A4 en français et projets à télécharger, au choix Perler ou Hama Midi.';
+const metadataDescription = 'Six modèles gratuits : ballon, fantôme, chauve-souris et Noël. PDF A4 en français et projets modifiables, avec les couleurs Perler ou Hama Midi.';
 const preview = '/patterns/original-soccer-ball/preview.png';
 
 export const metadata: Metadata = {
     title,
-    description,
+    description: metadataDescription,
     alternates: { canonical: path },
     openGraph: {
-        title, description, locale: 'fr_FR', type: 'website',
+        title, description: metadataDescription, locale: 'fr_FR', type: 'website',
         url: `https://fusebeadpatterns.art${path}`, siteName: 'Fuse Bead Patterns',
         images: [{ url: preview, width: 580, height: 580, alt: 'Ballon de football en perles à repasser Perler Midi' }],
     },
-    twitter: { card: 'summary_large_image', title, description, images: [preview] },
+    twitter: { card: 'summary_large_image', title, description: metadataDescription, images: [preview] },
 };
 
 const structuredData = {

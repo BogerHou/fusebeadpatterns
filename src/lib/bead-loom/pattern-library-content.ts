@@ -31,7 +31,7 @@ type LoomPatternLibraryContent = {
 export const loomPatternLibraryContent: Record<SiteLocale, LoomPatternLibraryContent> = {
     en: {
         title: 'Free Bead Loom Patterns — Printable PDF Charts | Fuse Bead Patterns',
-        description: 'Download three free bead loom patterns: heart, chevron and diamond bands. A4 and US Letter PDFs, chart PNGs and editable projects, each 11 beads across and 61 rows.',
+        description: 'Download free heart, chevron and diamond bead loom patterns. Each includes an A4 or US Letter PDF with row instructions, a chart PNG and an editable project.',
         heading: 'Free Bead Loom Patterns',
         introduction: 'Download a heart, chevron or diamond band pattern for your bead loom. These three original charts include color symbols, bead counts and row-by-row instructions. Choose A4 or US Letter PDF, a chart PNG or an editable project. No account needed.',
         home: 'Home',
@@ -60,7 +60,7 @@ export const loomPatternLibraryContent: Record<SiteLocale, LoomPatternLibraryCon
     },
     de: {
         title: 'Kostenlose Perlenwebmuster — PDF und PNG | Fuse Bead Patterns',
-        description: 'Lade drei kostenlose Perlenwebmuster herunter: Herz-, Chevron- und Rautenbänder. A4- und US-Letter-PDFs, Raster-PNGs und Projekte mit 11 Perlen pro Reihe und 61 Reihen.',
+        description: 'Lade kostenlose Herz-, Chevron- und Rautenbänder für den Perlenwebrahmen herunter. Mit A4- oder US-Letter-PDF, Reihenanleitung, Raster-PNG und Projekt.',
         heading: 'Kostenlose Perlenwebmuster',
         introduction: 'Lade ein Herz-, Chevron- oder Rautenmuster für deinen Perlenwebrahmen herunter. Die drei eigenen Entwürfe enthalten Farbbuchstaben, Perlenanzahlen und Reihenanleitungen. Wähle eine A4- oder US-Letter-PDF, ein Raster-PNG oder ein bearbeitbares Projekt. Ohne Konto.',
         home: 'Startseite',
@@ -89,7 +89,7 @@ export const loomPatternLibraryContent: Record<SiteLocale, LoomPatternLibraryCon
     },
     fr: {
         title: 'Modèles gratuits pour métier à perles — PDF et PNG | Fuse Bead Patterns',
-        description: 'Téléchargez trois modèles gratuits pour métier à perles : cœurs, chevrons et losanges. PDF A4 ou US Letter, grilles PNG et projets de 11 perles par rang et 61 rangs.',
+        description: 'Téléchargez trois modèles gratuits pour métier à perles : cœurs, chevrons et losanges. PDF avec instructions par rang, grilles PNG et projets modifiables.',
         heading: 'Modèles gratuits pour métier à perles',
         introduction: 'Téléchargez un motif de cœurs, de chevrons ou de losanges pour votre métier à perles. Ces trois créations originales comprennent des lettres pour les couleurs, les quantités de perles et les instructions rang par rang. Choisissez un PDF A4 ou US Letter, une grille PNG ou un projet modifiable. Sans compte.',
         home: 'Accueil',

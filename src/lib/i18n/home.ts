@@ -6,6 +6,7 @@ export const localizedHomeCopy = {
     de: {
         title: 'Bügelperlen-Vorlagen selbst erstellen | Fuse Bead Patterns',
         description: 'Erstelle kostenlos Bügelperlen-Vorlagen aus Fotos und Bildern. Wähle Marke und Steckplatte, bearbeite einzelne Perlen und lade dein Muster als PDF oder PNG herunter.',
+        metadataDescription: 'Erstelle kostenlos Bügelperlen-Vorlagen aus Fotos. Wähle Marke und Steckplatte, bearbeite die Perlen und lade dein Muster als PDF oder PNG herunter.',
         eyebrow: 'Aus deinem Bild wird dein Muster.',
         heading: 'Bügelperlen-Vorlagen selbst erstellen',
         intro: 'Lade ein Foto oder Pixelbild hoch, wähle deine Perlenmarke und passe die Größe an. Bearbeite das Muster im Editor und speichere es zum Ausdrucken. Dein Bild wird direkt im Browser verarbeitet.',
@@ -82,7 +83,7 @@ export const localizedHomeCopy = {
         learnHref: '/ja/guides/photo-to-perler-bead-pattern',
     },
 } satisfies Record<TranslatedLocale, {
-    title: string; description: string; eyebrow: string; heading: string; intro: string;
+    title: string; description: string; metadataDescription?: string; eyebrow: string; heading: string; intro: string;
     start: string; browse: string; free: string; workspace: string; flow: string;
     preview: string; previewNote: string; previewLink: string; previewHref: string;
     patternsHeading: string; patternsText: string; patternsHref: string;

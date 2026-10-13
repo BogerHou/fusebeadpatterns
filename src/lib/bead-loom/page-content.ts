@@ -19,7 +19,7 @@ type LoomPageContent = {
 export const loomPageContent: Record<LocalizedLoomLocale, LoomPageContent> = {
     de: {
         title: 'Perlenwebmuster-Generator — PDF und Reihenanleitung | Fuse Bead Patterns',
-        description: 'Erstelle kostenlose Perlenwebmuster mit eigenen Farben. Zeichne oder wandle ein Bild um und lade eine A4- oder US-Letter-PDF, ein Raster-PNG und dein Projekt herunter.',
+        description: 'Erstelle ein Perlenwebmuster mit eigenen Farben. Zeichne oder wandle ein Bild um und speichere eine PDF mit Reihenanleitung, ein PNG oder dein Projekt.',
         heading: 'Perlenwebmuster erstellen',
         introduction: 'Erstelle kostenlos ein Muster für deinen Perlenwebrahmen mit eigenen Farben. Zeichne oder beginne mit einem Bild und lade anschließend eine PDF mit Farbbuchstaben, ein Raster-PNG und die Reihenanleitung herunter. Ohne Konto.',
         helpHeading: 'Das Raster an deine Perlen anpassen',
@@ -35,7 +35,7 @@ export const loomPageContent: Record<LocalizedLoomLocale, LoomPageContent> = {
     },
     fr: {
         title: 'Générateur de motifs pour métier à perles — PDF et rangs | Fuse Bead Patterns',
-        description: 'Créez un motif pour métier à perles avec vos couleurs. Dessinez ou convertissez une image, puis téléchargez un PDF A4 ou US Letter, une grille PNG et votre projet.',
+        description: 'Créez un motif pour métier à perles avec vos couleurs. Dessinez ou convertissez une image, puis enregistrez un PDF, une grille PNG ou votre projet.',
         heading: 'Générateur de motifs pour métier à perles',
         introduction: 'Créez gratuitement un motif pour métier à perles avec vos propres couleurs. Dessinez ou partez d’une image, puis téléchargez un PDF avec des lettres pour les couleurs, une grille PNG et les instructions rang par rang. Sans compte.',
         helpHeading: 'Adapter la grille à vos perles',

@@ -10,7 +10,7 @@ import { hamaLanguageAlternates } from '@/lib/i18n/metadata';
 import { HamaCharacterLink } from '@/components/patterns/HamaCharacterDownloads';
 
 const title = 'Free Hama Bead Patterns: Printable Midi Templates | Fuse Bead Patterns';
-const description = 'Download six free Hama Midi bead patterns with Hama colour numbers. A4 and US Letter PDFs, plus editable projects for a football, ghost, bat and Christmas designs.';
+const description = 'Download six free Hama Midi bead patterns with colour numbers, A4 and US Letter PDFs, and editable projects for football, ghost, bat and Christmas designs.';
 const preview = '/patterns-hama/original-friendly-ghost/preview.png';
 const url = 'https://fusebeadpatterns.art/patterns/hama';
 

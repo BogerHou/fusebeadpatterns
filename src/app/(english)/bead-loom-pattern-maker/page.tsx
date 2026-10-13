@@ -8,12 +8,11 @@ import { loomPatternLibraryContent } from '@/lib/bead-loom/pattern-library-conte
 import { localeRoutes } from '@/lib/i18n/routes';
 
 const title = 'Free Bead Loom Pattern Maker — PDF & Row Instructions';
-const description = 'Make a bead loom pattern with your own colors. Draw or convert an image, count beads, and download a lettered A4 or US Letter PDF, chart PNG and editable project.';
+const description = 'Make a bead loom pattern with your own colors. Draw or convert an image, count beads, and save a lettered A4 or US Letter PDF, PNG or editable project.';
 
 export const metadata: Metadata = {
     title,
     description,
-    keywords: ['bead loom pattern maker', 'bead loom pattern generator', 'printable bead loom chart'],
     alternates: { canonical: '/bead-loom-pattern-maker', languages: loomLanguageAlternates },
     openGraph: {
         title,
