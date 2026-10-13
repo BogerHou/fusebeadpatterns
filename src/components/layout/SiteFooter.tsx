@@ -3,6 +3,7 @@ import { getGuideSummaries } from '@/lib/guides/localized';
 import { guidePages } from '@/app/(english)/guides/guide-data';
 import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
+import { perlerColorChartLabels, perlerColorChartPaths } from '@/lib/color-chart/routes';
 import LanguageSwitcher from './LanguageSwitcher';
 import styles from './LanguageSwitcher.module.css';
 
@@ -13,6 +14,7 @@ type SiteFooterSection =
     | 'pixel-grid'
     | 'bead-loom'
     | 'guides'
+    | 'color-chart'
     | 'about'
     | 'privacy'
     | 'terms';
@@ -55,6 +57,7 @@ const footerGroups: Array<{
         title: 'Learn',
         links: [
             { id: 'guides', label: 'All Guides', href: '/guides' },
+            { id: 'color-chart', label: perlerColorChartLabels.en, href: perlerColorChartPaths.en },
             ...guidePages.map((guide) => ({
                 id: `guide-${guide.slug}`,
                 label: guide.title,
@@ -98,6 +101,7 @@ export default function SiteFooter({
             title: copy.learn,
             links: [
                 { id: 'guides', label: copy.allGuides, href: routes.guides, lang: locale },
+                { id: 'color-chart', label: perlerColorChartLabels[locale], href: perlerColorChartPaths[locale], lang: locale },
                 ...getGuideSummaries(locale).map(guide => ({ id: `guide-${guide.slug}`, label: guide.language === locale ? guide.title : englishLabel(guide.title), href: guide.href, lang: guide.language })),
             ],
         },
