@@ -33,7 +33,7 @@ export const beadifierAlternativeCopy: Record<'de' | 'fr' | 'ja', GuideCopy> = {
                 heading: 'Bearbeite eine tatsächlich umgewandelte Vorlage',
                 body: [
                     'Die Rakete unten ist unser eigenes 29 × 29-Beispiel mit Perler Midi, kein Vergleich der Umwandlungsergebnisse beider Werkzeuge. Das Ausgangsbild ist eine KI-generierte Illustration. Beim automatischen Ergebnis wirkt der Fensterrand unterbrochen. Wenn du 16 vorhandene Perlen mit Midnight übermalst, entsteht eine geschlossene Kontur.',
-                    'Die Perlenzahl bleibt bei 337, während die Farbanzahl von 32 auf 31 sinkt. Öffne das unbearbeitete Projekt in unserem Editor, um die Korrektur auszuprobieren, oder öffne das bearbeitete Projekt zur Kontrolle. Die übrigen Farbtöne wurden nicht vereinfacht. Das Beispiel wurde nicht mit echten Perlen gelegt oder beim Bügeln getestet.',
+                    'Die Perlenzahl bleibt bei 337, während die Farbanzahl von 32 auf 31 sinkt. Öffne das unbearbeitete Beispiel oder das korrigierte Ergebnis über die Editor-Links unten; die Projektdateien bleiben als Downloads verfügbar. Speichere ein bereits geöffnetes Motiv vor „Aktuelle Vorlage ersetzen“ oder brich mit „Aktuelle Vorlage behalten“ ab. Die übrigen Farbtöne wurden nicht vereinfacht. Das Beispiel wurde nicht mit echten Perlen gelegt oder beim Bügeln getestet.',
                 ],
                 comparison: [
                     { alt: 'Vor der Bearbeitung: gemischte graue und blaue Perlen unterbrechen den Fensterrand der Rakete.', caption: 'Vorher: automatische Umwandlung, 337 Perlen und 32 Farben.' },
@@ -96,7 +96,7 @@ export const beadifierAlternativeCopy: Record<'de' | 'fr' | 'ja', GuideCopy> = {
                 heading: 'Essayez de retoucher un modèle réellement converti',
                 body: [
                     'La fusée ci-dessous est notre propre exemple Perler Midi de 29 × 29, pas une comparaison des conversions des deux outils. L’image source est une illustration générée par IA. Le contour du hublot semble discontinu dans le résultat automatique. Recolorer 16 perles existantes en Midnight permet de le rendre continu.',
-                    'Le nombre de perles reste à 337, tandis que le nombre de couleurs passe de 32 à 31. Ouvrez le projet non retouché dans notre éditeur pour essayer la correction, ou rouvrez le projet retouché pour l’examiner. Les autres nuances n’ont pas été simplifiées. Cet exemple n’a pas été assemblé avec des perles réelles ni testé au fer.',
+                    'Le nombre de perles reste à 337, tandis que le nombre de couleurs passe de 32 à 31. Utilisez les liens vers l’éditeur ci-dessous pour essayer l’exemple non retouché ou examiner le résultat ; les projets restent téléchargeables. Enregistrez le modèle ouvert avant « Remplacer le modèle actuel », ou choisissez « Conserver le modèle actuel » pour annuler. Les autres nuances n’ont pas été simplifiées. Cet exemple n’a pas été assemblé avec des perles réelles ni testé au fer.',
                 ],
                 comparison: [
                     { alt: 'Avant la retouche : un mélange de perles grises et bleues interrompt le contour du hublot de la fusée.', caption: 'Avant : conversion automatique, 337 perles et 32 couleurs.' },
@@ -159,7 +159,7 @@ export const beadifierAlternativeCopy: Record<'de' | 'fr' | 'ja', GuideCopy> = {
                 heading: '実際に変換した図案を修正してみる',
                 body: [
                     '下のロケットは、当サイトで作成した29 × 29のPerler Midiの例で、2つのツールの変換結果を比較したものではありません。元画像はAIで生成したイラストです。自動変換では窓の輪郭が途切れて見えます。既存の16粒をMidnightに塗り直すと、輪郭がつながります。',
-                    'ビーズの数は337粒のままで、色数は32色から31色になります。修正前のプロジェクトを当サイトのエディターで開いて試すか、修正後のプロジェクトを開いて確認してください。ほかの色はまだ整理していません。この例は実物のビーズで組み立てたり、アイロンで溶着したりする試験は行っていません。',
+                    'ビーズの数は337粒のままで、色数は32色から31色になります。下のエディターへのリンクから修正前の例を試すか、修正後の結果を確認できます。プロジェクトの保存リンクも残しています。別の図案が開いている場合は「現在の図案を置き換える」の前に保存し、取り消す場合は「現在の図案を保持」を選んでください。ほかの色はまだ整理していません。この例は実物のビーズで組み立てたり、アイロンで溶着したりする試験は行っていません。',
                 ],
                 comparison: [
                     { alt: '修正前：灰色と青色のビーズが混ざり、ロケットの窓の輪郭が途切れています。', caption: '修正前：自動変換、337粒・32色。' },

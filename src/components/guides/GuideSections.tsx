@@ -100,7 +100,7 @@ export default function GuideSections({ sections, locale = 'en', id }: { section
                                     key={link.href}
                                     href={link.href}
                                     download={link.download}
-                                    prefetch={link.download ? false : undefined}
+                                    prefetch={link.download ? false : link.prefetch}
                                     className="text-link"
                                 >
                                     {link.label}

@@ -51,9 +51,9 @@ describe('library project loading', () => {
         expect(fetchProject).not.toHaveBeenCalled();
     });
 
-    it('rejects a failed response without returning a replacement draft', async () => {
+    it.each([projectId, 'tutorial-rocket-after'])('rejects a failed response for %s without returning a replacement draft', async (id) => {
         const fetchProject = vi.fn<typeof fetch>().mockResolvedValue(new Response('Missing', { status: 404 }));
-        await expect(loadLibraryEditorProject(projectId, new AbortController().signal, fetchProject)).rejects.toThrow('current project has not changed');
+        await expect(loadLibraryEditorProject(id, new AbortController().signal, fetchProject)).rejects.toThrow('current project has not changed');
     });
 
     it.each(['not json', '{"version": 1}'])('rejects malformed project data', async (contents) => {
@@ -61,13 +61,13 @@ describe('library project loading', () => {
         await expect(loadLibraryEditorProject(projectId, new AbortController().signal, fetchProject)).rejects.toThrow('could not be opened');
     });
 
-    it('lets cancellation win even if the request resolves after it was cancelled', async () => {
+    it.each([projectId, 'tutorial-rocket-after'])('lets cancellation win for %s even if the request resolves after it was cancelled', async (id) => {
         const controller = new AbortController();
         let resolveResponse!: (value: Response) => void;
         const fetchProject = vi.fn<typeof fetch>().mockImplementation(() => new Promise((resolve) => {
             resolveResponse = resolve;
         }));
-        const loading = loadLibraryEditorProject(projectId, controller.signal, fetchProject);
+        const loading = loadLibraryEditorProject(id, controller.signal, fetchProject);
         controller.abort();
         resolveResponse(new Response(serializeEditorProject(createProject())));
         await expect(loading).rejects.toMatchObject({ name: 'AbortError' });

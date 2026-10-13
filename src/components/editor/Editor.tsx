@@ -427,6 +427,7 @@ function LibraryPatternEntry({
 }: LibraryPatternEntryProps & { patternId: string }) {
     const t = getEditorTranslator(locale);
     const project = getLibraryProject(patternId, locale);
+    const isTutorial = project?.kind === 'tutorial';
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const requestRef = useRef<AbortController | null>(null);
@@ -476,7 +477,7 @@ function LibraryPatternEntry({
 
     return (
         <section
-            aria-label={t("Open library pattern")}
+            aria-label={t(isTutorial ? "Open tutorial example" : "Open library pattern")}
             data-testid="library-pattern-entry"
             className="shrink-0 rounded-lg border border-[#d9ded5] bg-brand-yellow px-3 py-3 text-sm text-brutal-black sm:px-4"
         >
@@ -487,7 +488,7 @@ function LibraryPatternEntry({
                 {project
                     ? hasCurrentPattern
                         ? t("Your current pattern is still open. Save a project copy before replacing it.")
-                        : t("Open this ready-made pattern to edit its beads and colors.")
+                        : t(isTutorial ? "Open this practice example to follow the tutorial. It is not a finished craft pattern." : "Open this ready-made pattern to edit its beads and colors.")
                     : t("Your current project has not changed. You can continue editing or choose another pattern.")}
             </p>
             {error && <p role="alert" className="mt-2 font-semibold">{getEditorErrorMessage(error, locale)}</p>}
@@ -500,7 +501,7 @@ function LibraryPatternEntry({
                         disabled={loading || busy}
                         className="rounded-lg border border-[#d9ded5] bg-brutal-black px-3 py-2 font-semibold text-white disabled:opacity-50"
                     >
-                        {loading ? t("Opening pattern...") : hasCurrentPattern ? t("Replace current pattern") : t("Open pattern")}
+                        {loading ? t("Opening pattern...") : hasCurrentPattern ? t("Replace current pattern") : t(isTutorial ? "Open example" : "Open pattern")}
                     </button>
                 )}
                 {project && hasCurrentPattern && (

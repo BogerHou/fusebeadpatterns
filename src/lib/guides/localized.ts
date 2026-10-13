@@ -8,6 +8,7 @@ import { germanGuides } from './de';
 import { frenchGuides } from './fr';
 import { japaneseGuides } from './ja';
 import { guideHref, isTranslatedGuideSlug } from './routes';
+import { localizeTutorialEditorLink } from './tutorial-projects';
 
 export type GuideLocale = Exclude<SiteLocale, 'en'>;
 export const guideTranslations = { de: germanGuides, fr: frenchGuides, ja: japaneseGuides };
@@ -62,7 +63,7 @@ const photoAssetLabels: Record<string, [string, string, string]> = {
     '/guides/photo-to-pattern/cat-perler-29.bead-pattern.json': ['Katze 29 × 29 – bearbeitbares Projekt', 'Chat 29 × 29 – projet modifiable', '猫29 × 29 — 編集用プロジェクト'],
     '/guides/photo-to-pattern/cat-perler-58.bead-pattern.json': ['Katze 58 × 58 – bearbeitbares Projekt', 'Chat 58 × 58 – projet modifiable', '猫58 × 58 — 編集用プロジェクト'],
     '/guides/photo-to-pattern/rocket-source.png': ['Raketenillustration speichern', 'Enregistrer l’illustration de la fusée', '元のロケット画像を保存'],
-    '/guides/photo-to-pattern/rocket-perler-29-auto.bead-pattern.json': ['Unbearbeitetes Raketenprojekt', 'Projet de fusée avant retouche', '修正前のロケットプロジェクト'],
+    '/guides/photo-to-pattern/rocket-perler-29-auto.bead-pattern.json': ['Unbearbeitetes Raketenprojekt herunterladen', 'Télécharger le projet de fusée avant retouche', '修正前のロケットプロジェクトを保存'],
     '/guides/photo-to-pattern/rocket-perler-29-cleanup.bead-pattern.json': ['Bearbeitetes Raketenprojekt', 'Projet de fusée après retouche', '修正後のロケットプロジェクト'],
     '/guides/photo-to-pattern/rocket-perler-29-cleanup_grid.png': ['Bearbeitetes Raketenraster – PNG', 'Grille de la fusée retouchée – PNG', '修正後のロケット — マス目PNG'],
     '/guides/photo-to-pattern/rocket-perler-29-cleanup.pdf': ['Bearbeitete Rakete – PDF mit Symbolen', 'Fusée retouchée – PDF avec symboles', '修正後のロケット — 記号付きPDF'],
@@ -85,6 +86,8 @@ const miniGhostLinkLabels: Record<string, [string, string, string]> = {
 };
 
 export function localizeGuideLink<T extends { href: string; label: string }>(link: T, locale: GuideLocale): T {
+    const tutorial = localizeTutorialEditorLink(link, locale);
+    if (tutorial) return tutorial;
     const index = { de: 0, fr: 1, ja: 2 }[locale];
     const english = (label: string) => `${label} (${siteNavigation[locale].english})`;
     const miniLabel = miniGhostLinkLabels[link.href]?.[index];
