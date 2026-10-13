@@ -104,6 +104,25 @@ describe('editor draft pattern helpers', () => {
 });
 
 describe('editor project file helpers', () => {
+    it('keeps optional automatic bead limits without reinterpreting saved pixels or changing old missing fields', () => {
+        const pixels = new Uint8ClampedArray([10, 20, 30, 0, 50, 60, 70, 128, 90, 100, 110, 255]);
+        const legacy = { ...createTestDraft(), editedPattern: encodeEditorProjectPattern(pixels, 3, 1) };
+        const old = parseEditorProject(serializeEditorProject(legacy))!;
+        expect(old).toEqual(legacy);
+        expect(Object.hasOwn(old, 'maxBeadColors')).toBe(false);
+        for (const cap of [null, 1, 12, 512]) {
+            const limited = { ...legacy, maxBeadColors: cap };
+            const restored = parseEditorProject(serializeEditorProject(limited))!;
+            expect(restored).toEqual(limited);
+            expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(pixels);
+        }
+        for (const cap of [0, -1, 1.5, 513, '12', true, {}, []]) {
+            const invalid = { ...legacy, maxBeadColors: cap };
+            expect(parseEditorProject(JSON.stringify({ type: EDITOR_PROJECT_FILE_TYPE, version: 1, draft: invalid }))).toBeNull();
+            vi.stubGlobal('window', { sessionStorage: { getItem: () => JSON.stringify(invalid) } });
+            expect(loadEditorDraft()).toBeNull();
+        }
+    });
     it('reopens a legacy Artkal S project without changing pixels, disabled colors or its 50 × 50 board', async () => {
         const option = getPaletteOption('artkal_s')!;
         const csv = await readFile(path.join(process.cwd(), 'public', 'palettes', option.file), 'utf8');

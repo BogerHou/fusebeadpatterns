@@ -82,7 +82,9 @@ describe('localized guides and source preservation', () => {
             expect(photo.language).toBe(locale);
         }
         expect(guideRouteGroups.find(group => group.en === '/guides/photo-to-perler-bead-pattern')?.ja).toBe('/ja/guides/photo-to-perler-bead-pattern');
-        expect(getLocalizedGuide('photo-to-perler-bead-pattern', 'ja')?.sections).toHaveLength(8);
+        expect(getLocalizedGuide('photo-to-perler-bead-pattern', 'ja')?.sections).toHaveLength(
+            guidePages.find(guide => guide.slug === 'photo-to-perler-bead-pattern')!.sections.length
+        );
         expect(getLocalizedGuide('unknown-guide', 'de')).toBeUndefined();
     });
 

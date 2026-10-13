@@ -125,6 +125,7 @@ export async function prepareSourceImagePattern(options: {
     width: number;
     height: number;
     matchingId: string;
+    maxBeadColors?: number | null;
     restoredPixels?: Uint8ClampedArray | null;
 }, signal: AbortSignal): Promise<PreparedSourceImage> {
     const { project, width, height } = options;
@@ -151,6 +152,8 @@ export async function prepareSourceImagePattern(options: {
             pixels: imageData.data, width, height,
             palettes: project.paletteConfiguration.palettes,
             matchingId: options.matchingId,
+            ...(options.maxBeadColors !== undefined && options.maxBeadColors !== null
+                ? { maxBeadColors: options.maxBeadColors } : {}),
             dithering: { enable: project.ditheringConfiguration.enable, hardness: project.ditheringConfiguration.hardness },
             drawingPosition: { x: position.xStart, y: position.yStart, width: position.width, height: position.height },
         }, { signal });
