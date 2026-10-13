@@ -48,6 +48,8 @@ import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
 import { normalizeSourceCrop, type EditorSourceCrop } from '@/lib/core/utils/image-crop';
 import { getSourceCropCopy } from '@/lib/editor/source-crop-copy';
 import { getBeadColorLimitCopy } from '@/lib/editor/bead-color-limit-copy';
+import type { CraftPattern } from '@/lib/editor/craft-progress';
+import { getCraftProgressCopy } from '@/lib/editor/craft-progress-copy';
 import { limitPatternBeadColors } from '@/lib/editor/pattern-quantization';
 import { normalizeMaxBeadColors } from '@/lib/editor/brand-color-limit';
 import { SourceImageTransactions, readSourceImageFile, prepareSourceImagePattern, commitSourceImageCanvas, type PreparedSourceImage } from '@/lib/editor/source-image-transaction';
@@ -567,6 +569,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [maxBeadColors, setMaxBeadColors] = useState<number | null>(null);
     const [pendingMaxBeadColorsText, setPendingMaxBeadColorsText] = useState('');
     const [isColorLimitOpen, setIsColorLimitOpen] = useState(false);
+    const [craftPattern, setCraftPattern] = useState<CraftPattern | null>(null);
+    const [CraftProgressDialog, setCraftProgressDialog] = useState<React.ComponentType<{ pattern: CraftPattern; locale: SiteLocale; onClose: () => void }> | null>(null);
+    const [craftEntryBusy, setCraftEntryBusy] = useState(false);
+    const craftEntryBusyRef = useRef(false);
     const [colorLimitError, setColorLimitError] = useState<string | null>(null);
     const [colorLimitBusy, setColorLimitBusy] = useState(false);
     const [isSourceCropOpen, setIsSourceCropOpen] = useState(false);
@@ -2461,6 +2467,54 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         </div>
     );
 
+    const canOpenCraftProgress = hasEditablePattern && isEditorDraftReady && !processing &&
+        exportingId === null && !isLibraryPatternLoading && !craftEntryBusy && !craftPattern &&
+        !isSourceCropOpen && !isColorLimitOpen && !(isEditorPage && hasPendingPatternSettings);
+    const openCraftProgress = async () => {
+        if (!canOpenCraftProgress || craftEntryBusyRef.current || sourceTransactionsRef.current.pending ||
+            imageGenerationRef.current || settingsUpdateRef.current || exportInProgressRef.current ||
+            localeSaveInProgressRef.current || localeContextInstalling ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds)) return;
+        finishActiveStroke();
+        const project = currentProjectRef.current, pixels = reducedColorRef.current, canvas = canvasRef.current;
+        if (!project || !pixels || !canvas || !isEditorPatternSnapshotReady(pixels, canvas, previewSize)) return;
+        // Capture before loading the optional module; progress never owns editor pixels.
+        const width = canvas.width, height = canvas.height;
+        const input: CraftPattern = { width, height, boardSize: selectedBoard.beadsPerRow,
+            pixels: pixels.slice(), palettes: clonePalettes(project.paletteConfiguration.palettes),
+            paletteIds: [...selectedPaletteIds] };
+        craftEntryBusyRef.current = true;
+        setCraftEntryBusy(true);
+        setEditorMobilePanel(null);
+        setHomeMobilePanel(null);
+        try {
+            const [{ snapshotCraftPattern }, dialogModule] = await Promise.all([
+                import('@/lib/editor/craft-progress'), import('./CraftProgressDialog'),
+            ]);
+            if (currentProjectRef.current !== project || reducedColorRef.current !== pixels ||
+                canvas.width !== width || canvas.height !== height ||
+                pixels.some((value, index) => value !== input.pixels[index]) ||
+                sourceTransactionsRef.current.pending || imageGenerationRef.current || settingsUpdateRef.current) {
+                throw new Error('Pattern changed while opening progress.');
+            }
+            const snapshot = snapshotCraftPattern(input);
+            setCraftProgressDialog(() => dialogModule.default);
+            setCraftPattern(snapshot);
+        } catch {
+            setErrorMessage(getCraftProgressCopy(locale).openError);
+        } finally {
+            craftEntryBusyRef.current = false;
+            setCraftEntryBusy(false);
+        }
+    };
+    const craftProgressButton = (
+        <button type="button" onClick={() => void openCraftProgress()} disabled={!canOpenCraftProgress}
+            title={isEditorPage && hasPendingPatternSettings ? getCraftProgressCopy(locale).applySettingsHint : undefined}
+            className="min-h-11 w-full rounded-lg border border-[#768b7c] bg-white px-3 py-2 text-xs font-semibold text-brutal-black hover:bg-brand-cyan disabled:opacity-50">
+            {getCraftProgressCopy(locale).open}
+        </button>
+    );
+
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         loadSelectedFile(getFirstImageFile(event.target.files));
         event.currentTarget.value = '';
@@ -3451,7 +3505,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const handleEditorShortcuts = React.useEffectEvent(
         (event: KeyboardEvent) => {
-            if (isLibraryPatternLoading || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
+            if (craftPattern || craftEntryBusyRef.current || isLibraryPatternLoading || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
             const target = event.target as HTMLElement | null;
             const isTypingTarget =
                 target instanceof HTMLInputElement ||
@@ -3501,7 +3555,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
         const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
         if (!detail?.href) return;
-        if (!isEditorDraftReady || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending ||
+        if (craftPattern || craftEntryBusyRef.current || !isEditorDraftReady || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending ||
             (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
             event.preventDefault();
             setErrorMessage('Please wait for the current operation to finish before changing language.');
@@ -3629,7 +3683,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
-            <div className="contents" inert={isSourceCropOpen || isColorLimitOpen || sourceTransactionKind !== null}>
+            <div className="contents" inert={Boolean(craftPattern) || craftEntryBusy || isSourceCropOpen || isColorLimitOpen || sourceTransactionKind !== null}>
             {localeRestoreBlocked ? (
                 <div role="alert" className="flex min-h-48 flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#d9ded5] bg-brutal-bg p-6 font-sans text-brutal-black">
                     <p>{t('Your saved language change could not be restored. Retry or open a saved project to continue.')}</p>
@@ -3669,7 +3723,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                         locale={locale}
                         hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
-                        busy={processing || exportingId !== null}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern)}
                         onOpen={(draft, patternId) => {
                             restoreEditorDraft(draft);
                             libraryPatternIdRef.current = patternId;
@@ -3686,7 +3740,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     <PixelBeadEntry locale={locale}
                         hasCurrentPattern={hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
-                        busy={processing || exportingId !== null || isSourceCropOpen || isColorLimitOpen}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen}
                         onOpen={installPixelBeadDraft}
                         onSave={handleSaveProject}
                         onLoadingChange={setIsLibraryPatternLoading}
@@ -3795,6 +3849,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                 className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-yellow disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-white sm:block"
                             >
                                 {t("Save")}
+                            </button>
+                            <button type="button" onClick={() => void openCraftProgress()} disabled={!canOpenCraftProgress}
+                                title={isEditorPage && hasPendingPatternSettings ? getCraftProgressCopy(locale).applySettingsHint : undefined}
+                                className="hidden h-full border-l border-brutal-black/20 bg-white px-3 text-xs font-semibold hover:bg-brand-cyan disabled:opacity-50 sm:block">
+                                {getCraftProgressCopy(locale).open}
                             </button>
                             <button
                                 type="button"
@@ -4263,6 +4322,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                         <Save className="h-4 w-4" />
                                         {t("Save Project")}
                                     </button>
+                                    <div className="col-span-2">{craftProgressButton}</div>
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -5658,6 +5718,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                         >
                                             {t("Save Project")}
                                         </button>
+                                        {craftProgressButton}
                                     </div>
                                 ) : null}
                             </div>
@@ -5909,6 +5970,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                     {t("Save Project")}
                                 </Button>
                             </div>
+                            {craftProgressButton}
                         </div>
                     </Card>
 
@@ -6855,6 +6917,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 }}
             />
             </div>
+            {craftEntryBusy ? <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-line bg-white p-3 shadow-sm">{getCraftProgressCopy(locale).loading}</div> : null}
+            {craftPattern && CraftProgressDialog ? (
+                <CraftProgressDialog pattern={craftPattern} locale={locale} onClose={() => setCraftPattern(null)} />
+            ) : null}
             {sourceTransactionKind === 'upload' ? (
                 <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-line bg-white p-3 shadow-sm">
                     <button type="button" className="min-h-11 px-4 text-sm font-semibold text-accent" onClick={cancelSourceOperation}>{getSourceCropCopy(locale).cancel}</button>
