@@ -168,7 +168,7 @@ export const guidePages: GuidePage[] = [
                 heading: 'Start with a clear source image',
                 body: [
                     'Choose a photo with a clear subject, strong contrast, and a simple background. Portraits, game sprites, pets, icons, and logos usually convert better than busy scenes.',
-                    'If the subject is too small in the original image, crop it before uploading. The generator will have more beads available for the important part of the design.',
+                    'After uploading, choose “Crop image” beside the source image. Drag the frame around your subject, or enter its pixel coordinates, then choose “Apply and generate”. The original stays saved, so you can adjust the crop later or use the whole image again. Applying a crop generates a new pattern and replaces hand-edited beads; Cancel keeps your current work.',
                 ],
                 bullets: [
                     'Use high contrast images when possible.',

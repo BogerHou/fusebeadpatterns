@@ -14,6 +14,7 @@ import {
     EDITOR_PROJECT_PATTERN_DIMENSION_MAX,
     encodeEditorPatternDraft,
     encodeEditorProjectPattern,
+    loadEditorDraft,
     parseEditorProject,
     saveEditorDraft,
     serializeEditorProject,
@@ -272,6 +273,58 @@ describe('editor draft storage', () => {
 
         expect(saveEditorDraft(draft)).toBe(true);
         expect(setItem).toHaveBeenCalledWith(EDITOR_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    });
+
+    it('saves and restores an original-image crop with the exact source and edited RGBA', () => {
+        const values = new Map<string, string>();
+        vi.stubGlobal('window', { sessionStorage: {
+            setItem: (key: string, value: string) => values.set(key, value),
+            getItem: (key: string) => values.get(key) ?? null,
+        } });
+        const pixels = new Uint8ClampedArray([1, 2, 3, 0, 9, 8, 7, 255]);
+        const draft = createEditorDraft({
+            ...createTestDraft(), sourceMode: 'image', imageSrc: 'data:image/png;base64,b3JpZ2luYWw=',
+            sourceCrop: { sourceWidth: 120, sourceHeight: 80, x: 17, y: 9, width: 60, height: 30 },
+            editedPattern: encodeEditorProjectPattern(pixels, 2, 1),
+        });
+        expect(saveEditorDraft(draft)).toBe(true);
+        expect(loadEditorDraft()).toEqual(draft);
+        const restored = parseEditorProject(serializeEditorProject(draft))!;
+        expect(restored).toEqual(draft);
+        expect(decodeEditorPatternDraft(restored.editedPattern)).toEqual(pixels);
+        expect(restored.sourceCrop).not.toBe(draft.sourceCrop);
+        restored.sourceCrop!.x = 0;
+        expect(loadEditorDraft()!.sourceCrop!.x).toBe(17);
+        expect(draft.sourceCrop!.x).toBe(17);
+    });
+
+    it('rejects invalid crops in both project JSON and stored drafts without fallback to a different image area', () => {
+        const source = { sourceWidth: 120, sourceHeight: 80, x: 17, y: 9, width: 60, height: 30 };
+        const draft = { ...createTestDraft(), sourceMode: 'image' as const, imageSrc: 'data:image/png;base64,b3JpZ2luYWw=' };
+        const patches = [
+            { sourceCrop: { ...source, x: -1 } }, { sourceCrop: { ...source, x: 0.5 } },
+            { sourceCrop: { ...source, width: 104 } }, { sourceCrop: { ...source, height: 72 } },
+            { sourceCrop: { ...source, sourceWidth: Number.MAX_SAFE_INTEGER + 1 } },
+            { sourceCrop: { ...source, width: null } }, { sourceCrop: { ...source, height: '30' } },
+            { sourceCrop: { ...source, extra: true } }, { sourceCrop: {} }, { sourceCrop: false },
+            { sourceCrop: source, sourceMode: 'blank' }, { sourceCrop: source, imageSrc: null },
+            { sourceCrop: source, imageSrc: '' },
+        ];
+        for (const patch of patches) {
+            const candidate = { ...draft, ...patch };
+            const rawDraft = JSON.stringify(candidate);
+            vi.stubGlobal('window', { sessionStorage: { getItem: () => rawDraft } });
+            expect(loadEditorDraft()).toBeNull();
+            expect(parseEditorProject(JSON.stringify({ type: EDITOR_PROJECT_FILE_TYPE, version: 1, draft: candidate }))).toBeNull();
+        }
+    });
+
+    it('preserves legacy missing fields and accepts explicit null when clearing a crop', () => {
+        const legacy = createTestDraft();
+        const restored = parseEditorProject(serializeEditorProject(legacy))!;
+        expect(restored).toEqual(legacy);
+        expect(Object.hasOwn(restored, 'sourceCrop')).toBe(false);
+        expect(parseEditorProject(serializeEditorProject({ ...legacy, sourceCrop: null }))).toEqual({ ...legacy, sourceCrop: null });
     });
 
     it('reports a storage quota failure without throwing', () => {

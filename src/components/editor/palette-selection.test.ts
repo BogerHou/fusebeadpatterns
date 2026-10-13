@@ -10,6 +10,7 @@ import { applyFreshPaletteDefaults } from '../../lib/editor/palette-defaults';
 import { clonePalettes, countEnabledEntries, enablePaletteEntry, getAutomaticEditorColorRef, mergePaletteEnabledState, togglePaletteEntry, togglePaletteGroup } from '../../lib/editor/palette-state';
 import { PatternHistory, PatternStroke } from '../../lib/editor/pattern-history';
 import { remapPatternPalette } from '../../lib/editor/pattern-palette';
+import { normalizeSourceCrop, type EditorSourceCrop } from '../../lib/core/utils/image-crop';
 
 // Execute the actual checkbox/dropdown handlers and selected-palette effect.
 // Only React scheduling/canvas I/O are modeled; CSV loading, matching, pixels,
@@ -50,6 +51,7 @@ const compiled = ts.transpileModule([
     declaration('handleApplyPatternSettings'),
     declaration('setAutomaticEditorColorRef'), declaration('setManualEditorColorRef'), declaration('syncEditorColorAfterPatternBuild'),
     declaration('syncProjectPalettes'), declaration('updatePalettes'), declaration('handleEditorColorSelection'),
+    declaration('sourceProcessingKey'),
     `module.exports = { checkbox: handlePaletteSelection, primary: handlePrimaryPaletteChange, apply: handleApplyPatternSettings, cancel: cancelSettingsUpdate,
         update: updatePalettes, picker: handleEditorColorSelection, colorEffect: ${colorEffect.getText(source)},
         pendingPaletteEffect: ${pendingPaletteEffect.getText(source)}, image: ${imageEffect.getText(source)}, effect: ${selectionEffect.getText(source)} };`,
@@ -80,10 +82,19 @@ function harness(id = 'original-black-cat', mode: 'blank' | 'image' = 'blank', f
         paletteAbort: { current: null as AbortController | null }, skipImage: { current: false },
         settingsAbort: { current: null as AbortController | null }, pendingPalette: { current: null as Palette[] | null },
         imageAbort: { current: null as AbortController | null }, paletteHistory: { current: [] as Palette[][] },
+        sourceCandidate: { current: null as AbortController | null },
+        acceptedSource: { current: mode === 'image' ? {
+            boardId: draft.boardId, boardWidth: draft.boardWidth, boardHeight: draft.boardHeight,
+            matchingId: draft.matchingId, ditheringId: draft.ditheringId,
+            imageAdjustments: { ...draft.imageAdjustments }, selectedPaletteIds: [...draft.selectedPaletteIds],
+            activePalettes: clonePalettes(draft.activePalettes), center: draft.rendererSettings.center,
+            fit: draft.rendererSettings.fit, crop: null as EditorSourceCrop | null,
+        } : null },
         lastImage: { current: mode === 'image' ? 'test-image' : null },
         lastImageSettings: { current: JSON.stringify({ boardId: draft.boardId, boardWidth: draft.boardWidth,
             boardHeight: draft.boardHeight, matchingId: draft.matchingId, ditheringId: draft.ditheringId,
-            imageAdjustments: draft.imageAdjustments, center: draft.rendererSettings.center, fit: draft.rendererSettings.fit }) },
+            imageAdjustments: draft.imageAdjustments, center: draft.rendererSettings.center, fit: draft.rendererSettings.fit,
+            sourceCrop: null }) },
         editorColor: { current: null as string | null }, colorMode: { current: 'auto' as 'auto' | 'manual' },
     };
     const canvas = { width: 29, height: 29, getContext: () => ({
@@ -103,6 +114,7 @@ function harness(id = 'original-black-cat', mode: 'blank' | 'image' = 'blank', f
             useCallback: (callback: unknown) => callback,
             getBoardOption, getPaletteOption, parsePaletteCsv, applyFreshPaletteDefaults, PALETTE_OPTIONS,
             clonePalettes, countEnabledEntries, enablePaletteEntry, getAutomaticEditorColorRef, mergePaletteEnabledState, remapPatternPalette: convert, computeUsage,
+            normalizeSourceCrop, sourceCrop: null,
             fetch: fetchPalette, isEditorDraftReady: true, selectedPaletteIds: state.ids, activePalettes: state.active,
             matchingId: draft.matchingId, rendererSettings: { ...draft.rendererSettings, showGrid: true }, sourceMode: mode,
             currentProjectRef: refs.project, reducedColorRef: refs.pixels, patternHistoryRef: refs.history,
@@ -110,6 +122,7 @@ function harness(id = 'original-black-cat', mode: 'blank' | 'image' = 'blank', f
             canvasRef: { current: canvas }, paletteSyncAbortRef: refs.paletteAbort,
             restoredPaletteIdsRef: refs.restored, resolvedPaletteIdsRef: refs.resolved,
             imageGenerationRef: refs.imageAbort, settingsUpdateRef: refs.settingsAbort,
+            sourceCandidateControllerRef: refs.sourceCandidate, acceptedSourceConfigurationRef: refs.acceptedSource,
             pendingPaletteUpdateRef: refs.pendingPalette,
             skipNextPaletteRebuildRef: refs.skipImage, finishActiveStroke: finishStroke,
             createPatternPreviewDataUrl: (pixels: Uint8ClampedArray) => Buffer.from(pixels).toString('base64'),
@@ -185,6 +198,13 @@ function targetOnly(h: ReturnType<typeof harness>, refPrefix: string, beads: num
     expect([...h.state.usage.keys()].every(ref => ref.startsWith(refPrefix))).toBe(true);
     expect(countBeads(h.state.usage)).toBe(beads);
     expect(h.refs.project.current.paletteConfiguration.palettes).toEqual(h.state.active);
+    if (h.refs.acceptedSource.current) {
+        // Later failed image regeneration must roll back to this brand's exact
+        // accepted palette, rather than its preceding source configuration.
+        expect(h.refs.acceptedSource.current.selectedPaletteIds).toEqual(h.state.ids);
+        expect(h.refs.acceptedSource.current.activePalettes).toEqual(h.state.active);
+        expect(h.refs.acceptedSource.current.activePalettes).not.toBe(h.state.active);
+    }
     expect(computeUsage(h.refs.pixels.current, h.state.active)).toEqual(h.state.usage);
     expect(h.state.preview).toBe(Buffer.from(h.refs.pixels.current).toString('base64'));
 }
