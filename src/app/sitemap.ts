@@ -1,4 +1,5 @@
 import { hamaMakerPaths } from '@/lib/hama-maker/routes';
+import { perlerColorChartPaths } from '@/lib/color-chart/routes';
 import { guideRouteGroups } from '@/lib/guides/routes';
 import { sitePageRouteGroups } from '@/lib/site-pages/routes';
 import { localeRoutes } from '@/lib/i18n/routes';
@@ -17,6 +18,11 @@ const translationBaseline = Date.parse('2026-10-09T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
+        ...Object.values(perlerColorChartPaths).map(path => ({
+            url: `https://fusebeadpatterns.art${path}`,
+            lastModified: new Date('2026-10-13T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
+        })),
         ...Object.values(hamaMakerPaths).map(path => ({
             url: `https://fusebeadpatterns.art${path}`,
             lastModified: new Date('2026-10-09T00:00:00.000Z'),

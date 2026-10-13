@@ -1,4 +1,5 @@
 import { hamaMakerPaths } from '../hama-maker/routes';
+import { perlerColorChartPaths } from '../color-chart/routes';
 import { guideRouteGroups, guideIndexHref } from '../guides/routes';
 import { patternSectionRouteGroups } from '../patterns/section-routes';
 import { sitePageHref, sitePageRouteGroups } from '../site-pages/routes';
@@ -23,6 +24,7 @@ export const localeRoutes: Record<SiteLocale, { home: string; hamaMaker: string;
 export const localizedRouteGroups: ReadonlyArray<Partial<Record<SiteLocale, string>>> = [
     { en: '/', de: '/de', fr: '/fr', ja: '/ja' },
     hamaMakerPaths,
+    perlerColorChartPaths,
     { en: '/patterns', de: '/de/patterns', fr: '/fr/patterns', ja: '/ja/patterns' },
     ...patternSlugs.map(slug => ({ en: `/patterns/${slug}`, de: `/de/patterns/${slug}`, fr: `/fr/patterns/${slug}`, ja: `/ja/patterns/${slug}` })),
     ...patternSectionRouteGroups,

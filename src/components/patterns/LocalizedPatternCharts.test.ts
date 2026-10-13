@@ -23,6 +23,7 @@ import * as sectionMessages from '../../lib/patterns/section-messages';
 import * as metadata from '../../lib/i18n/metadata';
 import * as overview from '../../lib/patterns/library-overview';
 import * as hamaMakerRoutes from '../../lib/hama-maker/routes';
+import * as colorChartRoutes from '../../lib/color-chart/routes';
 import * as guideRoutes from '../../lib/guides/routes';
 import * as sitePageRoutes from '../../lib/site-pages/routes';
 import * as localeRoutes from '../../lib/i18n/routes';
@@ -44,6 +45,7 @@ const empty = defaultModule((): null => null);
 const quickDownloads = defaultModule(({ children }: { children: ReactNode }) => createElement('div', null, children));
 const patternCatalog = { ...empty, toLocalizedPatternCard: (pattern: catalog.Pattern) => ({ id: pattern.id }) };
 const modules: Record<string, unknown> = {
+    '@/lib/color-chart/routes': colorChartRoutes,
     './HamaCharacterDownloads': defaultModule(HamaCharacterDownloads),
     '@/components/patterns/HamaCharacterDownloads': defaultModule(HamaCharacterDownloads),
     'next/image': defaultModule(({ src, alt, width, height }: Record<string, unknown>) => createElement('img', { src, alt, width, height })),
@@ -224,7 +226,11 @@ describe('native pattern chart journeys', () => {
             expect(record.lastModified.toISOString()).toBe('2026-10-11T00:00:00.000Z');
             expect(record.images).toEqual(['https://fusebeadpatterns.art/patterns/original-sunset-mountain-lake/preview.png']);
         }
-        const previous = records.filter(record => !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const colorChartUrls = Object.values(colorChartRoutes.perlerColorChartPaths).map(path => `https://fusebeadpatterns.art${path}`);
+        const colorCharts = records.filter(record => colorChartUrls.includes(record.url));
+        expect(colorCharts.map(record => record.url)).toEqual(colorChartUrls);
+        for (const record of colorCharts) expect(record.lastModified.toISOString()).toBe('2026-10-13T00:00:00.000Z');
+        const previous = records.filter(record => !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 
