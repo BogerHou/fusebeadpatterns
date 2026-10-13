@@ -4,6 +4,7 @@ import type { SiteLocale } from '../i18n/locales';
 import { exportMessages } from '../core/printer/messages';
 import type { PdfScaleMode } from './pdf-scale';
 import { isPdfPaperSize, type PdfPaperSize } from './pdf-paper';
+import { validateBoardSelection, type BoardSelection } from './board-materials';
 
 type CoreExportId = 'pdf' | 'svg' | 'png' | 'jpg' | 'xlsx';
 
@@ -20,6 +21,7 @@ export type ExportEditorPatternOptions = {
     locale?: SiteLocale;
     pdfScaleMode?: PdfScaleMode;
     pdfPaperSize?: PdfPaperSize;
+    pdfBoard?: BoardSelection;
     exportGridPng: () => void | Promise<void>;
     printerLoaders?: Partial<Record<CoreExportId, EditorPrinterLoader>>;
 };
@@ -63,6 +65,7 @@ export async function exportEditorPattern({
     locale = 'en',
     pdfScaleMode,
     pdfPaperSize,
+    pdfBoard,
     printerLoaders = {},
 }: ExportEditorPatternOptions): Promise<void> {
     if (exportId === 'grid_png') {
@@ -76,16 +79,20 @@ export async function exportEditorPattern({
     if (exportId === 'pdf' && pdfPaperSize !== undefined && !isPdfPaperSize(pdfPaperSize)) {
         throw new Error(exportMessages(locale).paperUnsupported);
     }
+    const selectedBoard = exportId === 'pdf' && pdfBoard !== undefined
+        ? validateBoardSelection(reducedColor, project.boardConfiguration.board.nbBeadPerRow,
+            project.boardConfiguration.nbBoardWidth, project.boardConfiguration.nbBoardHeight, pdfBoard)
+        : undefined;
 
     const loadPrinter =
         printerLoaders[exportId] ?? DEFAULT_PRINTER_LOADERS[exportId];
     const Printer = await loadPrinter();
 
     const useDefaultPaper = exportId !== 'pdf' || pdfPaperSize === undefined || pdfPaperSize === 'a4';
-    if (locale === 'en' && (!pdfScaleMode || pdfScaleMode === 'fit-page') && useDefaultPaper) {
+    if (locale === 'en' && (!pdfScaleMode || pdfScaleMode === 'fit-page') && useDefaultPaper && !selectedBoard) {
         // Keep the established default printer contract for existing integrations.
         await new Printer().print(reducedColor, beadsUsage, project, fileName);
     } else {
-        await new Printer().print(reducedColor, beadsUsage, project, fileName, { locale, ...(pdfScaleMode ? { pdfScaleMode } : {}), ...(exportId === 'pdf' && pdfPaperSize ? { pdfPaperSize } : {}) });
+        await new Printer().print(reducedColor, beadsUsage, project, fileName, { locale, ...(pdfScaleMode ? { pdfScaleMode } : {}), ...(exportId === 'pdf' && pdfPaperSize ? { pdfPaperSize } : {}), ...(selectedBoard ? { pdfBoard: selectedBoard } : {}) });
     }
 }

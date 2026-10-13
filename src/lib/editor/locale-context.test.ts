@@ -50,6 +50,22 @@ function fixture() {
 }
 
 describe('editor language working context', () => {
+    it('keeps a valid selected material board only in the language handoff and rejects stale coordinates', () => {
+        const { draft, context } = fixture();
+        const before = JSON.stringify(draft);
+        const source = { ...context, materialsBoard: { row: 0, column: 0 } };
+        const parsed = parseEditorLocaleContext(source, draft)!;
+        expect(parsed.materialsBoard).toEqual({ row: 0, column: 0 });
+        source.materialsBoard.row = 3;
+        expect(parsed.materialsBoard).toEqual({ row: 0, column: 0 });
+        for (const materialsBoard of [{ row: 1, column: 0 }, { row: 0, column: 1 }, { row: -1, column: 0 }, { row: 0.5, column: 0 }, { row: '0', column: 0 }, [], false] as unknown[]) {
+            expect(parseEditorLocaleContext({ ...context, materialsBoard }, draft)).toBeNull();
+        }
+        expect(parseEditorLocaleContext({ ...context, materialsBoard: null }, draft)).not.toBeNull();
+        expect(parseEditorLocaleContext(context, draft)).not.toBeNull();
+        expect(JSON.stringify(draft)).toBe(before);
+    });
+
     it('restores actual undo and redo branches for a legal 29 × 29 applied board', () => {
         const { draft, context, states } = fixture();
         const parsed = parseEditorLocaleContext(JSON.parse(JSON.stringify(context)), draft);

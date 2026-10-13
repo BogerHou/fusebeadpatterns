@@ -1,8 +1,9 @@
 import type { SiteLocale } from '../../i18n/locales';
 import type { PdfScaleMode } from '../../editor/pdf-scale';
 import type { PdfPaperSize } from '../../editor/pdf-paper';
+import type { BoardSelection } from '../../editor/board-materials';
 
-export type PrinterOptions = { locale?: SiteLocale; pdfScaleMode?: PdfScaleMode; pdfPaperSize?: PdfPaperSize };
+export type PrinterOptions = { locale?: SiteLocale; pdfScaleMode?: PdfScaleMode; pdfPaperSize?: PdfPaperSize; pdfBoard?: BoardSelection };
 
 /** Labels only: brand names, references, palette symbols and counts stay intact. */
 export const EXPORT_MESSAGES = {

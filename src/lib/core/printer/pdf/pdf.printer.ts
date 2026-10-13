@@ -9,6 +9,7 @@ import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
 import type { SiteLocale } from '../../../i18n/locales';
 import type { PdfScaleMode } from '../../../editor/pdf-scale';
+import { getBoardMaterials, type BoardMaterials } from '../../../editor/board-materials';
 import { isPdfPaperSize, PDF_PAPER_DIMENSIONS, type PdfPaperSize } from '../../../editor/pdf-paper';
 import { boardPosition, exportMessages, pdfPrintingInstruction, type PrinterOptions } from '../messages';
 import { JAPANESE_EXPORT_FONT_NAME, loadJapaneseExportFont, registerJapaneseExportFont } from './japanese-font';
@@ -32,6 +33,11 @@ function labelFont(doc: jsPDF, locale: SiteLocale, size: number): void {
     doc.setFont(locale === 'ja' ? JAPANESE_EXPORT_FONT_NAME : 'helvetica', 'normal');
     doc.setFontSize(size);
     doc.setTextColor(0, 0, 0);
+}
+
+function boardGlobalRange(locale: SiteLocale, board: BoardMaterials): string {
+    const copy = exportMessages(locale);
+    return `${copy.pattern} / ${copy.row} ${board.globalRows.from}-${board.globalRows.to} / ${copy.column} ${board.globalColumns.from}-${board.globalColumns.to}`;
 }
 
 class Rect {
@@ -67,7 +73,7 @@ export class PdfPrinter implements Printer {
         usage: Map<string, number>,
         project: Project,
         filename: string,
-        { locale = 'en', pdfScaleMode = 'fit-page', pdfPaperSize = 'a4' }: PrinterOptions = {}
+        { locale = 'en', pdfScaleMode = 'fit-page', pdfPaperSize = 'a4', pdfBoard }: PrinterOptions = {}
     ): Promise<void> {
         if (!isPdfPaperSize(pdfPaperSize)) {
             throw new Error(exportMessages(locale).paperUnsupported);
@@ -78,6 +84,13 @@ export class PdfPrinter implements Printer {
         if (pdfScaleMode === 'midi-5mm' && !isMidiActualSizeProject(project)) {
             throw new Error(exportMessages(locale).midiSizeUnsupported);
         }
+        // Derive the selected inventory from the same full snapshot as the grid.
+        // Never treat the caller's whole-pattern usage as a single-board total.
+        const selectedBoard = pdfBoard === undefined ? undefined : getBoardMaterials(
+            reducedColor, project.paletteConfiguration.palettes,
+            project.boardConfiguration.board.nbBeadPerRow,
+            project.boardConfiguration.nbBoardWidth, project.boardConfiguration.nbBoardHeight, pdfBoard
+        );
         const { width, height } = PDF_PAPER_DIMENSIONS[pdfPaperSize];
         const margin = 5;
 
@@ -86,7 +99,7 @@ export class PdfPrinter implements Printer {
         if (locale === 'ja') {
             registerJapaneseExportFont(doc, await loadJapaneseExportFont());
         }
-        if (locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter') {
+        if (locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter' || selectedBoard) {
             const copy = exportMessages(locale);
             // jsPDF supports Japanese as "ja"; "ja-JP" is silently ignored.
             doc.setLanguage(({ en: 'en', de: 'de-DE', fr: 'fr-FR', ja: 'ja' } as const)[locale]);
@@ -94,12 +107,12 @@ export class PdfPrinter implements Printer {
         }
         doc.setFont('MonoFont');
 
-        this.boardMapping(doc, project, margin, width, height, locale, pdfScaleMode, pdfPaperSize);
-        this.usage(doc, usage, width, height, margin, project, locale, pdfScaleMode, pdfPaperSize);
-        this.beadMapping(doc, project, reducedColor, width, height, margin, locale, pdfScaleMode, pdfPaperSize);
+        if (!selectedBoard) this.boardMapping(doc, project, margin, width, height, locale, pdfScaleMode, pdfPaperSize);
+        this.usage(doc, selectedBoard?.usage ?? usage, width, height, margin, project, locale, pdfScaleMode, pdfPaperSize, selectedBoard);
+        this.beadMapping(doc, project, reducedColor, width, height, margin, locale, pdfScaleMode, pdfPaperSize, selectedBoard);
         if (
-            project.boardConfiguration.nbBoardWidth === 1 &&
-            project.boardConfiguration.nbBoardHeight === 1
+            selectedBoard || (project.boardConfiguration.nbBoardWidth === 1 &&
+            project.boardConfiguration.nbBoardHeight === 1)
         ) {
             // A board-position index is only useful when assembling multiple boards.
             doc.deletePage(1);
@@ -180,12 +193,13 @@ export class PdfPrinter implements Printer {
         project: Project,
         locale: SiteLocale = 'en',
         pdfScaleMode: PdfScaleMode = 'fit-page',
-        pdfPaperSize: PdfPaperSize = 'a4'
+        pdfPaperSize: PdfPaperSize = 'a4',
+        selectedBoard?: BoardMaterials
     ) {
         const usagePerPage = 30;
 
         const maxUsage = '' + _.max(Array.from(usage.values()));
-        const longestRef = _.maxBy(Array.from(usage.keys()), (s) => s.length);
+        const longestRef = _.maxBy(Array.from(usage.keys()), (s) => s.length) ?? '';
         const paletteEntriesByRef = createPaletteEntryRefMap(
             project.paletteConfiguration.palettes
         );
@@ -197,15 +211,18 @@ export class PdfPrinter implements Printer {
         const symbolWidth = project.exportConfiguration.useSymbols ? 50 : 0;
         const usageWidth = 50;
 
-        const showLabels = locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter';
-        const headerHeight = showLabels ? 22 : 0;
+        const showLabels = locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter' || !!selectedBoard;
+        const headerHeight = selectedBoard ? 39 : showLabels ? 22 : 0;
         const heightWithMargins = height - 2 * margin - headerHeight;
         const rowHeight = heightWithMargins / usagePerPage;
 
-        _.chunk(
+        const chunks = _.chunk(
             Array.from(usage.entries()).sort(([, v1], [, v2]) => v2 - v1),
             usagePerPage
-        ).forEach((entries) => {
+        );
+        // An empty selected board still has a materials page showing Count 0.
+        if (selectedBoard && chunks.length === 0) chunks.push([]);
+        chunks.forEach((entries) => {
             doc.addPage();
             const usageSheetWidthOffset =
                 (width - refWidth - usageWidth - symbolWidth) / 2;
@@ -215,9 +232,15 @@ export class PdfPrinter implements Printer {
                 labelFont(doc, locale, 14);
                 doc.text(copy.inventory, width / 2, 13, { align: 'center' });
                 labelFont(doc, locale, 8);
-                doc.text(copy.reference, usageSheetWidthOffset + refWidth / 2, 23, { align: 'center' });
-                if (symbolWidth) doc.text(copy.symbol, usageSheetWidthOffset + refWidth + symbolWidth / 2, 23, { align: 'center' });
-                doc.text(copy.count, usageSheetWidthOffset + refWidth + symbolWidth + usageWidth / 2, 23, { align: 'center' });
+                if (selectedBoard) {
+                    doc.text(boardPosition(locale, selectedBoard.selection.row, selectedBoard.selection.column), width / 2, 20, { align: 'center' });
+                    doc.text(boardGlobalRange(locale, selectedBoard), width / 2, 26, { align: 'center' });
+                    doc.text(`${copy.count} ${selectedBoard.beadCount}`, width / 2, 32, { align: 'center' });
+                }
+                const labelY = selectedBoard ? 40 : 23;
+                doc.text(copy.reference, usageSheetWidthOffset + refWidth / 2, labelY, { align: 'center' });
+                if (symbolWidth) doc.text(copy.symbol, usageSheetWidthOffset + refWidth + symbolWidth / 2, labelY, { align: 'center' });
+                doc.text(copy.count, usageSheetWidthOffset + refWidth + symbolWidth + usageWidth / 2, labelY, { align: 'center' });
                 doc.setFont('MonoFont');
             }
 
@@ -363,7 +386,8 @@ export class PdfPrinter implements Printer {
         margin: number,
         locale: SiteLocale = 'en',
         pdfScaleMode: PdfScaleMode = 'fit-page',
-        pdfPaperSize: PdfPaperSize = 'a4'
+        pdfPaperSize: PdfPaperSize = 'a4',
+        selectedBoard?: BoardMaterials
     ) {
         const actualMidi = pdfScaleMode === 'midi-5mm';
         const beadSize = actualMidi ? 5 :
@@ -381,9 +405,10 @@ export class PdfPrinter implements Printer {
 
         for (let i = 0; i < project.boardConfiguration.nbBoardHeight; i++) {
             for (let j = 0; j < project.boardConfiguration.nbBoardWidth; j++) {
+                if (selectedBoard && (i !== selectedBoard.selection.row || j !== selectedBoard.selection.column)) continue;
                 doc.addPage();
                 doc.setFontSize(24);
-                const showLabels = locale !== 'en' || actualMidi || pdfPaperSize === 'letter';
+                const showLabels = locale !== 'en' || actualMidi || pdfPaperSize === 'letter' || !!selectedBoard;
                 let text = showLabels ? boardPosition(locale, i, j) : `${i} - ${j}`;
                 if (showLabels) labelFont(doc, locale, 14);
                 const textWidth =
@@ -394,6 +419,11 @@ export class PdfPrinter implements Printer {
                     (doc.internal.pageSize.width - textWidth) / 2;
                 doc.setTextColor(0, 0, 0);
                 doc.text(text, textOffset, margin * 2);
+                if (selectedBoard) {
+                    labelFont(doc, locale, 8);
+                    doc.text(boardGlobalRange(locale, selectedBoard), width / 2, 17, { align: 'center' });
+                    doc.text(`${exportMessages(locale).count} ${selectedBoard.beadCount}`, width / 2, 23, { align: 'center' });
+                }
                 if (showLabels) {
                     const copy = exportMessages(locale);
                     labelFont(doc, locale, 7);
@@ -428,17 +458,18 @@ export class PdfPrinter implements Printer {
                             beadSize
                         );
 
-                        const colorIndex =
+                        const colorIndex = selectedBoard ? (y * beadsPerRow + x) * 4 :
                             ((y + i * beadsPerRow) * patternWidth +
                                 x +
                                 j * beadsPerRow) *
                             4;
+                        const source = selectedBoard?.pixels ?? reducedColor;
                         const paletteEntry = paletteEntriesByColor.get(
                             getPaletteEntryColorKey(
-                                reducedColor[colorIndex],
-                                reducedColor[colorIndex + 1],
-                                reducedColor[colorIndex + 2],
-                                reducedColor[colorIndex + 3]
+                                source[colorIndex],
+                                source[colorIndex + 1],
+                                source[colorIndex + 2],
+                                source[colorIndex + 3]
                             )
                         );
                         if (paletteEntry) {

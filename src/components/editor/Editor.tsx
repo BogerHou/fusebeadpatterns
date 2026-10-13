@@ -26,6 +26,9 @@ import { EditorDialog } from './EditorDialog';
 import { EditorSection } from './EditorSection';
 import { PdfScaleField } from './PdfScaleField';
 import { PdfPaperField } from './PdfPaperField';
+import { BoardMaterialsPanel, type BoardMaterialsView } from './BoardMaterialsPanel';
+import { getBoardMaterials, getBoardSummaries, type BoardSelection } from '@/lib/editor/board-materials';
+import { getBoardMaterialsCopy } from '@/lib/editor/board-materials-copy';
 import { useDialogFocus } from './useDialogFocus';
 import './editor-studio.css';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
@@ -120,6 +123,7 @@ import {
 import { LoadImage } from '@/lib/core/model/image/load-image.model';
 import {
     computeUsage,
+    createPaletteEntryRefMap,
     countBeads,
     drawImageInsideCanvas,
 } from '@/lib/core/utils/utils';
@@ -566,6 +570,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const initialLocaleRef = useRef(locale);
     const [pdfScaleMode, setPdfScaleMode] = useState<PdfScaleMode>(() => getInitialPdfScaleMode(locale));
     const [pdfPaperSize, setPdfPaperSize] = useState<PdfPaperSize>('a4');
+    const [materialsBoard, setMaterialsBoard] = useState<BoardSelection | null>(null);
     const [imageAdjustments, setImageAdjustments] = useState<ImageAdjustments>(
         DEFAULT_IMAGE_ADJUSTMENTS
     );
@@ -678,6 +683,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     } | null>(null);
 
     const selectedBoard = getBoardOption(boardId);
+    const validMaterialsBoard = materialsBoard && materialsBoard.row < boardHeight && materialsBoard.column < boardWidth ? materialsBoard : null;
     const totalBeads = countBeads(beadsUsage);
     const enabledColorCount = countEnabledEntries(activePalettes);
     const displayPreviewSize = getPreviewRenderSize(
@@ -1194,6 +1200,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         (draft: EditorDraft) => {
             pendingLocaleContextRef.current = null;
             pendingLocaleViewportRef.current = null;
+            setMaterialsBoard(null);
             setLocaleContextInstalling(false);
             libraryPatternIdRef.current = null;
             cancelSettingsUpdate();
@@ -1348,6 +1355,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         setIsAdvancedOpen(context.advancedOpen);
         setEditorMobilePanel(context.editorPanel);
         setHomeMobilePanel(context.homePanel);
+        setMaterialsBoard(context.materialsBoard ?? null);
         setManualPatternRevision(context.manualRevision);
         pendingLocaleViewportRef.current = context.viewport;
         setLocaleContextInstalling(false);
@@ -3124,8 +3132,25 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         link.click();
     };
 
-    const handleExport = async (exportId: string) => {
-        if (exportInProgressRef.current) {
+    const readBoardMaterials = useCallback((selection: BoardSelection | null): BoardMaterialsView | null => {
+        const pattern = reducedColorRef.current;
+        const current = currentProjectRef.current;
+        if (!pattern || !current || !selectedBoard ||
+            !isEditorPatternSnapshotReady(pattern, canvasRef.current, previewSize) ||
+            current.boardConfiguration.nbBoardWidth !== boardWidth ||
+            current.boardConfiguration.nbBoardHeight !== boardHeight ||
+            current.boardConfiguration.board.nbBeadPerRow !== selectedBoard.beadsPerRow) return null;
+        const palettes = clonePalettes(current.paletteConfiguration.palettes);
+        const boards = getBoardSummaries(pattern, palettes, selectedBoard.beadsPerRow, boardWidth, boardHeight);
+        return {
+            boards, total: boards.reduce((sum, board) => sum + board.beadCount, 0),
+            selected: selection ? getBoardMaterials(pattern, palettes, selectedBoard.beadsPerRow, boardWidth, boardHeight, selection) : null,
+            entries: createPaletteEntryRefMap(palettes), multiplePalettes: palettes.length > 1,
+        };
+    }, [boardWidth, boardHeight, selectedBoard, previewSize]);
+
+    const handleExport = async (exportId: string, selectedPdfBoard?: BoardSelection) => {
+        if (exportInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current) {
             return;
         }
         if (exportId === 'pdf' && !isPdfScaleSupported) {
@@ -3155,13 +3180,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         project.srcHeight = currentProjectRef.current.srcHeight;
         const usage = computeUsage(pattern, project.paletteConfiguration.palettes);
 
-        if (usage.size === 0) {
+        if (usage.size === 0 && !selectedPdfBoard) {
             return;
         }
 
         exportInProgressRef.current = true;
         setErrorMessage(null);
-        setExportingId(exportId);
+        setExportingId(selectedPdfBoard ? 'pdf-board' : exportId);
 
         try {
             await waitForNextPaint();
@@ -3170,10 +3195,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 locale,
                 pdfScaleMode,
                 pdfPaperSize,
+                ...(selectedPdfBoard ? { pdfBoard: { ...selectedPdfBoard } } : {}),
                 reducedColor: pattern,
                 beadsUsage: usage,
                 project,
-                fileName,
+                fileName: selectedPdfBoard ? `${fileName}-board-r${selectedPdfBoard.row + 1}-c${selectedPdfBoard.column + 1}` : fileName,
                 exportGridPng: () => handleGridExport(
                     pattern,
                     previewSize.width,
@@ -3194,7 +3220,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 error instanceof Error
                     ? error.message
                     : 'Unexpected export error.';
-            setErrorMessage(`${nextMessage}${EXPORT_ERROR_RECOVERY_ADVICE}`);
+            setErrorMessage(selectedPdfBoard ? getBoardMaterialsCopy(locale).error : `${nextMessage}${EXPORT_ERROR_RECOVERY_ADVICE}`);
         } finally {
             exportInProgressRef.current = false;
             setExportingId(null);
@@ -3283,6 +3309,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 advancedOpen: isAdvancedOpen,
                 editorPanel: editorMobilePanel,
                 homePanel: homeMobilePanel,
+                materialsBoard: validMaterialsBoard,
                 viewport: { left: previewViewportRef.current?.scrollLeft ?? 0, top: previewViewportRef.current?.scrollTop ?? 0 },
             }, draft);
             if (!context) throw new Error('Context not ready');
@@ -5330,6 +5357,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                         </label>
                                         <PdfPaperField locale={locale} id="home-pdf-paper" value={pdfPaperSize} onChange={setPdfPaperSize} />
                                         <PdfScaleField locale={locale} id="home-pdf-scale" value={pdfScaleMode} supportsActualSize={supportsMidiActualSize} onChange={setPdfScaleMode} />
+                                        {hasEditablePattern && <BoardMaterialsPanel
+                                            locale={locale} id="home-materials-board" selection={validMaterialsBoard} onSelect={setMaterialsBoard}
+                                            readSnapshot={readBoardMaterials} revision={beadsUsage} ready={!processing && !isLibraryPatternLoading}
+                                            canDownload={!processing && exportingId === null && isPdfScaleSupported}
+                                            exporting={exportingId !== null} boardExporting={exportingId === 'pdf-board'} symbols={useSymbols}
+                                            onDownload={selection => void handleExport('pdf', selection)}
+                                        />}
                                         <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[#d9ded5] bg-brutal-bg px-3 py-2 text-[11px] font-semibold">
                                             <input
                                                 name="homeMobileExportSymbols"
@@ -6465,6 +6499,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
                             <PdfPaperField locale={locale} id="export-pdf-paper" value={pdfPaperSize} onChange={setPdfPaperSize} />
                             <PdfScaleField locale={locale} id="export-pdf-scale" value={pdfScaleMode} supportsActualSize={supportsMidiActualSize} onChange={setPdfScaleMode} />
+                            {hasEditablePattern && <BoardMaterialsPanel
+                                locale={locale} id="export-materials-board" selection={validMaterialsBoard} onSelect={setMaterialsBoard}
+                                readSnapshot={readBoardMaterials} revision={beadsUsage} ready={!processing && !isLibraryPatternLoading}
+                                canDownload={!processing && exportingId === null && isPdfScaleSupported}
+                                exporting={exportingId !== null} boardExporting={exportingId === 'pdf-board'} symbols={useSymbols}
+                                onDownload={selection => void handleExport('pdf', selection)}
+                            />}
 
                             <label
                                 htmlFor={EXPORT_SYMBOLS_ID}

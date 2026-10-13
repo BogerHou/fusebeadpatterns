@@ -74,7 +74,7 @@ export const beadifierAlternativeGuide: GuidePage = {
             body: [
                 'Start from your original image and convert it again here. We do not offer an importer for a Beadifier project or reconstruct an editable pattern from its PDF. The Open Project button accepts our own project format.',
                 'Our bead editor uses board-based dimensions and preset palettes: it does not accept an arbitrary custom RGB palette or an exact custom grid such as 62 × 62. For arbitrary pixel dimensions without bead-brand matching, use our separate pixel art tool.',
-                'Choose A4 or US Letter for editor PDF exports. The paper choice is saved in your project; changing it keeps the beads and board layout. There is no per-board materials subtotal. Screen colors and digital charts still need checking against your physical beads and pegboard.',
+                'Choose A4 or US Letter for editor PDF exports. The paper choice is saved in your project; changing it keeps the beads and board layout. In Export, open Per-board materials and choose a board to view its colors and quantities or download its own PDF. Screen colors and digital charts still need checking against your physical beads and pegboard.',
             ],
             links: [{ href: '/pixel-art-grid', label: 'Use the pixel art tool for arbitrary grid dimensions' }],
         },

@@ -2,6 +2,7 @@ import { getBoardOption, getPaletteOption, type BoardOptionId } from './config';
 import { decodeEditorPatternDraft, parseEditorProject, EDITOR_PROJECT_FILE_TYPE, EDITOR_DRAFT_BOARD_COUNT_MAX, type EditorDraft } from './draft';
 import { PatternHistory, type PatternHistorySnapshot } from './pattern-history';
 import type { EditorShortcutTool } from './shortcuts';
+import type { BoardSelection } from './board-materials';
 import type { Palette } from '../core/model/palette/palette.model';
 import { localeRoutes } from '../i18n/routes';
 
@@ -40,6 +41,7 @@ export type EditorLocaleContext = {
     editorPanel: 'file' | 'edit' | 'colors' | 'setup' | null;
     homePanel: 'image' | 'brand' | 'pegboard' | 'advanced' | 'export' | null;
     viewport: { left: number; top: number };
+    materialsBoard?: BoardSelection | null;
 };
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -68,6 +70,11 @@ export function parseEditorLocaleContext(value: unknown, draft: EditorDraft): Ed
             ![null, 'image', 'brand', 'pegboard', 'advanced', 'export'].includes(value.homePanel as null | string) ||
             ![value.viewport.left, value.viewport.top].every(offset => typeof offset === 'number' && Number.isFinite(offset) && offset >= 0)) return null;
 
+        if (value.materialsBoard !== undefined && value.materialsBoard !== null &&
+            (!record(value.materialsBoard) || !Number.isInteger(value.materialsBoard.row) || !Number.isInteger(value.materialsBoard.column) ||
+                (value.materialsBoard.row as number) < 0 || (value.materialsBoard.row as number) >= draft.boardHeight ||
+                (value.materialsBoard.column as number) < 0 || (value.materialsBoard.column as number) >= draft.boardWidth)) return null;
+
         const board = getBoardOption(draft.boardId), pattern = draft.editedPattern;
         const pixels = decodeEditorPatternDraft(pattern);
         if (!board || !pattern || !pixels || pattern.width !== draft.boardWidth * board.beadsPerRow ||
@@ -87,6 +94,7 @@ export function parseEditorLocaleContext(value: unknown, draft: EditorDraft): Ed
             ...(value as unknown as EditorLocaleContext),
             history: JSON.parse(JSON.stringify(value.history)) as PatternHistorySnapshot,
             paletteHistory,
+            ...(record(value.materialsBoard) ? { materialsBoard: { row: value.materialsBoard.row as number, column: value.materialsBoard.column as number } } : {}),
             viewport: { left: value.viewport.left as number, top: value.viewport.top as number },
         };
     } catch {
