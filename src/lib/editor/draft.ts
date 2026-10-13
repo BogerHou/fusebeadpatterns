@@ -5,6 +5,7 @@ import { Palette } from '@/lib/core/model/palette/palette.model';
 import { isPdfScaleMode, type PdfScaleMode } from './pdf-scale';
 import { isPdfPaperSize, type PdfPaperSize } from './pdf-paper';
 import { isValidSourceCrop, type EditorSourceCrop } from '../core/utils/image-crop';
+import { isValidSourceBackground, normalizeSourceBackground, type SourceBackground } from './source-background';
 
 export const EDITOR_DRAFT_STORAGE_KEY = 'bead-pattern-editor-draft-v1';
 export const EDITOR_DRAFT_PATTERN_MAX_BYTES = 1_500_000;
@@ -23,6 +24,8 @@ export type EditorDraft = {
     sourceMode?: 'image' | 'blank';
     imageSrc: string | null;
     sourceCrop?: EditorSourceCrop | null;
+    /** Original-image conversion parameters only; edited pixels remain authoritative. */
+    sourceBackground?: SourceBackground | null;
     /** Automatic conversion only; saved edited pixels remain authoritative. */
     maxBeadColors?: number | null;
     fileName: string;
@@ -66,8 +69,32 @@ export function createEditorDraft(
 ): EditorDraft {
     return {
         version: 1,
-        ...input,
+        ...withValidatedSourceBackground(input),
     };
+}
+
+function withValidatedSourceBackground<T extends object>(draft: T): T {
+    const descriptor = Object.getOwnPropertyDescriptor(draft, 'sourceBackground');
+    if (!descriptor) {
+        if ('sourceBackground' in draft) throw new RangeError('Invalid inherited source background.');
+        return draft;
+    }
+    if (!('value' in descriptor) || !descriptor.enumerable) {
+        throw new RangeError('Invalid source background property.');
+    }
+    // Keep the exact legacy shape when this optional feature is unused.
+    if (descriptor.value === undefined || descriptor.value === null) return draft;
+
+    const sourceMode = Object.getOwnPropertyDescriptor(draft, 'sourceMode');
+    const imageSrc = Object.getOwnPropertyDescriptor(draft, 'imageSrc');
+    if ((sourceMode && (!('value' in sourceMode) || !sourceMode.enumerable ||
+        (sourceMode.value !== undefined && sourceMode.value !== 'image'))) ||
+        (!sourceMode && 'sourceMode' in draft) ||
+        !imageSrc || !('value' in imageSrc) || !imageSrc.enumerable ||
+        typeof imageSrc.value !== 'string' || imageSrc.value.length === 0) {
+        throw new RangeError('A source background requires an original image.');
+    }
+    return { ...draft, sourceBackground: normalizeSourceBackground(descriptor.value) };
 }
 
 function isValidPatternDimension(value: number): boolean {
@@ -237,6 +264,8 @@ function isEditorDraft(value: unknown): value is EditorDraft {
                 value.maxBeadColors >= 1 && value.maxBeadColors <= 512)) &&
         (value.sourceCrop === undefined || value.sourceCrop === null ||
             (sourceMode !== 'blank' && typeof value.imageSrc === 'string' && value.imageSrc.length > 0 && isValidSourceCrop(value.sourceCrop))) &&
+        (value.sourceBackground === undefined || value.sourceBackground === null ||
+            (sourceMode !== 'blank' && typeof value.imageSrc === 'string' && value.imageSrc.length > 0 && isValidSourceBackground(value.sourceBackground))) &&
         typeof value.fileName === 'string' &&
         isStringArray(value.selectedPaletteIds) &&
         value.selectedPaletteIds.length > 0 &&
@@ -353,7 +382,7 @@ export function createEditorProjectFile(
         type: EDITOR_PROJECT_FILE_TYPE,
         version: 1,
         savedAt,
-        draft,
+        draft: withValidatedSourceBackground(draft),
     };
 }
 
@@ -417,7 +446,7 @@ export function saveEditorDraft(draft: EditorDraft): boolean {
     try {
         window.sessionStorage.setItem(
             EDITOR_DRAFT_STORAGE_KEY,
-            JSON.stringify(draft)
+            JSON.stringify(withValidatedSourceBackground(draft))
         );
         return true;
     } catch {

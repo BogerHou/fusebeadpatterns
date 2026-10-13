@@ -141,6 +141,7 @@ describe('real preparation and canvas publication boundaries', () => {
         const { context, canvas } = sourceSurface(new Uint8ClampedArray(8));
         const prepared = await prepareSourceImagePattern({ src: 'original', fileName: 'saved', crop:
             { sourceWidth: 8, sourceHeight: 6, x: 1, y: 1, width: 4, height: 3 }, project: project(),
+            background: { color: { r: 90, g: 80, b: 70 }, tolerance: 255, mode: 'all-matching' },
             width: 2, height: 1, matchingId: 'euclidean', maxBeadColors: 1, restoredPixels: original }, new AbortController().signal);
         expect(Array.from(prepared.pixels)).toEqual(Array.from(original));
         expect(prepared.pixels).not.toBe(original);
@@ -160,6 +161,7 @@ describe('real preparation and canvas publication boundaries', () => {
             const request = vi.mocked(quantizePattern).mock.calls.at(-1)![0];
             if (cap === 12) expect(request.maxBeadColors).toBe(12);
             else expect(Object.hasOwn(request, 'maxBeadColors')).toBe(false);
+            expect(Object.hasOwn(request, 'protectEmptyCells')).toBe(false);
         }
     });
 
@@ -187,6 +189,91 @@ describe('real preparation and canvas publication boundaries', () => {
         expect(context.drawImage).not.toHaveBeenCalled();
         expect(canvas.width).toBe(0);
         expect(canvas.height).toBe(0);
+    });
+
+    it.each(['edge-connected', 'all-matching'] as const)('masks natural ROI before filters and re-clears interpolation bleed for %s', async mode => {
+        vi.mocked(quantizePattern).mockClear();
+        // Natural 7×7 source; selected 5×5 ROI is a red closed ring on white.
+        // Its central white pixel is deliberately isolated from the ROI edge.
+        const raw = new Uint8ClampedArray(5 * 5 * 4);
+        for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) {
+            const red = x >= 1 && x <= 3 && y >= 1 && y <= 3 && (x !== 2 || y !== 2);
+            raw.set(red ? [255, 0, 0, 255] : [255, 255, 255, 255], (y * 5 + x) * 4);
+        }
+        const original = raw.slice();
+        class TestImage {
+            width = 7; height = 7; naturalWidth = 7; naturalHeight = 7;
+            style = { filter: '' }; onload: (() => void) | null = null; onerror: (() => void) | null = null;
+            set src(_value: string) { queueMicrotask(() => this.onload?.()); }
+        }
+        // Deliberately model filtered readback with nonzero pixels everywhere.
+        // Correct transparency must come from the independent binary mask.
+        const bleed = new Uint8ClampedArray(12 * 10 * 4);
+        for (let i = 0; i < bleed.length; i += 4) bleed.set([71, 82, 93, 127], i);
+        const targetContext = { filter: '', drawImage: vi.fn(), getImageData: vi.fn(() => ({ data: bleed.slice() })) };
+        const rawContext = { filter: '', imageSmoothingEnabled: true, drawImage: vi.fn(), getImageData: vi.fn(() => ({ data: raw.slice() })) };
+        const maskedContext = { createImageData: (w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData: vi.fn() };
+        const surfaces = [targetContext, rawContext, maskedContext].map(context => ({ width: 0, height: 0, getContext: () => context }));
+        let allocated = 0;
+        vi.stubGlobal('window', { Image: TestImage });
+        vi.stubGlobal('document', { createElement: () => surfaces[allocated++] });
+        const candidate = project();
+        const prepared = await prepareSourceImagePattern({ src: 'unchanged-original', fileName: 'selected', crop:
+            { sourceWidth: 7, sourceHeight: 7, x: 1, y: 1, width: 5, height: 5 },
+            background: { color: { r: 255, g: 255, b: 255 }, tolerance: 0, mode }, project: candidate,
+            width: 12, height: 10, matchingId: 'euclidean', maxBeadColors: 2 }, new AbortController().signal);
+        expect(rawContext.filter).toBe('none');
+        expect(rawContext.imageSmoothingEnabled).toBe(false);
+        expect(rawContext.drawImage.mock.calls[0].slice(1)).toEqual([1, 1, 5, 5, 0, 0, 5, 5]);
+        expect(targetContext.filter).toBe(candidate.imageConfiguration.css());
+        expect(targetContext.drawImage.mock.calls[0].slice(1)).toEqual([0, 0, 5, 5, 1, 0, 10, 10]);
+        const uploaded = maskedContext.putImageData.mock.calls[0][0].data as Uint8ClampedArray;
+        for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) {
+            const keep = x >= 1 && x <= 3 && y >= 1 && y <= 3 && (mode === 'edge-connected' || x !== 2 || y !== 2);
+            const start = (y * 5 + x) * 4;
+            expect(Array.from(uploaded.slice(start, start + 4))).toEqual(keep ? Array.from(original.slice(start, start + 4)) : [0, 0, 0, 0]);
+        }
+        // Each source pixel occupies an exact 2×2 destination area; outer
+        // margins and matching regions must remain empty after filtering.
+        for (let y = 0; y < 10; y++) for (let x = 0; x < 12; x++) {
+            const keep = x >= 3 && x <= 8 && y >= 2 && y <= 7 &&
+                (mode === 'edge-connected' || x < 5 || x > 6 || y < 4 || y > 5);
+            const offset = (y * 12 + x) * 4;
+            expect(Array.from(prepared.pixels.slice(offset, offset + 4))).toEqual(keep ? [71, 82, 93, 127] : [0, 0, 0, 0]);
+        }
+        const request = vi.mocked(quantizePattern).mock.calls.at(-1)![0];
+        expect(request.protectEmptyCells).toBe(true);
+        expect(request.maxBeadColors).toBe(2);
+        expect(request.drawingPosition).toEqual({ x: 1, y: 0, width: 10, height: 10 });
+        expect(raw).toEqual(original);
+        expect(candidate.srcWidth).toBe(7);
+        expect(candidate.srcHeight).toBe(7);
+        expect(candidate.image.src).toBeInstanceOf(TestImage);
+        expect(surfaces.every(canvas => canvas.width === 0 && canvas.height === 0)).toBe(true);
+    });
+
+    it('cancels during raw ROI read without rendering or quantizing a background candidate', async () => {
+        vi.mocked(quantizePattern).mockClear();
+        const task = new AbortController();
+        class TestImage {
+            width = 2; height = 2; naturalWidth = 2; naturalHeight = 2;
+            style = { filter: '' }; onload: (() => void) | null = null; onerror: (() => void) | null = null;
+            set src(_value: string) { queueMicrotask(() => this.onload?.()); }
+        }
+        const target = { filter: '', drawImage: vi.fn(), getImageData: vi.fn() };
+        const raw = { filter: '', imageSmoothingEnabled: true, drawImage: () => task.abort(), getImageData: vi.fn() };
+        const surfaces = [target, raw].map(context => ({ width: 0, height: 0, getContext: () => context }));
+        let allocated = 0;
+        vi.stubGlobal('window', { Image: TestImage });
+        vi.stubGlobal('document', { createElement: () => surfaces[allocated++] });
+        await expect(prepareSourceImagePattern({ src: 'original', fileName: 'cancelled', crop: null,
+            background: { color: { r: 255, g: 255, b: 255 }, tolerance: 20, mode: 'edge-connected' },
+            project: project(), width: 2, height: 2, matchingId: 'euclidean' }, task.signal)).rejects.toMatchObject({ name: 'AbortError' });
+        expect(target.drawImage).not.toHaveBeenCalled();
+        expect(target.getImageData).not.toHaveBeenCalled();
+        expect(raw.getImageData).not.toHaveBeenCalled();
+        expect(quantizePattern).not.toHaveBeenCalled();
+        expect(surfaces.every(canvas => canvas.width === 0 && canvas.height === 0)).toBe(true);
     });
 
     it('restores the actual old raster and dimensions after a prepared write fails, without publishing source/model/history', async () => {

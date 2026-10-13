@@ -2,6 +2,9 @@ import type { Project } from '../core/model/project/project.model';
 import { drawImageInsideCanvas } from '../core/utils/utils';
 import type { EditorSourceCrop } from '../core/utils/image-crop';
 import { quantizePattern } from './pattern-quantization';
+import { normalizeSourceBackground, type SourceBackground } from './source-background';
+import { applySourceBackgroundEmptyMask, maskSourceBackground, readDecodedSourceBackgroundImage, sourceBackgroundDrawingPosition } from './source-background-processing';
+import { EDITOR_PROJECT_PATTERN_DIMENSION_MAX } from './editor-limits';
 
 /** Own one source operation. An old decode/worker reply cannot publish after
  * cancellation, replacement, restoration or a newer source operation. */
@@ -126,6 +129,7 @@ export async function prepareSourceImagePattern(options: {
     height: number;
     matchingId: string;
     maxBeadColors?: number | null;
+    background?: SourceBackground | null;
     restoredPixels?: Uint8ClampedArray | null;
 }, signal: AbortSignal): Promise<PreparedSourceImage> {
     const { project, width, height } = options;
@@ -146,14 +150,41 @@ export async function prepareSourceImagePattern(options: {
             if (options.restoredPixels.length !== width * height * 4) throw new Error('Pattern dimensions must match the RGBA pixel data.');
             return { project, pixels: options.restoredPixels.slice(), width, height };
         }
-        const position = drawImageInsideCanvas(canvas, image, project.rendererConfiguration, options.crop);
+        const background = normalizeSourceBackground(options.background);
+        let position: { xStart: number; yStart: number; width: number; height: number };
+        let mask: { mask: Uint8Array; width: number; height: number } | null = null;
+        if (background) {
+            if (![width, height].every(value => Number.isSafeInteger(value) && value > 0 && value <= EDITOR_PROJECT_PATTERN_DIMENSION_MAX)) throw new RangeError('Invalid target pattern dimensions.');
+            const source = readDecodedSourceBackgroundImage(image, options.crop, signal);
+            const masked = await maskSourceBackground({ pixels: source.pixels, width: source.width, height: source.height, background }, { signal });
+            if (signal.aborted) throw abortError();
+            position = sourceBackgroundDrawingPosition(width, height, options.crop ? source.width : image.width,
+                options.crop ? source.height : image.height, project.rendererConfiguration, Boolean(options.crop));
+            mask = { mask: masked.mask, width: source.width, height: source.height };
+            const sourceCanvas = document.createElement('canvas');
+            try {
+                sourceCanvas.width = source.width; sourceCanvas.height = source.height;
+                const sourceContext = sourceCanvas.getContext('2d');
+                if (!sourceContext) throw new Error('Canvas 2D context is unavailable.');
+                const sourceData = sourceContext.createImageData(source.width, source.height);
+                sourceData.data.set(masked.pixels);
+                sourceContext.putImageData(sourceData, 0, 0);
+                context.filter = project.imageConfiguration.css();
+                if (position.width > 0 && position.height > 0) context.drawImage(sourceCanvas, 0, 0, source.width, source.height,
+                    position.xStart, position.yStart, position.width, position.height);
+            } finally { sourceCanvas.width = sourceCanvas.height = 0; }
+        } else {
+            position = drawImageInsideCanvas(canvas, image, project.rendererConfiguration, options.crop);
+        }
         const imageData = context.getImageData(0, 0, width, height);
+        if (mask) await applySourceBackgroundEmptyMask(imageData.data, width, height, mask, position, signal);
         const pixels = await quantizePattern({
             pixels: imageData.data, width, height,
             palettes: project.paletteConfiguration.palettes,
             matchingId: options.matchingId,
             ...(options.maxBeadColors !== undefined && options.maxBeadColors !== null
                 ? { maxBeadColors: options.maxBeadColors } : {}),
+            ...(background ? { protectEmptyCells: true as const } : {}),
             dithering: { enable: project.ditheringConfiguration.enable, hardness: project.ditheringConfiguration.hardness },
             drawingPosition: { x: position.xStart, y: position.yStart, width: position.width, height: position.height },
         }, { signal });

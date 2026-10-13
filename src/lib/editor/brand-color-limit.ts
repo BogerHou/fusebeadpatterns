@@ -21,9 +21,9 @@ export function normalizeMaxBeadColors(value: unknown): number | null {
     return value;
 }
 
-function validateRequest(request: QuantizationRequest): number {
+function validateRequest(request: QuantizationRequest): number | null {
     const cap = normalizeMaxBeadColors(request.maxBeadColors);
-    if (cap === null) throw new RangeError('A maximum bead color count is required.');
+    if (cap === null && !request.protectEmptyCells) throw new RangeError('A maximum bead color count is required.');
     // Share the existing project's board-derived dimension limit.
     const dimensionLimit = EDITOR_PROJECT_PATTERN_DIMENSION_MAX;
     if (!Number.isSafeInteger(request.width) || !Number.isSafeInteger(request.height) ||
@@ -37,7 +37,8 @@ function validateRequest(request: QuantizationRequest): number {
         position.width < 0 || position.height < 0 || !request.dithering ||
         typeof request.dithering.enable !== 'boolean' || !Number.isFinite(request.dithering.hardness) ||
         request.dithering.hardness < 0 || request.dithering.hardness > 100 ||
-        (request.preservePatternAlpha !== undefined && request.preservePatternAlpha !== true)) {
+        (request.preservePatternAlpha !== undefined && request.preservePatternAlpha !== true) ||
+        (request.protectEmptyCells !== undefined && typeof request.protectEmptyCells !== 'boolean')) {
         throw new RangeError('Invalid bead conversion options.');
     }
     return cap;
@@ -215,7 +216,9 @@ export function* createBrandColorLimitSteps(request: QuantizationRequest): Gener
     if (!hasBeads) return new Uint8ClampedArray(request.pixels);
     if (colors.length === 0) throw new Error('No enabled opaque bead colors are available.');
     const matching = getMatchingOption(request.matchingId)?.value ?? MATCHINGS.EUCLIDEAN;
-    const subset = yield* selectSubset(request.pixels, colors, cap, matching, work);
+    // Background protection alone uses every enabled brand color. Do not turn
+    // this into an implicit 512-color cap or disable the user's dithering.
+    const subset = cap === null ? colors : yield* selectSubset(request.pixels, colors, cap, matching, work);
     const output = new Uint8ClampedArray(request.pixels);
     const cache = new Map<number, Color>();
     const position = request.drawingPosition;

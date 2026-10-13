@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import { createEditorDraft, decodeEditorPatternDraft, encodeEditorProjectPattern, parseEditorProject, serializeEditorProject } from './draft';
 import { getPaletteOption, parsePaletteCsv } from './config';
 import { isEditorLanguageArrival, parseEditorLocaleContext, type EditorLocaleContext } from './locale-context';
 import { PatternHistory, PatternStroke } from './pattern-history';
 import { localeRoutes } from '../i18n/routes';
+import { consumeEditorLocaleDraft, saveEditorLocaleDraft } from './locale-navigation';
 
 function fixture() {
     const perler = parsePaletteCsv('P-001,Coral,C,240,106,69\nP-002,Black,B,0,0,0', getPaletteOption('perler')!);
@@ -50,6 +53,63 @@ function fixture() {
 }
 
 describe('editor language working context', () => {
+    it.each(['cat-perler-29.bead-pattern.json', 'rocket-perler-29-cleanup.bead-pattern.json'])('keeps actual %s background parameters and both history branches across all four languages', async (file) => {
+        const original = parseEditorProject(await readFile(path.join(process.cwd(), 'public/guides/photo-to-pattern', file), 'utf8'))!;
+        const originalRaw = JSON.stringify(original);
+        const pixels = decodeEditorPatternDraft(original.editedPattern)!;
+        const history = new PatternHistory();
+        const states = [pixels.slice()];
+        for (const [offset, rgba] of [[0, [12, 34, 56, 255]], [4, [78, 90, 12, 0]]] as const) {
+            const stroke = new PatternStroke(pixels);
+            stroke.setPixel(offset, rgba);
+            history.push(stroke.finish());
+            states.push(pixels.slice());
+        }
+        history.undo(pixels);
+        let draft = createEditorDraft({
+            ...original,
+            sourceBackground: { color: { r: 255, g: 255, b: 255 }, tolerance: 24, mode: 'edge-connected' },
+            editedPattern: encodeEditorProjectPattern(pixels, 29, 29),
+        });
+        const priorPalette = structuredClone(original.activePalettes);
+        priorPalette[0].entries[0].enabled = !priorPalette[0].entries[0].enabled;
+        let context: EditorLocaleContext = {
+            ...fixture().context, history: history.capture(pixels, 29, 29)!,
+            colorRef: null, colorSelection: 'auto', paletteHistory: [priorPalette],
+        };
+        const expectedDraft = JSON.stringify(draft);
+        const expectedContext = JSON.stringify(context);
+        const values = new Map<string, string>();
+        const storage = {
+            getItem: (key: string) => values.get(key) ?? null,
+            setItem: (key: string, value: string) => { values.set(key, value); },
+            removeItem: (key: string) => { values.delete(key); },
+        };
+        for (const [index, language] of (['de', 'fr', 'ja', 'en'] as const).entries()) {
+            const href = `https://fusebeadpatterns.art${localeRoutes[language].editor}`;
+            expect(saveEditorLocaleDraft(draft, href, storage, 1_000 + index, null, context)).toBe(true);
+            const restored = consumeEditorLocaleDraft(href, storage, 1_001 + index)!;
+            expect(restored).not.toBeNull();
+            expect(JSON.stringify(restored.draft)).toBe(expectedDraft);
+            expect(JSON.stringify(restored.context)).toBe(expectedContext);
+            expect(restored.draft.imageSrc).toBe(original.imageSrc);
+            const currentPixels = decodeEditorPatternDraft(restored.draft.editedPattern)!;
+            const restoredHistory = new PatternHistory();
+            expect(restoredHistory.restore(restored.context!.history, currentPixels, 29, 29)).toBe(true);
+            expect(restoredHistory.canUndo).toBe(true);
+            expect(restoredHistory.canRedo).toBe(true);
+            restoredHistory.undo(currentPixels);
+            expect(Buffer.from(currentPixels).equals(Buffer.from(states[0]))).toBe(true);
+            restoredHistory.redo(currentPixels);
+            expect(Buffer.from(currentPixels).equals(Buffer.from(states[1]))).toBe(true);
+            restoredHistory.redo(currentPixels);
+            expect(Buffer.from(currentPixels).equals(Buffer.from(states[2]))).toBe(true);
+            draft = restored.draft;
+            context = restored.context!;
+        }
+        expect(JSON.stringify(original)).toBe(originalRaw);
+    });
+
     it('preserves crop/source/pixels across four-language project handoff without poisoning palette-history validation', () => {
         const { draft, context, pixels } = fixture();
         const croppedDraft = createEditorDraft({

@@ -1,6 +1,6 @@
 import {
     EDITOR_DRAFT_STORAGE_KEY,
-    EDITOR_PROJECT_FILE_TYPE,
+    createEditorProjectFile,
     parseEditorProject,
     type EditorDraft,
 } from './draft';
@@ -44,11 +44,9 @@ function clearMarker(storage: DraftStorage): void {
 }
 
 function parseDraft(value: unknown): EditorDraft | null {
-    return parseEditorProject(JSON.stringify({
-        type: EDITOR_PROJECT_FILE_TYPE,
-        version: 1,
-        draft: value,
-    }));
+    try {
+        return parseEditorProject(JSON.stringify(createEditorProjectFile(value as EditorDraft)));
+    } catch { return null; }
 }
 
 function parseRecovery(draftValue: unknown, acceptedPatternId: unknown, contextValue: unknown): EditorLocaleRecovery | null {
