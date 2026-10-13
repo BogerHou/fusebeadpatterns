@@ -15,7 +15,12 @@ export function localizedGuideMetadata(locale: GuideLocale, slug?: string): Meta
     const guide = slug ? getLocalizedGuide(slug, locale) : undefined;
     if (slug && !guide) return {};
     const title = `${guide?.title ?? guideUi[locale].title} | Fuse Bead Patterns`;
-    const description = guide?.description ?? guideUi[locale].intro;
+    const beadifierDescriptions = {
+        de: 'Vergleiche Beadifier und Fuse Bead Patterns: Bilder umwandeln, einzelne Perlen bearbeiten, eigene Farben wählen und Muster drucken oder als Projekt speichern.',
+        fr: 'Comparez Beadifier et Fuse Bead Patterns pour convertir des images, retoucher les perles, choisir vos couleurs et enregistrer un motif ou un projet.',
+        ja: guide?.description,
+    };
+    const description = slug === 'beadifier-alternative' ? beadifierDescriptions[locale] : guide?.description ?? guideUi[locale].intro;
     const path = slug ? guideHref(slug, locale) : guideIndexHref(locale);
     return {
         title, description,

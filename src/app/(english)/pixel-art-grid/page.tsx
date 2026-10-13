@@ -8,12 +8,11 @@ import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
 import PixelConversionExamples from '@/components/pixel-grid/PixelConversionExamples';
 
 const title = 'Pixel Art Grid Maker — Draw & Export PNG | Fuse Bead Patterns';
-const description = 'Draw on a free pixel art grid or import an image. Choose a custom size up to 128 × 128, edit individual pixels, and download a transparent PNG or editable project.';
+const description = 'Draw pixel art or import an image on a free grid up to 128 × 128. Edit individual pixels and download a transparent PNG or editable project.';
 
 export const metadata: Metadata = {
     title,
     description,
-    keywords: ['pixel art grid', 'pixel grid maker', 'grid for pixel art', 'transparent pixel art PNG'],
     alternates: { canonical: '/pixel-art-grid', languages: pixelLanguageAlternates },
     openGraph: {
         title,

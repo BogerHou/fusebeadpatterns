@@ -51,7 +51,9 @@ export function getLocalizedPatternSection(slug: string, locale: PatternLocale):
         const copy = topicMessages[locale][slug];
         if (!copy) throw new Error(`Missing ${locale} topic: ${slug}`);
         return {
-            slug, href: getPatternSectionHref(slug, locale), ...copy, patterns: getPatternsForTopic(topic),
+            slug, href: getPatternSectionHref(slug, locale), ...copy,
+            ...(slug === 'small' && locale === 'de' ? { metadataDescription: 'Vergleiche 10 kleine Bügelperlen-Motive mit höchstens 16×16 Perlen und zwei bis vier Farben. Lade das Raster herunter oder bearbeite die Vorlage im Editor.' } : {}),
+            patterns: getPatternsForTopic(topic),
             additionalPatterns: getAdditionalPatternsForTopic(topic),
             relatedLinks: topic.relatedLinks.map(link => {
                 const relatedTopic = getPatternTopicBySlug(link.href.replace('/patterns/', ''));

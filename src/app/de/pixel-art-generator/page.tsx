@@ -9,13 +9,14 @@ import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
 
 const title = 'Pixel-Art-Generator — Bild in Pixel-Art umwandeln | Fuse Bead Patterns';
 const description = 'Wandle Bilder kostenlos im Browser in Pixel-Art um. Wähle Größe und Farbanzahl, bearbeite einzelne Pixel und lade ein transparentes PNG oder dein Projekt herunter.';
+const metadataDescription = 'Wandle ein Bild in Pixel-Art um. Wähle Größe und Farben, bearbeite einzelne Pixel und speichere ein transparentes PNG oder dein Projekt. Kostenlos im Browser.';
 const pageUrl = 'https://fusebeadpatterns.art/de/pixel-art-generator';
 
 export const metadata: Metadata = {
-    title, description,
+    title, description: metadataDescription,
     alternates: { canonical: pageUrl, languages: pixelLanguageAlternates },
-    openGraph: { title, description, url: pageUrl, siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
-    twitter: { card: 'summary', title, description, images: [] },
+    openGraph: { title, description: metadataDescription, url: pageUrl, siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
+    twitter: { card: 'summary', title, description: metadataDescription, images: [] },
 };
 
 const applicationSchema = {

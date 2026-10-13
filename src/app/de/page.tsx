@@ -3,7 +3,7 @@ import LocalizedGeneratorPage from '@/components/layout/LocalizedGeneratorPage';
 import { localizedHomeCopy } from '@/lib/i18n/home';
 import { homeLanguageAlternates } from '@/lib/i18n/metadata';
 
-const { title, description } = localizedHomeCopy.de;
+const { title, metadataDescription: description } = localizedHomeCopy.de;
 export const metadata: Metadata = {
     title, description,
     alternates: { canonical: '/de', languages: homeLanguageAlternates },

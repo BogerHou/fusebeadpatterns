@@ -8,6 +8,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import * as catalog from '../../lib/patterns/catalog';
 import * as content from '../../lib/patterns/localized-content';
+import * as metadataDescriptions from '../../lib/patterns/metadata-descriptions';
 import * as englishContent from '../../lib/patterns/content';
 import * as presentation from '../../lib/patterns/presentation';
 import * as downloads from '../../lib/patterns/localized-download';
@@ -53,6 +54,7 @@ const modules: Record<string, unknown> = {
     '@/components/patterns/PatternLibraryHelp': empty, './PatternShare': empty,
     './PatternCards': { PatternGrid: (): null => null }, './CoasterInstructions': defaultModule(CoasterInstructions), './OrnamentInstructions': defaultModule(OrnamentInstructions),
     '@/lib/patterns/catalog': catalog, '@/lib/patterns/localized-content': content, '@/lib/patterns/localized-download': downloads,
+    '@/lib/patterns/metadata-descriptions': metadataDescriptions,
     '@/lib/patterns/localized-ui': ui, '@/lib/patterns/localized-sources': sources, '@/lib/patterns/fan-art': fanArt,
     '@/lib/patterns/rave': rave,
     '@/lib/patterns/multiboard': multiboard,
