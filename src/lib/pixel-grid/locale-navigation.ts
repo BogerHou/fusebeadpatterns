@@ -91,13 +91,31 @@ function decodeSnapshot(value: unknown): PixelLocaleSnapshot {
     };
 }
 
-function serializeSnapshot(snapshot: PixelLocaleSnapshot, destination: string, now: number): string {
-    const encoded = {
+function encodeSnapshot(snapshot: PixelLocaleSnapshot) {
+    return {
         ...snapshot,
         grid: encode(snapshot.grid), saved: encode(snapshot.saved),
         source: snapshot.source ? { ...encode(snapshot.source), name: snapshot.source.name } : null,
         history: { undo: snapshot.history.undo.map(encode), redo: snapshot.history.redo.map(encode) },
     };
+}
+
+/** Shared data codec only. Each journey owns its own keys, lifetime and destinations. */
+export function serializePixelWorkspaceSnapshot(snapshot: PixelLocaleSnapshot): string {
+    const encoded = encodeSnapshot(snapshot);
+    const raw = JSON.stringify(encoded);
+    if (raw.length > MAX_CHARACTERS) throw new Error('Pixel transfer exceeds supported size');
+    decodeSnapshot(encoded);
+    return raw;
+}
+
+export function parsePixelWorkspaceSnapshot(raw: string): PixelLocaleSnapshot {
+    if (raw.length > MAX_CHARACTERS) throw new Error('Pixel transfer exceeds supported size');
+    return decodeSnapshot(JSON.parse(raw));
+}
+
+function serializeSnapshot(snapshot: PixelLocaleSnapshot, destination: string, now: number): string {
+    const encoded = encodeSnapshot(snapshot);
     const raw = JSON.stringify({ version: 1, destination, savedAt: now, snapshot: encoded });
     if (raw.length > MAX_CHARACTERS) throw new Error('Pixel transfer exceeds supported size');
     decodeSnapshot(encoded);

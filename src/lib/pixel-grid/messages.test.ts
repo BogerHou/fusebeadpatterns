@@ -10,6 +10,11 @@ import * as core from './core';
 import * as conversion from './conversion';
 import * as messages from './messages';
 import * as localeNavigation from './locale-navigation';
+import * as beadCopy from './bead-copy';
+import * as beadTransfer from './bead-transfer';
+import * as beadConversion from './bead-conversion';
+import * as editorConfig from '../editor/config';
+import * as paletteDefaults from '../editor/palette-defaults';
 import type { PixelLocaleStore } from './locale-storage';
 import * as localeRoutes from '../i18n/routes';
 import { PixelGridError, PIXEL_GRID_ERROR_MESSAGES, type PixelGridErrorCode } from './errors';
@@ -148,6 +153,14 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/pixel-grid/conversion') return conversion;
         if (id === '@/lib/pixel-grid/messages') return messages;
         if (id === '@/lib/pixel-grid/locale-navigation') return localeNavigation;
+        if (id === '@/lib/pixel-grid/bead-copy') return beadCopy;
+        if (id === '@/lib/pixel-grid/bead-transfer') return beadTransfer;
+        if (id === '@/lib/pixel-grid/bead-conversion') return beadConversion;
+        if (id === '@/lib/editor/config') return editorConfig;
+        if (id === '@/lib/editor/palette-defaults') return paletteDefaults;
+        // The separate modal is lazy-loaded in production. These tests drive
+        // the workspace-owned boundary callbacks, not its modal rendering.
+        if (id === 'next/dynamic') return { __esModule: true, default: () => 'pixel-bead-dialog' };
         if (id === '@/lib/i18n/routes') return localeRoutes;
         if (id === '@/lib/analytics') return { trackPixelGridExport: () => false };
         if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_target, name) => String(name) }) };
@@ -245,7 +258,14 @@ function content(value: unknown): string {
 function invoke(node: TestNode, property: string, event?: unknown) {
     return (node.props[property] as (value?: unknown) => unknown)(event);
 }
-function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' } = { locale: 'fr', experience: 'converter' }, runtime: { storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>; largeStore?: PixelLocaleStore } = {}) {
+function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' } = { locale: 'fr', experience: 'converter' }, runtime: {
+    storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+    largeStore?: PixelLocaleStore;
+    href?: string;
+    beadTransfer?: Partial<typeof beadTransfer>;
+    fetch?: (href: string, options?: RequestInit) => Promise<{ ok: boolean; text: () => Promise<string> }>;
+    assign?: (href: string) => void;
+} = {}) {
     const text = copy[props.locale ?? 'en'];
     const slots: unknown[] = [], mountEffects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
     let slot = 0, first = true, tree: unknown;
@@ -262,9 +282,17 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     const paths = { en: '/pixel-art-grid', de: '/de/pixel-art-generator', fr: '/fr/image-en-pixel-art', ja: '/ja/pixel-art-converter' };
     let confirmations = 0;
     const assignments: string[] = [];
-    const location = { href: `https://fusebeadpatterns.art${paths[props.locale ?? 'en']}`, origin: 'https://fusebeadpatterns.art', pathname: paths[props.locale ?? 'en'], search: '', assign(href: string) { assignments.push(href); } };
+    const location = { href: `https://fusebeadpatterns.art${paths[props.locale ?? 'en']}`, origin: 'https://fusebeadpatterns.art', pathname: paths[props.locale ?? 'en'], search: '', assign(href: string) { runtime.assign?.(href); assignments.push(href); } };
+    if (runtime.href) {
+        const url = new URL(runtime.href, location.href);
+        location.href = url.href; location.pathname = url.pathname; location.search = url.search;
+    }
     const browser = {
         location, sessionStorage: storage, confirm: () => { confirmations++; return false; },
+        history: { replaceState(_state: unknown, _title: string, href: string) {
+            const url = new URL(href, location.href);
+            location.href = url.href; location.pathname = url.pathname; location.search = url.search;
+        } },
         addEventListener: (name: string, callback: (event: Event) => void) => register(browserListeners, name, callback),
         removeEventListener: (name: string, callback: (event: Event) => void) => browserListeners.get(name)?.delete(callback),
         clearTimeout() {}, setTimeout: (callback: () => void) => { callbacks.push(callback); return callbacks.length; },
@@ -303,8 +331,11 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         saveLargePixelLocaleSnapshot: (snapshot: localeNavigation.PixelLocaleSnapshot, href: string, area: typeof storage) => localeNavigation.saveLargePixelLocaleSnapshot(snapshot, href, area, runtime.largeStore),
         consumeLargePixelLocaleSnapshot: (href: string, area: typeof storage) => localeNavigation.consumeLargePixelLocaleSnapshot(href, area, runtime.largeStore),
     };
-    const Component = workspace({ react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@/lib/pixel-grid/locale-navigation': transfer, '@/lib/analytics': { trackPixelGridExport: (event: unknown) => { events.push(event); return false; } } }, {
-        window: browser, document, Blob, Uint8ClampedArray, location, Element: Anchor, HTMLAnchorElement: Anchor,
+    const Component = workspace({ react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@/lib/pixel-grid/locale-navigation': transfer,
+        '@/lib/pixel-grid/bead-transfer': { ...beadTransfer, ...runtime.beadTransfer },
+        '@/lib/analytics': { trackPixelGridExport: (event: unknown) => { events.push(event); return false; } } }, {
+        window: browser, document, Blob, Uint8ClampedArray, location, Element: Anchor, HTMLAnchorElement: Anchor, AbortController,
+        fetch: runtime.fetch ?? (async (href: string) => ({ ok: true, text: async () => readFileSync(`public${href}`, 'utf8') })),
         createImageBitmap: async () => ({ width: source.width, height: source.height, close() {} }),
         URL: class extends URL {
             static createObjectURL(blob: Blob) { const key = `blob:${blobs.size}`; blobs.set(key, blob); return key; }
@@ -317,7 +348,13 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     const byId = (id: string) => find(node => node.props.id === id);
     const button = (label: string) => find(node => node.type === 'button' && (content(node) === label || node.props['aria-label'] === label));
     return {
-        source, byId, button, render, downloads, events, storage, assignments,
+        source, byId, button, render, downloads, events, storage, assignments, location,
+        beadDialog: () => find(node => node.type === 'pixel-bead-dialog'),
+        key: (key: string, shiftKey = false) => {
+            const event = { key, shiftKey, ctrlKey: true, metaKey: false, altKey: false, target: null as EventTarget | null, preventDefault() {} };
+            for (const callback of documentListeners.get('keydown') ?? []) callback(event as unknown as Event);
+            render();
+        },
         settle: async () => { await new Promise(resolve => setImmediate(resolve)); render(); },
         switchLanguage: (href: string, marked = true) => {
             const event = { detail: { href }, target: new Anchor(new URL(href, location.href).href, marked), defaultPrevented: false, button: 0, preventDefault() { this.defaultPrevented = true; }, stopImmediatePropagation() {} };
@@ -401,6 +438,113 @@ describe('converter operation boundaries', () => {
         expect(await ui.currentProject()).toEqual(core.createGrid(128, 128));
         ui.click(copy.fr.undo);
         expect(await ui.currentProject()).toEqual(core.createGrid(64, 64));
+        ui.unmount();
+    });
+});
+
+describe('pixel-to-bead workspace boundaries', () => {
+    it('blocks document Undo while the bead dialog is open and retains the pixel history after Cancel', async () => {
+        const ui = interactiveWorkspace();
+        await ui.loadImage();
+        const original = await ui.currentProject();
+        ui.paint();
+        const edited = await ui.currentProject();
+        ui.click(beadCopy.getPixelBeadCopy('fr').open);
+        ui.key('z');
+        invoke(ui.beadDialog(), 'onClose'); ui.render();
+        expect(await ui.currentProject()).toEqual(edited);
+        ui.key('z');
+        expect(await ui.currentProject()).toEqual(original);
+        ui.key('y');
+        expect(await ui.currentProject()).toEqual(edited);
+        ui.unmount();
+    });
+
+    it('ignores a brand fetch that completes after Cancel without writing a transfer or navigating', async () => {
+        let completeFetch: (response: { ok: boolean; text: () => Promise<string> }) => void;
+        const pending = new Promise<{ ok: boolean; text: () => Promise<string> }>(resolve => { completeFetch = resolve; });
+        const fetch = vi.fn(() => pending);
+        const save = vi.fn(beadTransfer.savePixelBeadTransfer);
+        const ui = interactiveWorkspace(undefined, { fetch, beadTransfer: { savePixelBeadTransfer: save } });
+        await ui.loadImage(); ui.paint();
+        const before = await ui.currentProject();
+        ui.click(beadCopy.getPixelBeadCopy('fr').open);
+        invoke(ui.beadDialog(), 'onPrepare', 'perler'); ui.render();
+        await ui.settle();
+        expect(fetch).toHaveBeenCalledOnce();
+        expect(ui.beadDialog().props.busy).toBe(true);
+        invoke(ui.beadDialog(), 'onClose'); ui.render();
+        completeFetch!({ ok: true, text: async () => readFileSync('public/palettes/perler.csv', 'utf8') });
+        await ui.settle();
+        expect(save).not.toHaveBeenCalled();
+        expect(ui.assignments).toEqual([]);
+        expect(ui.byId('pixel-grid-workspace').props['aria-busy']).toBe(false);
+        expect(await ui.currentProject()).toEqual(before);
+        ui.unmount();
+    });
+
+    it('protects a failed bead-return read, retries, and restores original pixels, source and both history branches', async () => {
+        const first = interactiveWorkspace();
+        await first.loadImage();
+        const original = await first.currentProject();
+        first.paint();
+        const edited = core.createGrid(original.width, original.height, original.pixels);
+        core.paintLine(edited, [0, 0], [0, 0], [240, 106, 69, 255]);
+        // Leave a real redo branch pending at the time the transfer is saved.
+        first.key('z');
+        first.change('pixel-width', '17'); first.change('pixel-height', '31'); first.change('pixel-image-mode', 'crop');
+        first.change('pixel-color-limit', '16'); first.change('pixel-export-scale', '4');
+        first.click(beadCopy.getPixelBeadCopy('fr').open);
+        invoke(first.beadDialog(), 'onPrepare', 'hama'); first.render();
+        await vi.waitFor(() => expect(first.assignments.length).toBe(1));
+        expect(first.location.search).toContain('bead-return=');
+        let reads = 0;
+        const target = interactiveWorkspace(undefined, {
+            storage: first.storage, href: first.location.href,
+            beadTransfer: { readPixelBeadReturn: async (...args) => {
+                if (++reads === 1) throw new Error('Temporary session read failure');
+                return beadTransfer.readPixelBeadReturn(...args);
+            } },
+        });
+        await target.settle();
+        const text = beadCopy.getPixelBeadCopy('fr');
+        expect(target.status()).toContain(text.returnFailed);
+        expect(target.button(text.returnRetry).props.disabled).toBe(false);
+        expect(target.button(copy.fr.saveProject).props.disabled).toBe(true);
+        expect(target.canvas().props.inert).toBe(true);
+        target.paint(); target.key('z'); target.click(copy.fr.newBlank); target.click(copy.fr.saveProject);
+        expect(target.downloads).toEqual([]);
+        expect(target.unload()).toBe(true);
+        target.click(text.returnRetry); await target.settle();
+        expect(reads).toBe(2);
+        expect(target.status()).toContain(text.returnRestored);
+        expect(target.byId('pixel-width').props.value).toBe('17');
+        expect(target.byId('pixel-height').props.value).toBe('31');
+        expect(target.byId('pixel-image-mode').props.value).toBe('crop');
+        expect(target.byId('pixel-color-limit').props.value).toBe(16);
+        expect(target.byId('pixel-export-scale').props.value).toBe(4);
+        expect(target.location.search).not.toContain('bead-return');
+        expect(await target.currentProject()).toEqual(original);
+        target.click(copy.fr.redo); expect(await target.currentProject()).toEqual(edited);
+        target.click(copy.fr.undo); expect(await target.currentProject()).toEqual(original);
+        target.change('pixel-width', '17'); target.change('pixel-height', '31');
+        target.click(copy.fr.reconvert);
+        expect(await target.currentProject()).toEqual(conversion.reducePixelGridColors(core.resizeImage(first.source, 17, 31, 'crop'), 16));
+        expect(first.storage.getItem(beadTransfer.PIXEL_BEAD_STORAGE_KEY)).toBeNull();
+        first.unmount(); target.unmount();
+    });
+
+    it('restores unsaved-pixel leave protection when editor navigation is rejected', async () => {
+        const ui = interactiveWorkspace(undefined, { assign: () => { throw new Error('Navigation blocked'); } });
+        await ui.loadImage(); ui.paint();
+        expect(ui.unload()).toBe(true);
+        const text = beadCopy.getPixelBeadCopy('fr');
+        ui.click(text.open);
+        invoke(ui.beadDialog(), 'onPrepare', 'perler'); ui.render();
+        await vi.waitFor(() => { ui.render(); expect(ui.beadDialog().props.error).toBe(text.transferFailed); });
+        expect(ui.assignments).toEqual([]);
+        expect(ui.beadDialog().props.busy).toBe(false);
+        expect(ui.unload()).toBe(true);
         ui.unmount();
     });
 });

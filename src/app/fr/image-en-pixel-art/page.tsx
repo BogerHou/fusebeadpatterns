@@ -81,7 +81,10 @@ export default function ImageEnPixelArtPage() {
                         Il n’y a pas de sauvegarde automatique.
                     </p>
                     <p className="mt-5">
-                        Pour créer un modèle avec des couleurs de perles, ouvrez le{' '}
+                        Pour convertir votre dessin actuel, choisissez « Créer un modèle de perles » dans l’atelier, puis une marque. Chaque pixel devient une position de perle ; des cases vides complètent les plaques sans redimensionner le dessin. Vous pouvez revenir au dessin en pixels avec ses couleurs d’origine.
+                    </p>
+                    <p className="mt-5">
+                        Pour partir d’une autre image, ouvrez le{' '}
                         <Link href="/fr#generator" prefetch={false} className="text-link text-accent">générateur de modèles de perles</Link>.
                     </p>
                 </section>

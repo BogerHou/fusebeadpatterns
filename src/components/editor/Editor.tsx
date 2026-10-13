@@ -24,6 +24,10 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { EditorDialog } from './EditorDialog';
 import { SourceCropDialog } from './SourceCropDialog';
+import { PixelBeadEntry } from './PixelBeadEntry';
+import { preparePixelBeadEditorDraft } from '@/lib/editor/pixel-bead-entry';
+import { getPixelBeadReturnHref } from '@/lib/pixel-grid/bead-transfer';
+import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
 import { EditorSection } from './EditorSection';
 import { PdfScaleField } from './PdfScaleField';
 import { PdfPaperField } from './PdfPaperField';
@@ -601,6 +605,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [draftWarning, setDraftWarning] = useState<string | null>(null);
     const [isLibraryPatternLoading, setIsLibraryPatternLoading] = useState(false);
+    const [pixelReturnHref, setPixelReturnHref] = useState<string | null>(null);
+    const pixelReturnDirtyRef = useRef(false);
+    const pixelReturnBaselineRef = useRef<number | null>(null);
+    const pixelReturnPixelsRef = useRef<Uint8ClampedArray | null>(null);
     const [beadsUsage, setBeadsUsage] = useState<Map<string, number>>(new Map());
     const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
     const [previewSize, setPreviewSize] = useState({ width: 1, height: 1 });
@@ -1250,7 +1258,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     }, []);
 
     const restoreEditorDraft = useCallback(
-        (draft: EditorDraft) => {
+        (draft: EditorDraft, installed?: PreparedSourceImage & { usage: Map<string, number>; preview: string }) => {
             cancelSourceOperation();
             setIsSourceCropOpen(false);
             setSourceCropError(null);
@@ -1271,9 +1279,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
             editorColorSelectionModeRef.current = 'auto';
             activeEditorColorValueRef.current = null;
-            builtBlankPatternRevisionRef.current = -1;
-            currentProjectRef.current = null;
-            reducedColorRef.current = null;
+            builtBlankPatternRevisionRef.current = installed ? blankPatternRevision : -1;
+            currentProjectRef.current = installed?.project ?? null;
+            reducedColorRef.current = installed?.pixels ?? null;
             paletteHistoryRef.current = [];
             patternHistoryRef.current.clear();
             activeStrokeRef.current = null;
@@ -1335,9 +1343,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 draft.selectedPaletteIds[0] ?? DEFAULT_PALETTE_ID
             );
             setErrorMessage(null);
-            setBeadsUsage(new Map());
-            setPreviewDataUrl(null);
-            setPreviewSize({ width: 1, height: 1 });
+            setBeadsUsage(installed?.usage ?? new Map());
+            setPreviewDataUrl(installed?.preview ?? null);
+            setPreviewSize(installed ? { width: installed.width, height: installed.height } : { width: 1, height: 1 });
             setAutomaticEditorColorRef(null);
             setActiveEditorTool('bead');
             setIsAdvancedOpen(false);
@@ -1346,15 +1354,15 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             setIsExportDialogOpen(false);
             setEditorMobilePanel(null);
             setHomeMobilePanel(null);
-            pendingEditedPatternRef.current = draft.editedPattern ?? null;
-            setManualPatternRevision(0);
+            pendingEditedPatternRef.current = installed ? null : draft.editedPattern ?? null;
+            setManualPatternRevision(installed ? 1 : 0);
             setHistoryRevision((previous) => previous + 1);
 
-            if (nextSourceMode === 'blank') {
+            if (nextSourceMode === 'blank' && !installed) {
                 setBlankPatternRevision((previous) => previous + 1);
             }
         },
-        [cancelSettingsUpdate, cancelSourceOperation, setAutomaticEditorColorRef]
+        [blankPatternRevision, cancelSettingsUpdate, cancelSourceOperation, setAutomaticEditorColorRef]
     );
 
     useEffect(() => {
@@ -2116,6 +2124,62 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         isEditorDraftReady,
         sourceMode,
     ]);
+
+    const installPixelBeadDraft = useCallback(async (input: EditorDraft, signal: AbortSignal) => {
+        if (signal.aborted || processing || exportingId !== null || imageGenerationRef.current || settingsUpdateRef.current || sourceTransactionsRef.current.pending) {
+            throw new Error('Pixel bead installation is unavailable.');
+        }
+        // Everything that can fail is prepared without modifying the live
+        // document. The transfer's saved cells are authoritative, not an image.
+        const { draft, prepared } = preparePixelBeadEditorDraft(input);
+        const board = getBoardOption(draft.boardId)!;
+        const usage = computeUsage(prepared.pixels, prepared.project.paletteConfiguration.palettes);
+        const preview = createPatternPreviewDataUrl(prepared.pixels, prepared.width, prepared.height,
+            board.beadsPerRow, draft.rendererSettings.showGrid);
+        if (!preview) throw new Error('Unable to prepare pixel bead preview.');
+        const placeholder = new window.Image();
+        prepared.project.image = { name: draft.fileName, src: placeholder } as LoadImage;
+        await waitForNextPaint();
+        signal.throwIfAborted();
+        const canvas = canvasRef.current;
+        if (!canvas || imageGenerationRef.current || settingsUpdateRef.current) throw new Error('Pixel bead installation is unavailable.');
+        // A rejected canvas write restores its old raster and leaves all model,
+        // source and undo refs intact. Only a successful write permits install.
+        commitSourceImageCanvas(canvas, prepared, reducedColorRef.current);
+        restoreEditorDraft(draft, { ...prepared, usage, preview });
+        syncEditorColorAfterPatternBuild(usage, prepared.project.paletteConfiguration.palettes);
+        pixelReturnDirtyRef.current = false;
+        pixelReturnBaselineRef.current = 1;
+        pixelReturnPixelsRef.current = prepared.pixels;
+        persistEditorDraft(draft);
+    }, [processing, exportingId, restoreEditorDraft, syncEditorColorAfterPatternBuild, persistEditorDraft]);
+
+    const refreshPixelReturn = useCallback(() => {
+        if (!isEditorPage) return;
+        try { setPixelReturnHref(getPixelBeadReturnHref(window.location.href, window.sessionStorage)); }
+        catch { setPixelReturnHref(null); }
+    }, [isEditorPage]);
+
+    useEffect(() => { refreshPixelReturn(); }, [refreshPixelReturn, locale]);
+    useEffect(() => {
+        if (!pixelReturnHref || !hasEditablePattern) return;
+        if (pixelReturnBaselineRef.current === null) {
+            pixelReturnBaselineRef.current = manualPatternRevision;
+            pixelReturnPixelsRef.current = reducedColorRef.current;
+        } else if (pixelReturnBaselineRef.current !== manualPatternRevision || pixelReturnPixelsRef.current !== reducedColorRef.current) {
+            pixelReturnDirtyRef.current = true;
+        }
+    }, [pixelReturnHref, hasEditablePattern, manualPatternRevision, beadsUsage]);
+    useEffect(() => {
+        if (!pixelReturnHref) return;
+        const guard = (event: BeforeUnloadEvent) => {
+            if (!pixelReturnDirtyRef.current || localeSaveInProgressRef.current) return;
+            event.preventDefault();
+            event.returnValue = '';
+        };
+        window.addEventListener('beforeunload', guard);
+        return () => window.removeEventListener('beforeunload', guard);
+    }, [pixelReturnHref]);
 
     // Run after image/blank generation effects so a new request cannot save
     // its settings alongside pixels from the previous completed pattern.
@@ -3203,6 +3267,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             }
 
             persistEditorDraft(draft);
+            pixelReturnDirtyRef.current = false;
+            pixelReturnBaselineRef.current = manualPatternRevision;
+            pixelReturnPixelsRef.current = reducedColorRef.current;
             setErrorMessage(null);
         } catch {
             setErrorMessage('Could not save the complete project. Your pattern is still open; try saving again.');
@@ -3384,7 +3451,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const handleEditorShortcuts = React.useEffectEvent(
         (event: KeyboardEvent) => {
-            if (isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
+            if (isLibraryPatternLoading || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
             const target = event.target as HTMLElement | null;
             const isTypingTarget =
                 target instanceof HTMLInputElement ||
@@ -3614,6 +3681,20 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 </Suspense>
             )}
 
+            {isEditorPage && isEditorDraftReady && (
+                <Suspense fallback={null}>
+                    <PixelBeadEntry locale={locale}
+                        hasCurrentPattern={hasEditablePattern}
+                        canSaveCurrentPattern={canSaveProject}
+                        busy={processing || exportingId !== null || isSourceCropOpen || isColorLimitOpen}
+                        onOpen={installPixelBeadDraft}
+                        onSave={handleSaveProject}
+                        onLoadingChange={setIsLibraryPatternLoading}
+                        onReturnChange={refreshPixelReturn}
+                        onNotice={setDraftWarning} />
+                </Suspense>
+            )}
+
             {isEditorPage ? (
                 isEditorDraftReady ? (
                 <div inert={isLibraryPatternLoading} className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[92px_minmax(0,1fr)] overflow-hidden rounded-lg border border-[#d9ded5] bg-brutal-bg text-brutal-black sm:border sm:grid-rows-[94px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_312px] xl:grid-rows-[48px_minmax(0,1fr)]">
@@ -3632,6 +3713,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                 {t("Editor")}
                             </h1>
                             <LanguageSwitcher locale={locale} className="editor-language-switcher" />
+                            {pixelReturnHref ? <a href={pixelReturnHref}
+                                className="max-w-32 truncate rounded-md px-2 py-1 text-xs font-semibold text-brutal-black underline underline-offset-2 hover:bg-brand-yellow"
+                                title={getPixelBeadCopy(locale).returnToPixels}>
+                                {getPixelBeadCopy(locale).returnToPixels}
+                            </a> : null}
                         </div>
                         <div className="flex h-full shrink-0 items-center xl:col-start-2 xl:min-w-0 xl:justify-end xl:whitespace-nowrap xl:border-l xl:border-[#d9ded5] xl:[&>*]:shrink-0">
                             {hasEditablePattern ? (

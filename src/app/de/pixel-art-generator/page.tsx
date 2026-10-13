@@ -63,7 +63,10 @@ export default function GermanPixelArtPage() {
                     aber weder das Originalbild noch Einstellungen oder Verlauf. Es gibt keine automatische Speicherung.
                 </p>
                 <p className="mt-5">
-                    Für eine Vorlage mit echten Perlenfarben nutze den{' '}
+                    Wähle im Arbeitsbereich „Bügelperlen-Vorlage erstellen“, um deine aktuelle Zeichnung in Perlenfarben zu übertragen. Ein Pixel entspricht einer Perlenposition; leere Felder ergänzen ganze Platten, ohne das Motiv zu skalieren. Über den Rückweg bleibt deine Pixelzeichnung mit den ursprünglichen Farben erhalten.
+                </p>
+                <p className="mt-5">
+                    Für ein anderes Ausgangsbild nutze den{' '}
                     <Link href="/de#generator" prefetch={false} className="text-link text-accent">Bügelperlen-Vorlagengenerator</Link>.
                 </p>
             </section>

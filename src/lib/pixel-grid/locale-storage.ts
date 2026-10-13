@@ -5,10 +5,14 @@ export interface PixelLocaleStore {
     remove(key: string): Promise<void>;
 }
 
+export interface PixelTransferStore extends PixelLocaleStore {
+    read(key: string): Promise<string | null>;
+}
+
 const DATABASE = 'fusebead-pixel-language-transfer';
 const STORE = 'transfers';
 
-export function createPixelLocaleStore(): PixelLocaleStore {
+export function createPixelLocaleStore(): PixelTransferStore {
     function transaction<T>(operate: (store: IDBObjectStore, result: (value: T) => void) => void): Promise<T> {
         return new Promise((resolve, reject) => {
             let database: IDBDatabase | undefined;
@@ -57,6 +61,13 @@ export function createPixelLocaleStore(): PixelLocaleStore {
     }
     return {
         put: (key, raw, expiresAt) => transaction<void>(store => { store.put({ raw, expiresAt }, key); }),
+        read: key => transaction<string | null>((store, result) => {
+            const request = store.get(key);
+            request.onsuccess = () => {
+                const entry = request.result;
+                result(entry && entry.expiresAt >= Date.now() && typeof entry.raw === 'string' ? entry.raw : null);
+            };
+        }),
         take: key => transaction<string | null>((store, result) => {
             const request = store.get(key);
             request.onsuccess = () => {

@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
+import { savePixelBeadTransfer, readPixelBeadReturn, finishPixelBeadReturn, isPixelBeadReturn, clearPixelBeadReturnQuery } from '@/lib/pixel-grid/bead-transfer';
 import { trackPixelGridExport } from '@/lib/analytics';
 import {
     LIMITS, createGrid, dimensions, paintLine, resizeImage, GridHistory, gridsEqual,
@@ -10,9 +13,11 @@ import {
 } from '@/lib/pixel-grid/core';
 import { reducePixelGridColors, countVisibleColors, encodeScaledPng, type ColorLimit } from '@/lib/pixel-grid/conversion';
 import { PIXEL_GRID_MESSAGES, PixelGridUiError, pixelGridErrorMessage, type PixelGridLocale } from '@/lib/pixel-grid/messages';
-import { LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
+import { localeRoutes, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import { consumePixelLocaleSnapshot, consumeLargePixelLocaleSnapshot, hasLargePixelLocaleSnapshot, hasPixelLocaleWork, isPixelLocaleNavigation, savePixelLocaleSnapshot, saveLargePixelLocaleSnapshot, type PixelLocaleSnapshot } from '@/lib/pixel-grid/locale-navigation';
 import styles from './PixelGridWorkspace.module.css';
+
+const PixelBeadDialog = dynamic(() => import('./PixelBeadDialog'), { ssr: false });
 
 type Tool = 'brush' | 'eraser' | 'pan';
 type Zoom = 'fit' | '4' | '8' | '16' | '24' | '32';
@@ -73,6 +78,14 @@ export interface PixelGridWorkspaceProps {
 
 export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' }: PixelGridWorkspaceProps = {}) {
     const text = PIXEL_GRID_MESSAGES[locale];
+    const beadText = getPixelBeadCopy(locale);
+    const [beadDialog, setBeadDialog] = useState(false);
+    const beadDialogRef = useRef(false);
+    const [beadError, setBeadError] = useState<string | null>(null);
+    const [beadReturnPending, setBeadReturnPending] = useState(false);
+    const beadController = useRef<AbortController | null>(null);
+    const beadReturnPromise = useRef<Promise<PixelLocaleSnapshot | null> | null>(null);
+    const beadReturnDone = useRef(false);
     const converter = experience === 'converter';
     const initialSide = converter ? 64 : 16;
     const isWideViewport = useSyncExternalStore(subscribeWideViewport, wideViewport, serverViewport);
@@ -236,7 +249,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             }
         };
         const keyboard = (event: globalThis.KeyboardEvent) => {
-            if (busyRef.current || localeRecoveryPendingRef.current || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+            if (beadDialogRef.current || busyRef.current || localeRecoveryPendingRef.current || !(event.ctrlKey || event.metaKey) || event.altKey) return;
             if (event.target instanceof Element && event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
             if (event.key.toLowerCase() === 'z') { event.preventDefault(); undo(event.shiftKey); }
             else if (event.key.toLowerCase() === 'y') { event.preventDefault(); undo(true); }
@@ -251,6 +264,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         return () => {
             mountedRef.current = false;
             sequence.current++;
+            beadController.current?.abort();
             busyRef.current = false;
             strokeRef.current = null;
             sourceRef.current = null;
@@ -291,8 +305,33 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }, [text.languageRestoreFailed]);
 
     const restoreLocale = useCallback(() => {
-        if (largeLocaleRestoreRef.current && busyRef.current) return;
+        if ((largeLocaleRestoreRef.current || beadReturnPromise.current) && busyRef.current) return;
         try {
+            if (!beadReturnDone.current && isPixelBeadReturn(window.location.href)) {
+                const returnUrl = window.location.href;
+                localeReadyRef.current = false;
+                localeRecoveryPendingRef.current = true; setLocaleRecoveryPending(true);
+                busyRef.current = true; setBusy(true); setBeadReturnPending(true);
+                setStatus({ text: beadText.returnRestoring, error: false });
+                beadReturnPromise.current ??= readPixelBeadReturn(returnUrl, window.sessionStorage);
+                void beadReturnPromise.current.then(snapshot => {
+                    if (!mountedRef.current) return;
+                    if (!snapshot) throw new Error('Missing pixel return drawing');
+                    beadReturnDone.current = true;
+                    busyRef.current = false; setBusy(false); setBeadReturnPending(false);
+                    localeRestoreRef.current = snapshot;
+                    applyLocaleSnapshot(snapshot);
+                    setStatus({ text: beadText.returnRestored, error: false });
+                    window.history.replaceState(null, '', clearPixelBeadReturnQuery(returnUrl));
+                    void finishPixelBeadReturn(returnUrl, window.sessionStorage).catch(() => { /* Restored drawing is already safe in memory. */ });
+                }).catch(() => {
+                    if (!mountedRef.current) return;
+                    beadReturnPromise.current = null;
+                    protectLocaleRecovery();
+                    setStatus({ text: beadText.returnFailed, error: true });
+                });
+                return;
+            }
             // Probe again on retry: a failed read may conceal either supported
             // version, so pending recovery alone must not force the large path.
             if (hasLargePixelLocaleSnapshot(window.sessionStorage) || largeLocaleRestoreRef.current) {
@@ -335,10 +374,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             }
         } catch {
             protectLocaleRecovery();
+            if (isPixelBeadReturn(window.location.href)) setStatus({ text: beadText.returnFailed, error: true });
             return;
         }
         applyLocaleSnapshot(localeRestoreRef.current ?? null);
-    }, [applyLocaleSnapshot, protectLocaleRecovery, text.languageRestoring, text.languageRestoreUnavailable]);
+    }, [applyLocaleSnapshot, protectLocaleRecovery, text.languageRestoring, text.languageRestoreUnavailable, beadText.returnRestoring, beadText.returnRestored, beadText.returnFailed]);
 
     useEffect(() => { restoreLocale(); }, [restoreLocale]);
 
@@ -519,6 +559,53 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         finally { if (current()) { busyRef.current = false; setBusy(false); syncHistory(); } }
     }
 
+    function closeBeadDialog() {
+        beadController.current?.abort();
+        beadController.current = null;
+        taskId.current++;
+        busyRef.current = false; setBusy(false);
+        beadDialogRef.current = false; setBeadDialog(false); setBeadError(null);
+    }
+
+    function prepareBeadPattern(paletteId: string) {
+        setBeadError(null);
+        void task(beadText.preparing, async current => {
+            const controller = new AbortController(); beadController.current = controller;
+            const snapshot: PixelLocaleSnapshot = {
+                grid: gridRef.current, saved: savedRef.current, source: sourceRef.current,
+                history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
+                zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
+            };
+            try {
+                const [{ convertPixelGridToBeads }, { getPaletteOption, parsePaletteCsv }, { applyFreshPaletteDefaults }] = await Promise.all([
+                    import('@/lib/pixel-grid/bead-conversion'), import('@/lib/editor/config'), import('@/lib/editor/palette-defaults'),
+                ]);
+                if (!current()) return;
+                const option = getPaletteOption(paletteId);
+                if (!option) throw new Error('Invalid bead brand');
+                const response = await fetch(`/palettes/${option.file}`, { signal: controller.signal });
+                if (!response.ok) throw new Error('Bead brand unavailable');
+                const palette = applyFreshPaletteDefaults(paletteId, parsePaletteCsv(await response.text(), option));
+                if (!current()) return;
+                const { draft } = await convertPixelGridToBeads({ grid: snapshot.grid, paletteId, palette }, { signal: controller.signal });
+                if (!current()) return;
+                const transfer = await savePixelBeadTransfer(snapshot, draft, window.location.href, localeRoutes[locale].editor, window.sessionStorage, { signal: controller.signal });
+                if (!current()) { await finishPixelBeadReturn(transfer.returnHref, window.sessionStorage).catch(() => {}); return; }
+                // Back returns to the recoverable pixel workspace, in this same tab.
+                window.history.replaceState(null, '', transfer.returnHref);
+                allowUnload.current = true;
+                window.location.assign(transfer.editorHref);
+            } catch {
+                if (current() && !controller.signal.aborted) {
+                    allowUnload.current = false;
+                    setBeadError(beadText.transferFailed);
+                    setStatus({ text: beadText.transferFailed, error: true });
+                }
+                if (controller.signal.aborted) return;
+            } finally { if (beadController.current === controller) beadController.current = null; }
+        });
+    }
+
     function importImage(file?: File) {
         if (!file) return;
         void task(text.importing, async current => {
@@ -630,9 +717,15 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
 
     return (
         <div className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
+            <div className="contents" inert={beadDialog}>
             {localeRecoveryPending && <section className={`${styles.panel} ${styles.converterImport}`} aria-label={text.languageRetry}>
                 <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
-                <button type="button" disabled={busy} onClick={restoreLocale}>{text.languageRetry}</button>
+                <button type="button" disabled={busy} onClick={restoreLocale}>{beadReturnPending ? beadText.returnRetry : text.languageRetry}</button>
+                {beadReturnPending && !busy && <button type="button" onClick={() => {
+                    beadReturnDone.current = true; setBeadReturnPending(false);
+                    window.history.replaceState(null, '', clearPixelBeadReturnQuery(window.location.href));
+                    applyLocaleSnapshot(null);
+                }}>{beadText.returnDiscard}</button>}
             </section>}
             {imageImport}
             <details className={styles.settingsDisclosure} open={settingsExpanded ?? isWideViewport}>
@@ -698,8 +791,14 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                     <p className={styles.hint}>{text.projectHelp}</p>
                     <p className={styles.hint}>{text.converterProjectHelp}</p>
                 </section>
+                <section className={styles.panel} aria-label={beadText.open}>
+                    <button type="button" disabled={locked} onClick={() => action(() => { setBeadError(null); beadDialogRef.current = true; setBeadDialog(true); })}>{beadText.open}</button>
+                    <p className={styles.hint}>{beadText.returnSaved}</p>
+                </section>
                 <p className={styles.hint}>{text.processingHelp}</p>
             </div>
+            </div>
+            {beadDialog && <PixelBeadDialog locale={locale} width={grid.width} height={grid.height} busy={busy} error={beadError} onPrepare={prepareBeadPattern} onClose={closeBeadDialog} />}
         </div>
     );
 }

@@ -63,7 +63,10 @@ export default function PixelArtGridPage() {
                         color-limit choice or undo history. Images are processed on your device.
                     </p>
                     <p className="mt-5">
-                        Need bead colors and a printable pattern?{' '}
+                        To use your current drawing, choose “Make a bead pattern” in the workspace and select a bead brand. Each pixel becomes one bead position; empty cells complete the boards without resizing. You can return to your pixel drawing with its original colors.
+                    </p>
+                    <p className="mt-5">
+                        Starting from a different image?{' '}
                         <Link href="/#generator" className="font-medium text-[#28614e] underline decoration-1 underline-offset-4">Open the bead pattern generator</Link>.
                     </p>
                 </section>
