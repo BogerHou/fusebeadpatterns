@@ -1,7 +1,8 @@
 import type { SiteLocale } from '../../i18n/locales';
 import type { PdfScaleMode } from '../../editor/pdf-scale';
+import type { PdfPaperSize } from '../../editor/pdf-paper';
 
-export type PrinterOptions = { locale?: SiteLocale; pdfScaleMode?: PdfScaleMode };
+export type PrinterOptions = { locale?: SiteLocale; pdfScaleMode?: PdfScaleMode; pdfPaperSize?: PdfPaperSize };
 
 /** Labels only: brand names, references, palette symbols and counts stay intact. */
 export const EXPORT_MESSAGES = {
@@ -22,6 +23,7 @@ export const EXPORT_MESSAGES = {
         imageLoadFailed: 'The pattern image could not be loaded for export.',
         midiSizeUnsupported: 'The 5 mm PDF requires a 29 × 29 board and Perler Midi, Hama Midi or Artkal S palettes. Choose a counting chart for other settings.',
         scaleUnsupported: 'Unsupported PDF scale setting.',
+        paperUnsupported: 'Unsupported PDF paper size.',
     },
     de: {
         pattern: 'Vorlage', inventory: 'Materialliste', title: 'Bügelperlen-Vorlage',
@@ -40,6 +42,7 @@ export const EXPORT_MESSAGES = {
         imageLoadFailed: 'Das Vorlagenbild konnte für den Export nicht geladen werden.',
         midiSizeUnsupported: 'Das 5-mm-PDF benötigt eine 29 × 29-Platte mit Perler Midi, Hama Midi oder Artkal S. Wählen Sie für andere Einstellungen die Zählvorlage.',
         scaleUnsupported: 'Nicht unterstützte PDF-Skalierung.',
+        paperUnsupported: 'Nicht unterstütztes PDF-Papierformat.',
     },
     fr: {
         pattern: 'Modèle', inventory: 'Matériel', title: 'Modèle de perles à repasser',
@@ -58,6 +61,7 @@ export const EXPORT_MESSAGES = {
         imageLoadFailed: 'L’image du modèle n’a pas pu être chargée pour l’export.',
         midiSizeUnsupported: 'Le PDF à pas de 5 mm nécessite une plaque de 29 × 29 avec Perler Midi, Hama Midi ou Artkal S. Utilisez la grille à compter pour les autres réglages.',
         scaleUnsupported: 'Échelle PDF non prise en charge.',
+        paperUnsupported: 'Format de papier du PDF non pris en charge.',
     },
     ja: {
         pattern: '図案', inventory: '材料表', title: 'アイロンビーズ図案',
@@ -76,6 +80,7 @@ export const EXPORT_MESSAGES = {
         imageLoadFailed: '書き出し用の図案画像を読み込めませんでした。',
         midiSizeUnsupported: '5 mmのPDFは29×29マスとPerler Midi・Hama Midi・Artkal Sのパレットで使用できます。他の設定ではマスを数える図案を選んでください。',
         scaleUnsupported: '対応していないPDFの印刷倍率です。',
+        paperUnsupported: '対応していないPDFの用紙サイズです。',
     },
 } as const;
 
@@ -88,10 +93,16 @@ export function boardPosition(locale: SiteLocale, row: number, column: number) {
     return `${copy.board} / ${copy.row} ${row + 1} / ${copy.column} ${column + 1}`;
 }
 
+export function pdfPrintingInstruction(locale: SiteLocale, paperSize: PdfPaperSize): string {
+    const instruction = exportMessages(locale).printing;
+    return paperSize === 'letter' ? instruction.replace('A4', 'US Letter') : instruction;
+}
+
 /** Only these fixed strings are typeset with the existing Japanese font subset. */
 export const JAPANESE_EXPORT_FONT_TEXT = [
     ...(['pattern', 'inventory', 'title', 'boards', 'board', 'row', 'column',
         'reference', 'symbol', 'count', 'printing', 'pitch', 'scaled', 'caution'] as const)
         .map((key) => EXPORT_MESSAGES.ja[key]),
     '0123456789 /-50 mm',
+    pdfPrintingInstruction('ja', 'letter'),
 ].join('');

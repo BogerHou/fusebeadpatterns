@@ -3,6 +3,7 @@ import type { Project } from '../core/model/project/project.model';
 import type { SiteLocale } from '../i18n/locales';
 import { exportMessages } from '../core/printer/messages';
 import type { PdfScaleMode } from './pdf-scale';
+import { isPdfPaperSize, type PdfPaperSize } from './pdf-paper';
 
 type CoreExportId = 'pdf' | 'svg' | 'png' | 'jpg' | 'xlsx';
 
@@ -18,6 +19,7 @@ export type ExportEditorPatternOptions = {
     fileName: string;
     locale?: SiteLocale;
     pdfScaleMode?: PdfScaleMode;
+    pdfPaperSize?: PdfPaperSize;
     exportGridPng: () => void | Promise<void>;
     printerLoaders?: Partial<Record<CoreExportId, EditorPrinterLoader>>;
 };
@@ -60,6 +62,7 @@ export async function exportEditorPattern({
     exportGridPng,
     locale = 'en',
     pdfScaleMode,
+    pdfPaperSize,
     printerLoaders = {},
 }: ExportEditorPatternOptions): Promise<void> {
     if (exportId === 'grid_png') {
@@ -70,15 +73,19 @@ export async function exportEditorPattern({
     if (!isCoreExportId(exportId)) {
         throw new Error(`${exportMessages(locale).unsupported}: ${exportId}`);
     }
+    if (exportId === 'pdf' && pdfPaperSize !== undefined && !isPdfPaperSize(pdfPaperSize)) {
+        throw new Error(exportMessages(locale).paperUnsupported);
+    }
 
     const loadPrinter =
         printerLoaders[exportId] ?? DEFAULT_PRINTER_LOADERS[exportId];
     const Printer = await loadPrinter();
 
-    if (locale === 'en' && (!pdfScaleMode || pdfScaleMode === 'fit-page')) {
+    const useDefaultPaper = exportId !== 'pdf' || pdfPaperSize === undefined || pdfPaperSize === 'a4';
+    if (locale === 'en' && (!pdfScaleMode || pdfScaleMode === 'fit-page') && useDefaultPaper) {
         // Keep the established default printer contract for existing integrations.
         await new Printer().print(reducedColor, beadsUsage, project, fileName);
     } else {
-        await new Printer().print(reducedColor, beadsUsage, project, fileName, { locale, ...(pdfScaleMode ? { pdfScaleMode } : {}) });
+        await new Printer().print(reducedColor, beadsUsage, project, fileName, { locale, ...(pdfScaleMode ? { pdfScaleMode } : {}), ...(exportId === 'pdf' && pdfPaperSize ? { pdfPaperSize } : {}) });
     }
 }

@@ -9,7 +9,8 @@ import { downloadBlob } from '../download';
 import { Project } from '../../model/project/project.model';
 import type { SiteLocale } from '../../../i18n/locales';
 import type { PdfScaleMode } from '../../../editor/pdf-scale';
-import { boardPosition, exportMessages, type PrinterOptions } from '../messages';
+import { isPdfPaperSize, PDF_PAPER_DIMENSIONS, type PdfPaperSize } from '../../../editor/pdf-paper';
+import { boardPosition, exportMessages, pdfPrintingInstruction, type PrinterOptions } from '../messages';
 import { JAPANESE_EXPORT_FONT_NAME, loadJapaneseExportFont, registerJapaneseExportFont } from './japanese-font';
 import {
     createPaletteEntryColorMap,
@@ -66,23 +67,26 @@ export class PdfPrinter implements Printer {
         usage: Map<string, number>,
         project: Project,
         filename: string,
-        { locale = 'en', pdfScaleMode = 'fit-page' }: PrinterOptions = {}
+        { locale = 'en', pdfScaleMode = 'fit-page', pdfPaperSize = 'a4' }: PrinterOptions = {}
     ): Promise<void> {
+        if (!isPdfPaperSize(pdfPaperSize)) {
+            throw new Error(exportMessages(locale).paperUnsupported);
+        }
         if (pdfScaleMode !== 'fit-page' && pdfScaleMode !== 'midi-5mm') {
             throw new Error(exportMessages(locale).scaleUnsupported);
         }
         if (pdfScaleMode === 'midi-5mm' && !isMidiActualSizeProject(project)) {
             throw new Error(exportMessages(locale).midiSizeUnsupported);
         }
-        const height = 297;
-        const width = 210;
+        const { width, height } = PDF_PAPER_DIMENSIONS[pdfPaperSize];
         const margin = 5;
 
-        const doc: jsPDF = new jsPDF();
+        // Keep the established A4 constructor and coordinates for old callers.
+        const doc: jsPDF = pdfPaperSize === 'letter' ? new jsPDF({ format: 'letter' }) : new jsPDF();
         if (locale === 'ja') {
             registerJapaneseExportFont(doc, await loadJapaneseExportFont());
         }
-        if (locale !== 'en' || pdfScaleMode === 'midi-5mm') {
+        if (locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter') {
             const copy = exportMessages(locale);
             // jsPDF supports Japanese as "ja"; "ja-JP" is silently ignored.
             doc.setLanguage(({ en: 'en', de: 'de-DE', fr: 'fr-FR', ja: 'ja' } as const)[locale]);
@@ -90,9 +94,9 @@ export class PdfPrinter implements Printer {
         }
         doc.setFont('MonoFont');
 
-        this.boardMapping(doc, project, margin, width, height, locale, pdfScaleMode);
-        this.usage(doc, usage, width, height, margin, project, locale, pdfScaleMode);
-        this.beadMapping(doc, project, reducedColor, width, height, margin, locale, pdfScaleMode);
+        this.boardMapping(doc, project, margin, width, height, locale, pdfScaleMode, pdfPaperSize);
+        this.usage(doc, usage, width, height, margin, project, locale, pdfScaleMode, pdfPaperSize);
+        this.beadMapping(doc, project, reducedColor, width, height, margin, locale, pdfScaleMode, pdfPaperSize);
         if (
             project.boardConfiguration.nbBoardWidth === 1 &&
             project.boardConfiguration.nbBoardHeight === 1
@@ -114,7 +118,8 @@ export class PdfPrinter implements Printer {
         width: number,
         height: number,
         locale: SiteLocale = 'en',
-        pdfScaleMode: PdfScaleMode = 'fit-page'
+        pdfScaleMode: PdfScaleMode = 'fit-page',
+        pdfPaperSize: PdfPaperSize = 'a4'
     ) {
         const boardSize = Math.min(
             (width - margin * 2) / project.boardConfiguration.nbBoardHeight,
@@ -126,7 +131,8 @@ export class PdfPrinter implements Printer {
             (height - boardSize * project.boardConfiguration.nbBoardHeight) / 2;
         const fontSize = 12;
 
-        if (locale !== 'en' || pdfScaleMode === 'midi-5mm') {
+        const showLabels = locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter';
+        if (showLabels) {
             const copy = exportMessages(locale);
             labelFont(doc, locale, 14);
             doc.text(`${copy.boards} / ${copy.row} - ${copy.column}`, width / 2, 15, { align: 'center' });
@@ -149,7 +155,7 @@ export class PdfPrinter implements Printer {
                 );
 
                 const txtContainer = container.scale(0.5);
-                const text = locale === 'en' && pdfScaleMode === 'fit-page' ? `${y} - ${x}` : `${y + 1} - ${x + 1}`;
+                const text = showLabels ? `${y + 1} - ${x + 1}` : `${y} - ${x}`;
                 doc.setFontSize(this.biggestFontSize(text, txtContainer));
                 doc.text(
                     text,
@@ -173,7 +179,8 @@ export class PdfPrinter implements Printer {
         margin: number,
         project: Project,
         locale: SiteLocale = 'en',
-        pdfScaleMode: PdfScaleMode = 'fit-page'
+        pdfScaleMode: PdfScaleMode = 'fit-page',
+        pdfPaperSize: PdfPaperSize = 'a4'
     ) {
         const usagePerPage = 30;
 
@@ -190,7 +197,7 @@ export class PdfPrinter implements Printer {
         const symbolWidth = project.exportConfiguration.useSymbols ? 50 : 0;
         const usageWidth = 50;
 
-        const showLabels = locale !== 'en' || pdfScaleMode === 'midi-5mm';
+        const showLabels = locale !== 'en' || pdfScaleMode === 'midi-5mm' || pdfPaperSize === 'letter';
         const headerHeight = showLabels ? 22 : 0;
         const heightWithMargins = height - 2 * margin - headerHeight;
         const rowHeight = heightWithMargins / usagePerPage;
@@ -355,7 +362,8 @@ export class PdfPrinter implements Printer {
         height: number,
         margin: number,
         locale: SiteLocale = 'en',
-        pdfScaleMode: PdfScaleMode = 'fit-page'
+        pdfScaleMode: PdfScaleMode = 'fit-page',
+        pdfPaperSize: PdfPaperSize = 'a4'
     ) {
         const actualMidi = pdfScaleMode === 'midi-5mm';
         const beadSize = actualMidi ? 5 :
@@ -375,7 +383,7 @@ export class PdfPrinter implements Printer {
             for (let j = 0; j < project.boardConfiguration.nbBoardWidth; j++) {
                 doc.addPage();
                 doc.setFontSize(24);
-                const showLabels = locale !== 'en' || actualMidi;
+                const showLabels = locale !== 'en' || actualMidi || pdfPaperSize === 'letter';
                 let text = showLabels ? boardPosition(locale, i, j) : `${i} - ${j}`;
                 if (showLabels) labelFont(doc, locale, 14);
                 const textWidth =
@@ -389,14 +397,17 @@ export class PdfPrinter implements Printer {
                 if (showLabels) {
                     const copy = exportMessages(locale);
                     labelFont(doc, locale, 7);
-                    doc.text(copy.caution, 15, 252);
-                    doc.text(copy.printing, 15, 258);
-                    doc.text(actualMidi ? copy.pitch : copy.scaled, 15, 264);
+                    // A4 retains its original positions. Letter's shorter page
+                    // keeps the whole ruler inside the 5 mm bottom margin.
+                    const rulerY = Math.min(274, height - margin - 2);
+                    doc.text(copy.caution, 15, rulerY - 22);
+                    doc.text(pdfPrintingInstruction(locale, pdfPaperSize), 15, rulerY - 16);
+                    doc.text(actualMidi ? copy.pitch : copy.scaled, 15, rulerY - 10);
                     doc.setDrawColor(0, 0, 0);
-                    doc.line(15, 274, 65, 274);
-                    doc.line(15, 272, 15, 276);
-                    doc.line(65, 272, 65, 276);
-                    doc.text('50 mm', 70, 275);
+                    doc.line(15, rulerY, 65, rulerY);
+                    doc.line(15, rulerY - 2, 15, rulerY + 2);
+                    doc.line(65, rulerY - 2, 65, rulerY + 2);
+                    doc.text('50 mm', 70, rulerY + 1);
                     doc.setFont('MonoFont');
                 }
 
