@@ -1,4 +1,5 @@
 import type { GuidePage } from '../../app/(english)/guides/guide-data';
+import { tutorialEditorLink } from './tutorial-projects';
 
 export const beadifierAlternativeGuide: GuidePage = {
     slug: 'beadifier-alternative',
@@ -39,13 +40,15 @@ export const beadifierAlternativeGuide: GuidePage = {
             heading: 'Try editing a real converted pattern',
             body: [
                 'The rocket below is our own 29 × 29 Perler Midi example, not a comparison of the two tools’ conversions. Its source is an AI-generated illustration. The automatic result has a broken-looking window outline; repainting 16 existing beads Midnight makes the outline continuous.',
-                'The bead count stays at 337, while the color count changes from 32 to 31. Open the unedited project in our editor to try the correction, or reopen the edited project to inspect it. The remaining shades have not been simplified, and the example has not been physically assembled or iron-tested.',
+                'The bead count stays at 337, while the color count changes from 32 to 31. Use the editor links below to try the unedited example or inspect the edited result; the project downloads remain available. If another pattern is open, save it before choosing Replace current pattern, or choose Keep current pattern to cancel. The remaining shades have not been simplified, and the example has not been physically assembled or iron-tested.',
             ],
             comparison: [
                 { src: '/guides/photo-to-pattern/rocket-perler-29-auto_grid.png', alt: 'Before editing: mixed gray and blue beads interrupt the rocket window outline.', caption: 'Before: automatic conversion, 337 beads and 32 colors.', width: 580, height: 580 },
                 { src: '/guides/photo-to-pattern/rocket-perler-29-cleanup_grid.png', alt: 'After editing: 16 Midnight beads form a continuous outline around the rocket window.', caption: 'After: 16 beads repainted, 337 beads and 31 colors.', width: 580, height: 580 },
             ],
             links: [
+                tutorialEditorLink('tutorial-rocket-before'),
+                tutorialEditorLink('tutorial-rocket-after'),
                 { href: '/guides/photo-to-pattern/rocket-perler-29-auto.bead-pattern.json', label: 'Unedited rocket project', download: true },
                 { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup.bead-pattern.json', label: 'Edited rocket project', download: true },
                 { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup.pdf', label: 'Edited rocket PDF', download: true },

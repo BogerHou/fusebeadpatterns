@@ -4,8 +4,9 @@ import { getLocalizedSubjectName } from './localized-content';
 import { hamaPatterns } from './hama';
 import { getMiniLibraryProject } from './mini';
 import { getHamaCharacterLibraryProject } from './hama-character-variants';
+import { getTutorialLibraryProject } from '../guides/tutorial-projects';
 
-export type LibraryProject = { id: string; title: string; projectUrl: string };
+export type LibraryProject = { id: string; title: string; projectUrl: string; kind?: 'tutorial' };
 
 const libraryProjects: LibraryProject[] = [
     {
@@ -603,6 +604,8 @@ const libraryProjects: LibraryProject[] = [
 export function getLibraryProject(id: string, locale: SiteLocale = 'en'): LibraryProject | undefined {
     const original = libraryProjects.find((project) => project.id === id);
     if (original) return locale === 'en' ? original : { ...original, title: getLocalizedSubjectName(original, locale) };
+    const tutorial = getTutorialLibraryProject(id, locale);
+    if (tutorial) return tutorial;
     const mini = getMiniLibraryProject(id, locale);
     if (mini) return mini;
     const characterHama = getHamaCharacterLibraryProject(id, locale);

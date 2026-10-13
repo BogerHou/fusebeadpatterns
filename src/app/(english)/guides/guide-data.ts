@@ -1,5 +1,6 @@
 import { keychainGuide } from '../../../lib/guides/keychains';
 import { beadifierAlternativeGuide } from '../../../lib/guides/beadifier-alternative';
+import { tutorialEditorLink } from '../../../lib/guides/tutorial-projects';
 
 export type GuideSection = {
     heading: string;
@@ -18,6 +19,7 @@ export type GuideSection = {
         href: string;
         label: string;
         download?: boolean;
+        prefetch?: false;
     }>;
     comparison?: Array<{
         src: string;
@@ -111,9 +113,11 @@ export const guidePages: GuidePage[] = [
                 body: [
                     'The 29 × 29 version uses 667 beads; the 58 × 58 version uses 2,726. The larger version adds a few highlights, but the eye colors and fine whiskers are still largely missing. Dark fur merges with the background. For this photo, the extra beads do not produce a clear pet portrait. Try a brighter source with a simpler background, crop closer to the face, or plan to redraw key features in the editor.',
                     'These are the files exported by the generator with Use Symbols In Printable Exports checked. The smaller PDF has a color list and one chart page. The larger PDF has an overview, a color list and four board charts. Match each chart symbol to its color code and quantity in the list. Grid PNG is useful for inspecting the layout. These exports are not verified life-size pegboard templates and do not include the library PDFs’ 50 mm calibration line.',
-                    'These downloads are practice conversions, not finished portrait patterns. To try either example, save its project file and choose Open Project in the generator or editor. Use only the bead colors you own before hand-editing. Select your Color Brand; in the editor, use Pattern Setup (Setup on a smaller screen) and Apply Changes. Open Colors, or Colors then Manage Palettes on a narrow editor screen. Match color codes to your bead bags: keep the colors you own enabled and disable the others one at a time, keeping at least one enabled. Check the result and color quantities before cleanup, then choose Save (Save Project in the generator). The examples have not been physically assembled or iron-tested.',
+                    'These are practice conversions, not finished portrait patterns. Open either cat example directly in the editor using the links below, or download its project and choose Open Project later. If another pattern is open, save it before choosing Replace current pattern; Keep current pattern cancels the replacement. Use only the bead colors you own before hand-editing. Select your Color Brand; in the editor, use Pattern Setup (Setup on a smaller screen) and Apply Changes. Open Colors, or Colors then Manage Palettes on a narrow editor screen. Match color codes to your bead bags: keep the colors you own enabled and disable the others one at a time, keeping at least one enabled. Check the result and color quantities before cleanup, then choose Save (Save Project in the generator). The examples have not been physically assembled or iron-tested.',
                 ],
                 links: [
+                    tutorialEditorLink('tutorial-cat-29'),
+                    tutorialEditorLink('tutorial-cat-58'),
                     { href: '/guides/photo-to-pattern/cat-perler-29.pdf', label: '29 × 29 PDF', download: true },
                     { href: '/guides/photo-to-pattern/cat-perler-29_grid.png', label: '29 × 29 grid PNG', download: true },
                     { href: '/guides/photo-to-pattern/cat-perler-29.bead-pattern.json', label: '29 × 29 editable project', download: true },
@@ -135,7 +139,8 @@ export const guidePages: GuidePage[] = [
                 ],
                 links: [
                     { href: '/guides/photo-to-pattern/rocket-source.png', label: 'Save the rocket source image', download: true },
-                    { href: '/guides/photo-to-pattern/rocket-perler-29-auto.bead-pattern.json', label: 'Open the unedited example', download: true },
+                    tutorialEditorLink('tutorial-rocket-before'),
+                    { href: '/guides/photo-to-pattern/rocket-perler-29-auto.bead-pattern.json', label: 'Download the unedited rocket project', download: true },
                 ],
             },
             {
@@ -151,6 +156,8 @@ export const guidePages: GuidePage[] = [
                     { src: '/guides/photo-to-pattern/rocket-perler-29-cleanup_grid.png', alt: 'After 16 manual bead edits: a continuous Midnight outline surrounds the teal rocket window.', caption: 'After: 16 beads repainted Midnight, with every other cell unchanged.', width: 580, height: 580 },
                 ],
                 links: [
+                    tutorialEditorLink('tutorial-rocket-before'),
+                    tutorialEditorLink('tutorial-rocket-after'),
                     { href: '/editor', label: 'Try the edits in the editor' },
                     { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup.bead-pattern.json', label: 'Edited project', download: true },
                     { href: '/guides/photo-to-pattern/rocket-perler-29-cleanup_grid.png', label: 'Edited grid PNG', download: true },

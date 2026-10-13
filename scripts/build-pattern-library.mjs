@@ -621,14 +621,17 @@ import type { SiteLocale } from '../i18n/locales';
 import { getLocalizedSubjectName } from './localized-content';
 import { hamaPatterns } from './hama';
 import { getMiniLibraryProject } from './mini';
+import { getTutorialLibraryProject } from '../guides/tutorial-projects';
 
-export type LibraryProject = { id: string; title: string; projectUrl: string };
+export type LibraryProject = { id: string; title: string; projectUrl: string; kind?: 'tutorial' };
 
 const libraryProjects: LibraryProject[] = ${JSON.stringify(patterns.map(({ id, title, assets }) => ({ id, title, projectUrl: assets.project })), null, 4)};
 
 export function getLibraryProject(id: string, locale: SiteLocale = 'en'): LibraryProject | undefined {
     const original = libraryProjects.find((project) => project.id === id);
     if (original) return locale === 'en' ? original : { ...original, title: getLocalizedSubjectName(original, locale) };
+    const tutorial = getTutorialLibraryProject(id, locale);
+    if (tutorial) return tutorial;
     const mini = getMiniLibraryProject(id, locale);
     if (mini) return mini;
     const hama = hamaPatterns.find((pattern) => pattern.projectId === id);
