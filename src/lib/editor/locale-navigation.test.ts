@@ -85,6 +85,17 @@ function assertWorkingRecovery(recovered: ReturnType<typeof consumeEditorLocaleD
 }
 
 describe('editor language navigation recovery', () => {
+    it('preserves an automatic limit through four language handoffs without reducing saved pixels or undo/redo branches', () => {
+        const fixture = workingFixture();
+        fixture.draft.maxBeadColors = 1;
+        for (const href of ['/editor', '/de/editor', '/fr/editor', '/ja/editor']) {
+            const session = storage();
+            expect(saveEditorLocaleDraft(fixture.draft, href, session, 1000, null, fixture.context)).toBe(true);
+            const recovered = consumeEditorLocaleDraft(href, session, 1001);
+            assertWorkingRecovery(recovered, fixture);
+            expect(recovered!.draft.maxBeadColors).toBe(1);
+        }
+    });
     it('restores both history branches, manual color, pending changes and viewport without changing the draft format', () => {
         const session = storage(), fixture = workingFixture();
         const href = '/ja/editor?pattern=accepted&view=large#canvas';

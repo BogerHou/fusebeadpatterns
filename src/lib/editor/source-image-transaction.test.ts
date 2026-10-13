@@ -5,6 +5,7 @@ import { buildEditorProject } from './project';
 import { BOARD_OPTIONS } from './config';
 import { Palette, PaletteEntry } from '../core/model/palette/palette.model';
 import { Color } from '../core/model/color/color.model';
+import { quantizePattern } from './pattern-quantization';
 
 vi.mock('./pattern-quantization', () => ({
     // Palette matching has its independent tests. These cases isolate source
@@ -135,17 +136,31 @@ describe('real preparation and canvas publication boundaries', () => {
     }
 
     it('restores the authoritative edited RGBA without cropping, filtering or re-quantizing it even when source dimensions differ', async () => {
+        vi.mocked(quantizePattern).mockClear();
         const original = new Uint8ClampedArray([17, 28, 39, 0, 90, 80, 70, 128]);
         const { context, canvas } = sourceSurface(new Uint8ClampedArray(8));
         const prepared = await prepareSourceImagePattern({ src: 'original', fileName: 'saved', crop:
             { sourceWidth: 8, sourceHeight: 6, x: 1, y: 1, width: 4, height: 3 }, project: project(),
-            width: 2, height: 1, matchingId: 'euclidean', restoredPixels: original }, new AbortController().signal);
+            width: 2, height: 1, matchingId: 'euclidean', maxBeadColors: 1, restoredPixels: original }, new AbortController().signal);
         expect(Array.from(prepared.pixels)).toEqual(Array.from(original));
         expect(prepared.pixels).not.toBe(original);
         expect(context.drawImage).not.toHaveBeenCalled();
         expect(context.getImageData).not.toHaveBeenCalled();
+        expect(quantizePattern).not.toHaveBeenCalled();
         expect(canvas.width).toBe(0);
         expect(canvas.height).toBe(0);
+    });
+
+    it('forwards the captured limit for a new source conversion and omits the field for the legacy unlimited branch', async () => {
+        vi.mocked(quantizePattern).mockClear();
+        for (const cap of [12, null, undefined]) {
+            sourceSurface(new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 0, 0]));
+            await prepareSourceImagePattern({ src: 'original', fileName: 'new', crop: null,
+                project: project(), width: 2, height: 1, matchingId: 'euclidean', maxBeadColors: cap }, new AbortController().signal);
+            const request = vi.mocked(quantizePattern).mock.calls.at(-1)![0];
+            if (cap === 12) expect(request.maxBeadColors).toBe(12);
+            else expect(Object.hasOwn(request, 'maxBeadColors')).toBe(false);
+        }
     });
 
     it('passes the exact original rectangle to the shared sampler and keeps a separate Project snapshot', async () => {

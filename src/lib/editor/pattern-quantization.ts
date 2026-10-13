@@ -3,12 +3,13 @@ import {
     type QuantizationRequest,
     type QuantizationResponse,
 } from './quantization-protocol';
+import { createBrandColorLimitSteps, validateBrandColorLimitRequest } from './brand-color-limit';
 
 // Worker startup costs more than converting a small single-board pattern.
 export const WORKER_MIN_PATTERN_PIXELS = 4096;
 const WORKER_STARTUP_TIMEOUT_MS = 10_000;
 
-type QuantizationOptions = {
+export type QuantizationOptions = {
     signal?: AbortSignal;
     workerFactory?: () => Worker;
 };
@@ -26,7 +27,48 @@ async function runFallback(
     if (signal?.aborted) {
         throw abortError();
     }
+    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha) {
+        const steps = createBrandColorLimitSteps(request);
+        let step = steps.next();
+        while (!step.done) {
+            const start = performance.now();
+            // Each generator step is bounded. Consume a short time slice rather
+            // than paying the browser's nested-timer delay for every 2048 ops.
+            while (!step.done && performance.now() - start < 8) {
+                if (signal?.aborted) {
+                    steps.return(undefined);
+                    throw abortError();
+                }
+                step = steps.next();
+            }
+            if (step.done) return step.value;
+            await new Promise<void>((resolve) => setTimeout(resolve, 0));
+            if (signal?.aborted) {
+                steps.return(undefined);
+                throw abortError();
+            }
+            step = steps.next();
+        }
+        return step.value;
+    }
     return runPatternQuantization(request);
+}
+
+export type PatternColorLimitRequest = Pick<QuantizationRequest, 'pixels' | 'width' | 'height' | 'palettes' | 'matchingId'> & {
+    maxBeadColors: number;
+};
+
+/** Explicitly reduce the current grid, keeping every alpha and empty-cell RGB. */
+export function limitPatternBeadColors(
+    request: PatternColorLimitRequest,
+    options: QuantizationOptions = {}
+): Promise<Uint8ClampedArray> {
+    return quantizePattern({
+        ...request,
+        preservePatternAlpha: true,
+        dithering: { enable: false, hardness: 0 },
+        drawingPosition: { x: 0, y: 0, width: request.width, height: request.height },
+    }, options);
 }
 
 function runWorker(
@@ -115,6 +157,9 @@ export async function quantizePattern(
 ): Promise<Uint8ClampedArray> {
     if (options.signal?.aborted) {
         throw abortError();
+    }
+    if (request.maxBeadColors !== undefined && request.maxBeadColors !== null || request.preservePatternAlpha) {
+        validateBrandColorLimitRequest(request);
     }
     if (request.width * request.height < WORKER_MIN_PATTERN_PIXELS ||
         (!options.workerFactory && typeof Worker === 'undefined')) {

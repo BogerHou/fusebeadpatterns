@@ -114,7 +114,7 @@ function harness(id = 'original-black-cat', mode: 'blank' | 'image' = 'blank', f
             useCallback: (callback: unknown) => callback,
             getBoardOption, getPaletteOption, parsePaletteCsv, applyFreshPaletteDefaults, PALETTE_OPTIONS,
             clonePalettes, countEnabledEntries, enablePaletteEntry, getAutomaticEditorColorRef, mergePaletteEnabledState, remapPatternPalette: convert, computeUsage,
-            normalizeSourceCrop, sourceCrop: null,
+            normalizeSourceCrop, sourceCrop: null, maxBeadColors: null,
             fetch: fetchPalette, isEditorDraftReady: true, selectedPaletteIds: state.ids, activePalettes: state.active,
             matchingId: draft.matchingId, rendererSettings: { ...draft.rendererSettings, showGrid: true }, sourceMode: mode,
             currentProjectRef: refs.project, reducedColorRef: refs.pixels, patternHistoryRef: refs.history,

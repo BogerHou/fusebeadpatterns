@@ -184,6 +184,14 @@ export const guidePages: GuidePage[] = [
                 ],
             },
             {
+                heading: 'Use fewer bead colors',
+                body: [
+                    'Choose “Reduce bead colors” and enter a maximum, such as 8. “Apply to current pattern” changes the colors while keeping bead positions and empty cells; use Undo to compare it with your previous work. Only enabled colors from your selected bead brands are used. The result can use fewer colors than the limit.',
+                    '“Convert source image again” starts from the original image and current crop and replaces hand edits. Leave the limit blank to turn it off; this alone does not recover earlier detail. The downloadable comparisons above were made without a color limit and remain unchanged.',
+                    'Inspect faces, outlines and small accent colors before exporting. Fewer colors can make supplies simpler, but can also remove important details. Manual painting or a later brand change can exceed the conversion limit; check the actual colors in the materials list.',
+                ],
+            },
+            {
                 heading: 'Use the editor for cleanup',
                 body: [
                     'Automatic color matching gets you close, but handmade bead art often needs a few manual edits. Clean up facial features, outlines, text, and background noise before exporting.',

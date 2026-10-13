@@ -1,5 +1,6 @@
 import { BoardOptionId } from './config';
-import { BOARDS } from '../core/model/board/board.model';
+import { EDITOR_DRAFT_BOARD_COUNT_MAX, EDITOR_PROJECT_PATTERN_DIMENSION_MAX, EDITOR_PROJECT_PATTERN_MAX_BYTES } from './editor-limits';
+export { EDITOR_DRAFT_BOARD_COUNT_MAX, EDITOR_PROJECT_PATTERN_DIMENSION_MAX, EDITOR_PROJECT_PATTERN_MAX_BYTES } from './editor-limits';
 import { Palette } from '@/lib/core/model/palette/palette.model';
 import { isPdfScaleMode, type PdfScaleMode } from './pdf-scale';
 import { isPdfPaperSize, type PdfPaperSize } from './pdf-paper';
@@ -7,12 +8,6 @@ import { isValidSourceCrop, type EditorSourceCrop } from '../core/utils/image-cr
 
 export const EDITOR_DRAFT_STORAGE_KEY = 'bead-pattern-editor-draft-v1';
 export const EDITOR_DRAFT_PATTERN_MAX_BYTES = 1_500_000;
-export const EDITOR_DRAFT_BOARD_COUNT_MAX = 20;
-export const EDITOR_PROJECT_PATTERN_DIMENSION_MAX =
-    EDITOR_DRAFT_BOARD_COUNT_MAX *
-    Math.max(...Object.values(BOARDS).map((board) => board.nbBeadPerRow));
-export const EDITOR_PROJECT_PATTERN_MAX_BYTES =
-    EDITOR_PROJECT_PATTERN_DIMENSION_MAX ** 2 * 4;
 export const EDITOR_PROJECT_FILE_TYPE = 'bead-pattern-project-v1';
 export const EDITOR_PROJECT_FILE_EXTENSION = '.bead-pattern.json';
 
@@ -28,6 +23,8 @@ export type EditorDraft = {
     sourceMode?: 'image' | 'blank';
     imageSrc: string | null;
     sourceCrop?: EditorSourceCrop | null;
+    /** Automatic conversion only; saved edited pixels remain authoritative. */
+    maxBeadColors?: number | null;
     fileName: string;
     selectedPaletteIds: string[];
     activePalettes: Palette[];
@@ -235,6 +232,9 @@ function isEditorDraft(value: unknown): value is EditorDraft {
             sourceMode === 'image' ||
             sourceMode === 'blank') &&
         (typeof value.imageSrc === 'string' || value.imageSrc === null) &&
+        (value.maxBeadColors === undefined || value.maxBeadColors === null ||
+            (typeof value.maxBeadColors === 'number' && Number.isInteger(value.maxBeadColors) &&
+                value.maxBeadColors >= 1 && value.maxBeadColors <= 512)) &&
         (value.sourceCrop === undefined || value.sourceCrop === null ||
             (sourceMode !== 'blank' && typeof value.imageSrc === 'string' && value.imageSrc.length > 0 && isValidSourceCrop(value.sourceCrop))) &&
         typeof value.fileName === 'string' &&

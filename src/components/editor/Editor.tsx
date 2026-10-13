@@ -2,7 +2,7 @@
 
 import NextImage from 'next/image';
 import Link from 'next/link';
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ChevronDown,
@@ -43,6 +43,9 @@ import { resolvePdfPaperSize, type PdfPaperSize } from '@/lib/editor/pdf-paper';
 import { isEditorPatternSnapshotReady } from '@/lib/editor/draft-readiness';
 import { normalizeSourceCrop, type EditorSourceCrop } from '@/lib/core/utils/image-crop';
 import { getSourceCropCopy } from '@/lib/editor/source-crop-copy';
+import { getBeadColorLimitCopy } from '@/lib/editor/bead-color-limit-copy';
+import { limitPatternBeadColors } from '@/lib/editor/pattern-quantization';
+import { normalizeMaxBeadColors } from '@/lib/editor/brand-color-limit';
 import { SourceImageTransactions, readSourceImageFile, prepareSourceImagePattern, commitSourceImageCanvas, type PreparedSourceImage } from '@/lib/editor/source-image-transaction';
 import { DEFAULT_EDITOR_PALETTE_ID as DEFAULT_PALETTE_ID, getInitialEditorConfiguration } from '@/lib/editor/initial-configuration';
 
@@ -210,7 +213,7 @@ type EditorSourceMode = 'image' | 'blank';
 type AcceptedSourceConfiguration = Pick<EditorDraft,
     'boardId' | 'boardWidth' | 'boardHeight' | 'matchingId' | 'ditheringId' |
     'imageAdjustments' | 'selectedPaletteIds' | 'activePalettes'> & {
-    center: boolean; fit: boolean; crop: EditorSourceCrop | null;
+    center: boolean; fit: boolean; crop: EditorSourceCrop | null; maxBeadColors: number | null;
 };
 type EditorMobilePanel = 'file' | 'edit' | 'colors' | 'setup' | null;
 type HomeMobilePanel =
@@ -557,9 +560,14 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const [sourceMode, setSourceMode] = useState<EditorSourceMode>('image');
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [sourceCrop, setSourceCrop] = useState<EditorSourceCrop | null>(null);
+    const [maxBeadColors, setMaxBeadColors] = useState<number | null>(null);
+    const [pendingMaxBeadColorsText, setPendingMaxBeadColorsText] = useState('');
+    const [isColorLimitOpen, setIsColorLimitOpen] = useState(false);
+    const [colorLimitError, setColorLimitError] = useState<string | null>(null);
+    const [colorLimitBusy, setColorLimitBusy] = useState(false);
     const [isSourceCropOpen, setIsSourceCropOpen] = useState(false);
     const [sourceCropError, setSourceCropError] = useState<string | null>(null);
-    const [sourceTransactionKind, setSourceTransactionKind] = useState<'upload' | 'crop' | null>(null);
+    const [sourceTransactionKind, setSourceTransactionKind] = useState<'upload' | 'crop' | 'limit-source' | 'limit-current' | null>(null);
     const [fileName, setFileName] = useState('bead-pattern');
     const [selectedPaletteIds, setSelectedPaletteIds] = useState<string[]>([
         initialConfiguration.paletteId,
@@ -706,6 +714,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         previewZoom
     );
     const colorsUsed = beadsUsage.size;
+    const unmatchedBeadCount = useMemo(() => {
+        const pixels = reducedColorRef.current;
+        if (!pixels) return 0;
+        let occupied = 0;
+        for (let offset = 3; offset < pixels.length; offset += 4) if (pixels[offset]) occupied++;
+        return Math.max(0, occupied - countBeads(beadsUsage));
+    }, [beadsUsage]);
     const primaryPaletteId = selectedPaletteIds[0] ?? DEFAULT_PALETTE_ID;
     const hasEditablePattern = Boolean(previewDataUrl);
     const canSaveProject = hasEditablePattern && !processing;
@@ -1137,18 +1152,20 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
     }, [activePalettes]);
 
-    const sourceProcessingKey = useCallback((crop: EditorSourceCrop | null) => JSON.stringify({
+    const sourceProcessingKey = useCallback((crop: EditorSourceCrop | null, colorLimit: number | null = maxBeadColors) => JSON.stringify({
         boardId, boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
         center: rendererSettings.center, fit: rendererSettings.fit,
         sourceCrop: normalizeSourceCrop(crop),
+        ...(colorLimit !== null ? { maxBeadColors: colorLimit } : {}),
     }), [boardId, boardWidth, boardHeight, matchingId, ditheringId, imageAdjustments,
-        rendererSettings.center, rendererSettings.fit]);
+        rendererSettings.center, rendererSettings.fit, maxBeadColors]);
 
     const createCurrentEditorDraft = useCallback((forProject = false) => {
         return createEditorDraft({
             sourceMode,
             imageSrc,
             ...(sourceCrop ? { sourceCrop: { ...sourceCrop } } : {}),
+            ...(maxBeadColors !== null ? { maxBeadColors } : {}),
             fileName,
             selectedPaletteIds,
             activePalettes,
@@ -1182,6 +1199,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         imageAdjustments,
         imageSrc,
         sourceCrop,
+        maxBeadColors,
         matchingId,
         previewZoom,
         referenceOpacity,
@@ -1227,6 +1245,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         sourceCandidateControllerRef.current = null;
         if (candidate && imageGenerationRef.current === candidate) imageGenerationRef.current = null;
         setSourceTransactionKind(null);
+        setColorLimitBusy(false);
         setProcessing(false);
     }, []);
 
@@ -1235,6 +1254,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             cancelSourceOperation();
             setIsSourceCropOpen(false);
             setSourceCropError(null);
+            setIsColorLimitOpen(false);
+            setColorLimitError(null);
             pendingLocaleContextRef.current = null;
             pendingLocaleViewportRef.current = null;
             setMaterialsBoard(null);
@@ -1266,10 +1287,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 imageAdjustments: { ...draft.imageAdjustments }, selectedPaletteIds: [...draft.selectedPaletteIds],
                 activePalettes: clonePalettes(draft.activePalettes), center: draft.rendererSettings.center,
                 fit: draft.rendererSettings.fit, crop: normalizeSourceCrop(draft.sourceCrop),
+                maxBeadColors: draft.maxBeadColors ?? null,
             } : null;
             setSourceMode(nextSourceMode);
             setImageSrc(draft.imageSrc);
             setSourceCrop(normalizeSourceCrop(draft.sourceCrop));
+            setMaxBeadColors(draft.maxBeadColors ?? null);
+            setPendingMaxBeadColorsText(draft.maxBeadColors == null ? '' : String(draft.maxBeadColors));
             setFileName(draft.fileName);
             // The saved palettes are the project's color snapshot. Reloading
             // them could regenerate the image after its edited pixels restore.
@@ -1773,6 +1797,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         setImageAdjustments({ ...accepted.imageAdjustments });
         setRendererSettings(previous => ({ ...previous, center: accepted.center, fit: accepted.fit }));
         setSourceCrop(accepted.crop ? { ...accepted.crop } : null);
+        setMaxBeadColors(accepted.maxBeadColors);
         skipNextPaletteRebuildRef.current = true;
     }, []);
 
@@ -1844,7 +1869,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 const saved = pendingEditedPatternRef.current;
                 const restoredPixels = saved && saved.width === width && saved.height === height ? decodeEditorPatternDraft(saved) : null;
                 const prepared = await prepareSourceImagePattern({ src: imageSrc, fileName: outputSettings.fileName,
-                    crop: sourceCrop, project, width, height, matchingId, restoredPixels }, controller.signal);
+                    crop: sourceCrop, project, width, height, matchingId, maxBeadColors, restoredPixels }, controller.signal);
                 if (controller.signal.aborted || imageGenerationRef.current !== controller) return;
                 const latest = getImageOutputSettings();
                 project.image.name = latest.fileName;
@@ -1860,6 +1885,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     imageAdjustments: { ...imageAdjustments }, selectedPaletteIds: [...(resolvedPaletteIdsRef.current ?? [])],
                     activePalettes: clonePalettes(activePalettes), center: rendererSettings.center,
                     fit: rendererSettings.fit, crop: normalizeSourceCrop(sourceCrop),
+                    maxBeadColors,
                 };
                 lastProcessedImageSrcRef.current = imageSrc;
                 lastProcessedImageSettingsKeyRef.current = imageProcessingSettingsKey;
@@ -1888,7 +1914,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             if (imageGenerationRef.current === controller) imageGenerationRef.current = null;
         };
     }, [activePalettes, boardHeight, boardId, boardWidth, ditheringId, imageAdjustments,
-        imageSrc, sourceCrop, matchingId, rendererSettings.center, rendererSettings.fit,
+        imageSrc, sourceCrop, maxBeadColors, matchingId, rendererSettings.center, rendererSettings.fit,
         selectedBoard, sourceProcessingKey, publishPreparedSource, restoreAcceptedSourceConfiguration, isEditorDraftReady]);
 
     useEffect(() => {
@@ -2124,7 +2150,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         sourceProcessingKey,
     ]);
 
-    const runSourceCandidate = async (input: File | string, crop: EditorSourceCrop | null, kind: 'upload' | 'crop'): Promise<boolean> => {
+    const runSourceCandidate = async (input: File | string, crop: EditorSourceCrop | null,
+        kind: 'upload' | 'crop' | 'limit-source', candidateColorLimit: number | null = maxBeadColors): Promise<boolean> => {
         if (!isEditorDraftReady || localeTransferPending || localeContextInstalling ||
             isLibraryPatternLoading || exportInProgressRef.current || !selectedBoard) return false;
         // A selected brand is not ready until its own palette has committed.
@@ -2161,7 +2188,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         // Capture every generation input before reading or decoding the file.
         const paletteIds = [...selectedPaletteIds], paletteSnapshot = clonePalettes(activePalettes);
         const board = selectedBoard, width = boardWidth * board.beadsPerRow, height = boardHeight * board.beadsPerRow;
-        const settingsKey = sourceProcessingKey(normalized);
+        const settingsKey = sourceProcessingKey(normalized, candidateColorLimit);
         const configuration = { boardOption: board, boardWidth, boardHeight, matchingId, ditheringId,
             imageAdjustments: { ...imageAdjustments }, rendererSettings: { ...rendererSettings }, useSymbols };
         try {
@@ -2171,7 +2198,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 if (signal.aborted) throw new DOMException('Source image operation cancelled.', 'AbortError');
                 const project = buildEditorProject({ ...configuration, palettes });
                 const prepared = await prepareSourceImagePattern({ src, fileName: name, crop: normalized,
-                    project, width, height, matchingId: configuration.matchingId }, signal);
+                    project, width, height, matchingId: configuration.matchingId, maxBeadColors: candidateColorLimit }, signal);
                 const usage = computeUsage(prepared.pixels, project.paletteConfiguration.palettes);
                 const preview = createPatternPreviewDataUrl(prepared.pixels, width, height,
                     board.beadsPerRow, configuration.rendererSettings.showGrid);
@@ -2183,6 +2210,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     ditheringId: configuration.ditheringId, imageAdjustments: { ...configuration.imageAdjustments },
                     selectedPaletteIds: paletteIds, activePalettes: clonePalettes(palettes),
                     center: configuration.rendererSettings.center, fit: configuration.rendererSettings.fit, crop: normalized,
+                    maxBeadColors: candidateColorLimit,
                 };
                 libraryPatternIdRef.current = null;
                 pendingLocaleContextRef.current = null;
@@ -2198,6 +2226,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 setSourceMode('image');
                 setImageSrc(src);
                 setSourceCrop(normalized);
+                setMaxBeadColors(candidateColorLimit);
                 setFileName(name);
                 setPreviewZoom(1);
                 setErrorMessage(null);
@@ -2214,7 +2243,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         } catch {
             if (jobs.isCurrent(controller)) {
                 const message = getSourceCropCopy(locale).error;
-                if (kind === 'crop') setSourceCropError(message); else setErrorMessage(getSourceCropCopy(locale).uploadError);
+                if (kind === 'crop') setSourceCropError(message);
+                else if (kind === 'limit-source') setColorLimitError(getBeadColorLimitCopy(locale).error);
+                else setErrorMessage(getSourceCropCopy(locale).uploadError);
             }
             return false;
         } finally {
@@ -2236,6 +2267,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             isLibraryPatternLoading || !isEditorDraftReady) return;
         finishActiveStroke();
         setSourceCropError(null);
+        setIsColorLimitOpen(false);
+        setColorLimitError(null);
         setIsSourceCropOpen(true);
     };
 
@@ -2249,6 +2282,120 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             {sourceCrop ? <p className="text-xs leading-5 text-muted">{getSourceCropCopy(locale).applied} · {sourceCrop.width} × {sourceCrop.height} {getSourceCropCopy(locale).pixelUnit}</p> : null}
         </div>
     ) : null;
+
+    const openColorLimit = () => {
+        if (processing || imageGenerationRef.current || settingsUpdateRef.current ||
+            exportingId !== null || isLibraryPatternLoading || !isEditorDraftReady ||
+            (isEditorPage && hasPendingPatternSettings)) return;
+        finishActiveStroke();
+        setPendingMaxBeadColorsText(maxBeadColors === null ? '' : String(maxBeadColors));
+        setColorLimitError(null);
+        setIsColorLimitOpen(true);
+    };
+
+    const readPendingColorLimit = (): number | null | undefined => {
+        try {
+            if (pendingMaxBeadColorsText === '') return null;
+            if (!/^\d{1,3}$/.test(pendingMaxBeadColorsText)) throw new RangeError('Invalid color limit.');
+            return normalizeMaxBeadColors(Number(pendingMaxBeadColorsText));
+        } catch {
+            setColorLimitError(getBeadColorLimitCopy(locale).invalid);
+            return undefined;
+        }
+    };
+
+    const applyCurrentColorLimit = async () => {
+        const limit = readPendingColorLimit();
+        if (limit === undefined || processing || sourceTransactionsRef.current.pending ||
+            exportInProgressRef.current || settingsUpdateRef.current || imageGenerationRef.current ||
+            isLibraryPatternLoading || !isEditorDraftReady ||
+            (isEditorPage && hasPendingPatternSettings) ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds)) return;
+        finishActiveStroke();
+        const project = currentProjectRef.current, pixels = reducedColorRef.current, canvas = canvasRef.current;
+        if (!project || !pixels || !canvas || !isEditorPatternSnapshotReady(pixels, canvas, previewSize)) return;
+        if (!confirmLargePatternAction(currentPatternBeadCount, locale)) return;
+        const jobs = sourceTransactionsRef.current, controller = jobs.begin();
+        sourceCandidateControllerRef.current = controller;
+        imageGenerationRef.current = controller;
+        setSourceTransactionKind('limit-current');
+        setColorLimitBusy(true);
+        setProcessing(true);
+        setColorLimitError(null);
+        const before = pixels.slice(), width = canvas.width, height = canvas.height;
+        const palettes = clonePalettes(project.paletteConfiguration.palettes), history = patternHistoryRef.current;
+        const key = sourceProcessingKey(sourceCrop, limit);
+        try {
+            await jobs.prepare(controller, async signal => {
+                // Disabling the preference never tries to recover detail or
+                // re-match already completed hand-edited bead colors.
+                const next = limit === null ? before.slice() : await limitPatternBeadColors({
+                    pixels: before, width, height, palettes, matchingId, maxBeadColors: limit,
+                }, { signal });
+                const patch = createPatternPatch(before, next);
+                const usage = computeUsage(next, palettes);
+                const preview = createPatternPreviewDataUrl(next, width, height,
+                    project.boardConfiguration.board.nbBeadPerRow, rendererSettings.showGrid);
+                return { next, patch, usage, preview };
+            }, ({ next, patch, usage, preview }) => {
+                if (currentProjectRef.current !== project || reducedColorRef.current !== pixels ||
+                    patternHistoryRef.current !== history || canvas.width !== width || canvas.height !== height ||
+                    pixels.some((value, index) => value !== before[index])) throw new Error('Pattern changed.');
+                commitSourceImageCanvas(canvas, { project, pixels: next, width, height }, pixels);
+                reducedColorRef.current = next;
+                if (patch) {
+                    history.push(patch);
+                    setManualPatternRevision(previous => previous + 1);
+                    setHistoryRevision(previous => previous + 1);
+                }
+                if (acceptedSourceConfigurationRef.current) acceptedSourceConfigurationRef.current.maxBeadColors = limit;
+                lastProcessedImageSettingsKeyRef.current = key;
+                skipNextPaletteRebuildRef.current = true;
+                setMaxBeadColors(limit);
+                setBeadsUsage(usage);
+                setPreviewDataUrl(preview);
+                syncEditorColorAfterPatternBuild(usage, palettes);
+                setErrorMessage(null);
+                setIsColorLimitOpen(false);
+            });
+        } catch {
+            if (jobs.isCurrent(controller)) setColorLimitError(getBeadColorLimitCopy(locale).error);
+        } finally {
+            if (jobs.finish(controller)) {
+                sourceCandidateControllerRef.current = null;
+                if (imageGenerationRef.current === controller) imageGenerationRef.current = null;
+                setSourceTransactionKind(null);
+                setProcessing(false);
+                setColorLimitBusy(false);
+            }
+        }
+    };
+
+    const regenerateWithColorLimit = async () => {
+        const limit = readPendingColorLimit();
+        if (limit === undefined || !imageSrc || sourceMode !== 'image' || colorLimitBusy ||
+            (isEditorPage && hasPendingPatternSettings)) return;
+        if (hasManualPatternChanges && !window.confirm(getBeadColorLimitCopy(locale).sourceWarning)) return;
+        setColorLimitBusy(true);
+        const running = runSourceCandidate(imageSrc, sourceCrop, 'limit-source', limit);
+        const controller = sourceCandidateControllerRef.current;
+        const accepted = await running;
+        if (accepted) setIsColorLimitOpen(false);
+        if (sourceCandidateControllerRef.current === controller || !sourceTransactionsRef.current.pending) setColorLimitBusy(false);
+    };
+
+    const colorLimitButton = (
+        <div>
+        <button type="button" onClick={openColorLimit}
+            disabled={processing || exportingId !== null || isLibraryPatternLoading || !hasEditablePattern || (isEditorPage && hasPendingPatternSettings)}
+            title={isEditorPage && hasPendingPatternSettings ? getBeadColorLimitCopy(locale).applySettingsHint : undefined}
+            className="mt-2 min-h-11 w-full rounded-lg border border-[#768b7c] bg-white px-3 py-2 text-xs font-semibold text-brutal-black hover:bg-brand-cyan disabled:opacity-50">
+            {getBeadColorLimitCopy(locale).open}
+        </button>
+        {maxBeadColors !== null ? <p className="mt-1 text-xs leading-5 text-muted">{getBeadColorLimitCopy(locale).appliedLimit.replace('{count}', number(maxBeadColors))}</p> : null}
+        {isEditorPage && hasPendingPatternSettings ? <p className="mt-1 text-xs leading-5 text-muted">{getBeadColorLimitCopy(locale).applySettingsHint}</p> : null}
+        </div>
+    );
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         loadSelectedFile(getFirstImageFile(event.target.files));
@@ -2272,6 +2419,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         cancelSourceOperation();
         setIsSourceCropOpen(false);
         setSourceCropError(null);
+        setIsColorLimitOpen(false);
+        setColorLimitError(null);
         libraryPatternIdRef.current = null;
         pendingLocaleContextRef.current = null;
         pendingLocaleViewportRef.current = null;
@@ -2282,6 +2431,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         setSourceMode('blank');
         setImageSrc(null);
         setSourceCrop(null);
+        setMaxBeadColors(null);
+        setPendingMaxBeadColorsText('');
         setFileName('blank-pattern');
         setErrorMessage(null);
         setBeadsUsage(new Map());
@@ -3233,7 +3384,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const handleEditorShortcuts = React.useEffectEvent(
         (event: KeyboardEvent) => {
-            if (isSourceCropOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
+            if (isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending || localeSaveInProgressRef.current || localeRestoreBlocked || !isEditorDraftReady || localeContextInstalling) return;
             const target = event.target as HTMLElement | null;
             const isTypingTarget =
                 target instanceof HTMLInputElement ||
@@ -3283,7 +3434,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
         const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
         if (!detail?.href) return;
-        if (!isEditorDraftReady || isSourceCropOpen || sourceTransactionsRef.current.pending ||
+        if (!isEditorDraftReady || isSourceCropOpen || isColorLimitOpen || sourceTransactionsRef.current.pending ||
             (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
             event.preventDefault();
             setErrorMessage('Please wait for the current operation to finish before changing language.');
@@ -3411,7 +3562,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
-            <div className="contents" inert={isSourceCropOpen || sourceTransactionKind !== null}>
+            <div className="contents" inert={isSourceCropOpen || isColorLimitOpen || sourceTransactionKind !== null}>
             {localeRestoreBlocked ? (
                 <div role="alert" className="flex min-h-48 flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#d9ded5] bg-brutal-bg p-6 font-sans text-brutal-black">
                     <p>{t('Your saved language change could not be restored. Retry or open a saved project to continue.')}</p>
@@ -4201,6 +4352,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                     >
                                         {t("Manage Palettes")}
                                     </button>
+                                    {colorLimitButton}
                                 </div>
                             ) : null}
 
@@ -4567,6 +4719,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                     ))}
                                 </select>
                             </label>
+                            {colorLimitButton}
                             <label className="block">
                                 <span className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-brutal-black/65">
                                     <span>{t("Pegboard")}</span>
@@ -5060,6 +5213,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
                                 {homeMobilePanel === 'brand' ? (
                                     <div className="space-y-3">
+                                        {colorLimitButton}
                                         <label className="block">
                                             <span className="mb-1 block text-[11px] font-semibold text-brutal-black/65">
                                                 {t("Color Brand")}
@@ -5515,6 +5669,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                             </EditorSection>
 
                             <EditorSection title={t("Color Brand")}>
+                                {colorLimitButton}
                                 <select
                                     id={HOME_PRIMARY_PALETTE_ID}
                                     name="homePrimaryPalette"
@@ -6623,6 +6778,45 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 <SourceCropDialog imageSrc={imageSrc} initialCrop={sourceCrop} locale={locale} error={sourceCropError}
                     onApply={crop => runSourceCandidate(imageSrc, crop, 'crop')}
                     onCancel={() => { cancelSourceOperation(); setIsSourceCropOpen(false); setSourceCropError(null); }} />
+            ) : null}
+            {isColorLimitOpen ? (
+                <EditorDialog locale={locale} title={getBeadColorLimitCopy(locale).title}
+                    summary={getBeadColorLimitCopy(locale).summary}
+                    onClose={() => { cancelSourceOperation(); setIsColorLimitOpen(false); setColorLimitError(null); }}>
+                    <div className="space-y-4">
+                        <label className="block text-sm font-semibold" htmlFor="editor-max-bead-colors">
+                            {getBeadColorLimitCopy(locale).label}
+                        </label>
+                        <input id="editor-max-bead-colors" type="text" inputMode="numeric" maxLength={3}
+                            value={pendingMaxBeadColorsText} disabled={colorLimitBusy}
+                            placeholder={getBeadColorLimitCopy(locale).unlimited}
+                            aria-describedby="editor-max-bead-colors-hint" aria-invalid={Boolean(colorLimitError)}
+                            onChange={event => { setPendingMaxBeadColorsText(event.target.value); setColorLimitError(null); }}
+                            className="min-h-11 w-full rounded-lg border border-[#768b7c] bg-white px-3 py-2 text-base" />
+                        <p id="editor-max-bead-colors-hint" className="text-sm leading-6 text-muted">{getBeadColorLimitCopy(locale).hint}</p>
+                        <p className="text-sm font-semibold">{getBeadColorLimitCopy(locale).currentCount.replace('{count}', number(colorsUsed))}</p>
+                        {unmatchedBeadCount > 0 ? <p className="text-sm leading-6 text-muted">{getBeadColorLimitCopy(locale).unmatchedCount.replace('{count}', number(unmatchedBeadCount))}</p> : null}
+                        <p className="text-sm leading-6 text-muted">{getBeadColorLimitCopy(locale).manualNote}</p>
+                        <p className="text-sm leading-6 text-muted">{getBeadColorLimitCopy(locale).nullCurrentNote}</p>
+                        {colorLimitError ? <p role="alert" className="text-sm text-red-700">{colorLimitError}</p> : null}
+                        {colorLimitBusy ? <p role="status" aria-live="polite" className="text-sm font-semibold">{getBeadColorLimitCopy(locale).busy}</p> : null}
+                        <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => void applyCurrentColorLimit()} disabled={colorLimitBusy || !hasEditablePattern}
+                                className="min-h-11 rounded-lg border border-[#28614e] bg-[#28614e] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                                {getBeadColorLimitCopy(locale).applyCurrent}
+                            </button>
+                            <button type="button" onClick={() => void regenerateWithColorLimit()} disabled={colorLimitBusy || !imageSrc || sourceMode !== 'image'}
+                                className="min-h-11 rounded-lg border border-[#768b7c] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50">
+                                {getBeadColorLimitCopy(locale).regenerate}
+                            </button>
+                            <button type="button" onClick={() => { cancelSourceOperation(); setIsColorLimitOpen(false); setColorLimitError(null); }}
+                                className="min-h-11 rounded-lg border border-[#768b7c] bg-white px-4 py-2 text-sm font-semibold">
+                                {getBeadColorLimitCopy(locale).cancel}
+                            </button>
+                        </div>
+                        <p className="text-sm leading-6 text-muted">{getBeadColorLimitCopy(locale).sourceWarning}</p>
+                    </div>
+                </EditorDialog>
             ) : null}
         </div>
     );
