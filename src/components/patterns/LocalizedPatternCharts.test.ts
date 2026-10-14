@@ -94,6 +94,35 @@ const englishMetadata = englishRoute.generateMetadata as (props: DetailProps) =>
 const sitemap = load('../../app/sitemap.ts').default as () => Array<{ url: string; lastModified: Date; images?: string[] }>;
 
 describe('native pattern chart journeys', () => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('%s renders the original strawberry with the correct native chart, materials and complete downloads', async locale => {
+        const pattern = catalog.getPatternById('original-strawberry')!;
+        const props = { params: Promise.resolve({ segments: ['strawberry'] }) };
+        const html = renderToStaticMarkup(locale === 'en' ? await EnglishDetail(props) : createElement(Detail, { pattern, locale }));
+        const grid = locale === 'en' ? { href: pattern.assets.grid, width: 788, height: 908 } : downloads.getLocalizedPatternGrid(pattern, locale);
+        const chart = [...html.matchAll(/<img\b[^>]*>/g)].map(match => match[0]).find(image => image.includes(`src="${grid.href}"`))!;
+        expect(chart).toContain(`width="${grid.width}"`);
+        expect(chart).toContain(`height="${grid.height}"`);
+        const prefix = locale === 'en' ? '' : `/${locale}`;
+        const pdf = locale === 'en' ? pattern.assets.pdf : downloads.getLocalizedPatternPdf(pattern, locale).href;
+        const letter = locale === 'en' ? pattern.assets.pdfLetter! : downloads.getLocalizedPatternLetterPdf(pattern, locale)!.href;
+        for (const href of [pdf, letter, grid.href, pattern.assets.project, pattern.assets.pixels, `${prefix}/editor?pattern=${pattern.id}`]) expect(html).toContain(`href="${href}"`);
+        for (const ref of ['80-19005', '80-19010', '80-19056']) expect(html).toContain(ref);
+        expect(html).toContain('296');
+        if (locale === 'en') expect(await englishMetadata(props)).toMatchObject({
+            title: 'Strawberry Perler Bead Pattern | Fuse Bead Patterns', description: pattern.description,
+            alternates: { canonical: '/patterns/strawberry', languages: metadata.patternLanguageAlternates('strawberry') },
+        });
+    });
+
+    it('adds the four native strawberry sitemap records with the new publication date only', () => {
+        const records = sitemap().filter(record => record.url.endsWith('/patterns/strawberry'));
+        expect(records.map(record => record.url)).toEqual(['de/', 'fr/', 'ja/', ''].map(prefix => `https://fusebeadpatterns.art/${prefix}patterns/strawberry`));
+        for (const record of records) {
+            expect(record.lastModified.toISOString()).toBe('2026-10-14T00:00:00.000Z');
+            expect(record.images).toEqual(['https://fusebeadpatterns.art/patterns/original-strawberry/preview.png']);
+        }
+    });
+
     it.each(['en', 'de', 'fr', 'ja'] as const)('%s renders the real four-board detail, global coordinates and correct native downloads', async locale => {
         const pattern = catalog.getPatternById('original-sunset-mountain-lake')!;
         const html = renderToStaticMarkup(locale === 'en'
@@ -230,7 +259,7 @@ describe('native pattern chart journeys', () => {
         const colorCharts = records.filter(record => colorChartUrls.includes(record.url));
         expect(colorCharts.map(record => record.url)).toEqual(colorChartUrls);
         for (const record of colorCharts) expect(record.lastModified.toISOString()).toBe('2026-10-13T00:00:00.000Z');
-        const previous = records.filter(record => !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const previous = records.filter(record => !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 

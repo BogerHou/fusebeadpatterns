@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Strawberry Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Original strawberry EN/DE/FR/JA PDFs and native chart labels; no old-font refresh",
+  "subsetSha256": "3408839923928a4fb734caca9742f97ce3938e0dc1b0bfb67ac27524bf677de6",
+  "glyphsSha256": "42dfb2a29dc3896ea00df12b281ddc0008ac0187bfb80ae8948cf8a21391fee2",
+  "charactersSha256": "5f576a805e068c5ce4756c3849a7c52d9526ed594a1296cbf80084ae090ffef6",
+  "characterCount": 232,
+  "patternIds": [
+    "original-strawberry"
+  ],
+  "chartCount": 3,
+  "pdfCount": 8,
+  "chartCharactersSha256": "8e4d005372633c2a3c2343b28326c6e73a01a9f50e71bfe6d6748dc84efcf0b5",
+  "pdfCharactersSha256": "3f3e6b5d7aadf7a672d48f6627d61c86192d60ec0267554017a832d2dd347e1f"
+}

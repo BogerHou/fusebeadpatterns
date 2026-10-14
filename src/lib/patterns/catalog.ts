@@ -9711,6 +9711,61 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-sunset-mountain-lake/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-11"
+    },
+    {
+        "id": "original-strawberry",
+        "slug": "strawberry",
+        "title": "Strawberry",
+        "version": "Original Strawberry design v1",
+        "description": "Make a red strawberry with a green leafy cap and pale yellow seeds. Download the free Perler bead pattern or edit the 19 × 22 design.",
+        "notes": [
+            "Use one 29 × 29 MIDI pegboard. Empty grid cells do not need beads.",
+            "An original strawberry with a green leafy cap and pale yellow seed beads.",
+            "Uses Red 80-19005, Dark Green 80-19010 and Pastel Yellow 80-19056. Screen colors are approximate.",
+            "The PNG is a counting chart, not an actual-size placement template. These downloads use Midi beads, not Mini beads.",
+            "Print the PDF at 100% / Actual size and check its 50 mm scale line before use.",
+            "This pattern has not been physically assembled or iron-tested. Perler screen colors are approximate."
+        ],
+        "collectionId": null,
+        "beads": 296,
+        "colorCount": 3,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 19,
+        "motifHeight": 22,
+        "palette": [
+            {
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "symbol": "R",
+                "count": 216
+            },
+            {
+                "ref": "80-19010",
+                "name": "Dark Green",
+                "hex": "#007b4e",
+                "symbol": "G",
+                "count": 68
+            },
+            {
+                "ref": "80-19056",
+                "name": "Pastel Yellow",
+                "hex": "#e9e290",
+                "symbol": "Y",
+                "count": 12
+            }
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-strawberry/preview.png",
+            "grid": "/patterns/original-strawberry/grid.png",
+            "pixels": "/patterns/original-strawberry/pixels.png",
+            "project": "/patterns/original-strawberry/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-strawberry/pattern.pdf",
+            "pdfLetter": "/patterns/original-strawberry/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-14"
     }
 ];
 

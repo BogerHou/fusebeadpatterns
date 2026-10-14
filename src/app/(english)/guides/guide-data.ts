@@ -100,8 +100,8 @@ export const guidePages: GuidePage[] = [
                 heading: 'Try the same photo in the generator',
                 body: [
                     'Save the source photo below, open the generator, and choose Upload Image. Select Perler Midi and the Midi 29 × 29 pegboard. Set Boards Wide and Boards Tall to 1 for the smaller result, or set both to 2 for the larger result.',
-                    'For this comparison, all 103 Perler Midi colors were enabled. In Advanced, Matching was DeltaE CIE2000 and Dithering was None. Brightness, Contrast and Saturation were 100; Grayscale was 0; Center and Fit To Boards were checked. The source was not cropped or retouched.',
-                    'The photo is taller than it is wide, so fitting it on a square board leaves empty columns. Those cells need no beads. The dark background inside the photograph is still part of the pattern: uploading a photo does not remove its background.',
+                    'For this comparison, all 103 Perler Midi colors were enabled. In Advanced, Matching was DeltaE CIE2000 and Dithering was None. Brightness, Contrast and Saturation were 100; Grayscale was 0; Center and Fit To Boards were checked. The source was not cropped or retouched, and background removal was off.',
+                    'The photo is taller than it is wide, so fitting it on a square board leaves empty columns. Those cells need no beads. The dark background inside the photograph is still part of the pattern: uploading a photo does not remove its background automatically.',
                 ],
                 links: [
                     { href: '/guides/photo-to-pattern/cat-source.jpg', label: 'Save the source photo', download: true },
@@ -181,6 +181,14 @@ export const guidePages: GuidePage[] = [
                 body: [
                     'The board size controls how many bead positions the image can use. A 29 x 29 pattern is good for a small project, but detailed photos often need multiple boards or a mini bead pegboard.',
                     'If the pattern looks muddy, increase the board count before changing color settings. More bead positions usually helps more than aggressive filtering.',
+                ],
+            },
+            {
+                heading: 'Remove a simple background before hand-editing',
+                body: [
+                    'This is an optional next step; the saved comparisons above keep their original backgrounds. Choose your bead brand and board size first. In the editor, apply any pending settings with “Apply Changes” and wait for conversion to finish. Choose “Remove background” beside the source image, then click a visible background pixel in the original image area or enter its six-digit hex color. “Tolerance” accepts whole numbers from 0 to 255: 0 matches the exact original RGB color; increase it gradually to include similar shades.',
+                    'Start with “Connected to an edge” to remove matching areas connected to the edge of the current image area. “Every matching pixel” also removes matching colors inside the subject. Check the bead preview, especially where fur, clothing or outlines resemble the background. It uses your current bead brand and conversion settings. Choose “Cancel” to discard these changes and keep your current pattern.',
+                    'Choose “Apply and generate” only when the preview is suitable. This generates a new pattern from the saved original image and current crop, replacing hand edits. “Undo” restores the bead grid, but the background settings still apply to later conversions. To stop using them, uncheck “Remove the selected background” and apply again; the current crop stays selected. Your original image remains saved. If the image area is too large to process, use “Crop image” to select a smaller area first.',
                 ],
             },
             {

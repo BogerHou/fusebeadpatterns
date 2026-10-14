@@ -598,6 +598,11 @@ const libraryProjects: LibraryProject[] = [
         "id": "original-sunset-mountain-lake",
         "title": "Sunset Mountain Lake",
         "projectUrl": "/patterns/original-sunset-mountain-lake/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-strawberry",
+        "title": "Strawberry",
+        "projectUrl": "/patterns/original-strawberry/pattern.bead-pattern.json"
     }
 ];
 

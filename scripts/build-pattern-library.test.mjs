@@ -32,7 +32,7 @@ const current = parsePublishedCatalog(await readFile(path.join(root, 'src/lib/pa
 // These are historical Santa/winter/Creeper promotion tests. The independently
 // authored originals use their own generators and must not refresh any legacy lock.
 const raveIds = ['original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom'];
-const independentOriginalIds = ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', ...raveIds, 'original-sunset-mountain-lake'];
+const independentOriginalIds = ['original-retro-diamond-coaster', 'original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', ...raveIds, 'original-sunset-mountain-lake', 'original-strawberry'];
 const historicalCatalog = {
     collections: current.collections,
     patterns: current.patterns.filter(pattern => !independentOriginalIds.includes(pattern.id)),
@@ -54,12 +54,12 @@ const winterPatterns = winterIds.map((id, index) => ({
 const reconstructedWinter = () => [...structuredClone(winterPublished.patterns), ...structuredClone(winterPatterns)];
 
 test('independent original additions preserve the complete published 110 and 111 catalogs', () => {
-    assert.equal(current.patterns.length - historicalCatalog.patterns.length, 8);
-    assert.deepEqual(current.patterns.slice(-8).map(pattern => pattern.id), independentOriginalIds);
+    assert.equal(current.patterns.length - historicalCatalog.patterns.length, 9);
+    assert.deepEqual(current.patterns.slice(-independentOriginalIds.length).map(pattern => pattern.id), independentOriginalIds);
     assert.equal(historicalCatalog.patterns.length, 110);
     assert.equal(createHash('sha256').update(JSON.stringify(historicalCatalog)).digest('hex'),
         '70163c19034985395498762a6ff1beadefdfc2056b03f89e625e2a0e526fd9a7');
-    const published111 = { collections: current.collections, patterns: current.patterns.filter(pattern => !['original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', ...raveIds, 'original-sunset-mountain-lake'].includes(pattern.id)) };
+    const published111 = { collections: current.collections, patterns: current.patterns.filter(pattern => !['original-christmas-bauble-ornament', 'original-black-cat', 'original-latin-cross', ...raveIds, 'original-sunset-mountain-lake', 'original-strawberry'].includes(pattern.id)) };
     assert.equal(published111.patterns.length, 111);
     assert.equal(createHash('sha256').update(JSON.stringify(published111)).digest('hex'),
         '2df28e6a91daf9f8eb3574477fef3b89ac50eed4da3b22e51d4e0b8d25f21a41');

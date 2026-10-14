@@ -589,6 +589,11 @@
       "href": "/patterns-de/original-sunset-mountain-lake/grid.png",
       "width": 1484,
       "height": 2003
+    },
+    "original-strawberry": {
+      "href": "/patterns-de/original-strawberry/grid.png",
+      "width": 788,
+      "height": 1375
     }
   },
   "fr": {
@@ -1181,6 +1186,11 @@
       "href": "/patterns-fr/original-sunset-mountain-lake/grid.png",
       "width": 1484,
       "height": 2003
+    },
+    "original-strawberry": {
+      "href": "/patterns-fr/original-strawberry/grid.png",
+      "width": 788,
+      "height": 1375
     }
   },
   "ja": {
@@ -1773,6 +1783,11 @@
       "href": "/patterns-ja/original-sunset-mountain-lake/grid.png",
       "width": 1484,
       "height": 2003
+    },
+    "original-strawberry": {
+      "href": "/patterns-ja/original-strawberry/grid.png",
+      "width": 788,
+      "height": 1308
     }
   }
 }

@@ -20,7 +20,7 @@ const expected = [
 
 describe('reviewed original rave patterns', () => {
     it('adds only three originals without changing the 114 existing objects or five collections', () => {
-        const old = patterns.filter(pattern => !ravePatternIds.includes(pattern.id) && pattern.id !== 'original-sunset-mountain-lake');
+        const old = patterns.filter(pattern => !ravePatternIds.includes(pattern.id) && pattern.id !== 'original-sunset-mountain-lake' && pattern.id !== 'original-strawberry');
         expect(old).toHaveLength(114);
         expect(createHash('sha256').update(JSON.stringify(old)).digest('hex')).toBe('17f75aeeee37ec226837151069a2a094efc4dec440d36296bc9def639b509992');
         expect(createHash('sha256').update(JSON.stringify(patternCollections)).digest('hex')).toBe('b98ca4ac8197f4710c81b3a89da673d5941986ea9a04efd4dab225e952d6998b');
