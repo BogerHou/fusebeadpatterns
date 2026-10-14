@@ -3,6 +3,7 @@ import { PixelGridError } from './errors';
 /** Independent digital-pixel model. No bead palettes, print units or bead-project storage. */
 export type RgbaPixels = readonly number[] | Uint8Array | Uint8ClampedArray;
 export type PixelPoint = readonly [number, number];
+export type RgbaColor = [number, number, number, number];
 export type ResizeMode = 'fit' | 'crop' | 'stretch';
 export interface RgbaSource {
     width: number;
@@ -39,6 +40,42 @@ export function setPixel(grid: PixelGrid, x: number, y: number, rgba: RgbaPixels
     if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= grid.width || y >= grid.height) return false;
     grid.pixels.set(bytes(rgba, 4), (y * grid.width + x) * 4);
     return true;
+}
+/** Read model RGBA, including hidden RGB at alpha zero, without sharing its buffer. */
+export function readPixel(grid: PixelGrid, x: number, y: number): RgbaColor | null {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= grid.width || y >= grid.height) return null;
+    const offset = (y * grid.width + x) * 4;
+    return [grid.pixels[offset], grid.pixels[offset + 1], grid.pixels[offset + 2], grid.pixels[offset + 3]];
+}
+
+/** Replace one four-connected region of exactly equal RGBA. Returns changed cells.
+ * A bounded queue visits each cell once; no recursion, diagonal join or alpha shortcut.
+ */
+export function floodFill(grid: PixelGrid, x: number, y: number, rgba: RgbaPixels): number {
+    dimensions(grid.width, grid.height);
+    if (grid.pixels.length !== grid.width * grid.height * 4) throw new PixelGridError('PIXEL_DATA_LENGTH');
+    const target = readPixel(grid, x, y);
+    if (!target) return 0;
+    const replacement = bytes(rgba, 4);
+    if (target.every((value, index) => value === replacement[index])) return 0;
+    const queue = new Uint16Array(grid.width * grid.height);
+    let head = 0, tail = 0;
+    const visit = (cell: number) => {
+        const offset = cell * 4;
+        if (!target.every((value, index) => value === grid.pixels[offset + index])) return;
+        // Mark on enqueue with the different replacement, so no cell is queued twice.
+        grid.pixels.set(replacement, offset);
+        queue[tail++] = cell;
+    };
+    visit(y * grid.width + x);
+    while (head < tail) {
+        const cell = queue[head++], column = cell % grid.width;
+        if (column > 0) visit(cell - 1);
+        if (column + 1 < grid.width) visit(cell + 1);
+        if (cell >= grid.width) visit(cell - grid.width);
+        if (cell + grid.width < grid.width * grid.height) visit(cell + grid.width);
+    }
+    return tail;
 }
 export function paintLine(grid: PixelGrid, start: PixelPoint, end: PixelPoint, rgba: RgbaPixels): void {
     if (![...start, ...end].every(Number.isInteger)) throw new PixelGridError('INVALID_PIXEL_POSITION');

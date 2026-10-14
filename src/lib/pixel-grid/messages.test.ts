@@ -92,6 +92,21 @@ describe('pixel grid localization', () => {
         expect(copy.en.exportedGrid(256, 256)).toBe('Downloaded a 256 × 256 grid PNG. Your original pixels are unchanged.');
     });
 
+    it.each(['en', 'de', 'fr', 'ja'] as const)('names both new tools and reports precise fill/pick results in %s', locale => {
+        const text = copy[locale];
+        expect(text.fill.length).toBeGreaterThan(0); expect(text.picker.length).toBeGreaterThan(0);
+        expect(text.filled(16384)).toContain(text.number(16384));
+        expect(text.picked('#123abc', 53)).toContain('#123abc');
+        expect(text.picked('#123abc', 53)).toContain('53');
+        expect(text.drawingHelp).toContain('B/E/F/I/P');
+        expect(text.fillUnchanged.length).toBeGreaterThan(0);
+        if (locale !== 'en') {
+            expect(text.fill).not.toBe(copy.en.fill); expect(text.picker).not.toBe(copy.en.picker);
+            expect(text.filled(2)).not.toBe(copy.en.filled(2));
+            expect(text.picked('#000000', 0)).not.toBe(copy.en.picked('#000000', 0));
+        }
+    });
+
     it('localizes every validation and browser failure in Japanese without exposing raw errors', () => {
         expect(Object.keys(JAPANESE_PIXEL_GRID_ERRORS).sort()).toEqual(Object.keys(PIXEL_GRID_ERROR_MESSAGES).sort());
         for (const code of Object.keys(PIXEL_GRID_ERROR_MESSAGES) as PixelGridErrorCode[]) {
@@ -342,13 +357,29 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
             static revokeObjectURL(key: string) { blobs.delete(key); }
         },
     }) as (props: { locale?: messages.PixelGridLocale; experience?: 'grid' | 'converter' }) => unknown;
-    function render() { slot = 0; tree = Component(props); if (first) { first = false; for (const effect of mountEffects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); } } }
+    const captures = new Set<number>();
+    const rectangle = { left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100 };
+    const nativeCanvas = { getBoundingClientRect: () => rectangle, focus() {},
+        setPointerCapture: (id: number) => { captures.add(id); },
+        hasPointerCapture: (id: number) => captures.has(id), releasePointerCapture: (id: number) => { captures.delete(id); } };
+    const nativeViewport = { scrollLeft: 0, scrollTop: 0, getBoundingClientRect: () => rectangle, clientWidth: 100, clientHeight: 100 };
+    function render() {
+        slot = 0; tree = Component(props);
+        if (first) { first = false; for (const effect of mountEffects) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); } }
+        // Attach just the DOM contracts used by event handlers after mount effects.
+        // This harness does not claim to render Canvas or exercise focus ergonomics.
+        for (const node of nodes(tree)) {
+            const ref = node.props.ref as { current: unknown } | undefined;
+            if (ref && node.type === 'canvas') ref.current = nativeCanvas;
+            else if (ref && node.type === 'div' && node.props['aria-label'] === text.scrollArea) ref.current = nativeViewport;
+        }
+    }
     render(); render();
     const find = (predicate: (node: TestNode) => boolean) => { const node = nodes(tree).find(predicate); if (!node) throw new Error('Expected control not found'); return node; };
     const byId = (id: string) => find(node => node.props.id === id);
     const button = (label: string) => find(node => node.type === 'button' && (content(node) === label || node.props['aria-label'] === label));
     return {
-        source, byId, button, render, downloads, events, storage, assignments, location,
+        source, byId, button, render, downloads, events, storage, assignments, location, captures, nativeViewport,
         beadDialog: () => find(node => node.type === 'pixel-bead-dialog'),
         key: (key: string, shiftKey = false) => {
             const event = { key, shiftKey, ctrlKey: true, metaKey: false, altKey: false, target: null as EventTarget | null, preventDefault() {} };
@@ -370,6 +401,17 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
             return event.defaultPrevented;
         },
         canvas: () => find(node => node.type === 'canvas'),
+        canvasKey: (key: string, options: { ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean; isComposing?: boolean; otherTarget?: boolean } = {}) => {
+            const event = { key, ctrlKey: false, metaKey: false, altKey: false, nativeEvent: { isComposing: options.isComposing ?? false },
+                currentTarget: nativeCanvas, target: options.otherTarget ? {} : nativeCanvas, prevented: false, preventDefault() { this.prevented = true; }, ...options };
+            invoke(find(node => node.type === 'canvas'), 'onKeyDown', event); render(); return event.prevented;
+        },
+        pointer: (handler: 'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerCancel' | 'onLostPointerCapture', x = .25, y = .25, pointerId = 1, options: { button?: number; isPrimary?: boolean } = {}) => {
+            invoke(find(node => node.type === 'canvas'), handler, { pointerId, clientX: x * 100, clientY: y * 100,
+                currentTarget: nativeCanvas, button: 0, isPrimary: true, preventDefault() {}, ...options }); render();
+        },
+        blurCanvas: () => { invoke(find(node => node.type === 'canvas'), 'onBlur'); render(); },
+        blurWindow: () => { for (const callback of browserListeners.get('blur') ?? []) callback({} as Event); render(); },
         click: (label: string) => { invoke(button(label), 'onClick'); render(); },
         change: (id: string, value: string) => { invoke(byId(id), 'onChange', { target: { value } }); render(); },
         loadImage: async () => {
@@ -585,6 +627,11 @@ describe('language navigation through the actual workspace handlers', () => {
         expect(target.button(text.saveProject).props.disabled).toBe(true);
         expect(target.byId('pixel-width').props.disabled).toBe(true);
         expect(target.canvas().props.inert).toBe(true);
+        expect(target.button(text.fill).props.disabled).toBe(true);
+        expect(target.button(text.picker).props.disabled).toBe(true);
+        expect(target.canvasKey('f')).toBe(false); expect(target.canvasKey('i')).toBe(false);
+        target.pointer('onPointerDown'); expect(target.captures.size).toBe(0);
+        target.click(text.fill); target.click(text.picker);
         target.paint(); target.click(text.newBlank); target.click(text.saveProject); target.click(text.saveScaled);
         expect(target.downloads).toEqual([]);
         expect(target.events).toEqual([]);
@@ -827,6 +874,169 @@ describe('English drawing and image conversion share one preserved workspace', (
             expect(await translated.currentProject()).toEqual(original);
             translated.unmount();
         }
+        ui.unmount();
+    });
+});
+
+describe('connected fill and eyedropper event boundaries', () => {
+    const original = () => core.createGrid(2, 2, [12, 34, 56, 93, 12, 34, 56, 93, 12, 34, 56, 93, 91, 37, 83, 0]);
+
+    it.each(['fill', 'picker'] as const)('restores the actual %s selection, filled pixels, alpha and Undo/Redo through the four-language journey', async tool => {
+        const pairs = [['en', 'de'], ['de', 'ja'], ['ja', 'fr'], ['fr', 'en']] as const;
+        for (const [from, to] of pairs) {
+            const first = interactiveWorkspace({ locale: from });
+            const before = original(); await first.loadProject(core.serializeProject(before));
+            first.change('pixel-alpha', '53'); first.click(copy[from].fill); first.pointer('onPointerDown'); first.pointer('onPointerUp');
+            const filled = core.createGrid(2, 2, before.pixels); core.floodFill(filled, 0, 0, [240, 106, 69, 53]);
+            if (tool === 'picker') { first.click(copy[from].picker); first.pointer('onPointerDown', .75, .75); first.pointer('onPointerUp'); }
+            first.change('pixel-width', '17'); first.change('pixel-height', '31');
+            expect(first.switchLanguage(localeRoutes.localeRoutes[to].pixelGrid!).blocked).toBe(false);
+            const target = interactiveWorkspace({ locale: to }, { storage: first.storage });
+            expect(target.button(copy[to][tool]).props['aria-pressed']).toBe(true);
+            expect(target.byId('pixel-color').props.value).toBe(tool === 'picker' ? '#5b2553' : '#f06a45');
+            expect(target.byId('pixel-alpha').props.value).toBe(tool === 'picker' ? 0 : 53);
+            expect(target.byId('pixel-width').props.value).toBe('17'); expect(target.byId('pixel-height').props.value).toBe('31');
+            expect(target.unload()).toBe(true); expect(await target.currentProject()).toEqual(filled);
+            target.click(copy[to].undo); expect(await target.currentProject()).toEqual(before);
+            target.click(copy[to].redo); expect(await target.currentProject()).toEqual(filled);
+            first.unmount(); target.unmount();
+        }
+    });
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('fills once on pointer-down in %s, preserves pending settings and restores the whole region with one Undo', async locale => {
+        const text = copy[locale], ui = interactiveWorkspace({ locale });
+        const before = original(); await ui.loadProject(core.serializeProject(before));
+        ui.change('pixel-width', '17'); ui.change('pixel-height', '31');
+        ui.change('pixel-color-limit', '16'); ui.change('pixel-export-scale', '4');
+        ui.change('pixel-alpha', '53'); ui.click(text.fill);
+        ui.pointer('onPointerDown');
+        expect(ui.status()).toContain(text.filled(3));
+        expect(ui.unload()).toBe(true); expect(ui.captures.has(1)).toBe(true);
+        expect(ui.byId('pixel-width').props.value).toBe('17'); expect(ui.byId('pixel-height').props.value).toBe('31');
+        expect(ui.byId('pixel-color-limit').props.value).toBe(16); expect(ui.byId('pixel-export-scale').props.value).toBe(4);
+        ui.pointer('onPointerMove', .75, .75); ui.pointer('onPointerUp', .75, .75);
+        expect(ui.captures.size).toBe(0);
+        const filled = core.createGrid(2, 2, before.pixels); core.floodFill(filled, 0, 0, [240, 106, 69, 53]);
+        expect(await ui.currentProject()).toEqual(filled);
+        ui.click(text.undo); expect(await ui.currentProject()).toEqual(before);
+        ui.click(text.redo); expect(await ui.currentProject()).toEqual(filled);
+        expect(ui.button(text.fill).props['aria-pressed']).toBe(true);
+        ui.unmount();
+    });
+
+    it('a no-op fill neither dirties a saved project nor discards its redo branch', async () => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        const before = original(); await ui.loadProject(core.serializeProject(before));
+        ui.change('pixel-color', '#0c2238'); ui.change('pixel-alpha', '93'); ui.click(text.fill);
+        ui.pointer('onPointerDown'); ui.pointer('onPointerUp');
+        expect(ui.unload()).toBe(false); expect(ui.status()).toContain(text.fillUnchanged);
+        ui.change('pixel-color', '#f06a45'); ui.pointer('onPointerDown'); ui.pointer('onPointerUp');
+        const filled = await ui.currentProject(); ui.click(text.undo);
+        expect(ui.button(text.redo).props.disabled).toBe(false);
+        ui.change('pixel-color', '#0c2238'); ui.pointer('onPointerDown'); ui.pointer('onPointerUp');
+        expect(ui.button(text.redo).props.disabled).toBe(false);
+        ui.click(text.redo); expect(await ui.currentProject()).toEqual(filled);
+        ui.click(text.undo); expect(await ui.currentProject()).toEqual(before);
+        ui.unmount();
+    });
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('picks exact hidden RGB and zero alpha in %s without painting, saving or changing history', async locale => {
+        const text = copy[locale], ui = interactiveWorkspace({ locale });
+        const before = original(); await ui.loadProject(core.serializeProject(before));
+        ui.click(text.picker); ui.pointer('onPointerDown', .75, .75);
+        expect(ui.byId('pixel-color').props.value).toBe('#5b2553'); expect(ui.byId('pixel-alpha').props.value).toBe(0);
+        expect(ui.status()).toContain(text.picked('#5b2553', 0));
+        expect(ui.unload()).toBe(false); expect(ui.button(text.picker).props['aria-pressed']).toBe(true);
+        ui.pointer('onPointerMove', .25, .25); ui.pointer('onPointerUp', .25, .25);
+        expect(ui.byId('pixel-color').props.value).toBe('#5b2553'); expect(ui.byId('pixel-alpha').props.value).toBe(0);
+        expect(ui.unload()).toBe(false); expect(await ui.currentProject()).toEqual(before);
+        // The only previous operation is opening the 2 × 2 project, not picking.
+        ui.click(text.undo); expect(await ui.currentProject()).toEqual(core.createGrid(16, 16));
+        ui.unmount();
+    });
+
+    it('picking leaves unsaved work and its next Undo intact', async () => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        const before = original(); await ui.loadProject(core.serializeProject(before));
+        ui.paint(); expect(ui.unload()).toBe(true);
+        ui.click(text.picker); ui.pointer('onPointerDown', .75, .75); ui.pointer('onPointerUp');
+        expect(ui.unload()).toBe(true); expect(ui.button(text.picker).props['aria-pressed']).toBe(true);
+        ui.click(text.undo); expect(await ui.currentProject()).toEqual(before);
+        ui.unmount();
+    });
+
+    it.each(['onPointerUp', 'onPointerCancel', 'onLostPointerCapture', 'canvas-blur', 'window-blur'] as const)('ends a one-shot pointer tool on %s without adding a second history entry', async end => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        const before = original(); await ui.loadProject(core.serializeProject(before)); ui.click(text.fill);
+        ui.pointer('onPointerDown'); ui.pointer('onPointerMove', .75, .75);
+        if (end === 'canvas-blur') ui.blurCanvas();
+        else if (end === 'window-blur') ui.blurWindow();
+        else ui.pointer(end);
+        expect(ui.captures.size).toBe(0);
+        // A new click can fill the isolated transparent cell after capture ends.
+        ui.change('pixel-color', '#112233'); ui.pointer('onPointerDown', .75, .75, 2); ui.pointer('onPointerUp', .75, .75, 2);
+        ui.click(text.undo);
+        const firstFill = core.createGrid(2, 2, before.pixels); core.floodFill(firstFill, 0, 0, [240, 106, 69, 255]);
+        expect(await ui.currentProject()).toEqual(firstFill);
+        ui.click(text.undo); expect(await ui.currentProject()).toEqual(before);
+        ui.unmount();
+    });
+
+    it('Space and Enter execute Fill/Picker; Delete and Backspace erase only the selected cell', async () => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        const before = original(); await ui.loadProject(core.serializeProject(before));
+        expect(ui.canvasKey('f')).toBe(true); expect(ui.button(text.fill).props['aria-pressed']).toBe(true);
+        ui.canvasKey(' ');
+        const filled = core.createGrid(2, 2, before.pixels); core.floodFill(filled, 0, 0, [240, 106, 69, 255]);
+        expect(await ui.currentProject()).toEqual(filled); ui.click(text.undo);
+        ui.canvasKey('I'); ui.canvasKey('Enter');
+        expect(ui.byId('pixel-color').props.value).toBe('#0c2238'); expect(ui.byId('pixel-alpha').props.value).toBe(93);
+        expect(ui.button(text.picker).props['aria-pressed']).toBe(true);
+        expect(await ui.currentProject()).toEqual(before);
+        ui.canvasKey('Delete');
+        const erased = core.createGrid(2, 2, before.pixels); core.setPixel(erased, 0, 0, [0, 0, 0, 0]);
+        expect(await ui.currentProject()).toEqual(erased); ui.click(text.undo);
+        ui.canvasKey('F'); ui.canvasKey('Backspace');
+        expect(await ui.currentProject()).toEqual(erased);
+        ui.unmount();
+    });
+
+    it('tool keys apply only to the focused Canvas and ignore modifiers, text targets and IME', async () => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        await ui.loadProject(core.serializeProject(original()));
+        for (const options of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { isComposing: true }, { otherTarget: true }]) {
+            expect(ui.canvasKey('f', options)).toBe(false); expect(ui.button(text.brush).props['aria-pressed']).toBe(true);
+        }
+        expect(ui.canvasKey('constructor')).toBe(false); expect(ui.canvasKey('toString')).toBe(false);
+        for (const [key, tool] of [['e', text.eraser], ['f', text.fill], ['i', text.picker], ['p', text.pan], ['b', text.brush]]) {
+            expect(ui.canvasKey(key)).toBe(true); expect(ui.button(tool).props['aria-pressed']).toBe(true);
+        }
+        ui.key('f'); expect(ui.button(text.brush).props['aria-pressed']).toBe(true);
+        ui.unmount();
+    });
+
+    it('preserves drag painting, interrupted stroke history and Pan behavior', async () => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        const before = core.createGrid(4, 1); await ui.loadProject(core.serializeProject(before));
+        ui.pointer('onPointerDown', .125, .5); ui.pointer('onPointerMove', .875, .5); ui.pointer('onPointerCancel', .875, .5);
+        const painted = core.createGrid(4, 1); core.paintLine(painted, [0, 0], [3, 0], [240, 106, 69, 255]);
+        expect(await ui.currentProject()).toEqual(painted); ui.click(text.undo); expect(await ui.currentProject()).toEqual(before);
+        ui.click(text.pan); ui.pointer('onPointerDown', .125, .5); ui.pointer('onPointerMove', .875, .5); ui.pointer('onPointerUp', .875, .5);
+        expect(ui.nativeViewport.scrollLeft).toBe(-75);
+        expect(ui.canvasKey('Delete')).toBe(false); expect(await ui.currentProject()).toEqual(before);
+        ui.canvasKey('ArrowRight'); expect(ui.nativeViewport.scrollLeft).toBe(-11);
+        ui.unmount();
+    });
+
+    it('blocks fill and picker while an asynchronous operation owns the workspace', async () => {
+        const text = copy.en, ui = interactiveWorkspace({ locale: 'en' });
+        await ui.loadProject(core.serializeProject(original())); ui.click(text.fill);
+        ui.click(text.saveOriginal);
+        expect(ui.canvasKey('i')).toBe(false); expect(ui.canvasKey('Enter')).toBe(false);
+        ui.pointer('onPointerDown'); expect(ui.captures.size).toBe(0);
+        expect(ui.button(text.fill).props['aria-pressed']).toBe(true);
+        await vi.waitFor(() => { ui.render(); expect(ui.button(text.saveProject).props.disabled).toBe(false); });
+        expect(await ui.currentProject()).toEqual(original());
         ui.unmount();
     });
 });
