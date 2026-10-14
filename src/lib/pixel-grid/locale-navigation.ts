@@ -7,7 +7,7 @@ const MAX_AGE = 5 * 60 * 1000;
 const MAX_CHARACTERS = 32 * 1024 * 1024;
 const PIXEL_PATHS = ['/pixel-art-grid', '/de/pixel-art-generator', '/fr/image-en-pixel-art', '/ja/pixel-art-converter'];
 type StorageArea = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
-export type PixelTool = 'brush' | 'eraser' | 'pan';
+export type PixelTool = 'brush' | 'eraser' | 'fill' | 'picker' | 'pan';
 export type PixelZoom = 'fit' | '4' | '8' | '16' | '24' | '32';
 export type PixelSourceImage = RgbaSource & { name: string };
 export type PixelLocaleSnapshot = {
@@ -72,7 +72,7 @@ function decode(value: unknown, source = false): PixelGrid {
 function decodeSnapshot(value: unknown): PixelLocaleSnapshot {
     if (!record(value) || !record(value.history) || !Array.isArray(value.history.undo) || !Array.isArray(value.history.redo) || value.history.undo.length + value.history.redo.length > 50) throw new Error('Invalid pixel history');
     if (typeof value.width !== 'string' || value.width.length > 64 || typeof value.height !== 'string' || value.height.length > 64 ||
-        !['fit', 'crop', 'stretch'].includes(value.mode as string) || !['brush', 'eraser', 'pan'].includes(value.tool as string) ||
+        !['fit', 'crop', 'stretch'].includes(value.mode as string) || !['brush', 'eraser', 'fill', 'picker', 'pan'].includes(value.tool as string) ||
         typeof value.color !== 'string' || !/^#[\da-f]{6}$/i.test(value.color) || !integer(value.alpha, 0, 255) ||
         !['fit', '4', '8', '16', '24', '32'].includes(value.zoom as string) || typeof value.showGrid !== 'boolean' ||
         !['original', 8, 16, 32, 64].includes(value.colorLimit as string | number) || ![1, 2, 4, 8, 16].includes(value.exportScale as number) ||

@@ -2,7 +2,7 @@ import { test, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import { inflateSync, crc32 } from 'node:zlib';
 import { readFileSync } from 'node:fs';
-import { createGrid, setPixel, paintLine, resizeNearest, resizeImage, GridHistory, gridsEqual, serializeProject, parseProject, inspectImage, encodePng, LIMITS } from './core';
+import { createGrid, setPixel, readPixel, floodFill, paintLine, resizeNearest, resizeImage, GridHistory, gridsEqual, serializeProject, parseProject, inspectImage, encodePng, LIMITS } from './core';
 import type { PixelGrid, RgbaPixels, ResizeMode } from './core';
 import { PixelGridError, type PixelGridErrorCode } from './errors';
 // Independent Node inflater/CRC checks validate our browser-only PNG encoder.
@@ -301,4 +301,82 @@ test('sparse RGBA arrays cannot silently turn missing channels into zero', () =>
     }
     assert.equal(serializeProject(grid), before);
     assert.equal(1 in sparse, false);
+});
+
+
+test('pixel reads return independent exact RGBA including invisible color and reject out-of-bounds positions', () => {
+    const grid = createGrid(2, 1, [91, 37, 83, 0, 19, 47, 63, 1]);
+    const sampled = readPixel(grid, 0, 0)!;
+    assert.deepEqual(sampled, [91, 37, 83, 0]);
+    sampled[0] = 255;
+    assert.deepEqual(readPixel(grid, 0, 0), [91, 37, 83, 0]);
+    assert.deepEqual(readPixel(grid, 1, 0), [19, 47, 63, 1]);
+    for (const [x, y] of [[-1, 0], [2, 0], [0, 1], [0.5, 0], [NaN, 0]]) assert.equal(readPixel(grid, x, y), null);
+});
+
+test('fill joins only four-connected exact RGBA, never diagonal cells or the next row', () => {
+    const grid = createGrid(3, 3), ink = [12, 34, 56, 128];
+    for (const [x, y] of [[0, 0], [1, 0], [0, 1], [2, 1], [1, 2]]) setPixel(grid, x, y, ink);
+    assert.equal(floodFill(grid, 0, 0, [210, 60, 20, 93]), 3);
+    for (const [x, y] of [[0, 0], [1, 0], [0, 1]]) assert.deepEqual(readPixel(grid, x, y), [210, 60, 20, 93]);
+    for (const [x, y] of [[2, 1], [1, 2]]) assert.deepEqual(readPixel(grid, x, y), ink);
+    const rows = createGrid(2, 2, [0, 0, 0, 0, ...ink, ...ink, 0, 0, 0, 0]);
+    assert.equal(floodFill(rows, 1, 0, [1, 2, 3, 255]), 1);
+    assert.deepEqual(readPixel(rows, 0, 1), ink);
+});
+
+test('fill treats all four channels as boundaries, including alpha-zero hidden RGB', () => {
+    const grid = createGrid(5, 1, [12, 34, 56, 0, 12, 34, 56, 0, 0, 0, 0, 0, 12, 34, 56, 1, 12, 34, 57, 0]);
+    assert.equal(floodFill(grid, 0, 0, [91, 73, 53, 0]), 2);
+    assert.deepEqual(Array.from(grid.pixels), [91, 73, 53, 0, 91, 73, 53, 0, 0, 0, 0, 0, 12, 34, 56, 1, 12, 34, 57, 0]);
+    assert.equal(floodFill(grid, 2, 0, [12, 34, 56, 0]), 1);
+    assert.deepEqual(readPixel(grid, 3, 0), [12, 34, 56, 1]);
+});
+
+test('fill covers maximum and thin canvases without recursion or size changes', () => {
+    for (const [width, height] of [[1, 1], [1, 128], [128, 1], [128, 128], [17, 31]]) {
+        const grid = createGrid(width, height);
+        assert.equal(floodFill(grid, width - 1, height - 1, [24, 58, 92, 128]), width * height);
+        assert.equal(grid.width, width); assert.equal(grid.height, height);
+        for (let offset = 0; offset < grid.pixels.length; offset += 4) assert.deepEqual(Array.from(grid.pixels.subarray(offset, offset + 4)), [24, 58, 92, 128]);
+    }
+});
+
+test('same RGBA fill is a no-op and keeps an existing redo branch', () => {
+    const original = createGrid(2, 2), next = createGrid(2, 2);
+    floodFill(next, 0, 0, [11, 22, 33, 128]);
+    const history = new GridHistory(); history.push(original, next);
+    const undone = history.undo(next)!;
+    const noOp = createGrid(undone.width, undone.height, undone.pixels);
+    assert.equal(floodFill(noOp, 0, 0, [0, 0, 0, 0]), 0);
+    assert.equal(history.push(undone, noOp), false);
+    assert.equal(history.retainedSteps, 1); assert.equal(history.canRedo, true);
+    assert.deepEqual(history.redo(undone), next);
+});
+
+test('one connected fill is one reversible operation and survives version-1 JSON and original PNG exactly', async () => {
+    const before = createGrid(17, 31);
+    setPixel(before, 8, 15, [17, 89, 133, 0]);
+    const next = createGrid(before.width, before.height, before.pixels);
+    assert.equal(floodFill(next, 0, 0, [215, 61, 24, 53]), 526);
+    const history = new GridHistory(); history.push(before, next);
+    assert.equal(history.retainedSteps, 1);
+    assert.deepEqual(history.undo(next), before);
+    assert.deepEqual(history.redo(before), next);
+    const restored = parseProject(serializeProject(next));
+    assert.deepEqual(restored, next);
+    const png = decodeOwnPng(await encodePng(restored));
+    assert.equal(png.width, 17); assert.equal(png.height, 31);
+    assert.deepEqual(png.pixels, Array.from(next.pixels));
+    assert.deepEqual(Object.keys(JSON.parse(serializeProject(next))), ['format', 'version', 'width', 'height', 'pixels']);
+});
+
+test('malformed fills reject before mutation and replacement may alias model bytes', () => {
+    const grid = createGrid(2, 1, [11, 22, 33, 128, 91, 73, 53, 0]), before = serializeProject(grid);
+    for (const rgba of [[1, 2, 3], [1, 2, 3, 256], [1, 2, NaN, 0], new Array<number>(4)]) assert.throws(() => floodFill(grid, 0, 0, rgba));
+    assert.equal(serializeProject(grid), before);
+    for (const [x, y] of [[-1, 0], [2, 0], [0, 1], [0.5, 0], [0, Infinity]]) assert.equal(floodFill(grid, x, y, [1, 2, 3, 4]), 0);
+    assert.equal(serializeProject(grid), before);
+    assert.equal(floodFill(grid, 0, 0, grid.pixels.subarray(4, 8)), 1);
+    assert.deepEqual(readPixel(grid, 0, 0), [91, 73, 53, 0]);
 });

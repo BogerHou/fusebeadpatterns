@@ -19,7 +19,7 @@
 .workspace input[type='color'] { width: 48px; height: 40px; border: 0; padding: 0; background: none; }
 .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .drawingTools { display: flex; flex-wrap: wrap; gap: 6px; }
-.workspace .drawingTools button { flex: 1 1 auto; min-width: max-content; padding-inline: 8px; }
+.workspace .drawingTools button { flex: 1 0 auto; min-width: 44px; padding-inline: 8px; }
 .historyButtons { display: flex; flex: 0 0 auto; gap: 6px; }
 .workspace .drawingTools .historyButton { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; padding-inline: 0; }
 .spaced { margin-top: 16px; }

@@ -7,27 +7,29 @@ import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
 import { savePixelBeadTransfer, readPixelBeadReturn, finishPixelBeadReturn, isPixelBeadReturn, clearPixelBeadReturnQuery } from '@/lib/pixel-grid/bead-transfer';
 import { trackPixelGridExport } from '@/lib/analytics';
 import {
-    LIMITS, createGrid, dimensions, paintLine, resizeImage, GridHistory, gridsEqual,
+    LIMITS, createGrid, dimensions, paintLine, floodFill, readPixel, resizeImage, GridHistory, gridsEqual,
     serializeProject, parseProject, inspectImage, encodePng,
     type PixelGrid, type PixelPoint, type ResizeMode, type RgbaSource,
 } from '@/lib/pixel-grid/core';
 import { reducePixelGridColors, countVisibleColors, encodeScaledPng, type ColorLimit } from '@/lib/pixel-grid/conversion';
 import { PIXEL_GRID_MESSAGES, PixelGridUiError, pixelGridErrorMessage, type PixelGridLocale } from '@/lib/pixel-grid/messages';
 import { localeRoutes, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
-import { consumePixelLocaleSnapshot, consumeLargePixelLocaleSnapshot, hasLargePixelLocaleSnapshot, hasPixelLocaleWork, isPixelLocaleNavigation, savePixelLocaleSnapshot, saveLargePixelLocaleSnapshot, type PixelLocaleSnapshot } from '@/lib/pixel-grid/locale-navigation';
+import { consumePixelLocaleSnapshot, consumeLargePixelLocaleSnapshot, hasLargePixelLocaleSnapshot, hasPixelLocaleWork, isPixelLocaleNavigation, savePixelLocaleSnapshot, saveLargePixelLocaleSnapshot, type PixelLocaleSnapshot, type PixelTool } from '@/lib/pixel-grid/locale-navigation';
 import styles from './PixelGridWorkspace.module.css';
 
 const PixelBeadDialog = dynamic(() => import('./PixelBeadDialog'), { ssr: false });
 
-type Tool = 'brush' | 'eraser' | 'pan';
+type Tool = PixelTool;
 type Zoom = 'fit' | '4' | '8' | '16' | '24' | '32';
 type Color = [number, number, number, number];
 type SourceImage = RgbaSource & { name: string };
 type Stroke = {
     id: number; tool: 'brush' | 'eraser'; last: PixelPoint | null; color: Color; before: PixelGrid;
-} | { id: number; tool: 'pan'; start: PixelPoint; scroll: PixelPoint };
+} | { id: number; tool: 'pan'; start: PixelPoint; scroll: PixelPoint }
+  | { id: number; tool: 'fill' | 'picker' };
 
 const MOVES: Record<string, PixelPoint> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+const TOOL_KEYS: Record<string, Tool> = { b: 'brush', e: 'eraser', f: 'fill', i: 'picker', p: 'pan' };
 
 function subscribeWideViewport(callback: () => void) {
     const query = window.matchMedia('(min-width: 761px)');
@@ -149,7 +151,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         const current = strokeRef.current;
         if (!current || (pointerId !== undefined && pointerId !== current.id)) return;
         strokeRef.current = null;
-        if (current.tool !== 'pan') historyRef.current.push(current.before, gridRef.current);
+        if (current.tool === 'brush' || current.tool === 'eraser') historyRef.current.push(current.before, gridRef.current);
         const canvas = canvasRef.current;
         if (canvas?.hasPointerCapture(current.id)) canvas.releasePointerCapture(current.id);
         setPanning(false);
@@ -443,6 +445,25 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         dirtyRef.current = !gridsEqual(next, savedRef.current); setDirty(dirtyRef.current);
     }
 
+    function fill(cell: PixelPoint) {
+        const next = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
+        const changed = floodFill(next, cell[0], cell[1], paintColor());
+        if (changed) {
+            // Commit here rather than pointer-up: one click is one complete operation.
+            historyRef.current.push(gridRef.current, next);
+            gridRef.current = next; setGrid(next); syncHistory();
+            setStatus({ text: text.filled(changed), error: false });
+        } else setStatus({ text: text.fillUnchanged, error: false });
+    }
+
+    function pick(cell: PixelPoint) {
+        const rgba = readPixel(gridRef.current, cell[0], cell[1]);
+        if (!rgba) return;
+        const hex = `#${rgba.slice(0, 3).map(value => value.toString(16).padStart(2, '0')).join('')}`;
+        setColor(hex); setAlpha(rgba[3]);
+        setStatus({ text: text.picked(hex, rgba[3]), error: false });
+    }
+
     function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
         if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || strokeRef.current || event.button !== 0 || event.isPrimary === false) return;
         const cell = point(event), viewport = viewportRef.current;
@@ -453,6 +474,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         if (tool === 'pan') {
             strokeRef.current = { id: event.pointerId, tool, start: [event.clientX, event.clientY], scroll: [viewport.scrollLeft, viewport.scrollTop] };
             setPanning(true);
+        } else if (tool === 'fill' || tool === 'picker') {
+            cursorRef.current = cell; setCursor(cell);
+            strokeRef.current = { id: event.pointerId, tool };
+            if (tool === 'fill') fill(cell);
+            else pick(cell);
         } else {
             const rgba: Color = tool === 'eraser' ? [0, 0, 0, 0] : paintColor();
             strokeRef.current = { id: event.pointerId, tool, last: cell, color: rgba, before: createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels) };
@@ -470,7 +496,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 viewport.scrollLeft = stroke.scroll[0] + stroke.start[0] - event.clientX;
                 viewport.scrollTop = stroke.scroll[1] + stroke.start[1] - event.clientY;
             }
-        } else {
+        } else if (stroke.tool === 'brush' || stroke.tool === 'eraser') {
             const next = point(event);
             if (next) paint(stroke.last ?? next, next, stroke.color);
             stroke.last = next;
@@ -478,8 +504,14 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     function keyboard(event: KeyboardEvent<HTMLCanvasElement>) {
-        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || event.ctrlKey || event.metaKey || event.altKey) return;
-        const move = MOVES[event.key];
+        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || event.ctrlKey || event.metaKey || event.altKey || event.nativeEvent?.isComposing || event.target !== event.currentTarget) return;
+        const key = event.key.toLowerCase();
+        const selectedTool = Object.hasOwn(TOOL_KEYS, key) ? TOOL_KEYS[key] : undefined;
+        if (selectedTool) {
+            event.preventDefault(); finishStroke(); setTool(selectedTool);
+            return;
+        }
+        const move = Object.hasOwn(MOVES, event.key) ? MOVES[event.key] : undefined;
         if (tool === 'pan') {
             if (move && viewportRef.current) { event.preventDefault(); viewportRef.current.scrollLeft += move[0] * 64; viewportRef.current.scrollTop += move[1] * 64; }
             return;
@@ -499,6 +531,10 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             }
         } else if ([' ', 'Enter', 'Delete', 'Backspace'].includes(event.key)) {
             event.preventDefault(); finishStroke();
+            if (!['Delete', 'Backspace'].includes(event.key)) {
+                if (tool === 'picker') { pick(cursorRef.current); return; }
+                if (tool === 'fill') { fill(cursorRef.current); return; }
+            }
             const before = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
             paint(cursorRef.current, cursorRef.current, ['Delete', 'Backspace'].includes(event.key) || tool === 'eraser' ? [0, 0, 0, 0] : paintColor());
             historyRef.current.push(before, gridRef.current); syncHistory();
@@ -756,7 +792,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 <section className={styles.panel} aria-labelledby="pixel-canvas-title">
                     <div className={styles.heading}><h2 id="pixel-canvas-title">{text.pixels(grid.width, grid.height)}</h2><span>{text.visiblePixels(nontransparent)} · {text.visibleColors(countVisibleColors(grid))}</span></div>
                     <div className={styles.drawingTools} aria-label={text.drawingTools}>
-                        {(['brush', 'eraser', 'pan'] as const).map(id => <button type="button" key={id} aria-pressed={tool === id} disabled={locked} onClick={() => action(() => setTool(id))}>{text[id]}</button>)}
+                        {(['brush', 'eraser', 'fill', 'picker', 'pan'] as const).map(id => <button type="button" key={id} aria-pressed={tool === id} disabled={locked} onClick={() => action(() => setTool(id))}>{text[id]}</button>)}
                         <div className={styles.historyButtons}>
                             <button className={styles.historyButton} type="button" aria-label={text.undo} title={text.undo} disabled={locked || !historyState.undo} onClick={() => undo()}><Undo2 size={20} aria-hidden="true" /></button><button className={styles.historyButton} type="button" aria-label={text.redo} title={text.redo} disabled={locked || !historyState.redo} onClick={() => undo(true)}><Redo2 size={20} aria-hidden="true" /></button>
                         </div>

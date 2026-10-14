@@ -3,7 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { getPaletteOption, parsePaletteCsv } from '../editor/config';
 import { decodeEditorPatternDraft, type EditorDraft } from '../editor/draft';
 import { convertPixelGridToBeads } from './bead-conversion';
-import { createGrid, GridHistory, resizeImage } from './core';
+import { createGrid, floodFill, GridHistory, resizeImage } from './core';
 import type { PixelLocaleSnapshot } from './locale-navigation';
 import type { PixelTransferStore } from './locale-storage';
 import {
@@ -101,6 +101,36 @@ beforeEach(() => { vi.spyOn(Date, 'now').mockReturnValue(NOW); });
 afterEach(() => { vi.restoreAllMocks(); });
 
 describe('pixel drawing → whole-board bead project and exact return', () => {
+    it.each(['fill', 'picker'] as const)('returns the exact filled grid, alpha and history while retaining %s after every editor language', async tool => {
+        const before = createGrid(3, 2, [12, 34, 56, 93, 12, 34, 56, 93, 0, 0, 0, 0,
+            12, 34, 56, 93, 90, 80, 70, 1, 23, 47, 89, 0]);
+        const filled = createGrid(3, 2, before.pixels);
+        expect(floodFill(filled, 0, 0, [210, 61, 35, 53])).toBe(3);
+        const history = new GridHistory(); history.push(before, filled);
+        const resized = resizeImage(filled, 4, 4); history.push(filled, resized);
+        const snapshot: PixelLocaleSnapshot = { ...fixture(), grid: history.undo(resized)!, saved: before,
+            history: history.snapshot(), tool, color: '#d23d23', alpha: 53, cursor: [0, 0] };
+        const option = getPaletteOption('perler')!;
+        const palette = parsePaletteCsv(readFileSync(new URL(`../../../public/palettes/${option.file}`, import.meta.url), 'utf8'), option);
+        const converted = (await convertPixelGridToBeads({ grid: filled, paletteId: option.id, palette })).draft;
+        for (const [pixel, editor] of ROUTES) {
+            const session = sessionStorage(), bulk = bulkStorage();
+            const transfer = await savePixelBeadTransfer(snapshot, converted, pixel, editor, session, { now: NOW, store: bulk.store });
+            expect(peekPixelBeadTransfer(transfer.editorHref, session, NOW)!.draft).toEqual(converted);
+            ackPixelBeadTransfer(transfer.key, session);
+            for (const [returnPixel, translatedEditor] of ROUTES) {
+                const href = getPixelBeadReturnHref(translatedEditor, session, NOW)!;
+                expect(href).toBe(`${returnPixel}?bead-return=${transfer.key}`);
+                const returned = (await readPixelBeadReturn(href, session, { now: NOW, store: bulk.store }))!;
+                expectExactSnapshot(returned, snapshot);
+                const restoredHistory = new GridHistory(); restoredHistory.restore(returned.history);
+                expect(restoredHistory.redo(returned.grid)).toEqual(resized);
+                expect(restoredHistory.undo(resized)).toEqual(filled);
+                expect(restoredHistory.undo(filled)).toEqual(before);
+            }
+            await finishPixelBeadReturn(transfer.returnHref, session, { now: NOW, store: bulk.store });
+        }
+    });
     it.each([false, true])('retains every RGBA/source/settings byte and both history branches (large source: %s)', async large => {
         const session = sessionStorage(), bulk = bulkStorage(), snapshot = fixture(large), expected = structuredClone(snapshot);
         session.setItem('bead-pattern-editor-draft-v1', 'unrelated bead work');

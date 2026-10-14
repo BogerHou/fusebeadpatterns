@@ -32,6 +32,35 @@ function fixture(): PixelLocaleSnapshot {
 }
 
 describe('pixel workspace language transfer', () => {
+    it.each(['fill', 'picker'] as const)('keeps %s with exact opacity and both history branches through every language and storage codec', async tool => {
+        const paths = ['/pixel-art-grid', '/de/pixel-art-generator', '/fr/image-en-pixel-art', '/ja/pixel-art-converter'];
+        for (const path of paths) {
+            const session = storage(), bulk = largeStorage();
+            const snapshot = { ...fixture(), tool, alpha: tool === 'picker' ? 0 : 53 };
+            expect(savePixelLocaleSnapshot(snapshot, path, session, 1000)).toBe(true);
+            expect(consumePixelLocaleSnapshot(path, session, 1001)).toEqual(snapshot);
+            expect(await saveLargePixelLocaleSnapshot(snapshot, path, session, bulk.store, 1000)).toBe(true);
+            const restored = await consumeLargePixelLocaleSnapshot(path, session, bulk.store, 1001);
+            expect(restored).toEqual(snapshot);
+            const history = new GridHistory(); history.restore(restored!.history);
+            const redone = history.redo(restored!.grid)!;
+            expect(history.undo(redone)).toEqual(snapshot.grid);
+            expect(history.undo(snapshot.grid)).toEqual(snapshot.saved);
+            expect(bulk.records.size).toBe(0);
+        }
+    });
+
+    it('rejects unrecognized tools rather than treating arbitrary snapshot values as drawing tools', () => {
+        const session = storage(), path = '/de/pixel-art-generator';
+        for (const tool of ['eyedropper', 'bucket', '', 'constructor', 'toString', null, 1]) {
+            expect(savePixelLocaleSnapshot({ ...fixture(), tool } as PixelLocaleSnapshot, path, session, 1000)).toBe(false);
+            expect(session.data.has(PIXEL_LOCALE_STORAGE_KEY)).toBe(false);
+            expect(savePixelLocaleSnapshot(fixture(), path, session, 1000)).toBe(true);
+            const raw = JSON.parse(session.getItem(PIXEL_LOCALE_STORAGE_KEY)!); raw.snapshot.tool = tool;
+            session.setItem(PIXEL_LOCALE_STORAGE_KEY, JSON.stringify(raw));
+            expect(consumePixelLocaleSnapshot(path, session, 1001)).toBeNull();
+        }
+    });
     it('distinguishes a failed first marker probe from no transfer and restores the committed large snapshot on retry', async () => {
         const session = storage(), large = largeStorage(), snapshot = fixture();
         const target = '/de/pixel-art-generator';
