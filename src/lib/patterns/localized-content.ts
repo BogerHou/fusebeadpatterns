@@ -8,6 +8,7 @@ type Names = Record<PatternLocale, string>;
 const namedPokemon = pokemonNames as Record<string, Names>;
 // Literal descriptions of the pictured subject; original game names remain search aliases.
 const subjects: Record<string, [string, string, string]> = {
+    Strawberry: ['Erdbeere', 'Fraise', 'いちご'],
     'Blue Chicken': ['Blaues Huhn', 'Poule bleue', '青いニワトリ'],
     'White Chicken': ['Weißes Huhn', 'Poule blanche', '白いニワトリ'],
     'Brown Chicken': ['Braunes Huhn', 'Poule brune', '茶色のニワトリ'],
@@ -90,6 +91,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-strawberry') {
+        return locale === 'de'
+            ? `${name}: ein Originalmotiv mit roter Frucht, grünen Blättern und hellgelben Samen. Die ${beads} Perler-Midi-Perlen in ${colorCount} Farben passen als ${w} × ${h}-Motiv auf eine ${gw} × ${gh}-Steckplatte. Lade das A4- oder US-Letter-PDF herunter oder passe die Farben im Editor an.`
+            : locale === 'fr'
+            ? `${name} : un motif original de fruit rouge, avec des feuilles vertes et des graines jaune pâle. Les ${beads} perles Perler Midi en ${colorCount} couleurs forment un motif de ${w} × ${h} perles sur une plaque de ${gw} × ${gh} cases. Téléchargez le PDF A4 ou US Letter, ou modifiez les couleurs dans l’éditeur.`
+            : `赤い実に緑の葉と淡い黄色の種を描いた、${name}のオリジナル図案です。${colorCount}色・${beads}個のPerlerミディビーズを使い、横${w}×縦${h}マスの図柄を${gw}×${gh}マスのプレート1枚に作ります。A4・US Letter PDFを保存するか、日本語エディターで配色を変えられます。`;
+    }
     if (pattern.id === 'original-sunset-mountain-lake') {
         return locale === 'de'
             ? `${name}: eine große, unabhängig gezeichnete Landschaft mit Sonne, Bergketten und Spiegelungen im See. Das ${w} × ${h}-Motiv verwendet ${beads} Perler-Midi-Perlen in ${colorCount} Farben auf vier 29 × 29-Steckplatten, angeordnet als 2 × 2. Lade das fünfseitige A4- oder US-Letter-PDF herunter oder bearbeite die Farben im deutschen Editor.`
@@ -135,6 +143,8 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    'An original strawberry with a green leafy cap and pale yellow seed beads.': ['Ein originales Erdbeermotiv mit grünen Blättern und hellgelben Perlen als Samen.', 'Une fraise originale avec des feuilles vertes et des perles jaune pâle pour les graines.', '緑の葉と淡い黄色の種を描いた、いちごのオリジナル図案です。'],
+    'Uses Red 80-19005, Dark Green 80-19010 and Pastel Yellow 80-19056. Screen colors are approximate.': ['Verwendet Red 80-19005, Dark Green 80-19010 und Pastel Yellow 80-19056. Die Bildschirmfarben sind Näherungen.', 'Utilise Red 80-19005, Dark Green 80-19010 et Pastel Yellow 80-19056. Les couleurs à l’écran sont approximatives.', 'Red 80-19005、Dark Green 80-19010、Pastel Yellow 80-19056を使います。画面の色は目安です。'],
     'Use four 29 × 29 Midi pegboards arranged 2 × 2. The complete grid has 58 columns and 58 rows.': ['Verwende vier Midi-Steckplatten mit je 29 × 29 Feldern in einer 2 × 2-Anordnung. Das gesamte Raster hat 58 Spalten und 58 Zeilen.', 'Utilisez quatre plaques Midi de 29 × 29 cases, disposées en 2 × 2. La grille complète compte 58 colonnes et 58 lignes.', '29×29マスのミディ用プレート4枚を縦2枚・横2枚に並べます。図案全体は58列・58行です。'],
     'The 52 × 48 landscape is drawn at this size, not enlarged from a single-board pattern.': ['Die Landschaft wurde als 52 × 48-Motiv gezeichnet und nicht aus einer Ein-Platten-Vorlage vergrößert.', 'Ce paysage a été dessiné en 52 × 48 cases, sans agrandir un modèle prévu pour une seule plaque.', '横52×縦48マスの風景をこの大きさで描いています。プレート1枚用の図案を拡大したものではありません。'],
     'The first PDF page is a reduced overview; pages 2–5 show boards 1–4 at 5 mm spacing. Print at 100% / Actual size and check both 50 mm rulers.': ['Die erste PDF-Seite zeigt eine verkleinerte Übersicht; Seiten 2–5 zeigen die Platten 1–4 mit 5 mm Rasterabstand. Drucke mit 100 % / tatsächlicher Größe und prüfe beide 50-mm-Messlinien.', 'La première page du PDF est une vue réduite ; les pages 2–5 montrent les plaques 1–4 avec un espacement de 5 mm. Imprimez à 100 % / taille réelle et vérifiez les deux repères de 50 mm.', 'PDFの1ページ目は縮小した全体図で、2〜5ページ目はプレート1〜4をマスの間隔5 mmで表示します。100％・実際のサイズで印刷し、縦横の50 mm目盛りを確認してください。'],
