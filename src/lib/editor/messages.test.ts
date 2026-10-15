@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { SITE_LOCALES } from '../i18n/locales';
 import { BOARD_OPTIONS, DITHERING_OPTIONS, EXPORT_OPTIONS, MATCHING_OPTIONS, PALETTE_OPTIONS } from './config';
 import { EDITOR_MESSAGE_ROWS, formatEditorNumber, getEditorErrorMessage, getEditorTranslator } from './messages';
+import { getProjectOpenCopy } from './project-open-copy';
 
 const messages = new Map(EDITOR_MESSAGE_ROWS.map(row => [row[0], row]));
 
@@ -55,6 +56,31 @@ describe('full editor translations', () => {
             expect(getEditorErrorMessage(changedDuringConversion, locale)).not.toBe(changedDuringConversion);
             expect(getEditorErrorMessage(changedDuringConversion, locale)).not.toBe(getEditorErrorMessage('unknown browser exception', locale));
         }
+    });
+
+    it.each(SITE_LOCALES)('%s error display preserves the three native project-open outcomes', locale => {
+        const copy = getProjectOpenCopy(locale);
+        for (const key of ['busy', 'invalid', 'readError'] as const) {
+            expect(getEditorErrorMessage(copy[key], locale)).toBe(copy[key]);
+        }
+    });
+
+    it.each(['de', 'fr', 'ja'] as const)('%s does not treat confirmations or arbitrary exception text as native errors', locale => {
+        const copy = getProjectOpenCopy(locale);
+        const fallback = getEditorTranslator(locale)('Unexpected editor error.');
+        for (const message of [
+            copy.replaceConfirm,
+            'Unexpected exception: private-file-name.png',
+            copy.busy + ' private-file-name.png',
+            'prefix ' + copy.invalid,
+            getProjectOpenCopy(locale === 'de' ? 'fr' : 'de').readError,
+        ]) expect(getEditorErrorMessage(message, locale)).toBe(fallback);
+    });
+
+    it('keeps English project-open errors and the established English exception handling unchanged', () => {
+        expect(getEditorErrorMessage(getProjectOpenCopy('en').invalid, 'en')).toBe('Could not open project file. Choose a bead-pattern project JSON file.');
+        expect(getEditorErrorMessage(getProjectOpenCopy('en').readError, 'en')).toBe('Could not read project file.');
+        expect(getEditorErrorMessage('SecurityError: DOM Exception', 'en')).toBe('SecurityError: DOM Exception');
     });
 
     it('has no untranslated JSX interface text and resolves every static message key', () => {

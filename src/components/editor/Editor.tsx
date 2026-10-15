@@ -56,6 +56,8 @@ import { getCraftProgressCopy } from '@/lib/editor/craft-progress-copy';
 import { limitPatternBeadColors } from '@/lib/editor/pattern-quantization';
 import { normalizeMaxBeadColors } from '@/lib/editor/brand-color-limit';
 import { SourceImageTransactions, readSourceImageFile, prepareSourceImagePattern, commitSourceImageCanvas, type PreparedSourceImage } from '@/lib/editor/source-image-transaction';
+import { getProjectOpenCopy } from '@/lib/editor/project-open-copy';
+import { prepareEditorProjectFile } from '@/lib/editor/project-file-preparation';
 import { DEFAULT_EDITOR_PALETTE_ID as DEFAULT_PALETTE_ID, getInitialEditorConfiguration } from '@/lib/editor/initial-configuration';
 
 import {
@@ -677,6 +679,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const previewViewportRef = useRef<HTMLDivElement>(null);
     const editorImageFileInputRef = useRef<HTMLInputElement>(null);
     const projectFileInputRef = useRef<HTMLInputElement>(null);
+    const projectFileTransactionsRef = useRef(new SourceImageTransactions());
+    const projectFileMountedRef = useRef(true);
+    const projectDocumentAcceptedRef = useRef(false);
+    const libraryPatternLoadingRef = useRef(false);
     const currentProjectRef = useRef<Project | null>(null);
     const libraryPatternIdRef = useRef<string | null>(null);
     const initialLocaleReadRef = useRef<Promise<EditorLocaleRecovery | null> | null>(null);
@@ -1250,6 +1256,24 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         return saved;
     }, []);
 
+    const cancelProjectFileOperation = useCallback(() => {
+        projectFileTransactionsRef.current.cancel();
+    }, []);
+
+    useEffect(() => {
+        projectFileMountedRef.current = true;
+        return () => {
+            projectFileMountedRef.current = false;
+            cancelProjectFileOperation();
+        };
+    }, [cancelProjectFileOperation]);
+
+    const handleLibraryPatternLoading = useCallback((loading: boolean) => {
+        if (loading) cancelProjectFileOperation();
+        libraryPatternLoadingRef.current = loading;
+        setIsLibraryPatternLoading(loading);
+    }, [cancelProjectFileOperation]);
+
     const cancelSettingsUpdate = useCallback(() => {
         settingsUpdateRef.current?.abort();
         settingsUpdateRef.current = null;
@@ -1274,6 +1298,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     const restoreEditorDraft = useCallback(
         (draft: EditorDraft, installed?: PreparedSourceImage & { usage: Map<string, number>; preview: string }) => {
+            cancelProjectFileOperation();
+            projectDocumentAcceptedRef.current = true;
             cancelSourceOperation();
             setIsSourceCropOpen(false);
             setSourceCropError(null);
@@ -1380,7 +1406,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 setBlankPatternRevision((previous) => previous + 1);
             }
         },
-        [blankPatternRevision, cancelSettingsUpdate, cancelSourceOperation, setAutomaticEditorColorRef]
+        [blankPatternRevision, cancelProjectFileOperation, cancelSettingsUpdate, cancelSourceOperation, setAutomaticEditorColorRef]
     );
 
     useEffect(() => {
@@ -2260,6 +2286,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         finishActiveStroke();
         cancelSettingsUpdate();
         imageGenerationRef.current?.abort();
+        cancelProjectFileOperation();
         const jobs = sourceTransactionsRef.current, controller = jobs.begin();
         sourceCandidateControllerRef.current = controller;
         imageGenerationRef.current = controller;
@@ -2659,6 +2686,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             return;
         }
 
+        cancelProjectFileOperation();
+        projectDocumentAcceptedRef.current = true;
         cancelSourceOperation();
         setIsSourceCropOpen(false);
         setSourceCropError(null);
@@ -2756,6 +2785,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
 
         finishActiveStroke();
+        cancelProjectFileOperation();
+        projectDocumentAcceptedRef.current = true;
         const controller = new AbortController();
         settingsUpdateRef.current = controller;
         paletteSyncAbortRef.current?.abort();
@@ -3462,6 +3493,22 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         projectFileInputRef.current?.click();
     };
 
+    const isProjectFileOpenBusy = () =>
+        !projectFileMountedRef.current ||
+        (!initialDraftAppliedRef.current && !localeRestoreBlocked) ||
+        localeSaveInProgressRef.current || libraryPatternLoadingRef.current ||
+        craftEntryBusyRef.current || exportInProgressRef.current ||
+        sourceTransactionsRef.current.pending ||
+        Boolean(imageGenerationRef.current || settingsUpdateRef.current);
+
+    const hasCurrentProjectWork = () =>
+        localeRestoreBlocked || projectDocumentAcceptedRef.current ||
+        Boolean(lastProcessedImageSrcRef.current) ||
+        Boolean(reducedColorRef.current?.some(value => value !== 0)) ||
+        paletteHistoryRef.current.length > 0 ||
+        patternHistoryRef.current.canUndo || patternHistoryRef.current.canRedo ||
+        Boolean(activeStrokeRef.current);
+
     const handleProjectFileUpload = async (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
@@ -3472,18 +3519,60 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             return;
         }
 
+        const jobs = projectFileTransactionsRef.current;
+        jobs.cancel();
+        const copy = getProjectOpenCopy(locale);
+        if (isProjectFileOpenBusy()) {
+            if (projectFileMountedRef.current) setErrorMessage(copy.busy);
+            return;
+        }
+        const controller = jobs.begin();
+        const fromHref = window.location.href;
+        const isCurrent = () => projectFileMountedRef.current &&
+            jobs.isCurrent(controller) && window.location.href === fromHref;
+
         try {
-            const draft = parseEditorProject(await file.text());
+            const raw = await file.text();
+            if (!isCurrent()) return;
+            if (isProjectFileOpenBusy()) { setErrorMessage(copy.busy); return; }
+            const draft = parseEditorProject(raw);
 
             if (!draft) {
-                setErrorMessage(
-                    'Could not open project file. Choose a bead-pattern project JSON file.'
-                );
+                setErrorMessage(copy.invalid);
                 return;
             }
 
-            restoreEditorDraft(draft);
-            persistEditorDraft(draft);
+            const board = getBoardOption(draft.boardId)!;
+            if (draft.imageSrc && !draft.editedPattern &&
+                !confirmLargePatternAction(draft.boardWidth * draft.boardHeight * board.beadsPerRow ** 2, locale)) return;
+            if (!isCurrent()) return;
+            // Decode images, validate the saved grid against its board and
+            // prepare a detached document before touching accepted work.
+            const candidate = await prepareEditorProjectFile(draft, controller.signal, { loadPalette });
+            if (!isCurrent()) return;
+            if (isProjectFileOpenBusy()) { setErrorMessage(copy.busy); return; }
+            const { prepared } = candidate;
+            const usage = computeUsage(prepared.pixels, prepared.project.paletteConfiguration.palettes);
+            const preview = createPatternPreviewDataUrl(prepared.pixels, prepared.width, prepared.height,
+                board.beadsPerRow, candidate.draft.rendererSettings.showGrid);
+            if (!preview) throw new Error('Project preview unavailable.');
+            if (hasCurrentProjectWork() && !window.confirm(copy.replaceConfirm)) return;
+            if (!isCurrent()) return;
+            if (isProjectFileOpenBusy()) { setErrorMessage(copy.busy); return; }
+            const canvas = canvasRef.current;
+            if (!canvas) throw new Error('Project canvas unavailable.');
+            // A failed canvas write restores its old raster. Only success may
+            // finish the old stroke, replace the model and clear its history.
+            commitSourceImageCanvas(canvas, prepared, reducedColorRef.current);
+            finishActiveStroke();
+            restoreEditorDraft(candidate.draft, { ...prepared, usage, preview });
+            if (candidate.sourceKey) {
+                lastProcessedImageSrcRef.current = candidate.draft.imageSrc;
+                lastProcessedImageSettingsKeyRef.current = candidate.sourceKey;
+                skipNextPaletteRebuildRef.current = true;
+            }
+            syncEditorColorAfterPatternBuild(usage, prepared.project.paletteConfiguration.palettes);
+            persistEditorDraft(candidate.draft);
             if (localeRestoreBlocked) {
                 // Opening a file is an explicit choice to replace the protected
                 // language recovery. Its temporary data can expire independently.
@@ -3493,7 +3582,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 try { window.sessionStorage.removeItem(EDITOR_LOCALE_RESTORE_KEY); } catch { /* Storage may still be unavailable. */ }
             }
         } catch {
-            setErrorMessage('Could not read project file.');
+            if (isCurrent()) setErrorMessage(copy.readError);
+        } finally {
+            jobs.finish(controller);
         }
     };
 
@@ -3683,6 +3774,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     const handleLocaleNavigation = React.useEffectEvent((event: Event) => {
         const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
         if (!detail?.href) return;
+        cancelProjectFileOperation();
         if (craftPattern || craftEntryBusyRef.current || !isEditorDraftReady || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || sourceTransactionsRef.current.pending ||
             (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) || localeSaveInProgressRef.current || processing || imageGenerationRef.current || settingsUpdateRef.current || isLibraryPatternLoading || exportInProgressRef.current) {
             event.preventDefault();
@@ -3858,7 +3950,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                             persistEditorDraft(draft);
                         }}
                         onSave={handleSaveProject}
-                        onLoadingChange={setIsLibraryPatternLoading}
+                        onLoadingChange={handleLibraryPatternLoading}
                     />
                 </Suspense>
             )}
@@ -3871,7 +3963,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                         busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen}
                         onOpen={installPixelBeadDraft}
                         onSave={handleSaveProject}
-                        onLoadingChange={setIsLibraryPatternLoading}
+                        onLoadingChange={handleLibraryPatternLoading}
                         onReturnChange={refreshPixelReturn}
                         onNotice={setDraftWarning} />
                 </Suspense>
