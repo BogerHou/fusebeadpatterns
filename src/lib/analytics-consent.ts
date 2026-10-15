@@ -153,14 +153,42 @@ function getReferrerOrigin(referrer: string): string {
     return '';
 }
 
+function readCurrentAnalyticsPage(expectedPathname?: string | null) {
+    try {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return null;
+        const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
+        if (!canonical) return null;
+        const url = new URL(canonical);
+        if (url.protocol !== 'https:' || !PRODUCTION_HOSTS.has(url.hostname) || url.port || url.username || url.password
+            || url.pathname !== window.location.pathname
+            || (expectedPathname !== undefined && url.pathname !== expectedPathname)) return null;
+        return getAnalyticsPageContext(url.href);
+    } catch { return null; }
+}
+
+/** Pathnames are compared locally; only a matching static canonical is measured. */
+export function isAnalyticsPageReady(expectedPathname?: string | null): boolean {
+    return readCurrentAnalyticsPage(expectedPathname) !== null;
+}
+
+/** Events must inherit a page context that has already been measured. */
+export function canMeasureAnalyticsEvent(): boolean {
+    if (!canMeasureAnalytics()) return false;
+    const page = readCurrentAnalyticsPage();
+    return page !== null && page.page_location === lastPageContext?.page_location;
+}
+
 // Read through a function because canMeasureAnalytics may disable the SDK.
 function isAnalyticsDisabled(browser: AnalyticsBrowser): boolean { return browser[DISABLE_KEY] === true; }
 
-export function startAnalytics(): boolean {
+export function startAnalytics(expectedPathname?: string | null): boolean {
     try {
         if (!canMeasureAnalytics() || typeof document === 'undefined') { stopAnalytics(); return false; }
         const browser = window as AnalyticsBrowser;
-        const page = getAnalyticsPageContext(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href);
+        const page = readCurrentAnalyticsPage(expectedPathname);
+        // Metadata can lag a client navigation. Defer without withdrawing an
+        // existing grant, clearing its cookies, or advancing the previous page.
+        if (!page) return false;
         const isNewPage = lastPageContext?.page_location !== page.page_location;
         // A new document keeps only the incoming origin. SPA navigation uses the
         // previous measured canonical; repeated starts keep that page's source.
