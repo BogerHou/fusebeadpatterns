@@ -81,13 +81,13 @@ describe('pattern analytics', () => {
 });
 
 describe('pixel grid export analytics', () => {
-    it('only accepts the three pixel formats with a fixed entry point and independent event', () => {
-        for (const format of ['png', 'grid_png', 'project']) {
+    it('only accepts the four pixel formats with a fixed entry point and independent event', () => {
+        for (const format of ['png', 'grid_png', 'project', 'pdf']) {
             expect(buildPixelGridExportEvent({ format })).toEqual({
                 name: 'pixel_grid_export', parameters: { entry_point: 'pixel_grid', file_format: format },
             });
         }
-        for (const format of ['pdf', 'svg', 'jpg', '', 'PNG', 'private.png', 'https://example.com/private.png']) {
+        for (const format of ['svg', 'jpg', '', 'PNG', 'PDF', 'private.png', 'private.pdf', 'https://example.com/private.png']) {
             expect(buildPixelGridExportEvent({ format })).toBeNull();
         }
         expect(buildPatternEvent({ ...download, name: 'pixel_grid_export' })).toBeNull();
@@ -95,7 +95,7 @@ describe('pixel grid export analytics', () => {
 
     it('drops caller-supplied content, dimensions, URLs and overrides without reading them', () => {
         const input = {
-            format: 'png', entryPoint: 'private-work', name: 'pattern_export',
+            format: 'pdf', entryPoint: 'private-work', name: 'pattern_export',
             width: 31, height: 47, fileName: 'private-client.png', url: 'https://example.com/private.png',
             get image() { throw new Error('Private image must not be read'); },
             project: { name: 'private-work', pixels: [1, 2, 3, 4] },
@@ -104,7 +104,7 @@ describe('pixel grid export analytics', () => {
         vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag });
         expect(trackPixelGridExport(input)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'pixel_grid_export', {
-            entry_point: 'pixel_grid', file_format: 'png',
+            entry_point: 'pixel_grid', file_format: 'pdf',
         });
     });
 
@@ -112,11 +112,11 @@ describe('pixel grid export analytics', () => {
         for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
             const gtag = vi.fn();
             vi.stubGlobal('window', { location: { hostname }, gtag });
-            for (const format of ['png', 'grid_png', 'project']) {
+            for (const format of ['png', 'grid_png', 'project', 'pdf']) {
                 expect(trackPixelGridExport({ format })).toBe(true);
             }
             expect(trackPixelGridExport({ format: 'private-file.png' })).toBe(false);
-            expect(gtag.mock.calls).toEqual(['png', 'grid_png', 'project'].map(format => [
+            expect(gtag.mock.calls).toEqual(['png', 'grid_png', 'project', 'pdf'].map(format => [
                 'event', 'pixel_grid_export', { entry_point: 'pixel_grid', file_format: format },
             ]));
         }

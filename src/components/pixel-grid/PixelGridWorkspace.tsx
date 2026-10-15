@@ -13,6 +13,8 @@ import {
 } from '@/lib/pixel-grid/core';
 import { reducePixelGridColors, countVisibleColors, encodeScaledPng, type ColorLimit } from '@/lib/pixel-grid/conversion';
 import { PIXEL_GRID_MESSAGES, PixelGridUiError, pixelGridErrorMessage, type PixelGridLocale } from '@/lib/pixel-grid/messages';
+import { PIXEL_GRID_PRINT_COPY } from '@/lib/pixel-grid/print-copy';
+import { getPixelGridPrintPreferences, getServerPixelGridPrintPreferences, setPixelGridPrintPreferences, subscribePixelGridPrintPreferences } from '@/lib/pixel-grid/print-preferences';
 import { localeRoutes, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import { consumePixelLocaleSnapshot, consumeLargePixelLocaleSnapshot, hasLargePixelLocaleSnapshot, hasPixelLocaleWork, isPixelLocaleNavigation, savePixelLocaleSnapshot, saveLargePixelLocaleSnapshot, type PixelLocaleSnapshot, type PixelTool } from '@/lib/pixel-grid/locale-navigation';
 import styles from './PixelGridWorkspace.module.css';
@@ -80,6 +82,8 @@ export interface PixelGridWorkspaceProps {
 
 export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' }: PixelGridWorkspaceProps = {}) {
     const text = PIXEL_GRID_MESSAGES[locale];
+    const printText = PIXEL_GRID_PRINT_COPY[locale];
+    const printPreferences = useSyncExternalStore(subscribePixelGridPrintPreferences, getPixelGridPrintPreferences, getServerPixelGridPrintPreferences);
     const beadText = getPixelBeadCopy(locale);
     const [beadDialog, setBeadDialog] = useState(false);
     const beadDialogRef = useRef(false);
@@ -735,6 +739,32 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         });
     }
 
+    function savePdf() {
+        void task(printText.preparing, async current => {
+            // Snapshot before loading code/fonts, so export never reads a later mutable drawing.
+            const snapshot = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
+            const preferences = getPixelGridPrintPreferences();
+            try {
+                const { createPixelGridPdf } = await import('@/lib/pixel-grid/pdf');
+                if (!current()) return;
+                let japaneseFontBase64: string | undefined;
+                if (locale === 'ja') {
+                    const { loadJapaneseExportFont } = await import('@/lib/core/printer/pdf/japanese-font');
+                    if (!current()) return;
+                    japaneseFontBase64 = await loadJapaneseExportFont();
+                    if (!current()) return;
+                }
+                const bytes = await createPixelGridPdf(snapshot, { ...preferences, locale, japaneseFontBase64 });
+                if (!current()) return;
+                download(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }), `pixel-grid-${snapshot.width}x${snapshot.height}-${preferences.content}-${preferences.paper}-${preferences.mode}.pdf`);
+                trackPixelGridExport({ format: 'pdf' });
+                setStatus({ text: printText.exported, error: false });
+            } catch {
+                if (current()) setStatus({ text: printText.failed, error: true });
+            }
+        });
+    }
+
     const imageImport = (
         <section className={`${styles.panel} ${styles.converterImport}`} aria-labelledby="pixel-import-title">
             <h2 id="pixel-import-title">{text.converterTitle}</h2>
@@ -822,6 +852,17 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                     </div>
                     <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={locked} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={locked} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={locked} onClick={saveProject}>{text.saveProject}</button></div>
                     <p className={styles.hint}>{text.exportHelp}</p>
+                    <fieldset className={styles.printOptions} disabled={locked} aria-describedby="pixel-print-help pixel-print-layout-help">
+                        <legend>{printText.title}</legend>
+                        <div className={styles.printFields}>
+                            <label htmlFor="pixel-print-content">{printText.content}<select id="pixel-print-content" value={printPreferences.content} onChange={event => setPixelGridPrintPreferences({ ...printPreferences, content: event.target.value })}><option value="artwork">{printText.artwork}</option><option value="blank">{printText.blank}</option></select></label>
+                            <label htmlFor="pixel-print-paper">{printText.paper}<select id="pixel-print-paper" value={printPreferences.paper} onChange={event => setPixelGridPrintPreferences({ ...printPreferences, paper: event.target.value })}><option value="a4">A4</option><option value="letter">{printText.letter}</option></select></label>
+                            <label htmlFor="pixel-print-mode">{printText.layout}<select id="pixel-print-mode" value={printPreferences.mode} onChange={event => setPixelGridPrintPreferences({ ...printPreferences, mode: event.target.value })}><option value="overview">{printText.overview}</option><option value="tiled">{printText.tiled}</option></select></label>
+                        </div>
+                        <p id="pixel-print-help" className={styles.hint}>{printText.help}</p>
+                        <p id="pixel-print-layout-help" className={styles.hint}>{printText.layoutHelp}</p>
+                        <button className={styles.spaced} type="button" disabled={locked} onClick={savePdf}>{printText.download}</button>
+                    </fieldset>
                     <label className={styles.spaced} htmlFor="pixel-project-file">{text.openProject}<input ref={projectFileRef} hidden={locale !== 'en'} id="pixel-project-file" type="file" accept=".json,application/json" disabled={locked} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importProject(file); }} /></label>
                     {locale !== 'en' && <button className={styles.spaced} type="button" disabled={locked} onClick={() => projectFileRef.current?.click()} aria-label={text.openProject}>{text.chooseFile}</button>}
                     <p className={styles.hint}>{text.projectHelp}</p>

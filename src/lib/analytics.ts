@@ -9,7 +9,7 @@ const PALETTES = new Set([
 const ENTRY_POINTS = new Set(['pattern_detail', 'palette_guide', 'collection', 'patterns', 'editor', 'home']);
 const DOWNLOAD_FORMATS = new Set(['pdf', 'grid_png', 'project', 'png']);
 const EXPORT_FORMATS = new Set(['pdf', 'grid_png', 'svg', 'png', 'jpg', 'xlsx']);
-const PIXEL_GRID_EXPORT_FORMATS = new Set(['png', 'grid_png', 'project']);
+const PIXEL_GRID_EXPORT_FORMATS = new Set(['png', 'grid_png', 'project', 'pdf']);
 const BEAD_LOOM_EXPORT_FORMATS = new Set(['pdf', 'png', 'project']);
 
 export type PatternEventInput = {
