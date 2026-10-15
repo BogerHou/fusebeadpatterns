@@ -13,6 +13,7 @@ import * as printCopy from './print-copy';
 import * as printPreferences from './print-preferences';
 import type { createPixelGridPdf } from './pdf';
 import * as localeNavigation from './locale-navigation';
+import * as workspaceProject from './workspace-project';
 import * as beadCopy from './bead-copy';
 import * as beadTransfer from './bead-transfer';
 import * as beadConversion from './bead-conversion';
@@ -154,7 +155,7 @@ describe('pixel grid localization', () => {
         expect(copy.ja.converted(64, 64, 16)).toContain('16色');
         expect(copy.ja.exportedScaled(1024, 2048)).toContain('ダウンロードを開始しました');
         expect(copy.ja.leave).toContain('保存せずに移動');
-        expect(copy.ja.converterProjectHelp).toContain('元画像、色数の設定、操作履歴は含まれません');
+        expect(copy.ja.converterProjectHelp).toContain('作業ファイルには元画像のピクセル、編集・印刷設定、履歴も含まれます');
     });
 });
 
@@ -168,6 +169,14 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
     new Script(compiled).runInNewContext({ ...globals, exports, require: (id: string) => {
         if (Object.hasOwn(overrides, id)) return overrides[id];
         if (id === '@/lib/pixel-grid/core') return core;
+        if (id === '@/lib/pixel-grid/errors') return { PixelGridError };
+        if (id === '@/lib/pixel-grid/workspace-project') return {
+            ...workspaceProject,
+            // VM-owned UI records cross into the host-owned strict codec here.
+            // Recreate their data in its realm; browser production has one realm.
+            serializePixelWorkspaceProject: (snapshot: localeNavigation.PixelLocaleSnapshot, print: printPreferences.PixelGridPrintPreferences) => workspaceProject.serializePixelWorkspaceProject(
+                localeNavigation.parsePixelWorkspaceSnapshot(localeNavigation.serializePixelWorkspaceSnapshot(snapshot)), { ...print }),
+        };
         if (id === '@/lib/pixel-grid/conversion') return conversion;
         if (id === '@/lib/pixel-grid/messages') return messages;
         if (id === '@/lib/pixel-grid/print-copy') return printCopy;
@@ -199,7 +208,7 @@ describe('pixel grid initial user experience', () => {
         expect(html).toContain('Originalbild neu umwandeln');
         expect(html).toContain('PNG ohne Raster herunterladen');
         expect(html).toContain('aria-label="Rückgängig"');
-        expect(html).toContain('aria-label="Gespeichertes Pixel-Grid-Projekt öffnen"');
+        expect(html).toContain(`aria-label="${copy.de.openProject}"`);
         expect(html).not.toContain('Choose file');
     });
     it('keeps the English drawing defaults while exposing image conversion outside the folded settings', () => {
@@ -233,7 +242,7 @@ describe('pixel grid initial user experience', () => {
         expect(html).toContain('Appliquer la limite au dessin');
         expect(html).toContain('aria-label="Annuler"');
         expect(html).toContain('aria-label="Zone de dessin défilante"');
-        expect(html).toContain('historique des opérations');
+        expect(html).toContain(copy.fr.saveWorkspace);
         for (const phrase of ['Save your work', 'Unsaved changes', 'Canvas size', 'Drawing tools', 'Scrollable drawing area', 'Ready. Draw']) expect(html).not.toContain(phrase);
     });
 
@@ -255,7 +264,7 @@ describe('pixel grid initial user experience', () => {
         expect(html).toContain('原寸のPNGを保存');
         expect(html).toContain('グリッド付きPNGを保存');
         expect(html).toContain('編集用プロジェクトを保存');
-        expect(html).toContain('元画像、色数の設定、操作履歴は含まれません');
+        expect(html).toContain(copy.ja.saveWorkspace);
         for (const phrase of ['Save your work', 'Unsaved changes', 'Canvas size', 'Drawing tools', 'Choose file', 'Enregistrer', 'Reconvertir']) expect(html).not.toContain(phrase);
     });
 });
@@ -287,6 +296,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     assign?: (href: string) => void;
     createPdf?: typeof createPixelGridPdf;
     loadJapaneseFont?: () => Promise<string>;
+    confirm?: () => boolean;
 } = {}) {
     const text = copy[props.locale ?? 'en'];
     const slots: unknown[] = [], mountEffects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
@@ -311,7 +321,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         location.href = url.href; location.pathname = url.pathname; location.search = url.search;
     }
     const browser = {
-        location, sessionStorage: storage, confirm: () => { confirmations++; return false; },
+        location, sessionStorage: storage, confirm: () => { confirmations++; return runtime.confirm?.() ?? false; },
         matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
         history: { replaceState(_state: unknown, _title: string, href: string) {
             const url = new URL(href, location.href);
@@ -1020,6 +1030,125 @@ describe('English drawing and image conversion share one preserved workspace', (
             expect(await translated.currentProject()).toEqual(original);
             translated.unmount();
         }
+        ui.unmount();
+    });
+});
+
+describe('complete user-downloaded pixel workspaces', () => {
+    async function preparedWorkspace() {
+        const ui = interactiveWorkspace({ locale: 'en' });
+        await ui.loadImage();
+        ui.paint();
+        const painted = await ui.currentProject();
+        ui.change('pixel-color-limit', '8');
+        ui.click(copy.en.reduceCurrent);
+        ui.click(copy.en.undo);
+        ui.change('pixel-width', '17');
+        ui.change('pixel-height', '');
+        ui.change('pixel-alpha', '73');
+        ui.change('pixel-color', '#224466');
+        ui.change('pixel-export-scale', '4');
+        ui.change('pixel-zoom', '8');
+        ui.click(copy.en.fill);
+        ui.change('pixel-print-paper', 'letter');
+        ui.change('pixel-print-mode', 'tiled');
+        ui.change('pixel-print-content', 'blank');
+        const file = await ui.download(copy.en.saveWorkspace);
+        const raw = await file.blob.text();
+        return { ui, painted, file, raw, project: workspaceProject.parsePixelWorkspaceProject(raw) };
+    }
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('reopens the image, pending settings, complete past/future and print choices in %s', async locale => {
+        const original = await preparedWorkspace();
+        expect(original.file.name).toBe('pixel-16x16.pixel-workspace.json');
+        expect(original.project.snapshot.source?.pixels).toEqual(original.ui.source.pixels);
+        expect(original.project.snapshot.grid).toEqual(original.painted);
+        expect(original.project.snapshot.saved).toEqual(original.painted);
+        expect(original.project.snapshot.history.undo).toHaveLength(2);
+        expect(original.project.snapshot.history.redo).toHaveLength(1);
+        expect(original.project.print).toEqual({ paper: 'letter', mode: 'tiled', content: 'blank' });
+        original.ui.unmount();
+
+        const reopened = interactiveWorkspace({ locale, experience: locale === 'en' ? 'grid' : 'converter' });
+        await reopened.loadProject(original.raw);
+        expect(reopened.status()).toContain(copy[locale].workspaceOpened('saved.pixel-grid.json'));
+        expect(reopened.byId('pixel-width').props.value).toBe('17');
+        expect(reopened.byId('pixel-height').props.value).toBe('');
+        expect(reopened.byId('pixel-alpha').props.value).toBe(73);
+        expect(reopened.byId('pixel-color').props.value).toBe('#224466');
+        expect(reopened.byId('pixel-color-limit').props.value).toBe(8);
+        expect(reopened.byId('pixel-export-scale').props.value).toBe(4);
+        expect(reopened.byId('pixel-zoom').props.value).toBe('8');
+        expect(reopened.byId('pixel-print-paper').props.value).toBe('letter');
+        expect(reopened.byId('pixel-print-mode').props.value).toBe('tiled');
+        expect(reopened.byId('pixel-print-content').props.value).toBe('blank');
+        expect(reopened.button(copy[locale].reconvert).props.disabled).toBe(false);
+        expect(reopened.button(copy[locale].undo).props.disabled).toBe(false);
+        expect(reopened.button(copy[locale].redo).props.disabled).toBe(false);
+        const resaved = await reopened.download(copy[locale].saveWorkspace);
+        expect(await resaved.blob.text()).toBe(original.raw);
+        reopened.click(copy[locale].redo);
+        expect(conversion.countVisibleColors(await reopened.currentProject())).toBeLessThanOrEqual(8);
+        reopened.click(copy[locale].undo);
+        expect(await reopened.currentProject()).toEqual(original.painted);
+        // Undo publishes the restored 16x16 grid and synchronizes both dimension
+        // controls, as it did before full-workspace files were introduced.
+        expect(reopened.byId('pixel-width').props.value).toBe('16');
+        expect(reopened.byId('pixel-height').props.value).toBe('16');
+        reopened.change('pixel-width', '17');
+        reopened.change('pixel-height', '31');
+        reopened.change('pixel-color-limit', 'original');
+        reopened.click(copy[locale].reconvert);
+        expect(await reopened.currentProject()).toEqual(core.resizeImage(reopened.source, 17, 31, 'fit'));
+        reopened.unmount();
+    });
+
+    it('keeps the existing full workspace when replacement is cancelled', async () => {
+        const original = await preparedWorkspace();
+        const confirm = vi.fn(() => false);
+        const current = interactiveWorkspace({ locale: 'ja' }, { confirm });
+        await current.loadImage(); current.paint();
+        const before = await current.download(copy.ja.saveWorkspace);
+        await current.loadProject(original.raw);
+        expect(confirm).toHaveBeenCalledOnce();
+        expect(current.status()).toContain(copy.ja.workspaceCancelled);
+        const after = await current.download(copy.ja.saveWorkspace);
+        expect(await after.blob.text()).toBe(await before.blob.text());
+        current.unmount(); original.ui.unmount();
+    });
+
+    it('validates every field before confirmation or replacing an existing workspace', async () => {
+        const original = await preparedWorkspace();
+        const confirm = vi.fn(() => true);
+        const current = interactiveWorkspace({ locale: 'fr' }, { confirm });
+        await current.loadImage(); current.paint();
+        const before = await current.download(copy.fr.saveWorkspace);
+        const bad = JSON.parse(original.raw);
+        bad.snapshot.history.redo[0].pixels = 'AAAA';
+        await current.loadProject(JSON.stringify(bad));
+        expect(confirm).not.toHaveBeenCalled();
+        expect(current.status()).toContain(FRENCH_PIXEL_GRID_ERRORS.WORKSPACE_INVALID);
+        const after = await current.download(copy.fr.saveWorkspace);
+        expect(await after.blob.text()).toBe(await before.blob.text());
+        await current.loadProject(original.raw);
+        expect(confirm).toHaveBeenCalledOnce();
+        expect(current.status()).toContain(copy.fr.workspaceOpened('saved.pixel-grid.json'));
+        current.unmount(); original.ui.unmount();
+    });
+
+    it('rejects oversized files before reading them and remains editable', async () => {
+        const ui = interactiveWorkspace({ locale: 'de' });
+        ui.paint();
+        const before = await ui.currentProject();
+        const read = vi.fn(async () => 'unread');
+        invoke(ui.byId('pixel-project-file'), 'onChange', { currentTarget: { files: [{ name: 'large.pixel-workspace.json', size: workspaceProject.MAX_PIXEL_WORKSPACE_PROJECT_BYTES + 1, text: read }], value: 'large.pixel-workspace.json' } });
+        await ui.settle();
+        expect(read).not.toHaveBeenCalled();
+        expect(ui.status()).toContain(GERMAN_PIXEL_GRID_ERRORS.WORKSPACE_TOO_LARGE);
+        expect(ui.byId('pixel-grid-workspace').props['aria-busy']).toBe(false);
+        expect(await ui.currentProject()).toEqual(before);
+        ui.click(copy.de.undo);
+        expect(await ui.currentProject()).toEqual(core.createGrid(16, 16));
         ui.unmount();
     });
 });

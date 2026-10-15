@@ -59,8 +59,9 @@ export default function GermanPixelArtPage() {
                 <p className="mt-5">
                     Im PNG in Originalgröße entspricht eine Zelle einem Pixel: Aus einer Zeichnung mit 64 × 64 Zellen wird eine Datei mit 64 × 64 Pixeln.
                     Für größere Bilder kannst du ohne Raster um einen ganzzahligen Faktor vergrößern oder ein PNG mit Rasterlinien exportieren.
-                    Speichere zusätzlich das Projekt, um später weiterzuarbeiten. Es enthält die aktuellen Farben, die Transparenz und die Maße,
-                    aber weder das Originalbild noch Einstellungen oder Verlauf. Es gibt keine automatische Speicherung.
+                    Ein bearbeitbares Projekt speichert die aktuellen Pixel, Transparenz und Maße. Der vollständige Arbeitsstand
+                    enthält zusätzlich die Originalbildpixel, Einstellungen und den Verlauf. Speichere und öffne diese Dateien selbst;
+                    es gibt keine automatische Speicherung.
                 </p>
                 <p className="mt-5">
                     Wähle im Arbeitsbereich „Bügelperlen-Vorlage erstellen“, um deine aktuelle Zeichnung in Perlenfarben zu übertragen. Ein Pixel entspricht einer Perlenposition; leere Felder ergänzen ganze Platten, ohne das Motiv zu skalieren. Über den Rückweg bleibt deine Pixelzeichnung mit den ursprünglichen Farben erhalten.

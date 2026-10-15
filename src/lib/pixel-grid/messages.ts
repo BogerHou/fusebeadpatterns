@@ -8,6 +8,11 @@ const frNumber = (value: number) => value.toLocaleString('fr-FR');
 const jaNumber = (value: number) => value.toLocaleString('ja-JP');
 
 const en = {
+    saveWorkspace: 'Save full workspace',
+    exportedWorkspace: 'Full workspace download started. It includes the original image pixels, history and settings.',
+    replaceWorkspace: 'Replace this workspace, including its image, history and settings? Save it first if you want to keep it.',
+    workspaceCancelled: 'Workspace opening cancelled. Your current work is unchanged.',
+    workspaceOpened: (name: string) => `Opened ${name}: image, pixels, history and settings restored.`,
     number: enNumber,
     ready: 'Ready. Draw or import an image.',
     converterReady: 'Ready. Choose an image to convert, or draw on the blank canvas.',
@@ -36,8 +41,8 @@ const en = {
     saveTitle: 'Save your work', dirty: 'Unsaved changes', saved: 'Project saved / unchanged',
     saveOriginal: 'Save original-size PNG', saveGrid: 'Save enlarged grid PNG', saveProject: 'Save editable project',
     exportHelp: 'Original PNG: one cell = one pixel, current RGBA, no grid or background. Grid PNG: 16× larger with lines; it is not a sprite file or a full-size bead template.',
-    openProject: 'Open a saved Pixel Grid project',
-    projectHelp: 'Pixel Grid JSON version 1, up to 512 KiB. Bead-pattern projects use a different format. Undo remembers up to 50 operations in this session. Refreshing loses this session; save an editable project to keep your work.',
+    openProject: 'Open a pixel project or full workspace',
+    projectHelp: 'Pixel-only project: JSON version 1, up to 512 KiB. Full workspace: up to 32 MiB, with up to 50 Undo/Redo steps. Reopen the saved file after a reload. Bead-pattern projects use a different format.',
     processingHelp: 'Checkerboard means transparency. Browser image decoding may change color profiles and hidden RGB in fully transparent pixels. Projects and original-size PNGs preserve the current pixel data. Your images are processed on this device.',
     leave: 'You have unsaved pixel edits. Cancel to save an editable project, or leave without saving.',
     languageBusy: 'Wait for the current operation to finish before changing language.',
@@ -74,7 +79,7 @@ const en = {
     exportDimensions: (w: number, h: number, scale: number) => `${enNumber(w * scale)} × ${enNumber(h * scale)} pixels (${scale}×)`,
     scaledHelp: 'Each cell becomes a solid square of pixels. Enlargement adds no detail or grid and preserves the current colors and transparency. Preview zoom does not change the download size.',
     exportedScaled: (w: number, h: number) => `PNG download started: ${enNumber(w)} × ${enNumber(h)} pixels, without a grid. Save a project to keep an editable copy.`,
-    converterProjectHelp: 'The project saves only the current pixels, dimensions and transparency. It does not include the original image, color-limit setting or undo history.',
+    converterProjectHelp: 'An editable project keeps the current pixels, dimensions and transparency. A full workspace also includes the original image pixels, editing and print settings, and history. Share it only if you intend to include that image. Files stay on your device.',
     unknownError: 'This operation could not be completed. Your drawing was kept. Please try again.',
     uiErrors: {
         canvasUnavailable: 'Canvas drawing is unavailable in this browser.',
@@ -89,6 +94,12 @@ const en = {
 };
 
 const de: typeof en = {
+    openProject: 'Pixel-Projekt oder vollständigen Arbeitsstand öffnen',
+    saveWorkspace: 'Vollständigen Arbeitsstand speichern',
+    exportedWorkspace: 'Download des vollständigen Arbeitsstands gestartet. Er enthält die Originalbild-Pixel, den Verlauf und die Einstellungen.',
+    replaceWorkspace: 'Diesen Arbeitsstand mit Bild, Verlauf und Einstellungen ersetzen? Speichere ihn zuerst, wenn du ihn behalten möchtest.',
+    workspaceCancelled: 'Öffnen abgebrochen. Dein aktueller Arbeitsstand bleibt erhalten.',
+    workspaceOpened: name => `${name} geöffnet: Bild, Pixel, Verlauf und Einstellungen wiederhergestellt.`,
     number: deNumber,
     ready: 'Bereit. Zeichne oder importiere ein Bild.',
     converterReady: 'Bereit. Wähle ein Bild zum Umwandeln oder zeichne auf der leeren Zeichenfläche.',
@@ -117,8 +128,7 @@ const de: typeof en = {
     saveTitle: 'Deine Arbeit speichern', dirty: 'Ungespeicherte Änderungen', saved: 'Projekt gespeichert / unverändert',
     saveOriginal: 'PNG in Originalgröße speichern', saveGrid: 'Vergrößertes Raster-PNG speichern', saveProject: 'Bearbeitbares Projekt speichern',
     exportHelp: 'Original-PNG: eine Zelle = ein Pixel, aktuelle RGBA-Werte, ohne Raster oder Hintergrund. Raster-PNG: 16-fach vergrößert mit Linien; keine Sprite-Datei und keine Bügelperlen-Vorlage in Originalgröße.',
-    openProject: 'Gespeichertes Pixel-Grid-Projekt öffnen',
-    projectHelp: 'Pixel-Grid-JSON Version 1, höchstens 512 KiB. Bügelperlen-Projekte verwenden ein anderes Format. In dieser Sitzung lassen sich bis zu 50 Schritte rückgängig machen. Beim Neuladen geht die Sitzung verloren; speichere ein bearbeitbares Projekt, um deine Arbeit zu behalten.',
+    projectHelp: 'Pixel-Projekt: JSON Version 1, höchstens 512 KiB. Vollständiger Arbeitsstand: höchstens 32 MiB, mit bis zu 50 Rückgängig- und Wiederholen-Schritten. Öffne die gespeicherte Datei nach dem Neuladen. Bügelperlen-Projekte verwenden ein anderes Format.',
     processingHelp: 'Das Schachbrett zeigt transparente Bereiche. Beim Dekodieren im Browser können sich Farbprofile und verborgene RGB-Werte vollständig transparenter Pixel ändern. Projekte und PNGs in Originalgröße erhalten die aktuellen Pixeldaten. Deine Bilder werden auf diesem Gerät verarbeitet.',
     leave: 'Du hast ungespeicherte Pixeländerungen. Brich ab, um ein bearbeitbares Projekt zu speichern, oder verlasse die Seite ohne Speichern.',
     languageBusy: 'Warte, bis der aktuelle Vorgang abgeschlossen ist, bevor du die Sprache wechselst.',
@@ -155,7 +165,7 @@ const de: typeof en = {
     exportDimensions: (w, h, scale) => `${deNumber(w * scale)} × ${deNumber(h * scale)} Pixel (${scale}×)`,
     scaledHelp: 'Jede Zelle wird zu einem einfarbigen Pixelquadrat. Die Vergrößerung fügt keine Details oder Rasterlinien hinzu und erhält die aktuellen Farben und die Transparenz. Der Vorschau-Zoom verändert die Downloadgröße nicht.',
     exportedScaled: (w, h) => `PNG-Download gestartet: ${deNumber(w)} × ${deNumber(h)} Pixel ohne Raster. Speichere ein Projekt, um eine bearbeitbare Kopie zu behalten.`,
-    converterProjectHelp: 'Das Projekt speichert nur die aktuellen Pixel, Maße und die Transparenz. Es enthält weder das Originalbild noch die Farbgrenze oder den Bearbeitungsverlauf.',
+    converterProjectHelp: 'Ein bearbeitbares Projekt speichert die aktuellen Pixel, Maße und Transparenz. Der vollständige Arbeitsstand enthält zusätzlich die Originalbild-Pixel, Bearbeitungs- und Druckeinstellungen sowie den Verlauf. Teile ihn nur, wenn du das Bild mitgeben möchtest. Die Dateien bleiben auf deinem Gerät.',
     unknownError: 'Dieser Vorgang konnte nicht abgeschlossen werden. Deine Zeichnung wurde beibehalten. Bitte versuche es erneut.',
     uiErrors: {
         canvasUnavailable: 'Zeichnen auf der Zeichenfläche ist in diesem Browser nicht verfügbar.',
@@ -170,6 +180,11 @@ const de: typeof en = {
 };
 
 const fr: typeof en = {
+    saveWorkspace: 'Enregistrer tout l’espace de travail',
+    exportedWorkspace: 'Téléchargement de l’espace de travail lancé. Il contient les pixels de l’image d’origine, l’historique et les réglages.',
+    replaceWorkspace: 'Remplacer cet espace de travail, avec son image, son historique et ses réglages ? Enregistrez-le d’abord si vous souhaitez le conserver.',
+    workspaceCancelled: 'Ouverture annulée. Votre travail actuel est conservé.',
+    workspaceOpened: name => `${name} ouvert : image, pixels, historique et réglages restaurés.`,
     number: frNumber,
     ready: 'Prêt. Dessinez ou importez une image.',
     converterReady: 'Prêt. Choisissez une image à convertir ou dessinez sur la toile vide.',
@@ -198,8 +213,8 @@ const fr: typeof en = {
     saveTitle: 'Enregistrer votre création', dirty: 'Modifications non enregistrées', saved: 'Projet enregistré / inchangé',
     saveOriginal: 'PNG à la taille d’origine', saveGrid: 'PNG agrandi avec grille', saveProject: 'Enregistrer le projet modifiable',
     exportHelp: 'PNG original : une case = un pixel, couleurs et transparence actuelles, sans grille ni fond ajouté. PNG avec grille : agrandi 16 fois avec des lignes ; ce n’est ni un sprite ni un modèle de perles à taille réelle.',
-    openProject: 'Ouvrir un projet Pixel Grid enregistré',
-    projectHelp: 'Projet Pixel Grid JSON version 1, 512 Kio maximum. Les projets de perles utilisent un autre format. Vous pouvez annuler jusqu’à 50 opérations dans cette session. Un rechargement efface la session : enregistrez le projet pour conserver votre travail.',
+    openProject: 'Ouvrir un projet pixel ou un espace de travail complet',
+    projectHelp: 'Projet pixel : JSON version 1, 512 Kio maximum. Espace de travail complet : 32 Mio maximum, avec jusqu’à 50 étapes Annuler/Rétablir. Rouvrez le fichier enregistré après un rechargement. Les projets de perles utilisent un autre format.',
     processingHelp: 'Le damier indique la transparence. Le décodage par le navigateur peut modifier les profils de couleurs et les valeurs RVB cachées dans les pixels entièrement transparents. Les projets et les PNG sans grille conservent les données actuelles. Vos images sont traitées sur cet appareil.',
     leave: 'Des retouches ne sont pas enregistrées. Annulez pour enregistrer un projet modifiable, ou quittez sans enregistrer.',
     languageBusy: 'Attendez la fin de l’opération avant de changer de langue.',
@@ -236,7 +251,7 @@ const fr: typeof en = {
     exportDimensions: (w, h, scale) => `${frNumber(w * scale)} × ${frNumber(h * scale)} pixels (${scale}×)`,
     scaledHelp: 'Chaque case devient un carré de pixels uni. L’agrandissement n’ajoute ni détail ni grille et conserve les couleurs et la transparence actuelles. Le zoom de l’aperçu ne change pas les dimensions du fichier.',
     exportedScaled: (w, h) => `Téléchargement du PNG lancé : ${frNumber(w)} × ${frNumber(h)} pixels, sans grille. Enregistrez le projet pour conserver une copie modifiable.`,
-    converterProjectHelp: 'Le projet conserve seulement les pixels actuels, les dimensions et la transparence. Il ne contient ni l’image d’origine, ni le réglage des couleurs, ni l’historique des opérations.',
+    converterProjectHelp: 'Un projet modifiable garde les pixels actuels, les dimensions et la transparence. L’espace de travail complet inclut aussi les pixels de l’image d’origine, les réglages d’édition et d’impression et l’historique. Ne le partagez que si vous souhaitez inclure cette image. Les fichiers restent sur votre appareil.',
     unknownError: 'Cette opération n’a pas abouti. Votre dessin est conservé. Veuillez réessayer.',
     uiErrors: {
         canvasUnavailable: 'Le dessin sur toile n’est pas disponible dans ce navigateur.',
@@ -251,6 +266,11 @@ const fr: typeof en = {
 };
 
 const ja: typeof en = {
+    saveWorkspace: '作業全体を保存',
+    exportedWorkspace: '作業ファイルのダウンロードを開始しました。元画像のピクセル、履歴、設定が含まれます。',
+    replaceWorkspace: '現在の画像、履歴、設定を含む作業全体を置き換えますか？残したい場合は先に保存してください。',
+    workspaceCancelled: '読み込みをキャンセルしました。現在の作業は変更されていません。',
+    workspaceOpened: name => `${name}を開きました。画像、ピクセル、履歴、設定を復元しました。`,
     number: jaNumber,
     ready: '画像を読み込むか、キャンバスに描いてください。',
     converterReady: 'ドット絵に変換する画像を選んでください。空のキャンバスに描くこともできます。',
@@ -279,8 +299,8 @@ const ja: typeof en = {
     saveTitle: '作品を保存する', dirty: '未保存の変更があります', saved: 'プロジェクト保存済み／変更なし',
     saveOriginal: '原寸のPNGを保存', saveGrid: 'グリッド付きPNGを保存', saveProject: '編集用プロジェクトを保存',
     exportHelp: '原寸PNGは1マス＝1ピクセル。現在の色と透明度を保ち、グリッドや背景は追加しません。グリッド付きPNGは線を付けて16倍に拡大します。スプライト用ファイルやビーズの原寸印刷用図案ではありません。',
-    openProject: '保存したPixel Gridプロジェクトを開く',
-    projectHelp: 'Pixel Grid JSONバージョン1、512 KiBまで。ビーズ図案のプロジェクトとは別の形式です。この画面では最大50回の操作を元に戻せます。再読み込みすると作業は失われるため、続きから編集するにはプロジェクトを保存してください。',
+    openProject: 'ピクセル図案または作業ファイルを開く',
+    projectHelp: 'ピクセル図案はJSONバージョン1、512 KiBまで。作業ファイルは32 MiBまでで、元に戻す・やり直す履歴を合計50件保存できます。再読み込み後は保存したファイルを開いてください。ビーズ図案のプロジェクトとは別の形式です。',
     processingHelp: '市松模様は透明な部分です。ブラウザーで画像を読み込む際、カラープロファイルや完全に透明なピクセル内のRGB値が変わる場合があります。プロジェクトと原寸PNGには、現在のピクセルデータが保存されます。画像はこの端末内で処理します。',
     leave: '保存していない変更があります。編集用プロジェクトを保存するには「キャンセル」を選んでください。「OK」で保存せずに移動します。',
     languageBusy: '処理が終わってから言語を変更してください。',
@@ -317,7 +337,7 @@ const ja: typeof en = {
     exportDimensions: (w, h, scale) => `${jaNumber(w * scale)} × ${jaNumber(h * scale)}ピクセル（${scale}倍）`,
     scaledHelp: '各マスを同じ色の正方形に拡大します。細部やグリッドは追加せず、現在の色と透明度を保ちます。プレビューの表示倍率はダウンロード画像のサイズに影響しません。',
     exportedScaled: (w, h) => `${jaNumber(w)} × ${jaNumber(h)}のグリッドなしPNGのダウンロードを開始しました。続きから編集するにはプロジェクトも保存してください。`,
-    converterProjectHelp: 'プロジェクトに保存されるのは現在のピクセル、サイズ、透明度です。元画像、色数の設定、操作履歴は含まれません。',
+    converterProjectHelp: '編集用プロジェクトは現在のピクセル、サイズ、透明度を保存します。作業ファイルには元画像のピクセル、編集・印刷設定、履歴も含まれます。元画像を渡してよい場合のみ共有してください。ファイルはこの端末に保存されます。',
     unknownError: '操作を完了できませんでした。現在の画像は保持されています。もう一度お試しください。',
     uiErrors: {
         canvasUnavailable: 'このブラウザーではキャンバスに描画できません。',
@@ -338,6 +358,9 @@ export class PixelGridUiError extends Error {
 
 // Exhaustive core-code mapping; arbitrary browser/extension messages never leak into French UI.
 export const FRENCH_PIXEL_GRID_ERRORS: Record<PixelGridErrorCode, string> = {
+    WORKSPACE_TOO_LARGE: 'Les espaces de travail doivent faire 32 Mio maximum.',
+    WORKSPACE_UNSUPPORTED_FORMAT: 'Choisissez un espace de travail Pixel Grid (format pixel-grid-workspace, version 1).',
+    WORKSPACE_INVALID: 'Le fichier de travail est incomplet ou contient des données non prises en charge.',
     INVALID_DIMENSIONS: 'Utilisez des dimensions entières de 1 à 128, avec au maximum 16 384 pixels.',
     PIXEL_DATA_LENGTH: 'La quantité de données de pixels ne correspond pas aux dimensions de la toile.',
     INVALID_RGBA_CHANNELS: 'Les valeurs RGBA doivent être des entiers compris entre 0 et 255.',
@@ -366,6 +389,9 @@ export const FRENCH_PIXEL_GRID_ERRORS: Record<PixelGridErrorCode, string> = {
     PNG_SCALE_INVALID: 'Choisissez un agrandissement du PNG de 1, 2, 4, 8 ou 16 fois.',
 };
 export const JAPANESE_PIXEL_GRID_ERRORS: Record<PixelGridErrorCode, string> = {
+    WORKSPACE_TOO_LARGE: '作業ファイルは32 MiB以下にしてください。',
+    WORKSPACE_UNSUPPORTED_FORMAT: 'Pixel Gridの作業ファイル（pixel-grid-workspace、バージョン1）を選んでください。',
+    WORKSPACE_INVALID: '作業ファイルの内容が不完全か、対応していないデータが含まれています。',
     INVALID_DIMENSIONS: '幅と高さは1〜128の整数、合計16,384ピクセル以内にしてください。',
     PIXEL_DATA_LENGTH: 'ピクセルデータの量がキャンバスのサイズと一致しません。',
     INVALID_RGBA_CHANNELS: 'RGBAの値は0〜255の整数にしてください。',
@@ -394,6 +420,9 @@ export const JAPANESE_PIXEL_GRID_ERRORS: Record<PixelGridErrorCode, string> = {
     PNG_SCALE_INVALID: 'PNGの拡大倍率は1・2・4・8・16倍から選んでください。',
 };
 export const GERMAN_PIXEL_GRID_ERRORS: Record<PixelGridErrorCode, string> = {
+    WORKSPACE_TOO_LARGE: 'Vollständige Arbeitsstände dürfen höchstens 32 MiB groß sein.',
+    WORKSPACE_UNSUPPORTED_FORMAT: 'Wähle einen Pixel-Grid-Arbeitsstand (Format pixel-grid-workspace, Version 1).',
+    WORKSPACE_INVALID: 'Der Arbeitsstand ist unvollständig oder enthält nicht unterstützte Daten.',
     INVALID_DIMENSIONS: 'Verwende ganze Zahlen von 1 bis 128 für Breite und Höhe, mit höchstens 16.384 Pixeln.',
     PIXEL_DATA_LENGTH: 'Die Menge der Pixeldaten stimmt nicht mit den Maßen der Zeichenfläche überein.',
     INVALID_RGBA_CHANNELS: 'RGBA-Werte müssen ganze Zahlen zwischen 0 und 255 sein.',

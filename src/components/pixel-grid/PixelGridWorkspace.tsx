@@ -12,6 +12,8 @@ import {
     type PixelGrid, type PixelPoint, type ResizeMode, type RgbaSource,
 } from '@/lib/pixel-grid/core';
 import { reducePixelGridColors, countVisibleColors, encodeScaledPng, type ColorLimit } from '@/lib/pixel-grid/conversion';
+import { MAX_PIXEL_WORKSPACE_PROJECT_BYTES, PIXEL_WORKSPACE_PROJECT_FORMAT, parsePixelWorkspaceProject, serializePixelWorkspaceProject } from '@/lib/pixel-grid/workspace-project';
+import { PixelGridError } from '@/lib/pixel-grid/errors';
 import { PIXEL_GRID_MESSAGES, PixelGridUiError, pixelGridErrorMessage, type PixelGridLocale } from '@/lib/pixel-grid/messages';
 import { PIXEL_GRID_PRINT_COPY } from '@/lib/pixel-grid/print-copy';
 import { getPixelGridPrintPreferences, getServerPixelGridPrintPreferences, setPixelGridPrintPreferences, subscribePixelGridPrintPreferences } from '@/lib/pixel-grid/print-preferences';
@@ -683,9 +685,36 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     function importProject(file?: File) {
         if (!file) return;
         void task(text.opening, async current => {
-            if (file.size > LIMITS.maxProjectBytes) throw new PixelGridUiError('projectTooLarge');
+            if (file.size > MAX_PIXEL_WORKSPACE_PROJECT_BYTES) throw new PixelGridError('WORKSPACE_TOO_LARGE');
             const contents = await file.text();
             if (!current()) return;
+            let header: unknown;
+            try { header = JSON.parse(contents); }
+            catch { throw new PixelGridError('PROJECT_INVALID_JSON'); }
+            if (header && typeof header === 'object' && 'format' in header && header.format === PIXEL_WORKSPACE_PROJECT_FORMAT) {
+                // Validate the entire file before replacing any drawing or settings.
+                const workspace = parsePixelWorkspaceProject(contents);
+                for (const value of [workspace.snapshot.width, workspace.snapshot.height]) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.value = value;
+                    if (input.value !== value) throw new PixelGridError('WORKSPACE_INVALID');
+                }
+                const previous: PixelLocaleSnapshot = {
+                    grid: gridRef.current, saved: savedRef.current, source: sourceRef.current,
+                    history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
+                    zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
+                };
+                if (hasPixelLocaleWork(previous, initialSide, converter) && !window.confirm(text.replaceWorkspace)) {
+                    setStatus({ text: text.workspaceCancelled, error: false });
+                    return;
+                }
+                if (!current()) return;
+                applyLocaleSnapshot(workspace.snapshot);
+                setPixelGridPrintPreferences(workspace.print);
+                setStatus({ text: text.workspaceOpened(file.name), error: false });
+                return;
+            }
             const next = parseProject(contents);
             commit(next, text.opened(file.name, next.width, next.height));
             sourceRef.current = null;
@@ -736,6 +765,23 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             trackPixelGridExport({ format: 'project' });
             savedRef.current = snapshot; syncHistory();
             setStatus({ text: text.exportedProject, error: false });
+        });
+    }
+
+    function saveWorkspace() {
+        action(() => {
+            const checkpoint = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
+            const snapshot: PixelLocaleSnapshot = {
+                grid: checkpoint, saved: checkpoint, source: sourceRef.current,
+                history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
+                zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
+            };
+            const contents = serializePixelWorkspaceProject(snapshot, getPixelGridPrintPreferences());
+            download(new Blob([contents], { type: 'application/json' }), `pixel-${checkpoint.width}x${checkpoint.height}.pixel-workspace.json`);
+            trackPixelGridExport({ format: 'project' });
+            savedRef.current = checkpoint;
+            syncHistory();
+            setStatus({ text: text.exportedWorkspace, error: false });
         });
     }
 
@@ -850,7 +896,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                         <button className={converter ? styles.primary : undefined} type="button" disabled={locked} onClick={saveScaledPng}>{text.saveScaled}</button>
                         <p className={styles.hint}>{text.scaledHelp}</p>
                     </div>
-                    <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={locked} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={locked} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={locked} onClick={saveProject}>{text.saveProject}</button></div>
+                    <div className={styles.buttons}><button className={converter ? undefined : styles.primary} type="button" disabled={locked} onClick={() => savePng()}>{text.saveOriginal}</button><button type="button" disabled={locked} onClick={() => savePng(true)}>{text.saveGrid}</button><button type="button" disabled={locked} onClick={saveProject}>{text.saveProject}</button><button type="button" disabled={locked} onClick={saveWorkspace}>{text.saveWorkspace}</button></div>
                     <p className={styles.hint}>{text.exportHelp}</p>
                     <fieldset className={styles.printOptions} disabled={locked} aria-describedby="pixel-print-help pixel-print-layout-help">
                         <legend>{printText.title}</legend>
