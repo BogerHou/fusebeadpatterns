@@ -15,7 +15,7 @@ let initialized = false;
 let sdkLoaded = false;
 let requestGeneration = 0;
 let pendingRequest: { node: HTMLScriptElement; generation: number } | null = null;
-let lastPageLocation: string | null = null;
+let lastPageContext: ReturnType<typeof getAnalyticsPageContext> | null = null;
 let consentSnapshot: AnalyticsConsent = 'unknown';
 const subscribers = new Set<() => void>();
 
@@ -76,7 +76,7 @@ export function stopAnalytics() {
     browser[DISABLE_KEY] = true;
     // Drop pending commands if consent is withdrawn before the SDK has loaded.
     if (Array.isArray(browser.dataLayer)) browser.dataLayer.length = 0;
-    lastPageLocation = null;
+    lastPageContext = null;
     initialized = false;
     if (pendingRequest) {
         const request = pendingRequest;
@@ -144,6 +144,15 @@ export function getAnalyticsPageContext(canonical?: string | null) {
     return { page_location: pageLocation, page_referrer: '', page_title: 'Fuse Bead Patterns' };
 }
 
+function getReferrerOrigin(referrer: string): string {
+    try {
+        if (typeof referrer !== 'string' || !/^https?:\/\//i.test(referrer)) return '';
+        const url = new URL(referrer);
+        if ((url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password) return url.origin;
+    } catch { /* A missing, non-web or malformed referrer has no usable source. */ }
+    return '';
+}
+
 // Read through a function because canMeasureAnalytics may disable the SDK.
 function isAnalyticsDisabled(browser: AnalyticsBrowser): boolean { return browser[DISABLE_KEY] === true; }
 
@@ -151,7 +160,14 @@ export function startAnalytics(): boolean {
     try {
         if (!canMeasureAnalytics() || typeof document === 'undefined') { stopAnalytics(); return false; }
         const browser = window as AnalyticsBrowser;
-        const context = getAnalyticsPageContext(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href);
+        const page = getAnalyticsPageContext(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href);
+        const isNewPage = lastPageContext?.page_location !== page.page_location;
+        // A new document keeps only the incoming origin. SPA navigation uses the
+        // previous measured canonical; repeated starts keep that page's source.
+        const context = lastPageContext && !isNewPage ? lastPageContext : {
+            ...page,
+            page_referrer: lastPageContext?.page_location ?? getReferrerOrigin(document.referrer),
+        };
         browser[DISABLE_KEY] = false;
         browser.dataLayer ??= [];
         browser.gtag ??= function (): void {
@@ -172,12 +188,12 @@ export function startAnalytics(): boolean {
         // This code queues one explicit page view. GA stream enhanced measurement
         // may send additional events/page views (including history changes); its
         // account-level settings remain unverified by this source integration.
-        if (lastPageLocation !== context.page_location) browser.gtag('event', 'page_view', context);
+        if (isNewPage) browser.gtag('event', 'page_view', context);
         // Queueing commands can observe revoked/unreadable consent. Do not mark
         // setup complete or request an SDK after any such failure during startup.
         if (!canMeasureAnalytics() || isAnalyticsDisabled(browser)) { stopAnalytics(); return false; }
         initialized = true;
-        lastPageLocation = context.page_location;
+        lastPageContext = context;
         if (!sdkLoaded && !pendingRequest) {
             const script = document.createElement('script');
             const generation = ++requestGeneration;
@@ -197,6 +213,7 @@ export function startAnalytics(): boolean {
                 pendingRequest = null;
                 script.remove();
                 initialized = false;
+                lastPageContext = null;
                 if (!sdkLoaded) stopAnalytics();
                 // No automatic retry: another navigation, explicit start or
                 // repeated Allow choice can retry a failed current request.

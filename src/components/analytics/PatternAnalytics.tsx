@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
 import { getPatternLinkEvent, trackPatternEvent } from '@/lib/analytics';
 
-import { getAnalyticsConsent, getServerAnalyticsConsent, subscribeAnalyticsConsent, startAnalytics, stopAnalytics } from '@/lib/analytics-consent';
+import { getAnalyticsConsent, getServerAnalyticsConsent, subscribeAnalyticsConsent, startAnalytics } from '@/lib/analytics-consent';
 
 export default function PatternAnalytics(): null {
     const consent = useSyncExternalStore(subscribeAnalyticsConsent, getAnalyticsConsent, getServerAnalyticsConsent);
@@ -12,8 +12,9 @@ export default function PatternAnalytics(): null {
     const enabled = consent === 'granted';
 
     useEffect(() => {
-        if (enabled) startAnalytics();
-        else stopAnalytics();
+        // The hydration render can still hold the server's "unknown" snapshot.
+        // Check persisted consent here instead of withdrawing on that stale value.
+        startAnalytics();
     }, [enabled, pathname]);
 
     useEffect(() => {
