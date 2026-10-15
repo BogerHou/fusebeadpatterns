@@ -10,8 +10,8 @@ const contentSecurityPolicy = [
     "frame-ancestors 'none'",
     "object-src 'none'",
     isDevelopment
-        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com"
-        : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com"
+        : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com",
     [
         "connect-src 'self'",
         'https://www.google-analytics.com',

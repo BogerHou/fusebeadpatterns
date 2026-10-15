@@ -1,15 +1,20 @@
 'use client';
 
-import Script from 'next/script';
+import { usePathname } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
-import { getPatternLinkEvent, isProductionAnalyticsHost, trackPatternEvent } from '@/lib/analytics';
+import { getPatternLinkEvent, trackPatternEvent } from '@/lib/analytics';
 
-const subscribe = () => () => {};
-const getServerSnapshot = () => false;
-const getClientSnapshot = () => isProductionAnalyticsHost(window.location.hostname);
+import { getAnalyticsConsent, getServerAnalyticsConsent, subscribeAnalyticsConsent, startAnalytics, stopAnalytics } from '@/lib/analytics-consent';
 
-export default function PatternAnalytics() {
-    const enabled = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
+export default function PatternAnalytics(): null {
+    const consent = useSyncExternalStore(subscribeAnalyticsConsent, getAnalyticsConsent, getServerAnalyticsConsent);
+    const pathname = usePathname();
+    const enabled = consent === 'granted';
+
+    useEffect(() => {
+        if (enabled) startAnalytics();
+        else stopAnalytics();
+    }, [enabled, pathname]);
 
     useEffect(() => {
         if (!enabled) return;
@@ -28,23 +33,5 @@ export default function PatternAnalytics() {
         return () => document.removeEventListener('click', handleClick, true);
     }, [enabled]);
 
-    if (!enabled) return null;
-
-    return (
-        <>
-            <Script
-                strategy="lazyOnload"
-                async
-                src="https://www.googletagmanager.com/gtag/js?id=G-K3EC5BK93E"
-            />
-            <Script id="google-analytics" strategy="lazyOnload">
-                {`
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    gtag('js', new Date());
-                    gtag('config', 'G-K3EC5BK93E');
-                `}
-            </Script>
-        </>
-    );
+    return null;
 }

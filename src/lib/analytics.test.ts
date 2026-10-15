@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildBeadLoomExportEvent, buildPatternEvent, buildPixelGridExportEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackBeadLoomExport, trackPatternEvent, trackPixelGridExport } from './analytics';
 
+const grantedStorage = { getItem: () => 'granted' };
+
 const download = {
     name: 'pattern_download',
     patternId: 'sdv-blue-chicken',
@@ -55,7 +57,7 @@ describe('pattern analytics', () => {
         expect(trackPatternEvent(download)).toBe(false);
         const gtag = vi.fn();
         for (const hostname of ['localhost', '127.0.0.1', 'fusebeadpatterns-git-preview.vercel.app']) {
-            vi.stubGlobal('window', { location: { hostname }, gtag });
+            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
             expect(trackPatternEvent(download)).toBe(false);
         }
         expect(gtag).not.toHaveBeenCalled();
@@ -63,7 +65,7 @@ describe('pattern analytics', () => {
 
     it('only sends approved product parameters to the existing GA instance', () => {
         const gtag = vi.fn();
-        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag });
         const withPrivateExtraFields = { ...download, fileName: 'private-client.png', image: 'data:image/png;secret', project: { name: 'secret' } };
         expect(trackPatternEvent(withPrivateExtraFields)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'pattern_download', {
@@ -72,9 +74,9 @@ describe('pattern analytics', () => {
     });
 
     it('quietly drops events when analytics is blocked, late, or throws', () => {
-        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' } });
+        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' } });
         expect(trackPatternEvent(download)).toBe(false);
-        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } });
+        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } });
         expect(() => trackPatternEvent(download)).not.toThrow();
         expect(trackPatternEvent(download)).toBe(false);
     });
@@ -101,7 +103,7 @@ describe('pixel grid export analytics', () => {
             project: { name: 'private-work', pixels: [1, 2, 3, 4] },
         };
         const gtag = vi.fn();
-        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag });
         expect(trackPixelGridExport(input)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'pixel_grid_export', {
             entry_point: 'pixel_grid', file_format: 'pdf',
@@ -111,7 +113,7 @@ describe('pixel grid export analytics', () => {
     it('sends once per call on either production host and rejects unknown formats', () => {
         for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
             const gtag = vi.fn();
-            vi.stubGlobal('window', { location: { hostname }, gtag });
+            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
             for (const format of ['png', 'grid_png', 'project', 'pdf']) {
                 expect(trackPixelGridExport({ format })).toBe(true);
             }
@@ -126,7 +128,7 @@ describe('pixel grid export analytics', () => {
         expect(trackPixelGridExport({ format: 'png' })).toBe(false);
         const gtag = vi.fn();
         for (const hostname of ['localhost', '127.0.0.1', 'fusebeadpatterns-git-preview.vercel.app', 'preview.fusebeadpatterns.art', 'fusebeadpatterns.art.example.com']) {
-            vi.stubGlobal('window', { location: { hostname }, gtag });
+            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
             expect(trackPixelGridExport({ format: 'project' })).toBe(false);
         }
         expect(gtag).not.toHaveBeenCalled();
@@ -134,9 +136,9 @@ describe('pixel grid export analytics', () => {
 
     it('keeps analytics absence, exceptions and blocked access out of the export flow', () => {
         const unavailable = [
-            { location: { hostname: 'fusebeadpatterns.art' } },
-            { location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } },
-            { location: { hostname: 'fusebeadpatterns.art' }, get gtag() { throw new Error('Denied'); } },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' } },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, get gtag() { throw new Error('Denied'); } },
         ];
         for (const browser of unavailable) {
             vi.stubGlobal('window', browser);
@@ -173,7 +175,7 @@ describe('bead loom export analytics', () => {
         const expected = { entry_point: 'bead_loom', file_format: 'png' };
         expect(buildBeadLoomExportEvent(input)).toEqual({ name: 'bead_loom_export', parameters: expected });
         const gtag = vi.fn();
-        vi.stubGlobal('window', { location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag });
         expect(trackBeadLoomExport(input)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'bead_loom_export', expected);
     });
@@ -181,7 +183,7 @@ describe('bead loom export analytics', () => {
     it('sends each allowed format once per call on both production hosts and drops unknown formats', () => {
         for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
             const gtag = vi.fn();
-            vi.stubGlobal('window', { location: { hostname }, gtag });
+            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
             for (const format of ['pdf', 'png', 'project']) expect(trackBeadLoomExport({ format })).toBe(true);
             for (const format of ['private-file.pdf', 'grid_png', 'PDF']) expect(trackBeadLoomExport({ format })).toBe(false);
             expect(gtag.mock.calls).toEqual(['pdf', 'png', 'project'].map(format => [
@@ -194,7 +196,7 @@ describe('bead loom export analytics', () => {
         expect(trackBeadLoomExport({ format: 'pdf' })).toBe(false);
         const analyticsAccess = vi.fn();
         for (const hostname of ['localhost', '127.0.0.1', 'fusebeadpatterns-git-preview.vercel.app', 'preview.fusebeadpatterns.art', 'fusebeadpatterns.art.example.com']) {
-            vi.stubGlobal('window', {
+            vi.stubGlobal('window', { localStorage: grantedStorage,
                 location: { hostname },
                 get gtag() { analyticsAccess(); throw new Error('Analytics must not be accessed'); },
             });
@@ -205,10 +207,10 @@ describe('bead loom export analytics', () => {
 
     it('keeps absent, blocked and throwing analytics from affecting the export flow', () => {
         const unavailable = [
-            { location: { hostname: 'fusebeadpatterns.art' } },
-            { location: { hostname: 'fusebeadpatterns.art' }, gtag: 'not a function' },
-            { location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } },
-            { location: { hostname: 'fusebeadpatterns.art' }, get gtag() { throw new Error('Denied'); } },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' } },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag: 'not a function' },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag: () => { throw new Error('Blocked'); } },
+            { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, get gtag() { throw new Error('Denied'); } },
         ];
         for (const browser of unavailable) {
             vi.stubGlobal('window', browser);

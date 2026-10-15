@@ -6,6 +6,8 @@ import { localeRoutes } from '@/lib/i18n/routes';
 import { perlerColorChartLabels, perlerColorChartPaths } from '@/lib/color-chart/routes';
 import LanguageSwitcher from './LanguageSwitcher';
 import styles from './LanguageSwitcher.module.css';
+import PrivacyPreferencesButton from '@/components/analytics/PrivacyPreferencesButton';
+import AdSenseScript from '@/components/analytics/AdSenseScript';
 
 type SiteFooterSection =
     | 'generator'
@@ -23,6 +25,7 @@ type SiteFooterProps = {
     active?: SiteFooterSection;
     description?: string;
     locale?: SiteLocale;
+    adsense?: boolean;
 };
 
 type FooterLink = {
@@ -82,6 +85,7 @@ export default function SiteFooter({
     active,
     description,
     locale = 'en',
+    adsense = true,
 }: SiteFooterProps) {
     const copy = siteNavigation[locale];
     const routes = localeRoutes[locale];
@@ -117,6 +121,7 @@ export default function SiteFooter({
     ];
     return (
         <footer className="site-footer mt-auto">
+            {adsense && <AdSenseScript />}
             <div className="site-footer-inner">
                 <div>
                     <h2>Fuse Bead Patterns.</h2>
@@ -145,6 +150,7 @@ export default function SiteFooter({
             </div>
             <div className={`footer-note ${styles.footerNote}`}>
                 <span>&copy; {COPYRIGHT_YEAR} Fuse Bead Patterns. {copy.copyright}</span>
+                <PrivacyPreferencesButton locale={locale} />
                 <LanguageSwitcher locale={locale} className={styles.footerSwitcher} />
             </div>
         </footer>

@@ -1,3 +1,4 @@
+import { canMeasureAnalytics } from './analytics-consent';
 import { getLibraryProject } from './patterns/project-links';
 
 const PRODUCTION_HOSTS = new Set(['fusebeadpatterns.art', 'www.fusebeadpatterns.art']);
@@ -74,7 +75,7 @@ export function trackPatternEvent(input: PatternEventInput): boolean {
     // Measurement is best effort. A blocked/missing/late GA script must never
     // block navigation, file downloads, or a successfully generated export.
     try {
-        if (typeof window === 'undefined' || !isProductionAnalyticsHost(window.location.hostname)) return false;
+        if (!canMeasureAnalytics()) return false;
         const analyticsWindow = window as AnalyticsWindow;
         if (typeof analyticsWindow.gtag !== 'function') return false;
         const event = buildPatternEvent(input);
@@ -99,7 +100,7 @@ export function buildPixelGridExportEvent(input: PixelGridExportInput): PixelGri
 // not a confirmed disk save. Analytics failure must not affect the editor state.
 export function trackPixelGridExport(input: PixelGridExportInput): boolean {
     try {
-        if (typeof window === 'undefined' || !isProductionAnalyticsHost(window.location.hostname)) return false;
+        if (!canMeasureAnalytics()) return false;
         const analyticsWindow = window as AnalyticsWindow;
         if (typeof analyticsWindow.gtag !== 'function') return false;
         const event = buildPixelGridExportEvent(input);
@@ -124,7 +125,7 @@ export function buildBeadLoomExportEvent(input: BeadLoomExportInput): BeadLoomEx
 // Only the fixed format is read; chart content and caller-supplied extras are ignored.
 export function trackBeadLoomExport(input: BeadLoomExportInput): boolean {
     try {
-        if (typeof window === 'undefined' || !isProductionAnalyticsHost(window.location.hostname)) return false;
+        if (!canMeasureAnalytics()) return false;
         const analyticsWindow = window as AnalyticsWindow;
         if (typeof analyticsWindow.gtag !== 'function') return false;
         const event = buildBeadLoomExportEvent(input);

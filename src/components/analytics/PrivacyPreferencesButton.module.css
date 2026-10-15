@@ -1,0 +1,9 @@
+.trigger { display: inline-flex; align-items: center; min-height: 44px; color: inherit; font: inherit; font-size: .8125rem; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+.dialog { margin: auto; width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.5rem; border: 1px solid #bcc9be; border-radius: 0.75rem; background: #f8faf6; color: #203c2d; font-size: 1rem; line-height: 1.6; }
+.dialog::backdrop { background: rgb(20 35 26 / 35%); }
+.dialog h2 { font-size: 1.3rem; font-weight: 650; margin-bottom: 1rem; }
+.dialog p { margin: 0.8rem 0; max-width: none; font-size: 1rem; line-height: 1.6; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1.25rem; }
+.actions button { min-height: 44px; border: 1px solid #657d68; padding: 0.55rem 0.8rem; border-radius: 0.35rem; cursor: pointer; font: inherit; }
+.actions button:hover { background: #e7eee5; }
+.actions button:focus-visible, .trigger:focus-visible { outline: 2px solid #2f653c; outline-offset: 3px; }

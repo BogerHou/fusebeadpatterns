@@ -76,6 +76,8 @@ describe('complete global 404 document', () => {
         expect(html).toContain('<header'); expect(html).toContain('<footer');
         expect(html).not.toContain('__next_error__');
         expect(html).not.toContain('ページが見つかりません');
+        expect(html).not.toContain('pagead2.googlesyndication.com');
+        expect(html).not.toContain('adsbygoogle');
         const metadata = load(path.join(root, 'app/global-not-found.tsx')).metadata as { robots: unknown; alternates?: unknown; title: string };
         expect(metadata.robots).toEqual({ index: false, follow: true });
         expect(metadata.alternates).toBeUndefined();
@@ -112,6 +114,8 @@ describe('complete global 404 document', () => {
             }
         }
         expect(html.match(/<h1\b/g)).toHaveLength(1);
+        expect(html).not.toContain('pagead2.googlesyndication.com');
+        expect(html).not.toContain('adsbygoogle');
         effects[0]();
         expect(document.title).toBe(`${copy.title} | Fuse Bead Patterns`);
     });
@@ -129,5 +133,28 @@ describe('complete global 404 document', () => {
             const links = [...html.matchAll(/<a\b[^>]*data-locale-navigation="true"[^>]*>[\s\S]*?<\/a>/g)].map(([link]) => link);
             for (const link of links.filter(link => link.includes(`hrefLang="${locale}"`))) expect(link).toContain(`href="${target.href}"`);
         }
+    });
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('hoists one exact async AdSense script into the head of a normal %s page', locale => {
+        const { load } = renderer();
+        const Footer = load(path.join(root, 'components/layout/SiteFooter.tsx')).default as React.ComponentType<{ locale: typeof locale }>;
+        const AdSenseScript = load(path.join(root, 'components/analytics/AdSenseScript.tsx')).default as React.ComponentType;
+        // Render the actual footer and a second declaration to exercise React's
+        // installed SSR hoisting/deduplication rather than a source-text check.
+        const html = renderToStaticMarkup(React.createElement('html', null,
+            React.createElement('head'),
+            React.createElement('body', null, React.createElement(Footer, { locale }), React.createElement(AdSenseScript)),
+        ));
+        const head = html.match(/<head>[\s\S]*?<\/head>/)![0];
+        const body = html.match(/<body>[\s\S]*?<\/body>/)![0];
+        const scripts = [...head.matchAll(/<script\b[^>]*>[\s\S]*?<\/script>/g)];
+        expect(scripts).toHaveLength(1);
+        expect(scripts[0][0]).toContain('src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2170330097533662"');
+        expect(scripts[0][0]).toContain('async=""');
+        expect(scripts[0][0]).toContain('crossorigin="anonymous"');
+        expect(body).not.toContain('adsbygoogle');
+        expect(body).toContain('<footer');
+        expect(body).toContain(`href="${localeRoutes[locale].privacy}"`);
+        expect(html).not.toContain('adsbygoogle.push');
     });
 });

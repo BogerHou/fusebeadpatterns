@@ -20,6 +20,6 @@ export default function NotFoundPage({ locale }: { locale: SiteLocale }) {
                 <Link href={routes.home} className="button-secondary">{copy.home}</Link>
             </div>
         </main>
-        <SiteFooter locale={locale} />
+        <SiteFooter locale={locale} adsense={false} />
     </>;
 }

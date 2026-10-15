@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Editor from '@/components/editor/Editor';
+import AdSenseScript from '@/components/analytics/AdSenseScript';
 
 export const metadata: Metadata = {
     title: 'アイロンビーズ図案エディター | Fuse Bead Patterns',
@@ -7,4 +8,4 @@ export const metadata: Metadata = {
     alternates: { canonical: '/ja/editor' },
     robots: { index: false, follow: true },
 };
-export default function JapaneseEditor() { return <Editor mode="editor" locale="ja" />; }
+export default function JapaneseEditor() { return <><AdSenseScript /><Editor mode="editor" locale="ja" /></>; }
