@@ -23,6 +23,7 @@ function browserFixture(choice?: string, hostname = 'fusebeadpatterns.art') {
         localStorage,
     }) as EventTarget & { location: { hostname: string; href: string }; localStorage: typeof localStorage; dataLayer?: unknown[][]; gtag?: (...args: unknown[]) => void; [disableKey]?: boolean };
     const doc = {
+        referrer: '',
         querySelector: vi.fn(() => ({ href: 'https://fusebeadpatterns.art/patterns?secret=private.png#person@example.com' })),
         getElementById: (id: string) => nodes.get(id),
         createElement: vi.fn(makeScript),
@@ -40,6 +41,10 @@ function browserFixture(choice?: string, hostname = 'fusebeadpatterns.art') {
         win.dispatchEvent(event);
     }
     return { values, localStorage, win, doc, inserted, deletedCookies, storageEvent };
+}
+
+function pageViews(fixture: ReturnType<typeof browserFixture>) {
+    return fixture.win.dataLayer?.filter(args => args[0] === 'event' && args[1] === 'page_view').map(args => args[2]) ?? [];
 }
 
 beforeEach(() => vi.resetModules());
@@ -313,11 +318,155 @@ describe('optional analytics consent', () => {
         expect(fixture.values.get('editor-draft')).toBe('keep private drawing');
     });
 
-    it('uses only safe static canonical locations, a fixed title and no referrer', async () => {
+    it('builds safe static canonical locations with a fixed title and no implicit source', async () => {
         const { getAnalyticsPageContext } = await import('./analytics-consent');
         for (const canonical of [undefined, 'https://foreign.test/private.png', 'http://fusebeadpatterns.art/private.png', 'https://person:secret@fusebeadpatterns.art/']) {
             expect(getAnalyticsPageContext(canonical)).toEqual({ page_location: 'https://fusebeadpatterns.art/', page_referrer: '', page_title: 'Fuse Bead Patterns' });
         }
         expect(getAnalyticsPageContext('https://fusebeadpatterns.art/fr/patterns?email=person@example.com#secret.png').page_location).toBe('https://fusebeadpatterns.art/fr/patterns');
+    });
+
+    it.each([
+        ['https://www.google.com/search?q=private%20pattern#private.png', 'https://www.google.com'],
+        ['https://www.bing.com/search?q=person%40example.com#private.png', 'https://www.bing.com'],
+        ['http://reference.example:8080/private/article?email=person@example.com#private.png', 'http://reference.example:8080'],
+    ])('keeps only the incoming web origin for the first allowed page view: %s', async (referrer, origin) => {
+        const fixture = browserFixture();
+        fixture.doc.referrer = referrer;
+        const consent = await import('./analytics-consent');
+        expect(consent.startAnalytics()).toBe(false);
+        expect(fixture.inserted).toHaveLength(0);
+        expect(fixture.win.dataLayer).toBeUndefined();
+        expect(consent.setAnalyticsConsent('granted')).toBe(true);
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture)).toEqual([{ page_location: 'https://fusebeadpatterns.art/patterns', page_referrer: origin, page_title: 'Fuse Bead Patterns' }]);
+        expect(JSON.stringify(fixture.win.dataLayer)).not.toMatch(/private|person@|person%40|search\?|article|example\.com/);
+    });
+
+    it.each([
+        '', '/search?q=private', '//www.google.com/search?q=private', 'not a URL',
+        'https:/www.google.com/search', 'javascript:alert(1)', 'data:text/plain,private',
+        'file:///private/image.png', 'about:blank',
+        'https://person:secret@www.google.com/search?q=private',
+        'http://person@reference.example/path',
+    ])('does not infer a source from an invalid or credential-bearing referrer: %s', async referrer => {
+        const fixture = browserFixture('granted');
+        fixture.doc.referrer = referrer;
+        const consent = await import('./analytics-consent');
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture)).toEqual([{ page_location: 'https://fusebeadpatterns.art/patterns', page_referrer: '', page_title: 'Fuse Bead Patterns' }]);
+        expect(JSON.stringify(fixture.win.dataLayer)).not.toMatch(/private|person@|secret|www\.google/);
+    });
+
+    it('advances the source only for a new canonical and keeps same-page starts and custom events on that context', async () => {
+        const fixture = browserFixture('granted');
+        fixture.doc.referrer = 'https://www.google.com/search?q=private';
+        const consent = await import('./analytics-consent');
+        const analytics = await import('./analytics');
+        expect(consent.startAnalytics()).toBe(true);
+        expect(consent.startAnalytics()).toBe(true);
+        expect(analytics.trackPixelGridExport({ format: 'pdf' })).toBe(true);
+        expect(pageViews(fixture)).toHaveLength(1);
+        expect(fixture.win.dataLayer!.filter(args => args[0] === 'set').at(-1)?.[1]).toMatchObject({ page_location: 'https://fusebeadpatterns.art/patterns', page_referrer: 'https://www.google.com' });
+
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://www.fusebeadpatterns.art/pixel-art-grid?private=filename#private.png' });
+        expect(consent.startAnalytics()).toBe(true);
+        expect(consent.startAnalytics()).toBe(true);
+        expect(analytics.trackPixelGridExport({ format: 'pdf' })).toBe(true);
+        expect(pageViews(fixture)).toHaveLength(2);
+        expect(fixture.win.dataLayer!.filter(args => args[0] === 'set').at(-1)?.[1]).toMatchObject({ page_location: 'https://fusebeadpatterns.art/pixel-art-grid', page_referrer: 'https://fusebeadpatterns.art/patterns' });
+
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/fr/pixel-art-grid?private=filename#private.png' });
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture)).toEqual([
+            { page_location: 'https://fusebeadpatterns.art/patterns', page_referrer: 'https://www.google.com', page_title: 'Fuse Bead Patterns' },
+            { page_location: 'https://fusebeadpatterns.art/pixel-art-grid', page_referrer: 'https://fusebeadpatterns.art/patterns', page_title: 'Fuse Bead Patterns' },
+            { page_location: 'https://fusebeadpatterns.art/fr/pixel-art-grid', page_referrer: 'https://fusebeadpatterns.art/pixel-art-grid', page_title: 'Fuse Bead Patterns' },
+        ]);
+        const exports = fixture.win.dataLayer!.filter(args => args[0] === 'event' && args[1] === 'pixel_grid_export');
+        expect(exports).toHaveLength(2);
+        expect(exports.map(args => args[2])).toEqual([{ entry_point: 'pixel_grid', file_format: 'pdf' }, { entry_point: 'pixel_grid', file_format: 'pdf' }]);
+        expect(JSON.stringify(fixture.win.dataLayer)).not.toMatch(/private|filename|search\?/);
+    });
+
+    it('resets page-source context on withdrawal and ignores detached callbacks after granting again', async () => {
+        const fixture = browserFixture('granted');
+        fixture.doc.referrer = 'https://www.bing.com/search?q=private';
+        const consent = await import('./analytics-consent');
+        consent.startAnalytics(); const old = fixture.inserted[0];
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/pixel-art-grid' });
+        consent.startAnalytics();
+        expect(pageViews(fixture).at(-1)).toMatchObject({ page_referrer: 'https://fusebeadpatterns.art/patterns' });
+        expect(consent.setAnalyticsConsent('denied')).toBe(true);
+        old.onload?.(); old.onerror?.();
+        expect(fixture.win.dataLayer).toEqual([]);
+        expect(fixture.win[disableKey]).toBe(true);
+        expect(consent.setAnalyticsConsent('granted')).toBe(true);
+        expect(consent.startAnalytics()).toBe(true);
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture)).toEqual([{ page_location: 'https://fusebeadpatterns.art/pixel-art-grid', page_referrer: 'https://www.bing.com', page_title: 'Fuse Bead Patterns' }]);
+        expect(fixture.inserted).toHaveLength(1);
+        expect(fixture.values.get('editor-draft')).toBe('keep private drawing');
+    });
+
+    it('clears failed-request source context before an explicit retry and isolates an old error from the retry', async () => {
+        const fixture = browserFixture('granted');
+        fixture.doc.referrer = 'https://www.google.com/search?q=private';
+        const consent = await import('./analytics-consent');
+        consent.startAnalytics(); const old = fixture.inserted[0];
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/pixel-art-grid' });
+        consent.startAnalytics(); old.onerror?.();
+        expect(fixture.win.dataLayer).toEqual([]);
+        expect(consent.startAnalytics()).toBe(true);
+        const retry = fixture.inserted[1];
+        old.onerror?.(); retry.onload?.(); consent.startAnalytics();
+        expect(pageViews(fixture)).toEqual([{ page_location: 'https://fusebeadpatterns.art/pixel-art-grid', page_referrer: 'https://www.google.com', page_title: 'Fuse Bead Patterns' }]);
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/fr/patterns' });
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture).at(-1)).toMatchObject({ page_referrer: 'https://fusebeadpatterns.art/pixel-art-grid' });
+    });
+
+    it('resets context on a current request error even when an older detached SDK has executed', async () => {
+        const fixture = browserFixture('granted');
+        fixture.doc.referrer = 'https://www.bing.com/search?q=private';
+        const consent = await import('./analytics-consent');
+        consent.startAnalytics(); const old = fixture.inserted[0];
+        consent.setAnalyticsConsent('denied'); consent.setAnalyticsConsent('granted'); consent.startAnalytics();
+        const current = fixture.inserted[1];
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/pixel-art-grid' });
+        consent.startAnalytics();
+        old.onload?.(); current.onerror?.();
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/fr/patterns' });
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture).at(-1)).toMatchObject({ page_location: 'https://fusebeadpatterns.art/fr/patterns', page_referrer: 'https://www.bing.com' });
+        expect(fixture.inserted).toHaveLength(2);
+        expect(fixture.win[disableKey]).toBe(false);
+    });
+
+    it.each(['throws', 'revoked'] as const)('does not preserve or advance page-source context when consent %s during queueing', async failure => {
+        const fixture = browserFixture('granted');
+        fixture.doc.referrer = 'https://www.google.com/search?q=private';
+        const consent = await import('./analytics-consent');
+        consent.startAnalytics(); fixture.inserted[0].onload?.();
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/pixel-art-grid' });
+        const gtag = fixture.win.gtag!;
+        fixture.win.gtag = (...args) => {
+            gtag(...args);
+            if (args[0] === 'event' && args[1] === 'page_view') {
+                if (failure === 'throws') fixture.localStorage.getItem.mockImplementation(() => { throw new Error('Blocked mid-page-view'); });
+                else fixture.values.set(key, 'denied');
+            }
+        };
+        expect(consent.startAnalytics()).toBe(false);
+        expect(fixture.win.dataLayer).toEqual([]);
+        expect(fixture.win[disableKey]).toBe(true);
+        fixture.win.gtag = gtag;
+        fixture.localStorage.getItem.mockImplementation(name => fixture.values.get(name) ?? null);
+        expect(consent.setAnalyticsConsent('granted')).toBe(true);
+        fixture.doc.querySelector.mockReturnValue({ href: 'https://fusebeadpatterns.art/ja/patterns' });
+        expect(consent.startAnalytics()).toBe(true);
+        expect(pageViews(fixture)).toEqual([{ page_location: 'https://fusebeadpatterns.art/ja/patterns', page_referrer: 'https://www.google.com', page_title: 'Fuse Bead Patterns' }]);
+        expect(fixture.inserted).toHaveLength(1);
+        expect(fixture.values.get('editor-draft')).toBe('keep private drawing');
     });
 });
