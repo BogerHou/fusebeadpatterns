@@ -35,7 +35,10 @@ import german from '../../lib/patterns/german.json';
 import japanese from '../../lib/patterns/japanese.json';
 import CoasterInstructions from './CoasterInstructions';
 import OrnamentInstructions from './OrnamentInstructions';
-import HamaCharacterDownloads from './HamaCharacterDownloads';
+import HamaCharacterDownloads, { HamaCharacterLink } from './HamaCharacterDownloads';
+import HamaOriginalDownloads, { HamaOriginalLink } from './HamaOriginalDownloads';
+import GermanHamaDownloads from './GermanHamaDownloads';
+import { getHamaOriginalVariant, hamaBlackCatId } from '../../lib/patterns/hama-original-variants';
 
 // Render the actual page components. Only unrelated navigation, card browsing,
 // and the Next image/link wrappers are replaced for the Node environment.
@@ -46,8 +49,11 @@ const quickDownloads = defaultModule(({ children }: { children: ReactNode }) => 
 const patternCatalog = { ...empty, toLocalizedPatternCard: (pattern: catalog.Pattern) => ({ id: pattern.id }) };
 const modules: Record<string, unknown> = {
     '@/lib/color-chart/routes': colorChartRoutes,
-    './HamaCharacterDownloads': defaultModule(HamaCharacterDownloads),
-    '@/components/patterns/HamaCharacterDownloads': defaultModule(HamaCharacterDownloads),
+    './HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
+    '@/components/patterns/HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
+    './HamaOriginalDownloads': { ...defaultModule(HamaOriginalDownloads), HamaOriginalLink },
+    '@/components/patterns/HamaOriginalDownloads': { ...defaultModule(HamaOriginalDownloads), HamaOriginalLink },
+    '@/components/patterns/GermanHamaDownloads': defaultModule(GermanHamaDownloads),
     'next/image': defaultModule(({ src, alt, width, height }: Record<string, unknown>) => createElement('img', { src, alt, width, height })),
     'next/link': defaultModule(({ children, prefetch, ...props }: { children: ReactNode; prefetch?: unknown }) => { void prefetch; return createElement('a', props, children); }),
     '@/components/layout/Breadcrumbs': empty, '@/components/layout/SiteHeader': empty, '@/components/layout/SiteFooter': empty,
@@ -91,9 +97,39 @@ const englishRoute = load('../../app/(english)/patterns/[...segments]/page.tsx')
 type DetailProps = { params: Promise<{ segments: string[] }> };
 const EnglishDetail = englishRoute.default as (props: DetailProps) => Promise<ReactNode>;
 const englishMetadata = englishRoute.generateMetadata as (props: DetailProps) => Promise<Record<string, unknown>>;
+const EnglishHama = load('../../app/(english)/patterns/hama/page.tsx').default as ComponentType;
+const GermanHama = load('../../app/de/hama-perlen-vorlagen/page.tsx').default as ComponentType;
 const sitemap = load('../../app/sitemap.ts').default as () => Array<{ url: string; lastModified: Date; images?: string[] }>;
 
 describe('native pattern chart journeys', () => {
+    it.each(['en', 'de'] as const)('%s Hama hub adds a black cat reference outside the existing six cards', locale => {
+        const html = renderToStaticMarkup(createElement(locale === 'en' ? EnglishHama : GermanHama));
+        const variant = getHamaOriginalVariant(hamaBlackCatId, locale)!;
+        expect(html.match(/<article\b/g)).toHaveLength(6);
+        expect(html.match(/<h1\b/g)).toHaveLength(1);
+        expect(html).toContain(`href="${variant.detail}"`);
+        expect(html).not.toContain(`data-pattern-card="${variant.projectId}"`);
+    });
+    it.each(['en', 'de', 'fr', 'ja'] as const)('%s keeps the original black cat detail and Perler downloads while adding its fixed Hama section', async locale => {
+        const pattern = catalog.getPatternById(hamaBlackCatId)!;
+        const props = { params: Promise.resolve({ segments: ['black-cat'] }) };
+        const html = renderToStaticMarkup(locale === 'en' ? await EnglishDetail(props) : createElement(Detail, { pattern, locale }));
+        const variant = getHamaOriginalVariant(pattern.id, locale)!;
+        expect(html.match(/<h1\b/g)).toHaveLength(1);
+        expect(html.match(/id="hama-midi"/g)).toHaveLength(1);
+        expect(html).toContain('80-19018');
+        expect(html).toContain('80-19003');
+        const prefix = locale === 'en' ? '' : `/${locale}`;
+        for (const href of [pattern.assets.project, pattern.assets.pixels, `${prefix}/editor?pattern=${pattern.id}`, variant.editor, variant.project, variant.pdf, variant.pdfLetter, variant.grid]) {
+            expect(html).toContain(`href="${href}"`);
+        }
+        const perlerPdf = locale === 'en' ? pattern.assets.pdf : downloads.getLocalizedPatternPdf(pattern, locale).href;
+        expect(html).toContain(`href="${perlerPdf}"`);
+        if (locale === 'en') expect(await englishMetadata(props)).toMatchObject({
+            title: 'Black Cat Perler Bead Pattern | Fuse Bead Patterns', description: metadataDescriptions.patternMetadataDescription(pattern),
+            alternates: { canonical: '/patterns/black-cat', languages: metadata.patternLanguageAlternates('black-cat') },
+        });
+    });
     it.each(['en', 'de', 'fr', 'ja'] as const)('%s renders the original strawberry with the correct native chart, materials and complete downloads', async locale => {
         const pattern = catalog.getPatternById('original-strawberry')!;
         const props = { params: Promise.resolve({ segments: ['strawberry'] }) };

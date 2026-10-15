@@ -8,6 +8,7 @@ import { getPatternById, getPatternHref } from '@/lib/patterns/catalog';
 import { hamaPatterns } from '@/lib/patterns/hama';
 import { hamaLanguageAlternates } from '@/lib/i18n/metadata';
 import { HamaCharacterLink } from '@/components/patterns/HamaCharacterDownloads';
+import { HamaOriginalLink } from '@/components/patterns/HamaOriginalDownloads';
 
 const title = 'Free Hama Bead Patterns: Printable Midi Templates | Fuse Bead Patterns';
 const description = 'Download six free Hama Midi bead patterns with colour numbers, A4 and US Letter PDFs, and editable projects for football, ghost, bat and Christmas designs.';
@@ -68,6 +69,7 @@ export default function HamaPatternsPage() {
                     </div>
                 </section>
                 <HamaCharacterLink />
+                <HamaOriginalLink />
                 <section aria-labelledby="hama-colours" className="mt-14 max-w-3xl border-t border-line pt-8">
                     <h2 id="hama-colours" className="section-heading">Hama colours, ready to use</h2>
                     <p className="mt-4 leading-7 text-muted">

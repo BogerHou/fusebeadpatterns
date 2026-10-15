@@ -18,6 +18,8 @@ import { getLocalizedPatternName } from './localized-content';
 import { getLibraryProject } from './project-links';
 import { parseEditorProject } from '../editor/draft';
 import { HamaCharacterLink } from '../../components/patterns/HamaCharacterDownloads';
+import { HamaOriginalLink } from '../../components/patterns/HamaOriginalDownloads';
+import { getHamaOriginalVariant, hamaBlackCatId } from './hama-original-variants';
 // Render the actual shared card component; layout is separately exercised by Next's build/browser QA.
 const source = readFileSync(new URL('../../components/patterns/LocalizedHamaPatterns.tsx', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
@@ -26,10 +28,12 @@ new Script(compiled).runInNewContext({ exports: loaded, require: (id: string) =>
     if (id === '@/lib/patterns/localized-hama') return localizedData;
     if (id === '@/lib/i18n/metadata') return { hamaLanguageAlternates };
     if (id === './HamaCharacterDownloads') return { HamaCharacterLink };
+    if (id === './HamaOriginalDownloads') return { HamaOriginalLink };
     if (id.startsWith('@/components/layout/')) return { __esModule: true, default: (): null => null };
     return require(id);
 } });
 const LocalizedHamaDownloads = loaded.LocalizedHamaDownloads as ComponentType<{ locale: 'fr' | 'ja' }>;
+const LocalizedHamaPatterns = loaded.default as ComponentType<{ locale: 'fr' | 'ja' }>;
 const localizedHamaMetadata = loaded.localizedHamaMetadata as (locale: 'fr' | 'ja') => Metadata;
 const file = (url: string) => path.join(process.cwd(), 'public', url);
 // The native A4 files are already public and must not change when Letter is added.
@@ -43,6 +47,14 @@ const publishedA4Hashes: Record<string, { fr: string; ja: string }> = {
 };
 
 describe('complete French and Japanese Hama counterparts', () => {
+    it.each(['fr', 'ja'] as const)('%s Hama hub links to the extra black cat without changing its six-card collection', locale => {
+        const html = renderToStaticMarkup(createElement(LocalizedHamaPatterns, { locale }));
+        const variant = getHamaOriginalVariant(hamaBlackCatId, locale)!;
+        expect(html.match(/<article\b/g)).toHaveLength(6);
+        expect(html).toContain('"numberOfItems":6');
+        expect(html).toContain(`href="${variant.detail}"`);
+        expect(html).not.toContain(`data-pattern-card="${variant.projectId}"`);
+    });
     it.each(['fr', 'ja'] as const)('%s uses the same six reviewed Hama resources and native editor entries', locale => {
         const cards = localizedHamaPatterns(locale);
         expect(cards.map(card => card.id)).toEqual(hamaPatterns.map(card => card.id));
