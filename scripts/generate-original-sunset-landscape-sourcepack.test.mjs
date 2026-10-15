@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { chartSvg, checkArtifacts, designs, generate, options, tileRgba } from './generate-original-sunset-landscape-sourcepack.mjs';
+import { SIZE, chartSvg, checkArtifacts, cutPoints, designs, generate, options, tileRgba } from './generate-original-sunset-landscape-sourcepack.mjs';
 
 const sharp = createRequire(import.meta.url)('sharp');
 const repo = path.resolve(import.meta.dirname, '..');
@@ -23,6 +23,51 @@ function snapshot(root, prefix = '') {
         return entry.isDirectory() ? [{ relative, modified, directory: true }, ...snapshot(root, relative)] : [{ relative, modified, bytes: fs.readFileSync(full).toString('base64') }];
     });
 }
+
+test('iterative cut points match independent vertex-removal connectivity for every small grid, root and disconnected component', () => {
+    function componentCount(cells, omitted) {
+        const remaining = new Set([...cells].filter(cell => cell !== omitted)); let count = 0;
+        while (remaining.size) {
+            count++;
+            const queue = [remaining.values().next().value]; remaining.delete(queue[0]);
+            for (const current of queue) for (const candidate of remaining) {
+                if (Math.abs(current % SIZE - candidate % SIZE) + Math.abs(Math.floor(current / SIZE) - Math.floor(candidate / SIZE)) !== 1) continue;
+                remaining.delete(candidate); queue.push(candidate);
+            }
+        }
+        return count;
+    }
+    function expectOracle(cells) {
+        const before = componentCount(cells);
+        const expected = [...cells].filter(cell => componentCount(cells, cell) > before).sort((a, b) => a - b);
+        assert.deepEqual(cutPoints(cells), expected);
+        assert.deepEqual(cutPoints(new Set([...cells].reverse())), expected);
+    }
+    for (const offset of [0, 55 * SIZE + 55]) for (let mask = 0; mask < 512; mask++) {
+        const cells = new Set();
+        for (let index = 0; index < 9; index++) if (mask & 1 << index) cells.add(offset + Math.floor(index / 3) * SIZE + index % 3);
+        expectOracle(cells);
+    }
+    // Adjacent numeric indices at a row boundary must not become grid edges.
+    expectOracle(new Set([56, 57, 58, 59, 60, SIZE * 2 + 2, SIZE * 3 + 2]));
+});
+
+test('full boards and a 1710-cell winding path work with a small JavaScript call stack', () => {
+    const cli = spawnSync(process.execPath, ['--stack_size=256', '--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { SIZE, cutPoints, designs } from './scripts/generate-original-sunset-landscape-sourcepack.mjs';
+        assert.equal(designs()[0].pattern.beads, 2496);
+        assert.deepEqual(cutPoints(new Set(Array.from({length: SIZE * SIZE}, (_, i) => i))), []);
+        const path = [];
+        for (let y = 0; y < SIZE - 1; y += 2) {
+            for (let x = 0; x < SIZE; x++) path.push(y * SIZE + (y / 2 % 2 ? SIZE - 1 - x : x));
+            if (y + 2 < SIZE) path.push((y + 1) * SIZE + (y / 2 % 2 ? 0 : SIZE - 1));
+        }
+        assert.equal(path.length, 1710);
+        assert.deepEqual(cutPoints(new Set(path)), path.slice(1, -1).sort((a, b) => a - b));
+    `], { cwd: repo, encoding: 'utf8' });
+    assert.equal(cli.status, 0, cli.stderr);
+});
 
 test('the original58-grid landscape uses exact CSV colors and four841-cell quadrants, with no seam cells lost or counted twice', () => {
     const { pattern, rgba } = designs()[0];
