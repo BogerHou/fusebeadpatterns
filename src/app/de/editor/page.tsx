@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Editor from '@/components/editor/Editor';
+import AdSenseScript from '@/components/analytics/AdSenseScript';
 
 export const metadata: Metadata = {
     title: 'Bügelperlen-Editor | Fuse Bead Patterns',
@@ -7,4 +8,4 @@ export const metadata: Metadata = {
     alternates: { canonical: '/de/editor' },
     robots: { index: false, follow: true },
 };
-export default function GermanEditor() { return <Editor mode="editor" locale="de" />; }
+export default function GermanEditor() { return <><AdSenseScript /><Editor mode="editor" locale="de" /></>; }

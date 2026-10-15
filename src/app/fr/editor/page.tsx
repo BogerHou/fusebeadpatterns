@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Editor from '@/components/editor/Editor';
+import AdSenseScript from '@/components/analytics/AdSenseScript';
 
 export const metadata: Metadata = {
     title: 'Éditeur de modèles de perles | Fuse Bead Patterns',
@@ -7,4 +8,4 @@ export const metadata: Metadata = {
     alternates: { canonical: '/fr/editor' },
     robots: { index: false, follow: true },
 };
-export default function FrenchEditor() { return <Editor mode="editor" locale="fr" />; }
+export default function FrenchEditor() { return <><AdSenseScript /><Editor mode="editor" locale="fr" /></>; }

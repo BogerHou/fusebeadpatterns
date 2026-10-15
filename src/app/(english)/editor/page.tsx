@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Editor from '@/components/editor/Editor';
+import AdSenseScript from '@/components/analytics/AdSenseScript';
 
 export const metadata: Metadata = {
     title: 'Perler Bead Pattern Editor | Fuse Bead Patterns',
@@ -29,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function EditorPage() {
-    return <Editor mode="editor" />;
+    return <><AdSenseScript /><Editor mode="editor" /></>;
 }

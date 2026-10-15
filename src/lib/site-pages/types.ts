@@ -8,6 +8,7 @@ export type SitePageCopy = {
     heading: string;
     intro: string;
     updated?: string;
+    updatedISO?: string;
     sections: Array<{
         heading: string;
         paragraphs?: SiteParagraph[];

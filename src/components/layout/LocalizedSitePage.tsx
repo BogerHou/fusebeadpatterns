@@ -38,7 +38,7 @@ export default function LocalizedSitePage({ locale, slug }: { locale: Translated
             <article className="reading-article mx-auto w-full pt-4 sm:pt-8">
                 <h1 className="page-heading mb-8 sm:mb-10">{copy.heading}</h1>
                 <div className="max-w-[70ch] space-y-6 text-base leading-8 text-[#43564d] sm:text-lg sm:leading-8">
-                    {copy.updated && <p><strong>{ui.updated}</strong> <time dateTime="2026-04-17">{copy.updated}</time></p>}
+                    {copy.updated && <p><strong>{ui.updated}</strong> <time dateTime={copy.updatedISO ?? '2026-04-17'}>{copy.updated}</time></p>}
                     <p>{copy.intro}</p>
                     {copy.sections.map(section => <section key={section.heading} className={section.highlighted ? 'my-10 border-l-2 border-[#9ead9c] bg-[#edf0e8] px-5 py-6 sm:px-7' : '!mt-12'}>
                         <h2 className="section-heading mb-4">{section.heading}</h2>
