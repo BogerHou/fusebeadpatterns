@@ -71,6 +71,7 @@ function harness() {
         useCallback: (fn: unknown) => fn, preparePixelBeadEditorDraft, computeUsage, getBoardOption,
         createPatternPreviewDataUrl: () => 'data:image/png;base64,preview', window: { Image: class {} },
         waitForNextPaint: () => gate, commitSourceImageCanvas, cancelSourceOperation: vi.fn(), cancelSettingsUpdate: vi.fn(),
+        cancelProjectFileOperation: vi.fn(), projectDocumentAcceptedRef: { current: false },
         syncEditorColorAfterPatternBuild: vi.fn(), persistEditorDraft: persist, normalizeSourceCrop, normalizeSourceBackground, clonePalettes,
         resolvePdfScaleMode, resolvePdfPaperSize, clampNumber, DEFAULT_PALETTE_ID: 'perler', DEFAULT_REFERENCE_OPACITY: 65,
         Map, Error,

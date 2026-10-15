@@ -1,4 +1,5 @@
 import type { SiteLocale } from '@/lib/i18n/locales';
+import { getProjectOpenCopy } from './project-open-copy';
 
 // English keys also preserve the original interface wording. Product, palette,
 // algorithm and official color names intentionally remain unchanged.
@@ -237,6 +238,8 @@ export function formatEditorNumber(value: number, locale: SiteLocale): string {
 
 export function getEditorErrorMessage(message: string, locale: SiteLocale): string {
     if (locale === 'en') return message;
+    const projectOpen = getProjectOpenCopy(locale);
+    if (message === projectOpen.busy || message === projectOpen.invalid || message === projectOpen.readError) return message;
     const t = getEditorTranslator(locale);
     const advice = ' Try a smaller board count, choose another export format, or disable symbols for printable exports.';
     if (message.endsWith(advice)) {

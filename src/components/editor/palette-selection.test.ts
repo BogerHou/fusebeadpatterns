@@ -113,6 +113,7 @@ function harness(id = 'original-black-cat', mode: 'blank' | 'image' = 'blank', f
             module: loadedModule, AbortController, Uint8ClampedArray, Promise, Response, Error, RangeError, DOMException,
             React: { useEffectEvent: (event: PaletteEvent) => { state.latest = event; return (...args: Parameters<PaletteEvent>) => state.latest!(...args); } },
             useCallback: (callback: unknown) => callback,
+            cancelProjectFileOperation: vi.fn(), projectDocumentAcceptedRef: { current: false },
             getBoardOption, getPaletteOption, parsePaletteCsv, applyFreshPaletteDefaults, PALETTE_OPTIONS,
             clonePalettes, countEnabledEntries, enablePaletteEntry, getAutomaticEditorColorRef, mergePaletteEnabledState, remapPatternPalette: convert, computeUsage,
             normalizeSourceCrop, sourceCrop: null, normalizeSourceBackground, sourceBackground: null, maxBeadColors: null,
