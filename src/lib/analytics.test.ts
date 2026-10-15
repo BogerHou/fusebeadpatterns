@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildBeadLoomExportEvent, buildPatternEvent, buildPixelGridExportEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackBeadLoomExport, trackPatternEvent, trackPixelGridExport } from './analytics';
+import { startAnalytics, stopAnalytics } from './analytics-consent';
 
 const grantedStorage = { getItem: () => 'granted' };
 
@@ -11,7 +12,19 @@ const download = {
     format: 'pdf',
 };
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { stopAnalytics(); vi.unstubAllGlobals(); });
+
+function measuredBrowser(gtag: ReturnType<typeof vi.fn>, hostname = 'fusebeadpatterns.art') {
+    stopAnalytics();
+    vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname, pathname: '/patterns' }, gtag });
+    vi.stubGlobal('document', {
+        querySelector: () => ({ href: `https://${hostname}/patterns` }),
+        createElement: () => ({ remove() {}, dataset: {} }),
+        head: { appendChild() {} },
+    });
+    expect(startAnalytics()).toBe(true);
+    gtag.mockClear();
+}
 
 describe('pattern analytics', () => {
     it('only permits the public production hosts', () => {
@@ -65,7 +78,7 @@ describe('pattern analytics', () => {
 
     it('only sends approved product parameters to the existing GA instance', () => {
         const gtag = vi.fn();
-        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        measuredBrowser(gtag);
         const withPrivateExtraFields = { ...download, fileName: 'private-client.png', image: 'data:image/png;secret', project: { name: 'secret' } };
         expect(trackPatternEvent(withPrivateExtraFields)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'pattern_download', {
@@ -103,7 +116,7 @@ describe('pixel grid export analytics', () => {
             project: { name: 'private-work', pixels: [1, 2, 3, 4] },
         };
         const gtag = vi.fn();
-        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        measuredBrowser(gtag);
         expect(trackPixelGridExport(input)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'pixel_grid_export', {
             entry_point: 'pixel_grid', file_format: 'pdf',
@@ -113,7 +126,7 @@ describe('pixel grid export analytics', () => {
     it('sends once per call on either production host and rejects unknown formats', () => {
         for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
             const gtag = vi.fn();
-            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
+            measuredBrowser(gtag, hostname);
             for (const format of ['png', 'grid_png', 'project', 'pdf']) {
                 expect(trackPixelGridExport({ format })).toBe(true);
             }
@@ -175,7 +188,7 @@ describe('bead loom export analytics', () => {
         const expected = { entry_point: 'bead_loom', file_format: 'png' };
         expect(buildBeadLoomExportEvent(input)).toEqual({ name: 'bead_loom_export', parameters: expected });
         const gtag = vi.fn();
-        vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        measuredBrowser(gtag);
         expect(trackBeadLoomExport(input)).toBe(true);
         expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'bead_loom_export', expected);
     });
@@ -183,7 +196,7 @@ describe('bead loom export analytics', () => {
     it('sends each allowed format once per call on both production hosts and drops unknown formats', () => {
         for (const hostname of ['fusebeadpatterns.art', 'www.fusebeadpatterns.art']) {
             const gtag = vi.fn();
-            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
+            measuredBrowser(gtag, hostname);
             for (const format of ['pdf', 'png', 'project']) expect(trackBeadLoomExport({ format })).toBe(true);
             for (const format of ['private-file.pdf', 'grid_png', 'PDF']) expect(trackBeadLoomExport({ format })).toBe(false);
             expect(gtag.mock.calls).toEqual(['pdf', 'png', 'project'].map(format => [

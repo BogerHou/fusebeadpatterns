@@ -1,4 +1,4 @@
-import { canMeasureAnalytics } from './analytics-consent';
+import { canMeasureAnalyticsEvent as canMeasureAnalytics } from './analytics-consent';
 import { getLibraryProject } from './patterns/project-links';
 
 const PRODUCTION_HOSTS = new Set(['fusebeadpatterns.art', 'www.fusebeadpatterns.art']);
