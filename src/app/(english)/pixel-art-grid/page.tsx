@@ -59,8 +59,9 @@ export default function PixelArtGridPage() {
                     </p>
                     <p className="mt-5">
                         Reconvert uses the original image and replaces your edits; Undo brings them back.
-                        Your project stores the current pixels and transparency, but not the original image,
-                        color-limit choice or undo history. Images are processed on your device.
+                        Save an editable project for the current pixels and transparency, or a full workspace
+                        to keep the original image pixels, settings and history too. Save and reopen these files
+                        yourself; there is no automatic saving. Images are processed on your device.
                     </p>
                     <p className="mt-5">
                         To use your current drawing, choose “Make a bead pattern” in the workspace and select a bead brand. Each pixel becomes one bead position; empty cells complete the boards without resizing. You can return to your pixel drawing with its original colors.

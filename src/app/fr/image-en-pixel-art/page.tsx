@@ -76,9 +76,9 @@ export default function ImageEnPixelArtPage() {
                     <p className="mt-5">
                         Dans le PNG à la taille d’origine, chaque cellule devient un pixel : une grille de 64 × 64 donne un fichier de 64 × 64 pixels.
                         Pour une image plus grande, choisissez un agrandissement entier sans grille, ou exportez le PNG avec quadrillage.
-                        Enregistrez aussi le projet pour rouvrir les pixels plus tard : il conserve leurs couleurs,
-                        leur transparence et les dimensions, mais pas la photo source, les réglages ni l’historique.
-                        Il n’y a pas de sauvegarde automatique.
+                        Le projet modifiable conserve les pixels, la transparence et les dimensions. L’espace de travail complet
+                        inclut aussi les pixels de l’image d’origine, les réglages et l’historique. Enregistrez et rouvrez ces fichiers
+                        vous-même : il n’y a pas de sauvegarde automatique.
                     </p>
                     <p className="mt-5">
                         Pour convertir votre dessin actuel, choisissez « Créer un modèle de perles » dans l’atelier, puis une marque. Chaque pixel devient une position de perle ; des cases vides complètent les plaques sans redimensionner le dessin. Vous pouvez revenir au dessin en pixels avec ses couleurs d’origine.
