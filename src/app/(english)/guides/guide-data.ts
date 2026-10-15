@@ -249,11 +249,29 @@ export const guidePages: GuidePage[] = [
                 ],
             },
             {
+                heading: 'Export your pattern for printing',
+                body: [
+                    'Open a library pattern in the editor. If another project is open, choose Save current project before Replace current pattern. Once loading finishes, open Export above the grid, or File then Export Pattern on a small screen. Set Export Format to PDF and choose A4 or US Letter under PDF paper size to match your paper. Paper size leaves the bead layout unchanged.',
+                    'Under PDF scale, choose Page-fit counting chart for a grid to read and count. 5 mm Midi actual size is available only for a 29 × 29 Midi board with all active palettes being Perler Midi, Hama Midi or Artkal S. In 5 mm exports, only the individual board charts use actual spacing; the multi-board overview shows board positions and is not an actual-size placement template.',
+                    'If 5 mm is unavailable or PDF download is disabled by that setting, choose Page-fit counting chart yourself; it does not switch automatically. Keep your bead brand and board layout. For black-and-white printing, check Use Symbols In Printable Exports. Check this setting after opening a saved project.',
+                    'Choose Export PDF for the whole pattern and inspect all pages; the materials list may span several. Print a 5 mm chart at 100% or Actual size with page scaling off. Measure the 50 mm line and compare the grid spacing with your pegboard. A correct 50 mm line on a page-fit chart does not make its cells 5 mm.',
+                ],
+            },
+            {
+                heading: 'Print one board from a larger pattern',
+                body: [
+                    'In the export options, open Per-board materials. With All boards selected, the list shows each board by row and column. Select a board from the list or the Board menu, then check its preview and whole-pattern row and column ranges to locate it in your design.',
+                    'The selected view shows that board alone: its bead count, color count and quantities by color. An empty board shows no beads; it can still be downloaded as an empty-board PDF and needs no beads of its own.',
+                    'Choose Download selected board PDF to get only that board, with its own materials list and chart. Selecting a board changes the materials view, not the main Export PDF button: the main button still exports the whole pattern. The selected-board PDF uses your paper, scale and symbols settings; its materials list may span several pages.',
+                    'Whole pattern total already includes every board. For supplies, use the whole-pattern list or add each separate board once; do not add board counts on top of the whole-pattern total. Keep the board location and row and column ranges with each printed chart so you can place it correctly in the larger design.',
+                ],
+            },
+            {
                 heading: 'Print a library PDF at its intended size',
                 body: [
                     'Ready-made PDFs in the pattern library include a 50 mm scale line. In your PDF print dialog, select 100% or Actual size and turn off Fit to page or Shrink to fit. Print one page before placing beads.',
                     'Measure the printed scale line with a ruler: it should be 50 mm long. If it is shorter or longer, check the print scaling settings and print again. Match the printed grid to your actual pegboard before using it as a placement guide.',
-                    'This scale check applies to the library PDFs that carry the scale line. An editor export may use a different page layout; use its row and column grid as a chart unless you have checked the physical spacing. Choosing a different color brand does not change a midi chart into a mini or maxi placement template.',
+                    'The line checks print scaling; it does not by itself confirm bead spacing. Editor PDFs use the scale selected at export: a page-fit chart is for counting, even when its 50 mm line measures correctly. Choosing a different color brand does not change a midi chart into a mini or maxi placement template.',
                 ],
             },
             {

@@ -128,21 +128,37 @@ export function components(cells, omitted) {
     }
     return sizes.sort((a, b) => b - a);
 }
-function cutPoints(cells) {
+export function cutPoints(cells) {
     const entered = new Map(), low = new Map(), points = new Set(); let tick = 0;
-    function visit(cell, parent) {
-        entered.set(cell, ++tick); low.set(cell, tick); let children = 0;
-        for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-            const x = cell % SIZE + dx, y = Math.floor(cell / SIZE) + dy, next = y * SIZE + x;
-            if (x < 0 || y < 0 || x >= SIZE || y >= SIZE || !cells.has(next)) continue;
-            if (!entered.has(next)) {
-                children++; visit(next, cell); low.set(cell, Math.min(low.get(cell), low.get(next)));
-                if (parent !== null && low.get(next) >= entered.get(cell)) points.add(cell);
-            } else if (next !== parent) low.set(cell, Math.min(low.get(cell), entered.get(next)));
+    const directions = [[1,0],[-1,0],[0,1],[0,-1]];
+    // A filled board can visit thousands of cells in a single DFS branch. Keep
+    // Tarjan's enter/return state on the heap rather than the JavaScript stack.
+    for (const cell of cells) {
+        if (entered.has(cell)) continue;
+        entered.set(cell, ++tick); low.set(cell, tick);
+        const stack = [{ cell, parent: null, direction: 0, children: 0 }];
+        while (stack.length) {
+            const frame = stack[stack.length - 1];
+            if (frame.direction < directions.length) {
+                const [dx, dy] = directions[frame.direction++];
+                const x = frame.cell % SIZE + dx, y = Math.floor(frame.cell / SIZE) + dy, next = y * SIZE + x;
+                if (x < 0 || y < 0 || x >= SIZE || y >= SIZE || !cells.has(next)) continue;
+                if (!entered.has(next)) {
+                    frame.children++; entered.set(next, ++tick); low.set(next, tick);
+                    stack.push({ cell: next, parent: frame, direction: 0, children: 0 });
+                } else if (next !== frame.parent?.cell) low.set(frame.cell, Math.min(low.get(frame.cell), entered.get(next)));
+                continue;
+            }
+            stack.pop();
+            if (frame.parent === null) {
+                if (frame.children > 1) points.add(frame.cell);
+            } else {
+                const parent = frame.parent;
+                low.set(parent.cell, Math.min(low.get(parent.cell), low.get(frame.cell)));
+                if (parent.parent !== null && low.get(frame.cell) >= entered.get(parent.cell)) points.add(parent.cell);
+            }
         }
-        if (parent === null && children > 1) points.add(cell);
     }
-    for (const cell of cells) if (!entered.has(cell)) visit(cell, null);
     return [...points].sort((a,b) => a-b);
 }
 export function tileRgba(rgba, column, row) {
