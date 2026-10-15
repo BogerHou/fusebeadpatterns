@@ -9,6 +9,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as core from './core';
 import * as conversion from './conversion';
 import * as messages from './messages';
+import * as printCopy from './print-copy';
+import * as printPreferences from './print-preferences';
+import type { createPixelGridPdf } from './pdf';
 import * as localeNavigation from './locale-navigation';
 import * as beadCopy from './bead-copy';
 import * as beadTransfer from './bead-transfer';
@@ -167,6 +170,8 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/pixel-grid/core') return core;
         if (id === '@/lib/pixel-grid/conversion') return conversion;
         if (id === '@/lib/pixel-grid/messages') return messages;
+        if (id === '@/lib/pixel-grid/print-copy') return printCopy;
+        if (id === '@/lib/pixel-grid/print-preferences') return printPreferences;
         if (id === '@/lib/pixel-grid/locale-navigation') return localeNavigation;
         if (id === '@/lib/pixel-grid/bead-copy') return beadCopy;
         if (id === '@/lib/pixel-grid/bead-transfer') return beadTransfer;
@@ -280,6 +285,8 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     beadTransfer?: Partial<typeof beadTransfer>;
     fetch?: (href: string, options?: RequestInit) => Promise<{ ok: boolean; text: () => Promise<string> }>;
     assign?: (href: string) => void;
+    createPdf?: typeof createPixelGridPdf;
+    loadJapaneseFont?: () => Promise<string>;
 } = {}) {
     const text = copy[props.locale ?? 'en'];
     const slots: unknown[] = [], mountEffects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
@@ -294,6 +301,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     const register = (map: typeof browserListeners, name: string, callback: (event: Event) => void) => { if (!map.has(name)) map.set(name, new Set()); map.get(name)!.add(callback); };
     const stored = new Map<string, string>();
     const storage = runtime.storage ?? { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => { stored.set(key, value); }, removeItem: (key: string) => { stored.delete(key); } };
+    const preferenceStore = printPreferences.createPixelGridPrintPreferenceStore(() => storage);
     const paths = { en: '/pixel-art-grid', de: '/de/pixel-art-generator', fr: '/fr/image-en-pixel-art', ja: '/ja/pixel-art-converter' };
     let confirmations = 0;
     const assignments: string[] = [];
@@ -304,6 +312,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     }
     const browser = {
         location, sessionStorage: storage, confirm: () => { confirmations++; return false; },
+        matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
         history: { replaceState(_state: unknown, _title: string, href: string) {
             const url = new URL(href, location.href);
             location.href = url.href; location.pathname = url.pathname; location.search = url.search;
@@ -340,7 +349,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
             return (...args: unknown[]) => (slots[index] as typeof callback)(...args);
         },
         useEffect: (effect: () => void | (() => void)) => { if (first) mountEffects.push(effect); },
-        useSyncExternalStore: () => false,
+        useSyncExternalStore: (_subscribe: unknown, getSnapshot: () => unknown) => getSnapshot(),
     };
     const transfer = { ...localeNavigation,
         saveLargePixelLocaleSnapshot: (snapshot: localeNavigation.PixelLocaleSnapshot, href: string, area: typeof storage) => localeNavigation.saveLargePixelLocaleSnapshot(snapshot, href, area, runtime.largeStore),
@@ -348,6 +357,16 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     };
     const Component = workspace({ react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@/lib/pixel-grid/locale-navigation': transfer,
         '@/lib/pixel-grid/bead-transfer': { ...beadTransfer, ...runtime.beadTransfer },
+        '@/lib/pixel-grid/print-preferences': { ...printPreferences,
+            getPixelGridPrintPreferences: preferenceStore.getSnapshot,
+            getServerPixelGridPrintPreferences: preferenceStore.getServerSnapshot,
+            // The component runs in a VM, while this strict plain-object store lives in
+            // the host realm. Recreate the UI's own three-field record in that realm.
+            setPixelGridPrintPreferences: (value: printPreferences.PixelGridPrintPreferences) => preferenceStore.setPreferences({ ...value }),
+            subscribePixelGridPrintPreferences: preferenceStore.subscribe,
+        },
+        '@/lib/pixel-grid/pdf': { createPixelGridPdf: runtime.createPdf ?? (() => { throw new Error('PDF not requested by this test'); }) },
+        '@/lib/core/printer/pdf/japanese-font': { loadJapaneseExportFont: runtime.loadJapaneseFont ?? (() => { throw new Error('Font not requested by this test'); }) },
         '@/lib/analytics': { trackPixelGridExport: (event: unknown) => { events.push(event); return false; } } }, {
         window: browser, document, Blob, Uint8ClampedArray, location, Element: Anchor, HTMLAnchorElement: Anchor, AbortController,
         fetch: runtime.fetch ?? (async (href: string) => ({ ok: true, text: async () => readFileSync(`public${href}`, 'utf8') })),
@@ -443,6 +462,133 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         unmount: () => { for (const cleanup of cleanups) cleanup(); },
     };
 }
+
+describe('pixel grid printable PDF integration', () => {
+    const printableBytes = new TextEncoder().encode('%PDF-test-handler-contract');
+    const original = core.createGrid(3, 2, new Uint8ClampedArray([
+        17, 55, 99, 0, 20, 60, 100, 128, 15, 75, 99, 255,
+        2, 3, 4, 17, 22, 33, 44, 0, 99, 88, 77, 255,
+    ]));
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('forwards all print choices from real %s handlers without changing RGBA or Undo/Redo', async locale => {
+        const requested: { grid: core.PixelGrid; options: Parameters<typeof createPixelGridPdf>[1] }[] = [];
+        const font = vi.fn(async () => 'valid-test-font');
+        const pdf: typeof createPixelGridPdf = async (grid, options) => {
+            requested.push({ grid: core.createGrid(grid.width, grid.height, grid.pixels), options });
+            // A generator-owned mutable view must never alias the drawing being edited.
+            if (!(grid.pixels instanceof Uint8ClampedArray)) throw new Error('Expected the UI-owned copied RGBA bytes');
+            grid.pixels.fill(91);
+            return printableBytes;
+        };
+        const ui = interactiveWorkspace({ locale }, { createPdf: pdf, loadJapaneseFont: font });
+        await ui.loadProject(core.serializeProject(original));
+        ui.paint();
+        expect(ui.unload()).toBe(true);
+        ui.change('pixel-print-paper', 'letter'); ui.change('pixel-print-mode', 'tiled'); ui.change('pixel-print-content', 'blank');
+        const file = await ui.download(printCopy.PIXEL_GRID_PRINT_COPY[locale].download);
+        expect(file.name).toBe('pixel-grid-3x2-blank-letter-tiled.pdf');
+        expect(file.blob.type).toBe('application/pdf');
+        expect(new Uint8Array(await file.blob.arrayBuffer())).toEqual(printableBytes);
+        expect(requested).toHaveLength(1);
+        expect(requested[0].options).toEqual({ paper: 'letter', mode: 'tiled', content: 'blank', locale, japaneseFontBase64: locale === 'ja' ? 'valid-test-font' : undefined });
+        expect(font).toHaveBeenCalledTimes(locale === 'ja' ? 1 : 0);
+        expect(ui.events.filter(event => (event as { format: string }).format === 'pdf')).toEqual([{ format: 'pdf' }]);
+        expect(ui.status()).toContain(printCopy.PIXEL_GRID_PRINT_COPY[locale].exported);
+        expect(ui.unload()).toBe(true); // Downloading a PDF is not saving the editable project.
+        const after = await ui.currentProject();
+        expect(after).toEqual(requested[0].grid);
+        expect([...after.pixels]).not.toEqual(Array(after.pixels.length).fill(91));
+        ui.key('z'); expect(await ui.currentProject()).toEqual(original);
+        ui.key('z', true); expect(await ui.currentProject()).toEqual(after);
+        ui.unmount();
+    });
+
+    it('renders complete localized, labelled print choices for all four existing experiences', () => {
+        for (const locale of ['en', 'de', 'fr', 'ja'] as const) {
+            const text = printCopy.PIXEL_GRID_PRINT_COPY[locale];
+            const html = renderToStaticMarkup(createElement(workspace(), { locale, experience: locale === 'en' ? 'grid' : 'converter' }));
+            for (const id of ['content', 'paper', 'mode']) {
+                expect(html).toContain(`for="pixel-print-${id}"`);
+                expect(html).toContain(`id="pixel-print-${id}"`);
+            }
+            for (const value of [text.title, text.artwork, text.blank, text.download, text.help, text.layoutHelp]) expect(html).toContain(value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll("'", '&#x27;'));
+            expect(html).toContain('aria-describedby="pixel-print-help pixel-print-layout-help"');
+            if (locale !== 'en') expect(html).not.toContain(printCopy.PIXEL_GRID_PRINT_COPY.en.title);
+        }
+    });
+
+    it('blocks duplicate operations and language navigation during export; ignores a late completion after unmount', async () => {
+        let finish: ((bytes: Uint8Array) => void) | undefined;
+        const pdf = vi.fn<typeof createPixelGridPdf>(() => new Promise(resolve => { finish = resolve; }));
+        const ui = interactiveWorkspace({ locale: 'en' }, { createPdf: pdf });
+        ui.paint(); ui.click(printCopy.PIXEL_GRID_PRINT_COPY.en.download);
+        await ui.settle();
+        expect(pdf).toHaveBeenCalledOnce();
+        expect(ui.button(copy.en.saveOriginal).props.disabled).toBe(true);
+        expect(ui.button(printCopy.PIXEL_GRID_PRINT_COPY.en.download).props.disabled).toBe(true);
+        ui.click(printCopy.PIXEL_GRID_PRINT_COPY.en.download);
+        expect(ui.switchLanguage('/ja/pixel-art-converter').blocked).toBe(true);
+        expect(ui.assignments).toEqual([]);
+        ui.unmount(); finish!(printableBytes); await ui.settle();
+        expect(pdf).toHaveBeenCalledOnce(); expect(ui.downloads).toEqual([]); expect(ui.events).toEqual([]);
+    });
+
+    it('keeps the original image, drawing and undo future after a failed export and supports a retry', async () => {
+        let fail = true;
+        const pdf = vi.fn<typeof createPixelGridPdf>(async () => { if (fail) throw new Error('/private/file/name.png'); return printableBytes; });
+        const ui = interactiveWorkspace({ locale: 'fr', experience: 'converter' }, { createPdf: pdf });
+        await ui.loadImage();
+        ui.paint(); ui.key('z');
+        expect(ui.button(copy.fr.redo).props.disabled).toBe(false);
+        ui.click(printCopy.PIXEL_GRID_PRINT_COPY.fr.download); await ui.settle();
+        expect(ui.status()).toContain(printCopy.PIXEL_GRID_PRINT_COPY.fr.failed);
+        expect(ui.status()).not.toContain('/private/');
+        expect(ui.downloads).toEqual([]); expect(ui.events).toEqual([]);
+        expect(ui.button(copy.fr.redo).props.disabled).toBe(false);
+        fail = false;
+        await ui.download(printCopy.PIXEL_GRID_PRINT_COPY.fr.download);
+        expect(ui.switchLanguage('/de/pixel-art-generator').blocked).toBe(false);
+        const kept = localeNavigation.consumePixelLocaleSnapshot('https://fusebeadpatterns.art/de/pixel-art-generator', ui.storage)!;
+        expect(kept.source).toEqual({ ...ui.source, name: 'source.png' });
+        expect(kept.history.redo.length).toBe(1);
+        ui.unmount();
+    });
+
+    it('keeps artwork when the Japanese font fails, then retries with the same print choices', async () => {
+        let fail = true;
+        const font = vi.fn(async () => { if (fail) throw new Error('font unavailable'); return 'font-after-retry'; });
+        const pdf = vi.fn<typeof createPixelGridPdf>(async () => printableBytes);
+        const ui = interactiveWorkspace({ locale: 'ja' }, { createPdf: pdf, loadJapaneseFont: font });
+        await ui.loadProject(core.serializeProject(original));
+        ui.change('pixel-print-paper', 'letter');
+        ui.click(printCopy.PIXEL_GRID_PRINT_COPY.ja.download); await ui.settle();
+        expect(pdf).not.toHaveBeenCalled(); expect(ui.downloads).toEqual([]); expect(ui.events).toEqual([]);
+        expect(ui.status()).toContain(printCopy.PIXEL_GRID_PRINT_COPY.ja.failed);
+        fail = false; await ui.download(printCopy.PIXEL_GRID_PRINT_COPY.ja.download);
+        expect(pdf.mock.calls[0][1]).toMatchObject({ paper: 'letter', japaneseFontBase64: 'font-after-retry' });
+        expect(await ui.currentProject()).toEqual(original);
+        ui.unmount();
+    });
+
+    it('retains print choices on a freshly mounted translated workspace without modifying project format', async () => {
+        const data = new Map<string, string>();
+        const storage = { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => { data.set(key, value); }, removeItem: (key: string) => { data.delete(key); } };
+        const en = interactiveWorkspace({ locale: 'en' }, { storage });
+        en.change('pixel-print-paper', 'letter'); en.change('pixel-print-mode', 'tiled'); en.change('pixel-print-content', 'blank');
+        en.unmount();
+        const pdf = vi.fn<typeof createPixelGridPdf>(async () => printableBytes);
+        const de = interactiveWorkspace({ locale: 'de' }, { storage, createPdf: pdf });
+        expect(de.byId('pixel-print-paper').props.value).toBe('letter');
+        expect(de.byId('pixel-print-mode').props.value).toBe('tiled'); expect(de.byId('pixel-print-content').props.value).toBe('blank');
+        await de.download(printCopy.PIXEL_GRID_PRINT_COPY.de.download);
+        expect(pdf.mock.calls[0][1]).toMatchObject({ paper: 'letter', mode: 'tiled', content: 'blank' });
+        const project = de.downloads.length;
+        await de.currentProject();
+        expect(JSON.parse(await de.downloads[project].blob.text())).toMatchObject({ format: 'pixel-grid-project', version: 1 });
+        expect(await de.downloads[project].blob.text()).not.toContain('paper');
+        de.unmount();
+    });
+});
 
 describe('converter operation boundaries', () => {
     it('selecting a color limit does not change pixels; explicit current-drawing reduction is undoable', async () => {
