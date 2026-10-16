@@ -18,7 +18,7 @@ function fixture(): PixelLocaleSnapshot {
         source: { width: 3, height: 1, pixels: new Uint8ClampedArray([120, 33, 88, 0, 40, 80, 120, 1, 77, 88, 99, 255]), name: '元画像🐈.png' },
         history: history.snapshot(), width: '', height: '1e-', mode: 'crop', tool: 'picker',
         color: '#AbCdEf', alpha: 0, zoom: '24', showGrid: false, colorLimit: 16,
-        exportScale: 4, cursor: [1, 0], settingsExpanded: true,
+        exportScale: 4, cursor: [1, 0], settingsExpanded: true, sourceCrop: null,
     };
 }
 
@@ -32,13 +32,51 @@ function code(operation: () => unknown, expected: string) {
 }
 
 describe('complete pixel workspace project', () => {
+    it('writes crop-aware v2, reads exact old v1 as whole image, and never silently ignores a crop in v1', () => {
+        const input = fixture();
+        input.sourceCrop = { sourceWidth: 3, sourceHeight: 1, x: 1, y: 0, width: 2, height: 1 };
+        const raw = serializePixelWorkspaceProject(input, print), wire = JSON.parse(raw);
+        expect(wire.version).toBe(2);
+        const restored = parsePixelWorkspaceProject(raw);
+        expect(restored.snapshot).toEqual(input);
+        restored.snapshot.sourceCrop!.x = 0;
+        expect(input.sourceCrop.x).toBe(1);
+        const old = encoded(); old.version = 1; delete old.snapshot.sourceCrop;
+        expect(parsePixelWorkspaceProject(JSON.stringify(old)).snapshot).toEqual(fixture());
+        old.snapshot.sourceCrop = null;
+        code(() => parsePixelWorkspaceProject(JSON.stringify(old)), 'WORKSPACE_INVALID');
+        const missing = encoded(); delete missing.snapshot.sourceCrop;
+        code(() => parsePixelWorkspaceProject(JSON.stringify(missing)), 'WORKSPACE_INVALID');
+    });
+
+    it.each([
+        { sourceWidth: 3, sourceHeight: 1, x: 2, y: 0, width: 2, height: 1 },
+        { sourceWidth: 2, sourceHeight: 1, x: 0, y: 0, width: 1, height: 1 },
+        { sourceWidth: 3, sourceHeight: 1, x: 1.5, y: 0, width: 1, height: 1 },
+        { sourceWidth: 3, sourceHeight: 1, x: 0, y: 0, width: 0, height: 1 },
+        { sourceWidth: 3, sourceHeight: 1, x: 0, y: 0, width: 1, height: 1, extra: true },
+    ])('rejects invalid or source-mismatched crop data atomically', sourceCrop => {
+        const wire = encoded(); wire.snapshot.sourceCrop = sourceCrop;
+        code(() => parsePixelWorkspaceProject(JSON.stringify(wire)), 'WORKSPACE_INVALID');
+    });
+
+    it('rejects an area without its original image and crop accessors without executing them', () => {
+        const input = fixture();
+        input.sourceCrop = { sourceWidth: 3, sourceHeight: 1, x: 1, y: 0, width: 1, height: 1 };
+        input.source = null;
+        code(() => serializePixelWorkspaceProject(input, print), 'WORKSPACE_INVALID');
+        let calls = 0;
+        Object.defineProperty(input, 'sourceCrop', { get() { calls++; throw new Error('private'); }, enumerable: true });
+        code(() => serializePixelWorkspaceProject(input, print), 'WORKSPACE_INVALID');
+        expect(calls).toBe(0);
+    });
     it('roundtrips original hidden RGBA, independent saved baseline, both history branches and every pending setting', () => {
         const snapshot = fixture();
         const before = structuredClone(snapshot);
         const raw = serializePixelWorkspaceProject(snapshot, print);
         const restored = parsePixelWorkspaceProject(raw);
         expect(Object.keys(JSON.parse(raw))).toEqual(['format', 'version', 'snapshot', 'print']);
-        expect(restored).toEqual({ format: 'pixel-grid-workspace', version: 1, snapshot, print });
+        expect(restored).toEqual({ format: 'pixel-grid-workspace', version: 2, snapshot, print });
         expect(snapshot).toEqual(before); // Codec never applies the UI's checkpoint policy.
         expect(restored.snapshot.saved.width).toBe(1);
         const history = new GridHistory(50); history.restore(restored.snapshot.history);
@@ -79,7 +117,7 @@ describe('complete pixel workspace project', () => {
     it.each([
         (value: ReturnType<typeof encoded>) => { value.format = 'pixel-grid-project'; },
         (value: ReturnType<typeof encoded>) => { value.format = 'bead-pattern-editor'; },
-        (value: ReturnType<typeof encoded>) => { value.version = 2; },
+        (value: ReturnType<typeof encoded>) => { value.version = 3; },
     ])('distinguishes unsupported formats and future versions', mutate => {
         const value = encoded(); mutate(value);
         code(() => parsePixelWorkspaceProject(JSON.stringify(value)), 'WORKSPACE_UNSUPPORTED_FORMAT');
