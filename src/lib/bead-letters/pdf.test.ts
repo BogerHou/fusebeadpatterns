@@ -110,7 +110,9 @@ describe('actual letter PDF bytes and preserved source', () => {
         expect(pdf.raw).toContain('(S13)'); expect(pdf.raw).toContain('(S01)');
         expect(pdf.raw).toContain('7 x 9');
         expect(pdf.raw).toContain('50 x 50');
-        expect(pdf.raw).not.toContain('0-0');
+        // Inspect page labels only: UTC CreationDate metadata can contain
+        // "0-0" and says nothing about an old board-only page.
+        expect(pdf.pages[0].stream).not.toContain('(0-0)');
     });
 
     it('snapshots input, chosen paper, palette and RGBA before its first await', async () => {
