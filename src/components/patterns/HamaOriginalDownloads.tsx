@@ -2,6 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { SiteLocale } from '../../lib/i18n/locales';
 import { getHamaOriginalVariant, hamaBlackCatId } from '../../lib/patterns/hama-original-variants';
+import CherriesHamaDownloads from './CherriesHamaDownloads';
+import { hamaCherriesId } from '../../lib/patterns/cherries-hama';
 
 const copy = {
     en: {
@@ -44,6 +46,7 @@ export function HamaOriginalLink({ locale = 'en' }: { locale?: SiteLocale }) {
 }
 
 export default function HamaOriginalDownloads({ patternId, locale = 'en' }: { patternId: string; locale?: SiteLocale }) {
+    if (patternId === hamaCherriesId) return <CherriesHamaDownloads locale={locale} />;
     const variant = getHamaOriginalVariant(patternId, locale);
     if (!variant) return null;
     const text = copy[locale];

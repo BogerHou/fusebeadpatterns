@@ -599,6 +599,11 @@
       "href": "/patterns-de/original-celestial-stained-glass-window/grid.png",
       "width": 1484,
       "height": 2003
+    },
+    "original-cherries": {
+      "href": "/patterns-de/original-cherries/grid.png",
+      "width": 788,
+      "height": 1112
     }
   },
   "fr": {
@@ -1201,6 +1206,11 @@
       "href": "/patterns-fr/original-celestial-stained-glass-window/grid.png",
       "width": 1484,
       "height": 2003
+    },
+    "original-cherries": {
+      "href": "/patterns-fr/original-cherries/grid.png",
+      "width": 788,
+      "height": 1112
     }
   },
   "ja": {
@@ -1803,6 +1813,11 @@
       "href": "/patterns-ja/original-celestial-stained-glass-window/grid.png",
       "width": 1484,
       "height": 2003
+    },
+    "original-cherries": {
+      "href": "/patterns-ja/original-cherries/grid.png",
+      "width": 788,
+      "height": 1112
     }
   }
 }

@@ -20,10 +20,10 @@ const source = () => parseEditorProject(readFileSync(`public${pattern.assets.pro
 
 describe('reviewed original celestial stained-glass window', () => {
     it('appends one original while preserving all 119 complete previous catalog objects', () => {
-        const previous = patterns.filter(item => item.id !== id);
+        const previous = patterns.filter(item => item.id !== id && item.id !== 'original-cherries');
         expect(previous).toHaveLength(119);
         expect(sha(JSON.stringify(previous))).toBe('99247f787d575d45b5f15359191412679089ce353a886ce87407c668d8435830');
-        expect(patterns.at(-1)).toBe(pattern);
+        expect(patterns.filter(item => item.id !== 'original-cherries').at(-1)).toBe(pattern);
         expect(pattern).toMatchObject({
             slug: 'celestial-stained-glass-window', source: null, collectionId: null,
             beads: 2234, colorCount: 8, gridWidth: 58, gridHeight: 58,

@@ -1,0 +1,63 @@
+{
+  "id": "original-cherries",
+  "projectId": "original-cherries-hama",
+  "motif": {
+    "width": 24,
+    "height": 23
+  },
+  "board": {
+    "width": 29,
+    "height": 29
+  },
+  "beadCount": 284,
+  "materials": [
+    {
+      "ref": "H10",
+      "symbol": "-",
+      "count": 73,
+      "hex": "#027643",
+      "names": {
+        "en": "Green",
+        "de": "Grün",
+        "fr": "Vert",
+        "ja": "グリーン"
+      }
+    },
+    {
+      "ref": "H42",
+      "symbol": "M",
+      "count": 29,
+      "hex": "#0cbd51",
+      "names": {
+        "en": "Fluorescent Green",
+        "de": "Fluoreszierendes Grün",
+        "fr": "Vert fluorescent",
+        "ja": "蛍光グリーン"
+      }
+    },
+    {
+      "ref": "H44",
+      "symbol": "O",
+      "count": 8,
+      "hex": "#f96160",
+      "names": {
+        "en": "Pastel Red",
+        "de": "Pastellrot",
+        "fr": "Rouge pastel",
+        "ja": "パステルレッド"
+      }
+    },
+    {
+      "ref": "H114",
+      "symbol": "}",
+      "count": 174,
+      "hex": "#9a2c31",
+      "names": {
+        "en": "Cherry Red",
+        "de": "Kirschrot",
+        "fr": "Rouge cerise",
+        "ja": "チェリーレッド"
+      }
+    }
+  ]
+}

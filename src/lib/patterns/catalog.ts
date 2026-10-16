@@ -9855,6 +9855,74 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-celestial-stained-glass-window/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-16"
+    },
+    {
+        "id": "original-cherries",
+        "slug": "cherry",
+        "title": "Cherries",
+        "collectionId": null,
+        "version": "Original Cherries design v1",
+        "description": "Make two red cherries with joined green stems and one leaf. Download the free Perler bead pattern or edit the 24 × 23 design.",
+        "beads": 284,
+        "colorCount": 5,
+        "gridWidth": 29,
+        "gridHeight": 29,
+        "motifWidth": 24,
+        "motifHeight": 23,
+        "palette": [
+            {
+                "symbol": "R",
+                "ref": "80-19005",
+                "name": "Red",
+                "hex": "#b0353c",
+                "count": 133
+            },
+            {
+                "symbol": "D",
+                "ref": "80-15961",
+                "name": "Cherry",
+                "hex": "#9d2b3a",
+                "count": 41
+            },
+            {
+                "symbol": "H",
+                "ref": "80-19059",
+                "name": "Hot Coral",
+                "hex": "#dd595b",
+                "count": 8
+            },
+            {
+                "symbol": "G",
+                "ref": "80-19010",
+                "name": "Dark Green",
+                "hex": "#007b4e",
+                "count": 73
+            },
+            {
+                "symbol": "L",
+                "ref": "80-19080",
+                "name": "Green",
+                "hex": "#4dab64",
+                "count": 29
+            }
+        ],
+        "notes": [
+            "Place the 24 × 23 cherry motif on one 29 × 29 Midi pegboard. Leave all surrounding grid cells empty.",
+            "The two red cherries sit at different heights and share green stems with one pointed leaf. The eight coral highlights are filled beads.",
+            "Choose the Perler PDF for A4 or US Letter. Print at 100% / Actual size and measure the 50 mm guides before placing beads.",
+            "The cherry PNG has symbols for counting; it is not an actual-size placement template. Screen bead colors are approximate.",
+            "Physical assembly and ironing have not been tested; this cherry pattern does not specify a keychain or hanging attachment."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-cherries/preview.png",
+            "grid": "/patterns/original-cherries/grid.png",
+            "pixels": "/patterns/original-cherries/pixels.png",
+            "project": "/patterns/original-cherries/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-cherries/pattern.pdf",
+            "pdfLetter": "/patterns/original-cherries/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-16"
     }
 ];
 

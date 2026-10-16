@@ -18,7 +18,7 @@ const source = () => parseEditorProject(readFileSync(`public${pattern.assets.pro
 
 describe('reviewed original strawberry', () => {
     it('adds only the new original and preserves all 118 complete earlier catalog objects', () => {
-        const previous = patterns.filter(item => item.id !== id && item.id !== 'original-celestial-stained-glass-window');
+        const previous = patterns.filter(item => item.id !== id && item.id !== 'original-celestial-stained-glass-window' && item.id !== 'original-cherries');
         expect(previous).toHaveLength(118);
         expect(sha(JSON.stringify(previous))).toBe('c5d6e3ae045d9fea91dc7b668a707b6def0ae6e2b684c98fcde25fc9beec4c95');
         expect(pattern).toMatchObject({ slug: 'strawberry', source: null, collectionId: null, beads: 296, colorCount: 3, gridWidth: 29, gridHeight: 29, motifWidth: 19, motifHeight: 22, updatedAt: '2026-10-14' });

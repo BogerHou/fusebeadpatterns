@@ -13,6 +13,7 @@ import { patterns } from './catalog';
 import { hamaPatterns } from './hama';
 import { getHamaCharacterVariant, hamaCreeperId, hamaCreeperProjectId } from './hama-character-variants';
 import { getHamaOriginalVariant, hamaBlackCatId, hamaBlackCatProjectId } from './hama-original-variants';
+import { hamaCherriesId } from './cherries-hama';
 import { getLibraryProject } from './project-links';
 
 const locales = ['en', 'de', 'fr', 'ja'] as const;
@@ -23,7 +24,7 @@ describe('fixed original black cat Hama downloads', () => {
     it('allows only its exact project ID and preserves original, character and six-pattern Hama entries', async () => {
         for (const pattern of patterns) {
             expect(getLibraryProject(pattern.id)?.projectUrl).toBe(pattern.assets.project);
-            expect(Boolean(getHamaOriginalVariant(pattern.id))).toBe(pattern.id === hamaBlackCatId);
+            expect(Boolean(getHamaOriginalVariant(pattern.id))).toBe([hamaBlackCatId, hamaCherriesId].includes(pattern.id));
         }
         expect(patterns.some(pattern => pattern.id === hamaBlackCatProjectId)).toBe(false);
         expect(hamaPatterns).toHaveLength(6);
@@ -145,7 +146,7 @@ describe('fixed original black cat Hama downloads', () => {
     });
 
     it('does not add a section to other patterns or accept unsafe asset path variants', () => {
-        for (const id of [...patterns.filter(pattern => pattern.id !== hamaBlackCatId).map(pattern => pattern.id), hamaBlackCatProjectId, '../original-black-cat']) {
+        for (const id of [...patterns.filter(pattern => ![hamaBlackCatId, hamaCherriesId].includes(pattern.id)).map(pattern => pattern.id), hamaBlackCatProjectId, '../original-black-cat']) {
             expect(renderToStaticMarkup(createElement(HamaOriginalDownloads, { patternId: id }))).toBe('');
         }
         expect(getHamaOriginalVariant(hamaBlackCatId, '../en' as 'en')).toBeUndefined();
