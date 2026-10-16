@@ -8,8 +8,9 @@ it('keeps complete subject identities in short search summaries without changing
     const locales = ['de', 'fr', 'ja'] as const;
     const originalPatterns = JSON.stringify(patterns);
     const introductions = patterns.map(pattern => ({ id: pattern.id, locales: locales.map(locale => getLocalizedPatternIntro(pattern, locale)) }));
-    expect(patterns).toHaveLength(120);
-    expect(createHash('sha256').update(JSON.stringify(introductions.filter(pattern => pattern.id !== 'original-strawberry' && pattern.id !== 'original-celestial-stained-glass-window'))).digest('hex')).toBe('fd1e50e1cb5114eed24d2f5096ef08822de8a1cbdb57ecfd3dd91389c77cd13c');
+    expect(patterns).toHaveLength(121);
+    expect(patterns.find(pattern => pattern.id === 'original-cherries')).toMatchObject({ slug: 'cherry', title: 'Cherries', beads: 284, colorCount: 5 });
+    expect(createHash('sha256').update(JSON.stringify(introductions.filter(pattern => pattern.id !== 'original-strawberry' && pattern.id !== 'original-celestial-stained-glass-window' && pattern.id !== 'original-cherries'))).digest('hex')).toBe('fd1e50e1cb5114eed24d2f5096ef08822de8a1cbdb57ecfd3dd91389c77cd13c');
 
     for (const pattern of patterns) {
         const english = patternMetadataDescription(pattern);

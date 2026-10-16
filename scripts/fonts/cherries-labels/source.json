@@ -1,0 +1,25 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Cherries Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Only original Cherries EN/DE/FR/JA Perler/Hama downloads; no prior font refresh",
+  "subsetSha256": "1de753ee3b4420ce01800a362ef3a7c648a4b28b0799624c28a9518e76f9e6e7",
+  "glyphsSha256": "c97e153a7e6c4b879ab7f9da7a2317e556be7ef50bb1988f6af8e434b1cd7981",
+  "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ßàäèéöü’、。「」あいうかがきくけさしすせただってでとなにのはびぼまらりるわをんアィイエオカサジスズタデトナビプマミメリルレロン・ー不付作使個全制刷動印号各合名品商図固場変安定実寸対従応接換数料明未材枚柄案検横物用画番異白目確空紙線縦置自色表記証認説辞透選間隔際面頭（）",
+  "charactersSha256": "ba3b5917734325cffb477afbb5f8b194f47057dd1a0525cbf0f013d8987e6d83",
+  "characterCount": 233,
+  "patternIds": [
+    "original-cherries"
+  ],
+  "pdfCount": 16,
+  "chartCount": 8,
+  "upstreamReadOffline": true,
+  "layoutDependencySha256": "a3d52c7793d0d260e53dae5d86e8800fe6d78a596628584195e2f91d9f9cc8b5"
+}

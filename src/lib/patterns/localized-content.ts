@@ -9,6 +9,7 @@ const namedPokemon = pokemonNames as Record<string, Names>;
 // Literal descriptions of the pictured subject; original game names remain search aliases.
 const subjects: Record<string, [string, string, string]> = {
     Strawberry: ['Erdbeere', 'Fraise', 'いちご'],
+    Cherries: ['Kirschen', 'Cerises', 'さくらんぼ'],
     'Blue Chicken': ['Blaues Huhn', 'Poule bleue', '青いニワトリ'],
     'White Chicken': ['Weißes Huhn', 'Poule blanche', '白いニワトリ'],
     'Brown Chicken': ['Braunes Huhn', 'Poule brune', '茶色のニワトリ'],
@@ -92,6 +93,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-cherries') {
+        return locale === 'de'
+            ? `${name}: zwei rote Früchte mit verbundenen grünen Stielen und einem Blatt. Das ${w} × ${h}-Motiv besteht aus ${beads} Perler-Midi-Perlen in ${colorCount} Farben auf einer ${gw} × ${gh}-Steckplatte. Lade das A4- oder US-Letter-PDF und das Raster-PNG herunter oder ändere die Farben im Editor.`
+            : locale === 'fr'
+            ? `${name} : deux fruits rouges reliés par des tiges vertes, avec une feuille. Le motif de ${w} × ${h} perles utilise ${beads} perles Perler Midi en ${colorCount} couleurs sur une plaque de ${gw} × ${gh} cases. Téléchargez le PDF A4 ou US Letter et la grille PNG, ou modifiez les couleurs dans l’éditeur.`
+            : `緑の軸と1枚の葉でつながる、赤い${name}2粒の図案。${colorCount}色・${beads}個のPerlerミディビーズで、${gw}×${gh}マスのプレート1枚に横${w}×縦${h}マスで作ります。日本語のA4・US Letter PDFとPNGを保存するか、エディターで配色を変えられます。`;
+    }
     if (pattern.id === 'original-celestial-stained-glass-window') {
         return locale === 'de'
             ? `${name}: ein originales Bogenfenster mit Mondsichel, Sternen und farbigen Glasfeldern. Das ${w} × ${h}-Motiv verwendet ${beads} Perler-Midi-Perlen in ${colorCount} Farben auf vier 29 × 29-Steckplatten, angeordnet als 2 × 2. Lade das fünfseitige A4- oder US-Letter-PDF herunter oder bearbeite die Farben im deutschen Editor.`
@@ -151,6 +159,11 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    "Place the 24 × 23 cherry motif on one 29 × 29 Midi pegboard. Leave all surrounding grid cells empty.": ["Lege das 24 × 23-Perlen-Kirschmotiv auf eine Midi-Steckplatte mit 29 × 29 Feldern. Lass alle Felder um das Motiv frei.", "Placez le motif de cerises de 24 × 23 perles sur une plaque Midi de 29 × 29 cases. Laissez vides les cases autour du motif.", "横24×縦23マスのさくらんぼを、29×29マスのミディ用プレート1枚に作ります。図柄の周囲にはビーズを置きません。"],
+    "The two red cherries sit at different heights and share green stems with one pointed leaf. The eight coral highlights are filled beads.": ["Die beiden roten Kirschen sitzen auf unterschiedlicher Höhe und sind durch grüne Stiele mit einem spitzen Blatt verbunden. Die acht korallfarbenen Glanzlichter bestehen aus Perlen.", "Les deux cerises rouges sont décalées en hauteur et reliées par des tiges vertes avec une feuille pointue. Les huit reflets corail sont des perles pleines.", "高さをずらした2粒の赤い実を、緑の軸と先のとがった葉でつないでいます。光を表す珊瑚色の8マスにもビーズを置きます。"],
+    "Choose the Perler PDF for A4 or US Letter. Print at 100% / Actual size and measure the 50 mm guides before placing beads.": ["Wähle das Perler-PDF für A4 oder US Letter. Drucke mit 100 % / tatsächlicher Größe und miss die 50-mm-Messlinien, bevor du Perlen auflegst.", "Choisissez le PDF Perler pour A4 ou US Letter. Imprimez à 100 % / taille réelle et mesurez les repères de 50 mm avant de poser les perles.", "Perler用PDFはA4・US Letterから選べます。100％・実際のサイズで印刷し、ビーズを置く前に50 mmの目盛りを測ってください。"],
+    "The cherry PNG has symbols for counting; it is not an actual-size placement template. Screen bead colors are approximate.": ["Das Kirsch-PNG enthält Zählsymbole und dient nicht zum Auflegen in tatsächlicher Größe. Die Perlenfarben am Bildschirm sind Näherungen.", "Le PNG des cerises comporte des symboles pour compter les cases ; ce n’est pas un gabarit de placement à taille réelle. Les couleurs à l’écran sont approximatives.", "さくらんぼのPNGは記号付きの数えるための図で、実寸でビーズを重ねる型紙ではありません。画面上の色は目安です。"],
+    "Physical assembly and ironing have not been tested; this cherry pattern does not specify a keychain or hanging attachment.": ["Die Herstellung und das Bügeln mit echten Perlen wurden nicht getestet. Diese Kirschvorlage enthält keine Befestigung für Schlüsselanhänger oder zum Aufhängen.", "L’assemblage et le repassage n’ont pas été testés avec de vraies perles. Ce modèle de cerises ne prévoit pas d’attache de porte-clés ni de suspension.", "実物の制作とアイロン仕上げは検証していません。このさくらんぼ図案には、キーホルダーや吊り下げ用の取り付け部分は含まれません。"],
     "This arched celestial window is drawn natively across four boards, not enlarged from a single-board pattern.": ["Dieses Bogenfenster mit Himmelsmotiven wurde direkt über vier Steckplatten gezeichnet, nicht aus einer Einplatten-Vorlage vergrößert.", "Ce vitrail céleste en arc a été dessiné directement sur quatre plaques, sans agrandir un motif prévu pour une seule plaque.", "このアーチ窓の図案はプレート4枚分のマス目に直接描いています。プレート1枚の図案を拡大したものではありません。"],
     'An original strawberry with a green leafy cap and pale yellow seed beads.': ['Ein originales Erdbeermotiv mit grünen Blättern und hellgelben Perlen als Samen.', 'Une fraise originale avec des feuilles vertes et des perles jaune pâle pour les graines.', '緑の葉と淡い黄色の種を描いた、いちごのオリジナル図案です。'],
     'Uses Red 80-19005, Dark Green 80-19010 and Pastel Yellow 80-19056. Screen colors are approximate.': ['Verwendet Red 80-19005, Dark Green 80-19010 und Pastel Yellow 80-19056. Die Bildschirmfarben sind Näherungen.', 'Utilise Red 80-19005, Dark Green 80-19010 et Pastel Yellow 80-19056. Les couleurs à l’écran sont approximatives.', 'Red 80-19005、Dark Green 80-19010、Pastel Yellow 80-19056を使います。画面の色は目安です。'],
@@ -200,6 +213,7 @@ const seriesSearchAliases: Record<string, readonly string[]> = {
     'stardew-valley': ['スターデューバレー'],
 };
 const subjectSearchAliases: Record<string, readonly string[]> = {
+    'original-cherries': ['cherry perler bead pattern', 'cherries perler beads', 'Kirschen Bügelperlen', 'cerises perles à repasser', 'アイロンビーズ さくらんぼ'],
     'original-sunset-mountain-lake': ['large perler bead patterns', 'landscape perler bead pattern', 'sunset mountain lake', 'Bügelperlen Landschaft Vorlage', 'grande modèle paysage perles à repasser', 'アイロンビーズ 風景 図案', 'アイロンビーズ 大きい 図案'],
     'original-rave-alien-head': ['alien perler bead pattern', 'rave perler bead patterns', 'Alien Bügelperlen', 'alien perles à repasser', 'アイロンビーズ エイリアン'],
     'original-rave-rainbow-smiley': ['rainbow smiley perler bead pattern', 'rave perler bead patterns', 'Regenbogen Smiley Bügelperlen', 'smiley arc-en-ciel perles à repasser', 'アイロンビーズ 虹 スマイル'],

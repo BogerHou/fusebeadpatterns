@@ -108,6 +108,34 @@ const GermanHama = load('../../app/de/hama-perlen-vorlagen/page.tsx').default as
 const sitemap = load('../../app/sitemap.ts').default as () => Array<{ url: string; lastModified: Date; images?: string[] }>;
 
 describe('native pattern chart journeys', () => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('%s reserves the actual cherries chart ratio and keeps native Perler and Hama downloads', async locale => {
+        const pattern = catalog.getPatternById('original-cherries')!;
+        const html = renderToStaticMarkup(locale === 'en'
+            ? await EnglishDetail({ params: Promise.resolve({ segments: ['cherry'] }) })
+            : createElement(Detail, { pattern, locale }));
+        const grid = locale === 'en' ? { href: pattern.assets.grid } : downloads.getLocalizedPatternGrid(pattern, locale);
+        const bytes = readFileSync(new URL(`../../../public${grid.href}`, import.meta.url));
+        expect(bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+        const dimensions = { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+        expect(dimensions).toEqual({ width: 788, height: 1112 });
+        const image = [...html.matchAll(/<img\b[^>]*>/g)].map(match => match[0]).find(tag => tag.includes(`src="${grid.href}"`));
+        expect(image).toBeDefined();
+        expect(image).toContain(`width="${dimensions.width}"`);
+        expect(image).toContain(`height="${dimensions.height}"`);
+        const prefix = locale === 'en' ? '' : `/${locale}`;
+        const pdf = locale === 'en' ? pattern.assets.pdf : downloads.getLocalizedPatternPdf(pattern, locale).href;
+        const letter = locale === 'en' ? pattern.assets.pdfLetter! : downloads.getLocalizedPatternLetterPdf(pattern, locale)!.href;
+        const hama = getHamaOriginalVariant(pattern.id, locale)!;
+        for (const href of [pdf, letter, grid.href, pattern.assets.project, pattern.assets.pixels, `${prefix}/editor?pattern=${pattern.id}`, hama.pdf, hama.pdfLetter, hama.grid, hama.project, hama.editor]) {
+            expect(html).toContain(`href="${href}"`);
+        }
+        if (locale !== 'en') {
+            const links = [...html.matchAll(/<a\b[^>]*>/g)].map(match => match[0]).filter(tag => [pdf, letter, grid.href, hama.pdf, hama.pdfLetter, hama.grid].some(href => tag.includes(`href="${href}"`)));
+            expect(links).toHaveLength(7);
+            expect(links.every(tag => tag.includes(`hrefLang="${locale}"`))).toBe(true);
+        }
+    });
+
     it.each(['en', 'de'] as const)('%s Hama hub adds a black cat reference outside the existing six cards', locale => {
         const html = renderToStaticMarkup(createElement(locale === 'en' ? EnglishHama : GermanHama));
         const variant = getHamaOriginalVariant(hamaBlackCatId, locale)!;
@@ -335,6 +363,12 @@ describe('native pattern chart journeys', () => {
             expect('changeFrequency' in record).toBe(true);
             if ('changeFrequency' in record) expect(record.changeFrequency).toBe('monthly');
         }
+        const cherries = records.filter(record => record.url.endsWith('/patterns/cherry'));
+        expect(cherries.map(record => record.url)).toEqual(['de/', 'fr/', 'ja/', ''].map(prefix => `https://fusebeadpatterns.art/${prefix}patterns/cherry`));
+        for (const record of cherries) {
+            expect(record.lastModified.toISOString()).toBe('2026-10-16T00:00:00.000Z');
+            expect(record.images).toEqual(['https://fusebeadpatterns.art/patterns/original-cherries/preview.png']);
+        }
         const qrBeadUrls = Object.values(qrBeadRoutes.qrBeadPaths).map(path => `https://fusebeadpatterns.art${path}`);
         const qrBeads = records.filter(record => qrBeadUrls.includes(record.url));
         expect(qrBeads.map(record => record.url)).toEqual(qrBeadUrls);
@@ -343,7 +377,7 @@ describe('native pattern chart journeys', () => {
             expect('changeFrequency' in record).toBe(true);
             if ('changeFrequency' in record) expect(record.changeFrequency).toBe('monthly');
         }
-        const previous = records.filter(record => !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const previous = records.filter(record => !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry', 'cherry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 
