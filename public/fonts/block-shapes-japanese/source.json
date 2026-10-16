@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "weight": 400,
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Block Shapes Japanese",
+  "subsetPurpose": "Japanese block-shape planner PDF labels; all Japanese tool copy and printable ASCII",
+  "subsetSha256": "41855358072d9eec7116df9705eb2897328cdf2e3f0981eced22faf6ef062cbe",
+  "subsetBytes": 108696,
+  "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~×…、。「」〜あいうえおかがきぎくけこごさしじすずせそただっつてでとどなにねのはびへべまみむめもやよらりるれろわをんァイウェガクゲコサジスズセタダチッツテデトドビピフブプペホマムャュラルレロワン・ー一上下両並中了付似位体何作使保個停側偶備元先入全内円再出分切列別前割力動区厚原去参反取号各合同名含囲図在埋場壁変外大央奇奥始存学安完定実寸対小届層幅平幾底度座建形径復心成手択押指接換数整料断新方明映曲更書替最未材枚果柱棄検楕業概標次止残決法洞消準照現球生用画番的目直相眼破確示移空立端範築紙細終結続線編縁置色行表要見角言計記設証試認語読距輪込近連選部郭配重長閉開間限除際隣集離面高：？",
+  "charactersSha256": "47227ffd2ab0e59313383b52f003ea83841b3d86882b0d32e27c12e7f80e444e",
+  "characterCount": 386,
+  "jaKeyCount": 107,
+  "copySource": "src/lib/block-shapes/copy.ts",
+  "copyFileSha256AtBuild": "35f7cd76bdda2c9b164874d656caf517f3e12bc75aaf1d9391f3d5e20f0d7420",
+  "fonttoolsVersion": "4.60.1",
+  "builderSha256": "70e7065a249b88292ce547ee5fb0fe2e1b704d43423cf35d3ef6c2da3b3e57c0",
+  "readmeSha256": "24f9b5f2e297dc33d8945f4571a375ac8402b10ec5ca59fc31931f8e4305f746"
+}
