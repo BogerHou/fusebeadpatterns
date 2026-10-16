@@ -1,3 +1,4 @@
+import { qrBeadLabels, qrBeadPaths } from '@/lib/qr-beads/routes';
 import Link from 'next/link';
 import { getGuideSummaries } from '@/lib/guides/localized';
 import { guidePages } from '@/app/(english)/guides/guide-data';
@@ -17,6 +18,7 @@ type SiteFooterSection =
     | 'editor'
     | 'pixel-grid'
     | 'bead-loom'
+    | 'qr-beads'
     | 'bead-letters'
     | 'block-shapes'
     | 'guides'
@@ -54,6 +56,7 @@ const footerGroups: Array<{
             { id: 'bead-loom', label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker', nativeNavigation: true },
             { id: 'bead-letters', label: beadLetterLabels.en, href: beadLetterPaths.en, nativeNavigation: true },
             { id: 'block-shapes', label: blockShapeLabels.en, href: blockShapePaths.en, nativeNavigation: true },
+            { id: 'qr-beads', label: qrBeadLabels.en, href: qrBeadPaths.en, nativeNavigation: true },
             {
                 id: 'editor',
                 label: 'Advanced Editor',
@@ -107,6 +110,7 @@ export default function SiteFooter({
                 { id: 'bead-loom', label: copy.beadLoom, href: routes.beadLoom, lang: locale, nativeNavigation: true },
                 { id: 'bead-letters', label: beadLetterLabels[locale], href: routes.beadLetters, lang: locale, nativeNavigation: true },
                 { id: 'block-shapes', label: blockShapeLabels[locale], href: routes.blockShapes, lang: locale, nativeNavigation: true },
+                { id: 'qr-beads', label: qrBeadLabels[locale], href: routes.qrBeads, lang: locale, nativeNavigation: true },
             ] as FooterLink[],
         },
         {

@@ -1,5 +1,7 @@
 'use client';
 
+import { qrBeadLabels } from '../../lib/qr-beads/routes';
+
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { siteNavigation, type SiteLocale } from '../../lib/i18n/locales';
@@ -21,6 +23,7 @@ export default function ToolMenu({ locale }: { locale: SiteLocale }) {
         { href: routes.beadLoom, label: copy.beadLoom },
         { href: routes.beadLetters, label: beadLetterLabels[locale] },
         { href: routes.blockShapes, label: blockShapeLabels[locale] },
+        { href: routes.qrBeads, label: qrBeadLabels[locale] },
     ];
 
     useEffect(() => {

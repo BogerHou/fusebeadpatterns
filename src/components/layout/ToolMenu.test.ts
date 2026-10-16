@@ -9,13 +9,13 @@ let pathname = '/pixel-art-grid';
 vi.mock('next/navigation', () => ({ usePathname: () => pathname }));
 
 describe('tool navigation', () => {
-    it('exposes real native links to the six tools in each current language before hydration', () => {
+    it('exposes real native links to the seven tools in each current language before hydration', () => {
         for (const locale of SITE_LOCALES) {
             const routes = localeRoutes[locale];
             pathname = routes.pixelGrid!;
             const html = renderToStaticMarkup(createElement(ToolMenu, { locale }));
-            for (const href of [routes.home, routes.hamaMaker, routes.pixelGrid, routes.beadLoom, routes.beadLetters, routes.blockShapes]) expect(html).toContain(`href="${href}"`);
-            expect(html.match(/<a\b/g)).toHaveLength(6);
+            for (const href of [routes.home, routes.hamaMaker, routes.pixelGrid, routes.beadLoom, routes.beadLetters, routes.blockShapes, routes.qrBeads]) expect(html).toContain(`href="${href}"`);
+            expect(html.match(/<a\b/g)).toHaveLength(7);
             expect(html).toContain(`aria-label="${siteNavigation[locale].tools}"`);
             expect(html.match(/aria-current="page"/g)).toHaveLength(1);
             expect(html).not.toContain('data-locale-navigation');
