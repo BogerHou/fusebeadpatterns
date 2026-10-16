@@ -9766,6 +9766,95 @@ export const patterns: Pattern[] = [
             "pdfLetter": "/patterns/original-strawberry/pattern-letter.pdf"
         },
         "updatedAt": "2026-10-14"
+    },
+    {
+        "id": "original-celestial-stained-glass-window",
+        "slug": "celestial-stained-glass-window",
+        "title": "Celestial Stained Glass Window",
+        "collectionId": null,
+        "version": "Original Celestial Stained Glass Window design v1",
+        "description": "An original arched stained-glass window with a crescent moon, three stars, geometric blue panes and paired botanical sprigs.",
+        "beads": 2234,
+        "colorCount": 8,
+        "gridWidth": 58,
+        "gridHeight": 58,
+        "motifWidth": 48,
+        "motifHeight": 52,
+        "palette": [
+            {
+                "symbol": "N",
+                "ref": "80-15201",
+                "name": "Midnight",
+                "hex": "#2f3c55",
+                "count": 740
+            },
+            {
+                "symbol": "B",
+                "ref": "80-15200",
+                "name": "Cobalt",
+                "hex": "#0065b1",
+                "count": 314
+            },
+            {
+                "symbol": "T",
+                "ref": "80-15218",
+                "name": "Teal",
+                "hex": "#047f8a",
+                "count": 371
+            },
+            {
+                "symbol": "S",
+                "ref": "80-15216",
+                "name": "Sky",
+                "hex": "#4ac0d8",
+                "count": 263
+            },
+            {
+                "symbol": "M",
+                "ref": "80-15215",
+                "name": "Mist",
+                "hex": "#93b0bd",
+                "count": 129
+            },
+            {
+                "symbol": "G",
+                "ref": "80-19057",
+                "name": "Cheddar",
+                "hex": "#fbb146",
+                "count": 262
+            },
+            {
+                "symbol": "Y",
+                "ref": "80-19056",
+                "name": "Pastel Yellow",
+                "hex": "#e9e290",
+                "count": 91
+            },
+            {
+                "symbol": "E",
+                "ref": "80-15179",
+                "name": "Evergreen",
+                "hex": "#305545",
+                "count": 64
+            }
+        ],
+        "notes": [
+            "Use four 29 × 29 Midi pegboards arranged 2 × 2. The complete grid has 58 columns and 58 rows.",
+            "This arched celestial window is drawn natively across four boards, not enlarged from a single-board pattern.",
+            "The first PDF page is a reduced overview; pages 2–5 show boards 1–4 at 5 mm spacing. Print at 100% / Actual size and check both 50 mm rulers.",
+            "Empty grid cells do not need beads. The PNG is a counting chart, not an actual-size placement template.",
+            "Physical assembly, ironing and cross-board join strength have not been tested. Perler screen colors are approximate."
+        ],
+        "source": null,
+        "assets": {
+            "preview": "/patterns/original-celestial-stained-glass-window/preview.png",
+            "grid": "/patterns/original-celestial-stained-glass-window/grid.png",
+            "pixels": "/patterns/original-celestial-stained-glass-window/pixels.png",
+            "project": "/patterns/original-celestial-stained-glass-window/pattern.bead-pattern.json",
+            "pdf": "/patterns/original-celestial-stained-glass-window/pattern.pdf",
+            "pdfLetter": "/patterns/original-celestial-stained-glass-window/pattern-letter.pdf"
+        },
+        "updatedAt": "2026-10-16"
     }
 ];
 

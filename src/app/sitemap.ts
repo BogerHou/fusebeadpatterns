@@ -187,11 +187,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: 'https://fusebeadpatterns.art/fr/patterns', lastModified: new Date('2026-10-09T00:00:00.000Z') },
         ...(['de', 'fr', 'ja'] as const).flatMap(locale => patternSectionSlugs.filter(slug => !(locale === 'fr' && slug === 'christmas')).map(slug => ({
             url: `https://fusebeadpatterns.art${getPatternSectionHref(slug, locale)}`,
-            lastModified: new Date(['small', 'rave'].includes(slug) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(slug === 'adult' ? '2026-10-16T00:00:00.000Z' : ['small', 'rave'].includes(slug) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
         }))),
         ...['de', 'fr', 'ja'].flatMap(locale => patterns.map(pattern => ({
             url: `https://fusebeadpatterns.art/${locale}/patterns/${pattern.slug}`,
-            lastModified: new Date(pattern.id === 'original-strawberry' ? '2026-10-14T00:00:00.000Z' : ['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(pattern.id === 'original-celestial-stained-glass-window' ? '2026-10-16T00:00:00.000Z' : pattern.id === 'original-strawberry' ? '2026-10-14T00:00:00.000Z' : ['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
             images: [`https://fusebeadpatterns.art${pattern.assets.preview}`],
         }))),
         ...patterns.map((pattern) => ({

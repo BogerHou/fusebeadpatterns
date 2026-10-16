@@ -4,8 +4,10 @@ import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { getPatternsForTopic, getAdditionalPatternsForTopic, type PatternTopic } from '@/lib/patterns/topics';
 import { PatternGrid, toPatternCard } from './PatternCards';
 import SmallPatternContent from './SmallPatternContent';
+import AdultPatternContent from './AdultPatternContent';
 
 export default function PatternTopicPage({ topic }: { topic: PatternTopic }) {
+    if (topic.slug === 'adult') return <AdultPatternContent locale="en" />;
     if (topic.slug === 'small') return <SmallPatternContent locale="en" />;
     const selectedPatterns = getPatternsForTopic(topic);
     const additionalPatterns = getAdditionalPatternsForTopic(topic);

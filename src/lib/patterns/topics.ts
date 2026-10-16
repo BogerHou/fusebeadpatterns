@@ -1,6 +1,7 @@
 import { getPatternById, type Pattern } from './catalog';
 import { smallPatternCopy, smallPatternIds } from './small';
 import { ravePatternCopy, ravePatternIds } from './rave';
+import { adultPatternCopy, adultPatternIds } from './adult';
 
 export type PatternTopic = {
     slug: string;
@@ -171,6 +172,22 @@ export const patternTopics: readonly PatternTopic[] = [
             { href: '/guides/mini-perler-beads', label: 'Midi and Mini bead sizes' },
         ],
         updatedAt: '2026-10-11',
+    },
+    {
+        slug: 'adult',
+        label: adultPatternCopy.en.label,
+        title: adultPatternCopy.en.title,
+        description: adultPatternCopy.en.description,
+        intro: adultPatternCopy.en.intro,
+        patternIds: adultPatternIds,
+        selectionHeading: adultPatternCopy.en.heading,
+        selectionNotes: adultPatternCopy.en.notes,
+        relatedLinks: [
+            { href: '/guides/perler-bead-pegboards', label: adultPatternCopy.en.boardGuide },
+            { href: '/guides/perler-to-hama-artkal', label: adultPatternCopy.en.brandGuide },
+            { href: '/patterns/rave', label: adultPatternCopy.en.rave },
+        ],
+        updatedAt: '2026-10-16',
     },
 ];
 

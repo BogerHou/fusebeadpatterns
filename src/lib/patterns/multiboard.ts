@@ -1,8 +1,9 @@
 import type { SiteLocale } from '../i18n/locales';
 
 export const multiboardPatternId = 'original-sunset-mountain-lake';
+export const celestialWindowPatternId = 'original-celestial-stained-glass-window';
 export function isMultiboardPattern(id: string): boolean {
-    return id === multiboardPatternId;
+    return id === multiboardPatternId || id === celestialWindowPatternId;
 }
 
 export const multiboardCopy = {

@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "test": "vitest",
-    "test:run": "vitest run && node --test scripts/smoke-production.test.mjs scripts/build-pattern-library.test.mjs scripts/generate-mini-ghost-sourcepack.test.mjs scripts/generate-original-black-cat-sourcepack.test.mjs scripts/generate-original-latin-cross-sourcepack.test.mjs scripts/generate-original-rave-sourcepack.test.mjs scripts/generate-original-sunset-landscape-sourcepack.test.mjs scripts/generate-original-strawberry-sourcepack.test.mjs scripts/check-vercel-costs.test.mjs scripts/check-seo-metadata.test.mjs",
+    "test:run": "vitest run && node --test scripts/smoke-production.test.mjs scripts/build-pattern-library.test.mjs scripts/generate-mini-ghost-sourcepack.test.mjs scripts/generate-original-black-cat-sourcepack.test.mjs scripts/generate-original-latin-cross-sourcepack.test.mjs scripts/generate-original-rave-sourcepack.test.mjs scripts/generate-original-sunset-landscape-sourcepack.test.mjs scripts/generate-original-strawberry-sourcepack.test.mjs scripts/generate-original-celestial-window-sourcepack.test.mjs scripts/check-vercel-costs.test.mjs scripts/check-seo-metadata.test.mjs",
     "verify": "npm run test:run && npm run typecheck && npm run lint && npm run build && npm run cost:check && npm run seo:check",
     "audit:prod": "npm audit --registry=https://registry.npmjs.org --omit=dev",
     "cost:check": "node scripts/check-vercel-costs.mjs",

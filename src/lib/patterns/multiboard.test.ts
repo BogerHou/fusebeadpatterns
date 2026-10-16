@@ -22,12 +22,12 @@ const reviewedRowsSha = '8a86c6150760e276ca231a90f6d1312cdd4a7c2c67773dab35edc18
 const reviewedRgbaSha = 'b584e0a93314eb2af32a18aac6c64ae3a0323b2d9843fbc0349c5d4190ee5c56';
 
 describe('reviewed original four-board landscape', () => {
-    it('preserves every complete preexisting catalog object and grants the geometry exception to this exact ID only', () => {
-        const previous = patterns.filter(pattern => pattern.id !== id && pattern.id !== 'original-strawberry');
+    it('preserves every complete preexisting catalog object and preserves the original geometry lock when a separately reviewed four-board design is added', () => {
+        const previous = patterns.filter(pattern => pattern.id !== id && pattern.id !== 'original-strawberry' && pattern.id !== 'original-celestial-stained-glass-window');
         expect(previous).toHaveLength(117);
         // Complete objects from deployed 9928ce0, including URLs, downloads and timestamps.
         expect(sha(JSON.stringify(previous))).toBe('79b62398b84f4ff3e5c0be0cb7fae32b2e6fc6f9ccf4af1543ce8884629cfad5');
-        expect(patterns.filter(pattern => isMultiboardPattern(pattern.id)).map(pattern => pattern.id)).toEqual([id]);
+        expect(patterns.filter(pattern => isMultiboardPattern(pattern.id)).map(pattern => pattern.id)).toEqual([id, 'original-celestial-stained-glass-window']);
         for (const unknown of ['original-sunset-mountain-lake-v2', 'unreviewed-large', 'original-rave-alien-head']) {
             expect(isMultiboardPattern(unknown)).toBe(false);
         }
@@ -167,7 +167,7 @@ describe('reviewed original four-board landscape', () => {
     });
 
     it('executes the historical reader and authoring guard: only the exact reviewed ID may bypass its single-board input gate', () => {
-        const payload = patterns.filter(pattern => pattern.id !== 'original-strawberry').map(pattern => ({ ...pattern, locales: Object.fromEntries(['de', 'fr', 'ja'].map(locale => [locale, { notes: pattern.notes.map(note => localizePatternNote(note, locale as 'de' | 'fr' | 'ja')) }])) }));
+        const payload = patterns.filter(pattern => pattern.id !== 'original-strawberry' && pattern.id !== 'original-celestial-stained-glass-window').map(pattern => ({ ...pattern, locales: Object.fromEntries(['de', 'fr', 'ja'].map(locale => [locale, { notes: pattern.notes.map(note => localizePatternNote(note, locale as 'de' | 'fr' | 'ja')) }])) }));
         const code = `
 import argparse, ast, contextlib, copy, io, json, pathlib, re, shutil, sys, types
 source = pathlib.Path('scripts/build-localized-library-pdfs.py').read_text()

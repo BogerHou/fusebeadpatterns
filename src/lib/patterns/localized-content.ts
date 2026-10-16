@@ -66,6 +66,7 @@ const subjects: Record<string, [string, string, string]> = {
     'Rainbow Smiley': ['Regenbogen-Smiley', 'Smiley arc-en-ciel', '虹色スマイル'],
     'Crescent Moon Mushroom': ['Mondsichel mit Pilz', 'Croissant de lune et champignon', '三日月ときのこ'],
     'Sunset Mountain Lake': ['Sonnenuntergang am Bergsee', 'Lac de montagne au coucher du soleil', '山と湖の夕景'],
+    'Celestial Stained Glass Window': ['Glasfenster mit Mond und Sternen', 'Vitrail lune et étoiles', '月と星のステンドグラス窓'],
 };
 
 export function getLocalizedSubjectName(pattern: Pick<Pattern, 'id' | 'title'>, locale: PatternLocale): string {
@@ -91,6 +92,13 @@ export function getLocalizedPatternTitle(pattern: Pattern, locale: PatternLocale
 export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale): string {
     const name = getLocalizedPatternName(pattern, locale);
     const { beads, colorCount, motifWidth: w, motifHeight: h, gridWidth: gw, gridHeight: gh } = pattern;
+    if (pattern.id === 'original-celestial-stained-glass-window') {
+        return locale === 'de'
+            ? `${name}: ein originales Bogenfenster mit Mondsichel, Sternen und farbigen Glasfeldern. Das ${w} × ${h}-Motiv verwendet ${beads} Perler-Midi-Perlen in ${colorCount} Farben auf vier 29 × 29-Steckplatten, angeordnet als 2 × 2. Lade das fünfseitige A4- oder US-Letter-PDF herunter oder bearbeite die Farben im deutschen Editor.`
+            : locale === 'fr'
+            ? `${name} : un vitrail original en arc, avec un croissant de lune, des étoiles et des panneaux colorés. Le motif de ${w} × ${h} perles utilise ${beads} perles Perler Midi en ${colorCount} couleurs sur quatre plaques de 29 × 29 cases, disposées en 2 × 2. Téléchargez le PDF A4 ou US Letter de cinq pages, ou modifiez les couleurs dans l’éditeur en français.`
+            : `${name}のオリジナル図案。${w}×${h}マス、${colorCount}色・${beads}個のPerlerミディビーズを使い、29×29マスのプレート4枚を2×2に並べます。全5ページの日本語A4・US Letter PDFやマス目付きPNGを保存するか、エディターで配色を変更できます。`;
+    }
     if (pattern.id === 'original-strawberry') {
         return locale === 'de'
             ? `${name}: ein Originalmotiv mit roter Frucht, grünen Blättern und hellgelben Samen. Die ${beads} Perler-Midi-Perlen in ${colorCount} Farben passen als ${w} × ${h}-Motiv auf eine ${gw} × ${gh}-Steckplatte. Lade das A4- oder US-Letter-PDF herunter oder passe die Farben im Editor an.`
@@ -143,6 +151,7 @@ export function getLocalizedPatternIntro(pattern: Pattern, locale: PatternLocale
 }
 
 const notes: Record<string, [string, string, string]> = {
+    "This arched celestial window is drawn natively across four boards, not enlarged from a single-board pattern.": ["Dieses Bogenfenster mit Himmelsmotiven wurde direkt über vier Steckplatten gezeichnet, nicht aus einer Einplatten-Vorlage vergrößert.", "Ce vitrail céleste en arc a été dessiné directement sur quatre plaques, sans agrandir un motif prévu pour une seule plaque.", "このアーチ窓の図案はプレート4枚分のマス目に直接描いています。プレート1枚の図案を拡大したものではありません。"],
     'An original strawberry with a green leafy cap and pale yellow seed beads.': ['Ein originales Erdbeermotiv mit grünen Blättern und hellgelben Perlen als Samen.', 'Une fraise originale avec des feuilles vertes et des perles jaune pâle pour les graines.', '緑の葉と淡い黄色の種を描いた、いちごのオリジナル図案です。'],
     'Uses Red 80-19005, Dark Green 80-19010 and Pastel Yellow 80-19056. Screen colors are approximate.': ['Verwendet Red 80-19005, Dark Green 80-19010 und Pastel Yellow 80-19056. Die Bildschirmfarben sind Näherungen.', 'Utilise Red 80-19005, Dark Green 80-19010 et Pastel Yellow 80-19056. Les couleurs à l’écran sont approximatives.', 'Red 80-19005、Dark Green 80-19010、Pastel Yellow 80-19056を使います。画面の色は目安です。'],
     'Use four 29 × 29 Midi pegboards arranged 2 × 2. The complete grid has 58 columns and 58 rows.': ['Verwende vier Midi-Steckplatten mit je 29 × 29 Feldern in einer 2 × 2-Anordnung. Das gesamte Raster hat 58 Spalten und 58 Zeilen.', 'Utilisez quatre plaques Midi de 29 × 29 cases, disposées en 2 × 2. La grille complète compte 58 colonnes et 58 lignes.', '29×29マスのミディ用プレート4枚を縦2枚・横2枚に並べます。図案全体は58列・58行です。'],

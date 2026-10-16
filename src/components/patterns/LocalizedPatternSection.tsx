@@ -11,11 +11,17 @@ import { toLocalizedPatternCard } from './LocalizedPatternCatalog';
 import PatternSectionNav from './PatternSectionNav';
 import PatternLibraryHelp from './PatternLibraryHelp';
 import SmallPatternContent from './SmallPatternContent';
+import AdultPatternContent from './AdultPatternContent';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 export { localizedSectionMetadata } from '@/lib/patterns/localized-sections';
 
 export default function LocalizedPatternSection({ section, locale }: { section: Section; locale: PatternLocale }) {
+    if (section.slug === 'adult') return <>
+        <SiteHeader locale={locale} active="patterns" />
+        <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16 sm:pb-24"><AdultPatternContent locale={locale} /></main>
+        <SiteFooter locale={locale} active="patterns" />
+    </>;
     if (section.slug === 'small') return <>
         <SiteHeader locale={locale} active="patterns" />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16 sm:pb-24"><SmallPatternContent locale={locale} /></main>
