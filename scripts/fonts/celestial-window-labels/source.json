@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "license": "SIL Open Font License 1.1",
+  "derivativeFamily": "Fuse Bead Celestial Window Labels",
+  "weight": 400,
+  "fonttoolsVersion": "4.60.1",
+  "subsetPurpose": "Only original celestial-window EN/DE/FR/JA PDF/count charts; no prior font refresh",
+  "subsetSha256": "e5599067d7424327a9c225cf5e18e2b3af65d5b4796000b6cd65fbd914f919b3",
+  "glyphsSha256": "c23d9f9e65f40037d1b1dc65dd7f61bee2962c7345773df0d7ff1f3a3af8ea6e",
+  "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~Üßàäèéöü’。々「」あいえきくげこさしすせだつてでとにねのはびべまりるわをんアィイエオグサジスズタテデトドナビプペマミラリルレロン・ー上下並仕付体作使個全分列別制刷割印右号各合名品商図境大安実寸小左度強指接数料星月未材枚柄校案検横次正物用画界番白目確示空窓紙線縦縮置色行表記証認選部重間隔際面％（）：",
+  "charactersSha256": "9b7defd315c3a1207f86a369a278e24091fd3c03a769954aa999ee12cb69cb5a",
+  "characterCount": 248,
+  "patternIds": [
+    "original-celestial-stained-glass-window"
+  ],
+  "upstreamReadOffline": true,
+  "layoutDependencySha256": "a3d52c7793d0d260e53dae5d86e8800fe6d78a596628584195e2f91d9f9cc8b5"
+}

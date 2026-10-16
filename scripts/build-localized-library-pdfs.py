@@ -129,7 +129,7 @@ def catalog(node):
     assert len({p['slug'] for p in patterns}) == len(patterns)
     for pattern in patterns:
         assert re.fullmatch(r'[a-z0-9-]+', pattern['id']), pattern['id']
-        if pattern['id'] == 'original-sunset-mountain-lake':
+        if pattern['id'] in ('original-sunset-mountain-lake', 'original-celestial-stained-glass-window'):
             assert (pattern['gridWidth'], pattern['gridHeight']) == (58, 58), 'Unexpected reviewed multiboard geometry'
             continue
         assert (pattern['gridWidth'], pattern['gridHeight']) == (29, 29)
@@ -137,7 +137,7 @@ def catalog(node):
         assert all(len(p['notes']) == len(pattern['notes']) for p in pattern['locales'].values())
     # This historical renderer retains its single-board geometry and outputs.
     # The reviewed four-board original has a separate, independently checked builder.
-    return [pattern for pattern in patterns if pattern['id'] != 'original-sunset-mountain-lake']
+    return [pattern for pattern in patterns if pattern['id'] not in ('original-sunset-mountain-lake', 'original-celestial-stained-glass-window')]
 
 
 def retained_ids(locale):
@@ -588,6 +588,8 @@ def main():
     args = parser.parse_args()
     if args.id and 'original-sunset-mountain-lake' in args.id:
         parser.error('Use build-multiboard-pattern-downloads.py for original-sunset-mountain-lake; this renderer supports single-board downloads only')
+    if args.id and 'original-celestial-stained-glass-window' in args.id:
+        parser.error('Use build-celestial-window-downloads.py for original-celestial-stained-glass-window; this renderer supports single-board downloads only')
     if not args.node:
         parser.error('Node is required to evaluate the site translation source; supply --node')
     patterns = catalog(args.node)

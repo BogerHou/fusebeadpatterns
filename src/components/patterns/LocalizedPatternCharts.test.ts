@@ -265,6 +265,20 @@ describe('native pattern chart journeys', () => {
 
     it('retains Cross and four Beadifier guide entries while preserving every earlier complete sitemap record', () => {
         const records = sitemap();
+        const adultAdditions = ['en', 'de', 'fr', 'ja'].flatMap(locale => ['adult', 'celestial-stained-glass-window'].map(slug => `https://fusebeadpatterns.art${locale === 'en' ? '' : `/${locale}`}/patterns/${slug}`));
+        const adultRecords = records.filter(record => adultAdditions.includes(record.url));
+        expect(adultRecords).toHaveLength(8);
+        expect(new Set(adultRecords.map(record => record.url)).size).toBe(8);
+        expect(adultRecords.map(record => record.url).sort()).toEqual([...adultAdditions].sort());
+        for (const record of adultRecords) {
+            expect(record.lastModified.toISOString()).toBe('2026-10-16T00:00:00.000Z');
+            if (record.url.endsWith('/celestial-stained-glass-window')) expect(record.images).toEqual(['https://fusebeadpatterns.art/patterns/original-celestial-stained-glass-window/preview.png']);
+        }
+        for (const slug of ['adult', 'celestial-stained-glass-window']) {
+            const alternates = metadata.patternLanguageAlternates(slug);
+            expect(alternates['x-default']).toBe(`https://fusebeadpatterns.art/patterns/${slug}`);
+            for (const locale of ['en', 'de', 'fr', 'ja'] as const) expect(adultAdditions).toContain(alternates[locale]);
+        }
         const added = records.filter(record => record.url.endsWith('/patterns/cross'));
         expect(added.map(record => record.url)).toEqual([
             'https://fusebeadpatterns.art/de/patterns/cross',
@@ -319,7 +333,7 @@ describe('native pattern chart journeys', () => {
             expect('changeFrequency' in record).toBe(true);
             if ('changeFrequency' in record) expect(record.changeFrequency).toBe('monthly');
         }
-        const previous = records.filter(record => !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const previous = records.filter(record => !adultAdditions.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 

@@ -594,6 +594,11 @@
       "href": "/patterns-de/original-strawberry/grid.png",
       "width": 788,
       "height": 1375
+    },
+    "original-celestial-stained-glass-window": {
+      "href": "/patterns-de/original-celestial-stained-glass-window/grid.png",
+      "width": 1484,
+      "height": 2003
     }
   },
   "fr": {
@@ -1191,6 +1196,11 @@
       "href": "/patterns-fr/original-strawberry/grid.png",
       "width": 788,
       "height": 1375
+    },
+    "original-celestial-stained-glass-window": {
+      "href": "/patterns-fr/original-celestial-stained-glass-window/grid.png",
+      "width": 1484,
+      "height": 2003
     }
   },
   "ja": {
@@ -1788,6 +1798,11 @@
       "href": "/patterns-ja/original-strawberry/grid.png",
       "width": 788,
       "height": 1308
+    },
+    "original-celestial-stained-glass-window": {
+      "href": "/patterns-ja/original-celestial-stained-glass-window/grid.png",
+      "width": 1484,
+      "height": 2003
     }
   }
 }

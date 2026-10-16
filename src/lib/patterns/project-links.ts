@@ -604,6 +604,11 @@ const libraryProjects: LibraryProject[] = [
         "id": "original-strawberry",
         "title": "Strawberry",
         "projectUrl": "/patterns/original-strawberry/pattern.bead-pattern.json"
+    },
+    {
+        "id": "original-celestial-stained-glass-window",
+        "title": "Celestial Stained Glass Window",
+        "projectUrl": "/patterns/original-celestial-stained-glass-window/pattern.bead-pattern.json"
     }
 ];
 
