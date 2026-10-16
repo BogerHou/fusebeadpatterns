@@ -295,7 +295,15 @@ describe('native pattern chart journeys', () => {
         const colorCharts = records.filter(record => colorChartUrls.includes(record.url));
         expect(colorCharts.map(record => record.url)).toEqual(colorChartUrls);
         for (const record of colorCharts) expect(record.lastModified.toISOString()).toBe('2026-10-13T00:00:00.000Z');
-        const previous = records.filter(record => !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const beginnerGuides = records.filter(record => record.url.endsWith('/guides/perler-beads-for-beginners'));
+        expect(beginnerGuides.map(record => record.url)).toEqual([
+            'https://fusebeadpatterns.art/de/guides/perler-beads-for-beginners',
+            'https://fusebeadpatterns.art/fr/guides/perler-beads-for-beginners',
+            'https://fusebeadpatterns.art/ja/guides/perler-beads-for-beginners',
+            'https://fusebeadpatterns.art/guides/perler-beads-for-beginners',
+        ]);
+        for (const record of beginnerGuides) expect(record.lastModified.toISOString()).toBe('2026-10-16T00:00:00.000Z');
+        const previous = records.filter(record => !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 
