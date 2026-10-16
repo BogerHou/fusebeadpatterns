@@ -4,6 +4,7 @@ import { guidePages } from '@/app/(english)/guides/guide-data';
 import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
 import { perlerColorChartLabels, perlerColorChartPaths } from '@/lib/color-chart/routes';
+import { beadLetterLabels, beadLetterPaths } from '@/lib/bead-letters/routes';
 import LanguageSwitcher from './LanguageSwitcher';
 import styles from './LanguageSwitcher.module.css';
 import PrivacyPreferencesButton from '@/components/analytics/PrivacyPreferencesButton';
@@ -15,6 +16,7 @@ type SiteFooterSection =
     | 'editor'
     | 'pixel-grid'
     | 'bead-loom'
+    | 'bead-letters'
     | 'guides'
     | 'color-chart'
     | 'about'
@@ -48,6 +50,7 @@ const footerGroups: Array<{
             { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
             { id: 'pixel-grid', label: 'Pixel Art Grid', href: '/pixel-art-grid', nativeNavigation: true },
             { id: 'bead-loom', label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker', nativeNavigation: true },
+            { id: 'bead-letters', label: beadLetterLabels.en, href: beadLetterPaths.en, nativeNavigation: true },
             {
                 id: 'editor',
                 label: 'Advanced Editor',
@@ -99,6 +102,7 @@ export default function SiteFooter({
                 { id: 'editor', label: copy.advancedEditor, href: routes.editor, prefetch: false },
                 { id: 'pixel-grid', label: routes.pixelGrid ? copy.pixelGrid : englishLabel(copy.pixelGrid), href: routes.pixelGrid ?? '/pixel-art-grid', lang: routes.pixelGrid ? locale : 'en', nativeNavigation: true },
                 { id: 'bead-loom', label: copy.beadLoom, href: routes.beadLoom, lang: locale, nativeNavigation: true },
+                { id: 'bead-letters', label: beadLetterLabels[locale], href: routes.beadLetters, lang: locale, nativeNavigation: true },
             ] as FooterLink[],
         },
         {

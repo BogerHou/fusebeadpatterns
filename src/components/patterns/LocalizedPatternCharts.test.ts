@@ -24,6 +24,7 @@ import * as metadata from '../../lib/i18n/metadata';
 import * as overview from '../../lib/patterns/library-overview';
 import * as hamaMakerRoutes from '../../lib/hama-maker/routes';
 import * as colorChartRoutes from '../../lib/color-chart/routes';
+import * as beadLetterRoutes from '../../lib/bead-letters/routes';
 import * as guideRoutes from '../../lib/guides/routes';
 import * as sitePageRoutes from '../../lib/site-pages/routes';
 import * as localeRoutes from '../../lib/i18n/routes';
@@ -49,6 +50,7 @@ const quickDownloads = defaultModule(({ children }: { children: ReactNode }) => 
 const patternCatalog = { ...empty, toLocalizedPatternCard: (pattern: catalog.Pattern) => ({ id: pattern.id }) };
 const modules: Record<string, unknown> = {
     '@/lib/color-chart/routes': colorChartRoutes,
+    '@/lib/bead-letters/routes': beadLetterRoutes,
     './HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
     '@/components/patterns/HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
     './HamaOriginalDownloads': { ...defaultModule(HamaOriginalDownloads), HamaOriginalLink },
@@ -303,7 +305,11 @@ describe('native pattern chart journeys', () => {
             'https://fusebeadpatterns.art/guides/perler-beads-for-beginners',
         ]);
         for (const record of beginnerGuides) expect(record.lastModified.toISOString()).toBe('2026-10-16T00:00:00.000Z');
-        const previous = records.filter(record => !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const letterUrls = Object.values(beadLetterRoutes.beadLetterPaths).map(path => `https://fusebeadpatterns.art${path}`);
+        const letters = records.filter(record => letterUrls.includes(record.url));
+        expect(letters.map(record => record.url)).toEqual(letterUrls);
+        for (const record of letters) expect(record.lastModified.toISOString()).toBe('2026-10-16T00:00:00.000Z');
+        const previous = records.filter(record => !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 
