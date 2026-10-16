@@ -1,5 +1,6 @@
 import { keychainGuide } from '../../../lib/guides/keychains';
 import { beadifierAlternativeGuide } from '../../../lib/guides/beadifier-alternative';
+import { beginnerGuide } from '../../../lib/guides/beginners';
 import { tutorialEditorLink } from '../../../lib/guides/tutorial-projects';
 
 export type GuideSection = {
@@ -53,6 +54,7 @@ export type GuidePage = {
 };
 
 export const guidePages: GuidePage[] = [
+    beginnerGuide,
     {
         slug: 'photo-to-perler-bead-pattern',
         updatedAt: '2026-10-08',

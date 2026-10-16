@@ -1,6 +1,7 @@
 import type { SiteLocale } from '../i18n/locales';
 
 export const translatedGuideSlugs = [
+    'perler-beads-for-beginners',
     'photo-to-perler-bead-pattern',
     'perler-bead-pegboards', 'perler-to-hama-artkal', 'perler-vs-hama-vs-artkal',
     'mini-perler-beads', 'perler-bead-kits-and-storage', 'how-to-iron-perler-beads',
