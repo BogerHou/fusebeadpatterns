@@ -1,0 +1,75 @@
+{
+  "paletteSHA256": "6257da5908b11ac1cb67328a122e8bb8b439780528554cfc4a60e5ac2468b0a4",
+  "copySHA256": "499fc78d636b477fbc6aafa1f2eaa0ca94072f34a29d2aabf8fcc0ab53c7bfc9",
+  "sourceFontSHA256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "fontLicenseSHA256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "subsetFamily": "Fuse Bead Color Labels",
+  "subsetSHA256": "2e1533dd83e221ea8d48f7483542a8fcb7ac5f4ee94d9606ea8dbdeebd4a30b3",
+  "characterCount": 247,
+  "layout": {
+    "labelMM": [
+      35,
+      15
+    ],
+    "gapMM": [
+      2,
+      2
+    ],
+    "columns": 5,
+    "rows": 11,
+    "pageLabels": [
+      55,
+      48
+    ]
+  },
+  "files": {
+    "perler-midi-en-a4.pdf": {
+      "sha256": "fd26143a1178306b0caa0d51c17a1bbd0be6b4f45a8b4087fae74c0e576041c5",
+      "bytes": 25194,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-en-letter.pdf": {
+      "sha256": "30617fbf1ff969c146d4d4648c623cfbdf045b32718c5ac52d31862aeadfad14",
+      "bytes": 25217,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-de-a4.pdf": {
+      "sha256": "bcd481d9a642e05615679a51111867fba76fee4c07836544f04f0c6cf04d55e8",
+      "bytes": 25691,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-de-letter.pdf": {
+      "sha256": "885b1c5af7ea349dee1f35744953b5ac62d50b7e992b1c9d440af88f4f88d28e",
+      "bytes": 25707,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-fr-a4.pdf": {
+      "sha256": "f95834e388103c9b1e40fac57b3f84e97450896e7bf21a457946a74ba45d20fc",
+      "bytes": 25686,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-fr-letter.pdf": {
+      "sha256": "c6493ebe076ae03cc90fd24c5c5f45b12169a7aee4aebe5a30fe84285164ef51",
+      "bytes": 25703,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-ja-a4.pdf": {
+      "sha256": "3875aef50dc90ff805eb46c364ab2ac72ff1e20af29a11889d4987c53e6589fc",
+      "bytes": 45640,
+      "pages": 2,
+      "labels": 103
+    },
+    "perler-midi-ja-letter.pdf": {
+      "sha256": "9076e3b1b1fe76ab57ebf8f660a488cf0c59da6a6193acf86d05169b56284830",
+      "bytes": 45665,
+      "pages": 2,
+      "labels": 103
+    }
+  }
+}
