@@ -2,6 +2,7 @@
 
 import { qrBeadLabels } from '../../lib/qr-beads/routes';
 import { spriteLabels } from '../../lib/sprites/routes';
+import { bannerLabels } from '../../lib/minecraft-banners/routes';
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
@@ -26,6 +27,7 @@ export default function ToolMenu({ locale }: { locale: SiteLocale }) {
         { href: routes.blockShapes, label: blockShapeLabels[locale] },
         { href: routes.qrBeads, label: qrBeadLabels[locale] },
         { href: routes.sprites, label: spriteLabels[locale] },
+        { href: routes.bannerMaker, label: bannerLabels.designer[locale] },
     ];
 
     useEffect(() => {
