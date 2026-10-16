@@ -10,6 +10,8 @@ import { LOOM_LOCALE_STORAGE_KEY, consumeLoomLocaleSnapshot, consumeLargeLoomLoc
 import { loomSymbolInk } from '@/lib/bead-loom/contrast';
 import { getLoomPattern, getLoomPatternChart } from '@/lib/bead-loom/patterns';
 import { trackBeadLoomExport } from '@/lib/analytics';
+import { LOOM_WORKSPACE_FORMAT, MAX_LOOM_WORKSPACE_BYTES, LoomWorkspaceError, parseLoomWorkspaceProject, serializeLoomWorkspaceProject } from '@/lib/bead-loom/workspace-project';
+import { getLoomWorkspaceCopy } from '@/lib/bead-loom/workspace-copy';
 import styles from './LoomWorkspace.module.css';
 
 type Point = [number, number];
@@ -58,6 +60,7 @@ function originalExample(locale: LoomLocale): LoomChart {
 
 export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale } = {}) {
     const text = LOOM_MESSAGES[locale];
+    const workspaceText = getLoomWorkspaceCopy(locale);
     const [chart, setChart] = useState(() => createLocalizedLoomChart(locale));
     const chartRef = useRef(chart), saved = useRef(chart);
     const history = useRef<{ past: LoomChart[]; future: LoomChart[] }>({ past: [], future: [] });
@@ -83,6 +86,7 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
     const [busyMessage, setBusyMessage] = useState(text.preparing);
     const [restoreFailed, setRestoreFailed] = useState(false);
     const downloadUrls = useRef(new Map<string, number>());
+    const operation = useRef({ generation: 0 });
     const [viewportWidth, setViewportWidth] = useState(600);
     const scale = zoom === 'fit' ? Math.max(3, Math.min(28, (viewportWidth - margin * 2 - 30) / chart.columns / chart.cellAspect)) : Number(zoom);
 
@@ -142,7 +146,9 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
     }, []);
     useEffect(() => {
         mounted.current = true;
+        if(!busyRef.current)setBusy(false);
         const urls = downloadUrls.current;
+        const operations = operation.current;
         const unload = (e: BeforeUnloadEvent) => { if ((dirtyRef.current || busyRef.current || !localeReady.current) && !allowLeave.current) { e.preventDefault(); e.returnValue = ''; } };
         const navigate = (e: MouseEvent) => {
             if ((!dirtyRef.current && !busyRef.current && localeReady.current) || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -165,6 +171,7 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
         document.addEventListener('click', navigate, true); document.addEventListener('keydown', keyboard);
         return () => {
             mounted.current = false;
+            operations.generation++; busyRef.current = false;
             window.removeEventListener('beforeunload', unload); window.removeEventListener('blur', finishStroke); window.removeEventListener('pageshow', resetLeave);
             document.removeEventListener('click', navigate, true); document.removeEventListener('keydown', keyboard);
             for (const [url, timer] of urls) { window.clearTimeout(timer); URL.revokeObjectURL(url); } urls.clear();
@@ -254,9 +261,9 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
             };
             if (saveLoomLocaleSnapshot(snapshot, detail.href, window.sessionStorage)) { allowLeave.current = true; return; }
             event.preventDefault();
-            void task(async () => {
+            void task(async current => {
                 const stored = await saveLargeLoomLocaleSnapshot(snapshot, detail.href, window.sessionStorage);
-                if (!mounted.current) return;
+                if (!current()) return;
                 if (!stored) { setStatus({ text: text.languageFailed, error: true }); return; }
                 allowLeave.current = true; window.location.assign(detail.href);
             }, text.languageSaving);
@@ -328,54 +335,96 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
         if (dirtyRef.current && !window.confirm(text.replaceChart)) return;
         commit(next, text.chartReady, true);
     }
-    async function task(work: () => Promise<void>, message = text.preparing) {
+    async function task(work: (current: () => boolean) => Promise<void>, message = text.preparing, finish = true) {
         if (busyRef.current || !localeReady.current) return;
-        finishStroke(); busyRef.current = true; setBusyMessage(message); setBusy(true);
-        try { await work(); } catch (e) { if (mounted.current) setStatus({ text: loomErrorMessage(e, locale), error: true }); }
-        finally { busyRef.current = false; if (mounted.current) setBusy(false); }
+        if(finish)finishStroke(); const token=++operation.current.generation;
+        const current=()=>mounted.current&&operation.current.generation===token;
+        busyRef.current = true; setBusyMessage(message); setBusy(true);
+        try { await work(current); } catch (e) { if (current()) setStatus({ text: e instanceof LoomWorkspaceError?workspaceText.errors[e.code]:loomErrorMessage(e, locale), error: true }); }
+        finally { if(current()){busyRef.current = false; setBusy(false);} }
     }
     async function importImage(file: File) {
-        await task(async () => {
+        await task(async current => {
             if (file.size > 8388608) throw new Error('Choose an image smaller than 8 MB.');
-            const data = await file.arrayBuffer(); inspectImage(data, file.type);
+            const data = await file.arrayBuffer(); if(!current())return; inspectImage(data, file.type);
             const bitmap = await createImageBitmap(file);
             try {
+                if(!current())return;
                 if (bitmap.width > 2048 || bitmap.height > 2048 || bitmap.width * bitmap.height > 4194304) throw new Error('Choose an image up to 2048 pixels on each side.');
                 const temp = document.createElement('canvas'); temp.width = bitmap.width; temp.height = bitmap.height;
                 const ctx = temp.getContext('2d'); if (!ctx) throw new Error('Image decoding is unavailable in this browser.');
                 ctx.drawImage(bitmap, 0, 0); const pixels = ctx.getImageData(0, 0, temp.width, temp.height).data;
-                if (mounted.current) { source.current = { width: bitmap.width, height: bitmap.height, pixels }; setSourceName(file.name); setStatus({ text: text.imageLoaded, error: false }); }
+                if (current()) { source.current = { width: bitmap.width, height: bitmap.height, pixels }; setSourceName(file.name); setStatus({ text: text.imageLoaded, error: false }); }
                 temp.width = temp.height = 0;
             } finally { bitmap.close(); }
         });
     }
     async function importProject(file: File) {
-        await task(async () => {
-            if (file.size > LIMITS.maxProjectBytes) throw new Error('Choose a bead loom project smaller than 1 MB.');
-            const next = parseProject(await file.text());
-            if (!mounted.current || (dirtyRef.current && !window.confirm(text.replaceProject))) return;
+        await task(async current => {
+            if(file.size>MAX_LOOM_WORKSPACE_BYTES)throw new LoomWorkspaceError('TOO_LARGE');
+            let raw:string;try{raw=await file.text();}catch{throw new LoomWorkspaceError('READ_FAILED');}
+            if(!current())return;
+            let header:unknown;try{header=JSON.parse(raw);}catch{throw new LoomWorkspaceError('INVALID');}
+            if(header&&typeof header==='object'&&'format' in header&&header.format===LOOM_WORKSPACE_FORMAT){
+                const next=parseLoomWorkspaceProject(raw).snapshot;
+                // Number inputs must preserve raw pending values instead of
+                // silently normalizing a malicious file during installation.
+                for(const value of [next.columns,next.rows,next.aspect]){const input=document.createElement('input');input.type='number';input.value=value;if(input.value!==value)throw new LoomWorkspaceError('INVALID');}
+                const hasWork=!chartsEqual(chartRef.current,saved.current)||source.current!==null||history.current.past.length>0||history.current.future.length>0||columns!==String(chartRef.current.columns)||rows!==String(chartRef.current.rows)||aspect!==String(chartRef.current.cellAspect)||corner!==chartRef.current.startCorner||serpentine!==chartRef.current.serpentine;
+                if(hasWork&&!window.confirm(workspaceText.replace)){setStatus({text:workspaceText.cancelled,error:false});return;}
+                if(!current())return;
+                discardReplacedStroke();
+                applyLocaleSnapshot(next);setStatus({text:workspaceText.opened,error:false});return;
+            }
+            if(file.size>LIMITS.maxProjectBytes)throw new Error('Choose a bead loom project smaller than 1 MB.');
+            const next = parseProject(raw);
+            if (!current() || (!chartsEqual(chartRef.current,saved.current) && !window.confirm(text.replaceProject))) return;
+            if(!current())return;
+            discardReplacedStroke();
             saved.current = next; history.current = { past: [], future: [] }; source.current = null; setSourceName(''); publish(next, true);
             setStatus({ text: text.projectOpened, error: false });
-        });
+        },text.preparing,false);
+    }
+    function discardReplacedStroke(){
+        const previous=stroke.current;stroke.current=null;
+        if(previous&&canvas.current?.hasPointerCapture(previous.id)){
+            try{canvas.current.releasePointerCapture(previous.id);}catch{/* The pointer may already have been released. */}
+        }
     }
     function download(blob: Blob, name: string) {
-        const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-        downloadUrls.current.set(url, window.setTimeout(() => { URL.revokeObjectURL(url); downloadUrls.current.delete(url); }, 60000));
+        const url = URL.createObjectURL(blob), a = document.createElement('a');
+        try{
+            a.href = url; a.download = name; document.body.appendChild(a); a.click();
+            downloadUrls.current.set(url, window.setTimeout(() => { URL.revokeObjectURL(url); downloadUrls.current.delete(url); }, 60000));
+        }catch(error){URL.revokeObjectURL(url);throw error;}
+        finally{a.remove();}
     }
     async function exportFile(kind: 'project' | 'pdf' | 'png') {
-        await task(async () => {
+        await task(async current => {
             const snapshot = validateChart(chartRef.current), base = snapshot.title.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '').slice(0, 70) || 'bead-loom-chart';
             let blob: Blob;
             if (kind === 'project') blob = new Blob([serializeProject(snapshot)], { type: 'application/json' });
             else {
                 const exporter = await import('@/lib/bead-loom/export');
+                if(!current())return;
                 blob = kind === 'pdf' ? new Blob([await exporter.exportLoomPdf(snapshot, paper, locale)], { type: 'application/pdf' }) : await exporter.exportLoomPng(snapshot, locale);
             }
-            if (!mounted.current) return;
+            if (!current()) return;
             download(blob, `${base}${kind === 'project' ? '.bead-loom.json' : kind === 'pdf' ? `-${paper}.pdf` : '-chart.png'}`);
             trackBeadLoomExport({ format: kind });
             if (kind === 'project') { saved.current = snapshot; sync(); }
             setStatus({ text: text.exported(kind), error: false });
+        });
+    }
+    async function saveWorkspace(){
+        await task(async current=>{
+            const checkpoint=validateChart(chartRef.current);
+            const snapshot:LoomLocaleSnapshot={chart:checkpoint,saved:checkpoint,history:history.current,columns,rows,aspect,corner,serpentine,selected,replaceTarget,tool,zoom,cursor:cursorRef.current,source:source.current,sourceName,mode,paper};
+            const raw=serializeLoomWorkspaceProject(snapshot);
+            if(!current())return;
+            const base=checkpoint.title.replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,70)||'bead-loom-chart';
+            download(new Blob([raw],{type:'application/json'}),`${base}.bead-loom-workspace.json`);
+            trackBeadLoomExport({format:'project'});saved.current=checkpoint;sync();setStatus({text:workspaceText.saved,error:false});
         });
     }
     function editColor(id: string, key: 'name' | 'code' | 'hex', value: string) {
@@ -476,8 +525,10 @@ export default function LoomWorkspace({ locale = 'en' }: { locale?: LoomLocale }
                             <button className={styles.primary} onClick={() => void exportFile('pdf')}>{text.pdf}</button>
                             <button onClick={() => void exportFile('png')}>{text.png}</button>
                             <button onClick={() => void exportFile('project')}>{text.saveProject}</button>
+                            <button onClick={() => void saveWorkspace()}>{workspaceText.save}</button>
                         </div>
                         <p className={styles.hint}>{text.exportHelp}</p>
+                        <p className={styles.hint}>{workspaceText.help}</p>
                         <details className={styles.details}><summary>{text.rowInstructions(chart.rows)}</summary>
                             <p className={styles.hint}>{text.rowHelp}</p>
                             <div className={`${styles.rowScroll} ${styles.topSpace}`}><table className={styles.table}><thead><tr><th>{text.row}</th><th>{text.direction}</th><th>{text.sequence}</th></tr></thead><tbody>{instructions.map(row => <tr key={row.rowNumber}><th scope="row">{row.rowNumber}</th><td>{row.direction === 'left-to-right' ? text.leftToRight : text.rightToLeft}</td><td className={styles.rowSequence}>{row.runs.map(run => `${run.symbol} × ${run.count}`).join(' · ')}</td></tr>)}</tbody></table></div>

@@ -43,7 +43,7 @@ export default function BeadLoomPage() {
                     <li>Check the chart and row instructions, then export A4 or US Letter. Each cell is one bead, including the background. Counts exclude spare beads, thread and finishing materials.</li>
                 </ol>
                 <p className="mt-5">This tool makes filled rectangular charts for loom beadwork. It does not create peyote, brick-stitch or fuse-bead patterns. The PDF is a reading chart, not a life-size template. Bead finish, thread tension and weaving method affect the result; measure a sample and follow your loom instructions.</p>
-                <p className="mt-5">Images and projects stay in this browser. Save a project before leaving to keep the chart, palette and reading settings. The original image and undo history are not stored in the project.</p>
+                <p className="mt-5">Images and projects are processed in your browser. “Save project” keeps only the chart, palette and reading settings. “Save full workspace” also keeps the original image, undo/redo history and unapplied settings. Download the file you need before leaving; your work is not saved automatically.</p>
             </section>
         </main>
         <SiteFooter active="bead-loom" description="Create a bead loom chart with your own palette, check the row instructions, and save a printable chart and editable project from your browser." />

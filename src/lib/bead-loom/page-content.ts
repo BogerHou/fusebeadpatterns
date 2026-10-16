@@ -30,7 +30,7 @@ export const loomPageContent: Record<LocalizedLoomLocale, LoomPageContent> = {
             'Prüfe das Raster und die Reihenanleitung und exportiere dann auf A4 oder US Letter. Jede Zelle zählt als eine Perle, einschließlich des Hintergrunds. Die Anzahl enthält keine Reserveperlen, Fäden oder Materialien für den Abschluss.',
         ],
         chartHelp: 'Dieses Werkzeug erstellt vollständig gefüllte, rechteckige Raster für den Perlenwebrahmen. Es erstellt keine Peyote-, Brick-Stitch- oder Bügelperlenmuster. Die PDF ist ein Leseschema und keine Vorlage in Originalgröße. Perlenoberfläche, Fadenspannung und Webtechnik beeinflussen das Ergebnis. Miss eine Probe und beachte die Anleitung deines Webrahmens.',
-        savingHelp: 'Bilder und Projekte bleiben in diesem Browser. Speichere vor dem Verlassen ein Projekt, um Raster, Palette und Leseeinstellungen zu behalten. Das Originalbild und der Bearbeitungsverlauf werden nicht in der Projektdatei gespeichert.',
+        savingHelp: 'Bilder und Projekte werden in deinem Browser verarbeitet. „Projekt speichern“ sichert nur das Raster, die Palette und die Leseeinstellungen. „Vollständigen Arbeitsstand speichern“ sichert zusätzlich das Originalbild, den Rückgängig-/Wiederholen-Verlauf und noch nicht übernommene Einstellungen. Lade vor dem Verlassen die benötigte Datei herunter; deine Arbeit wird nicht automatisch gespeichert.',
         footer: 'Erstelle ein Perlenwebmuster mit eigener Palette, prüfe die Reihenanleitung und speichere ein druckbares Raster und ein bearbeitbares Projekt im Browser.',
     },
     fr: {
@@ -46,7 +46,7 @@ export const loomPageContent: Record<LocalizedLoomLocale, LoomPageContent> = {
             'Vérifiez la grille et les instructions, puis exportez en A4 ou US Letter. Chaque cellule représente une perle, y compris le fond. Le décompte exclut les perles de réserve, le fil et les matériaux de finition.',
         ],
         chartHelp: 'Cet outil crée des grilles rectangulaires entièrement remplies pour le tissage sur métier à perles. Il ne crée pas de motifs en peyote, en brick stitch ou en perles à repasser. Le PDF est une grille de lecture, pas un gabarit à taille réelle. La finition des perles, la tension du fil et la méthode de tissage influencent le résultat : mesurez un échantillon et suivez les instructions de votre métier.',
-        savingHelp: 'Les images et les projets restent dans ce navigateur. Enregistrez un projet avant de quitter pour conserver la grille, la palette et les réglages de lecture. Le fichier de projet ne contient ni l’image d’origine ni l’historique des modifications.',
+        savingHelp: 'Les images et les projets sont traités dans votre navigateur. « Enregistrer le projet » conserve uniquement la grille, la palette et les réglages de lecture. « Enregistrer tout l’espace de travail » conserve aussi l’image d’origine, l’historique d’annulation et de rétablissement et les réglages non appliqués. Téléchargez le fichier souhaité avant de quitter ; votre travail n’est pas enregistré automatiquement.',
         footer: 'Créez un motif pour métier à perles avec votre palette, consultez les instructions par rang et enregistrez une grille imprimable et un projet modifiable depuis votre navigateur.',
     },
     ja: {
@@ -62,7 +62,7 @@ export const loomPageContent: Record<LocalizedLoomLocale, LoomPageContent> = {
             '図案と段ごとの手順を確認し、A4またはUS Letterで書き出します。背景も含め、すべてのマスを1個のビーズとして数えます。予備のビーズ、糸、仕上げ材料は個数に含みません。',
         ],
         chartHelp: 'このツールは、ビーズ織り機で使う、すべてのマスが埋まった長方形の図案を作成します。ペヨーテステッチ、ブリックステッチ、アイロンビーズ用の図案には対応していません。PDFは読み取り用の図表で、実寸の型紙ではありません。ビーズの仕上げ、糸の張り、織り方によって結果が変わるため、試し織りを測り、織り機の説明に従ってください。',
-        savingHelp: '画像とプロジェクトはこのブラウザ内で処理されます。ページを離れる前にプロジェクトを保存すると、図案、配色、読み順の設定を残せます。プロジェクトファイルには元画像と操作履歴は含まれません。',
+        savingHelp: '画像とプロジェクトはこのブラウザ内で処理されます。「プロジェクトを保存」に含まれるのは図案、配色、読み順の設定です。「作業全体を保存」には元画像、元に戻す・やり直す履歴、未適用の設定も含まれます。作業は自動保存されないため、ページを離れる前に必要なファイルをダウンロードしてください。',
         footer: '自分の配色でビーズ織り図案を作成し、段ごとの手順を確認して、印刷用の図案と編集用プロジェクトをブラウザから保存できます。',
     },
 };

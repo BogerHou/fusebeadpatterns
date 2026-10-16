@@ -12,6 +12,8 @@ import * as pixelCore from '../pixel-grid/core';
 import * as routes from '../i18n/routes';
 import * as contrast from './contrast';
 import * as patterns from './patterns';
+import * as workspaceProject from './workspace-project';
+import { LOOM_WORKSPACE_COPY } from './workspace-copy';
 import { PixelGridError } from '../pixel-grid/errors';
 import { pixelGridErrorMessage } from '../pixel-grid/messages';
 import type { PixelLocaleStore } from '../pixel-grid/locale-storage';
@@ -83,6 +85,12 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/pixel-grid/core') return pixelCore;
         if (id === '@/lib/bead-loom/contrast') return contrast;
         if (id === '@/lib/bead-loom/patterns') return patterns;
+        if (id === '@/lib/bead-loom/workspace-copy') return {getLoomWorkspaceCopy:(locale:messages.LoomLocale)=>LOOM_WORKSPACE_COPY[locale]};
+        if (id === '@/lib/bead-loom/workspace-project') return {...workspaceProject,serializeLoomWorkspaceProject:(snapshot:transfer.LoomLocaleSnapshot)=>workspaceProject.serializeLoomWorkspaceProject({
+            // The component is evaluated in a VM. Recreate only its own-data
+            // envelope in this realm; production's strict codec is unchanged.
+            ...snapshot,history:{past:[...snapshot.history.past],future:[...snapshot.history.future]},cursor:[...snapshot.cursor],source:snapshot.source?{...snapshot.source}:null,
+        })};
         if (id === '@/lib/i18n/routes') return routes;
         if (id === '@/lib/analytics') return { trackBeadLoomExport: () => false };
         if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_target, name) => String(name) }) };
@@ -112,7 +120,7 @@ function localStore() {
     return { values, store };
 }
 // Real component handlers and model/exported project JSON; only DOM drawing/image decoding are fixtures.
-function interactive(locale: messages.LoomLocale, options: { storage?: ReturnType<typeof storageArea>; store?: PixelLocaleStore; search?: string; strictReplay?: boolean } = {}) {
+function interactive(locale: messages.LoomLocale, options: { storage?: ReturnType<typeof storageArea>; store?: PixelLocaleStore; search?: string; strictReplay?: boolean; confirm?:()=>boolean } = {}) {
     const slots: unknown[] = [], effects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
     let slot = 0, first = true, tree: unknown;
     const browserListeners = new Map<string, Set<(event: Event) => void>>(), documentListeners = new Map<string, Set<(event: Event) => void>>();
@@ -121,7 +129,7 @@ function interactive(locale: messages.LoomLocale, options: { storage?: ReturnTyp
     const search = options.search ?? '';
     const location = { href: `https://fusebeadpatterns.art${transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(locale)]}${search}`, origin: 'https://fusebeadpatterns.art', pathname: transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(locale)], search, assign(href: string) { assignments.push(href); }, reload() { assignments.push('reload'); } };
     const browser = {
-        location, sessionStorage: storage, confirm: (message: string) => { confirmations.push(message); return false; },
+        location, sessionStorage: storage, confirm: (message: string) => { confirmations.push(message); return options.confirm?.()??false; },
         addEventListener: (key: string, fn: (event: Event) => void) => register(browserListeners, key, fn), removeEventListener: (key: string, fn: (event: Event) => void) => browserListeners.get(key)?.delete(fn),
         clearTimeout() {}, setTimeout: () => 1,
     };
@@ -131,10 +139,10 @@ function interactive(locale: messages.LoomLocale, options: { storage?: ReturnTyp
     }
     const source = { width: 64, height: 32, pixels: new Uint8ClampedArray(64 * 32 * 4) };
     for (let i = 0; i < source.pixels.length; i++) source.pixels[i] = (i * 43) & 255;
-    const blobs = new Map<string, Blob>(), downloads: { name: string; blob: Blob }[] = [];
+    const blobs = new Map<string, Blob>(), downloads: { name: string; blob: Blob }[] = [];let failDownload=false;
     const document = {
         addEventListener: (key: string, fn: (event: Event) => void) => register(documentListeners, key, fn), removeEventListener: (key: string, fn: (event: Event) => void) => documentListeners.get(key)?.delete(fn),
-        body: { appendChild() {} }, createElement: (kind: string) => kind === 'canvas' ? { width: 0, height: 0, getContext: () => ({ drawImage() {}, getImageData: () => ({ data: source.pixels.slice() }) }) } : { href: '', download: '', remove() {}, click(this: { href: string; download: string }) { downloads.push({ name: this.download, blob: blobs.get(this.href)! }); } },
+        body: { appendChild() {} }, createElement: (kind: string) => kind === 'canvas' ? { width: 0, height: 0, getContext: () => ({ drawImage() {}, getImageData: () => ({ data: source.pixels.slice() }) }) } : { href: '', download: '', remove() {}, click(this: { href: string; download: string }) { if(failDownload)throw Error('Download unavailable.');downloads.push({ name: this.download, blob: blobs.get(this.href)! }); } },
     };
     const jsx = (type: unknown, props: Record<string, unknown>) => ({ type, props });
     const hooks = {
@@ -164,6 +172,11 @@ function interactive(locale: messages.LoomLocale, options: { storage?: ReturnTyp
     async function settle() { await new Promise(resolve => setImmediate(resolve)); render(); }
     return {
         source, storage, assignments, confirmations, exports, render, settle, byId,
+        startStroke(){const target={width:274,height:634,getBoundingClientRect:()=>({left:0,top:0,width:274,height:634}),setPointerCapture(){},focus(){}};invoke(find(node=>node.type==='canvas'),'onPointerDown',{currentTarget:target,pointerId:7,button:0,clientX:47,clientY:47,preventDefault(){}});render();},
+        runtime(){const refs=slots.filter(value=>value&&typeof value==='object'&&'current'in value).map(value=>(value as{current:unknown}).current);return structuredClone({charts:refs.filter(value=>value&&typeof value==='object'&&'cells'in value),history:refs.find(value=>value&&typeof value==='object'&&'past'in value&&'future'in value),stroke:refs.find(value=>value&&typeof value==='object'&&'before'in value&&'id'in value)});},
+        failDownloads(value:boolean){failDownload=value;},
+        activeUrls:()=>blobs.size,
+        replayEffects(){for(const cleanup of cleanups.splice(0))cleanup();for(const effect of effects){const cleanup=effect();if(cleanup)cleanups.push(cleanup);}render();},
         click(label: string) { invoke(button(label), 'onClick'); render(); },
         change(id: string, value: string | boolean) { invoke(byId(id), 'onChange', { target: { value, checked: value } }); render(); },
         status: () => content(tree), disabled: () => find(node => node.type === 'fieldset').props.disabled,
@@ -185,12 +198,73 @@ function interactive(locale: messages.LoomLocale, options: { storage?: ReturnTyp
             const raw = core.serializeProject(chart), file = { name: 'custom.bead-loom.json', size: Buffer.byteLength(raw), text: async () => raw };
             invoke(byId('loom-project-file'), 'onChange', { target: { files: [file], value: file.name } }); await settle();
         },
+        async loadRaw(raw:string){const file={name:'full.bead-loom-workspace.json',size:Buffer.byteLength(raw),text:async()=>raw};invoke(byId('loom-project-file'),'onChange',{target:{files:[file],value:file.name}});await settle();},
+        openDeferred(pending:Promise<string>){const file={name:'late.json',size:100,text:()=>pending};invoke(byId('loom-project-file'),'onChange',{target:{files:[file],value:file.name}});render();},
         async download(label: string) { const previous = downloads.length; invoke(button(label), 'onClick'); await vi.waitFor(() => expect(downloads.length).toBe(previous + 1)); render(); return downloads[previous]; },
         unmount() { for (const cleanup of cleanups) cleanup(); },
     };
 }
 
 describe('actual loom language events and project continuity', () => {
+    it.each(['en','de','fr','ja'] as const)('saves and reopens the full %s workspace including source and a future-only chart',async locale=>{
+        const ui=interactive(locale),native=copy[locale],full=LOOM_WORKSPACE_COPY[locale];
+        await ui.loadImage();ui.click(native.convert);ui.click(native.undo);
+        ui.change('loom-columns','');ui.change('loom-rows','47');ui.change('loom-aspect','1.25');ui.change('loom-paper','letter');ui.change('loom-mode','crop');
+        const file=await ui.download(full.save),raw=await file.blob.text(),snapshot=workspaceProject.parseLoomWorkspaceProject(raw).snapshot;
+        expect(file.name).toMatch(/\.bead-loom-workspace\.json$/);expect(snapshot.history.past).toHaveLength(0);expect(snapshot.history.future).toHaveLength(1);
+        expect(snapshot.source).toEqual(ui.source);expect(snapshot.saved).toEqual(snapshot.chart);expect(snapshot.columns).toBe('');expect(snapshot.rows).toBe('47');expect(snapshot.paper).toBe('letter');expect(ui.beforeUnload()).toBe(false);
+        const target=interactive(locale);await target.loadRaw(raw);expect(target.status()).toContain(full.opened);
+        expect(target.byId('loom-columns').props.value).toBe('');expect(target.byId('loom-rows').props.value).toBe('47');expect(target.byId('loom-paper').props.value).toBe('letter');
+        const restored=workspaceProject.parseLoomWorkspaceProject(await(await target.download(full.save)).blob.text()).snapshot;expect(restored).toEqual(snapshot);
+        target.click(native.redo);
+        expect(core.parseProject(await(await target.download(native.saveProject)).blob.text())).toEqual(snapshot.history.future[0]);
+        target.click(native.undo);target.change('loom-columns',String(snapshot.chart.columns));target.change('loom-rows',String(snapshot.chart.rows));target.change('loom-aspect',String(snapshot.chart.cellAspect));target.click(native.convert);
+        expect(core.parseProject(await(await target.download(native.saveProject)).blob.text())).toEqual(core.convertImage(ui.source,snapshot.chart,'crop'));
+        const endpoint=(['en','de','fr','ja'] as const).find(value=>value!==locale)!,path=transfer.LOOM_LOCALE_PATHS[['en','de','fr','ja'].indexOf(endpoint)];
+        expect(target.switchLanguage(`https://fusebeadpatterns.art${path}`).defaultPrevented).toBe(false);
+        const translated=interactive(endpoint,{storage:target.storage,strictReplay:true});
+        const roundtrip=workspaceProject.parseLoomWorkspaceProject(await(await translated.download(LOOM_WORKSPACE_COPY[endpoint].save)).blob.text()).snapshot;
+        expect(roundtrip.source).toEqual(ui.source);expect(roundtrip.paper).toBe('letter');expect(roundtrip.mode).toBe('crop');expect(roundtrip.history.past.length+roundtrip.history.future.length).toBeGreaterThan(0);
+        ui.unmount();target.unmount();translated.unmount();
+    });
+    it('rejects broken full files and read errors before replacing the original image or history, and honours Cancel',async()=>{
+        let allow=false;const ui=interactive('fr',{confirm:()=>allow}),native=copy.fr,full=LOOM_WORKSPACE_COPY.fr;
+        await ui.loadImage();ui.click(native.convert);ui.paint();ui.change('loom-rows','73');
+        const before=await(await ui.download(full.save)).blob.text();
+        const damaged=JSON.parse(before);damaged.snapshot.history.future=[{bad:true}];await ui.loadRaw(JSON.stringify(damaged));
+        expect(ui.status()).toContain(full.errors.INVALID);expect(await(await ui.download(full.save)).blob.text()).toBe(before);
+        const replacement=workspaceProject.parseLoomWorkspaceProject(before).snapshot;replacement.chart=core.createChart(5,7);replacement.saved=replacement.chart;replacement.history={past:[],future:[]};replacement.selected=replacement.chart.palette[1].id;replacement.replaceTarget=replacement.chart.backgroundId;replacement.cursor=[0,0];
+        const incoming=workspaceProject.serializeLoomWorkspaceProject(replacement);await ui.loadRaw(incoming);
+        expect(ui.confirmations.at(-1)).toBe(full.replace);expect(ui.status()).toContain(full.cancelled);expect(await(await ui.download(full.save)).blob.text()).toBe(before);
+        ui.openDeferred(Promise.reject(new Error('/private/decoder-secret')));await ui.settle();expect(ui.status()).toContain(full.errors.READ_FAILED);expect(ui.status()).not.toContain('decoder-secret');expect(await(await ui.download(full.save)).blob.text()).toBe(before);
+        allow=true;await ui.loadRaw(incoming);expect(ui.status()).toContain(full.opened);expect(core.parseProject(await(await ui.download(native.saveProject)).blob.text())).toEqual(replacement.chart);ui.unmount();
+    });
+    it('does not mark a failed workspace download as saved and keeps the old chart-only download contract',async()=>{
+        const ui=interactive('en');ui.paint();expect(ui.beforeUnload()).toBe(true);
+        ui.failDownloads(true);ui.click(LOOM_WORKSPACE_COPY.en.save);await ui.settle();expect(ui.beforeUnload()).toBe(true);expect(ui.activeUrls()).toBe(0);
+        ui.failDownloads(false);const file=await ui.download(LOOM_WORKSPACE_COPY.en.save);const opened=workspaceProject.parseLoomWorkspaceProject(await file.blob.text()).snapshot;
+        expect(opened.saved).toEqual(opened.chart);expect(ui.beforeUnload()).toBe(false);
+        const legacy=await ui.download(copy.en.saveProject);expect(legacy.name).toMatch(/\.bead-loom\.json$/);expect(JSON.parse(await legacy.blob.text())).toEqual({format:'bead-loom-project',version:1,chart:opened.chart});ui.unmount();
+    });
+    it('does not finish an active stroke or clear its redo history when opening fails or is cancelled',async()=>{
+        const ui=interactive('en');ui.paint();ui.click(copy.en.undo);
+        const full=await(await ui.download(LOOM_WORKSPACE_COPY.en.save)).blob.text();ui.startStroke();
+        const before=ui.runtime();expect(before.stroke).toBeTruthy();expect((before.history as{future:unknown[]}).future).toHaveLength(1);
+        for(const raw of ['{',JSON.stringify({format:workspaceProject.LOOM_WORKSPACE_FORMAT,version:1,snapshot:{}}),full]){
+            await ui.loadRaw(raw);expect(ui.runtime()).toEqual(before);
+        }
+        expect(ui.status()).toContain(LOOM_WORKSPACE_COPY.en.cancelled);
+        await ui.loadRaw(core.serializeProject(core.createChart()));expect(ui.confirmations.at(-1)).toBe(copy.en.replaceProject);expect(ui.runtime()).toEqual(before);ui.unmount();
+    });
+    it('invalidates an old file read across cleanup/remount so it cannot replace newer work or unlock a newer operation',async()=>{
+        const ui=interactive('ja',{confirm:()=>true});await ui.loadImage();ui.click(copy.ja.convert);
+        const raw=await(await ui.download(LOOM_WORKSPACE_COPY.ja.save)).blob.text(),newer=workspaceProject.parseLoomWorkspaceProject(raw).snapshot;
+        newer.chart.title='Newer chart';newer.saved=newer.chart;const newerRaw=workspaceProject.serializeLoomWorkspaceProject(newer);
+        let complete!:(value:string)=>void;const pending=new Promise<string>(resolve=>{complete=resolve;});ui.openDeferred(pending);expect(ui.disabled()).toBe(true);
+        ui.replayEffects();expect(ui.disabled()).toBe(false);await ui.loadRaw(newerRaw);
+        complete(raw);await ui.settle();expect(ui.status()).toContain(LOOM_WORKSPACE_COPY.ja.opened);
+        expect(core.parseProject(await(await ui.download(copy.ja.saveProject)).blob.text()).title).toBe('Newer chart');ui.unmount();
+    });
     it.each(['en', 'de', 'fr', 'ja'] as const)('opens the real heart chart from its gallery link in %s', async locale => {
         const ui = interactive(locale, { search: '?pattern=heart-band', strictReplay: true });
         expect(ui.byId('loom-columns').props.value).toBe('11');
