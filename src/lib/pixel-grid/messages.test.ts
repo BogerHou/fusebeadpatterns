@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { Script } from 'node:vm';
 import { inflateSync } from 'node:zlib';
@@ -16,6 +17,8 @@ import * as localeNavigation from './locale-navigation';
 import * as workspaceProject from './workspace-project';
 import * as cropCopy from './crop-copy';
 import * as sourceCrop from './source-crop';
+import * as practice from './practice';
+import * as practiceCopy from './practice-copy';
 import * as beadCopy from './bead-copy';
 import * as beadTransfer from './bead-transfer';
 import * as beadConversion from './bead-conversion';
@@ -182,6 +185,9 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/pixel-grid/conversion') return conversion;
         if (id === '@/lib/pixel-grid/crop-copy') return cropCopy;
         if (id === '@/lib/pixel-grid/source-crop') return sourceCrop;
+        if (id === '@/lib/pixel-grid/practice') return practice;
+        if (id === '@/lib/pixel-grid/practice-copy') return practiceCopy;
+        if (id === './PixelPracticeProvider') return { usePixelPracticeRegistration() {} };
         if (id === '@/lib/pixel-grid/messages') return messages;
         if (id === '@/lib/pixel-grid/print-copy') return printCopy;
         if (id === '@/lib/pixel-grid/print-preferences') return printPreferences;
@@ -301,6 +307,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     createPdf?: typeof createPixelGridPdf;
     loadJapaneseFont?: () => Promise<string>;
     confirm?: () => boolean;
+    practice?: { fetch: typeof fetch; decode: practice.PixelPracticeDecoder };
 } = {}) {
     const text = copy[props.locale ?? 'en'];
     const slots: unknown[] = [], mountEffects: (() => void | (() => void))[] = [], cleanups: (() => void)[] = [];
@@ -318,6 +325,8 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     const preferenceStore = printPreferences.createPixelGridPrintPreferenceStore(() => storage);
     const paths = { en: '/pixel-art-grid', de: '/de/pixel-art-generator', fr: '/fr/image-en-pixel-art', ja: '/ja/pixel-art-converter' };
     let confirmations = 0;
+    let practiceStart: ((id: practice.PixelPracticeId) => void) | undefined;
+    let practiceEnabled = false;
     const assignments: string[] = [];
     const location = { href: `https://fusebeadpatterns.art${paths[props.locale ?? 'en']}`, origin: 'https://fusebeadpatterns.art', pathname: paths[props.locale ?? 'en'], search: '', assign(href: string) { runtime.assign?.(href); assignments.push(href); } };
     if (runtime.href) {
@@ -334,6 +343,8 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         addEventListener: (name: string, callback: (event: Event) => void) => register(browserListeners, name, callback),
         removeEventListener: (name: string, callback: (event: Event) => void) => browserListeners.get(name)?.delete(callback),
         clearTimeout() {}, setTimeout: (callback: () => void) => { callbacks.push(callback); return callbacks.length; },
+        fetch: runtime.practice?.fetch,
+        requestAnimationFrame: (callback: () => void) => { callbacks.push(callback); return callbacks.length; }, cancelAnimationFrame() {},
     };
     class Anchor {
         target = '';
@@ -370,6 +381,8 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         consumeLargePixelLocaleSnapshot: (href: string, area: typeof storage) => localeNavigation.consumeLargePixelLocaleSnapshot(href, area, runtime.largeStore),
     };
     const Component = workspace({ react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@/lib/pixel-grid/locale-navigation': transfer,
+        './PixelPracticeProvider': { usePixelPracticeRegistration(start: typeof practiceStart, enabled: boolean) { practiceStart = start; practiceEnabled = enabled; } },
+        '@/lib/pixel-grid/practice': { ...practice, decodePixelPracticeImage: runtime.practice?.decode ?? practice.decodePixelPracticeImage },
         '@/lib/pixel-grid/bead-transfer': { ...beadTransfer, ...runtime.beadTransfer },
         '@/lib/pixel-grid/print-preferences': { ...printPreferences,
             getPixelGridPrintPreferences: preferenceStore.getSnapshot,
@@ -441,11 +454,27 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
             invoke(find(node => node.type === 'canvas'), 'onKeyDown', event); render(); return event.prevented;
         },
         pointer: (handler: 'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerCancel' | 'onLostPointerCapture', x = .25, y = .25, pointerId = 1, options: { button?: number; isPrimary?: boolean } = {}) => {
+            if (handler === 'onLostPointerCapture' || handler === 'onPointerCancel') captures.delete(pointerId);
             invoke(find(node => node.type === 'canvas'), handler, { pointerId, clientX: x * 100, clientY: y * 100,
                 currentTarget: nativeCanvas, button: 0, isPrimary: true, preventDefault() {}, ...options }); render();
         },
         blurCanvas: () => { invoke(find(node => node.type === 'canvas'), 'onBlur'); render(); },
         blurWindow: () => { for (const callback of browserListeners.get('blur') ?? []) callback({} as Event); render(); },
+        startPractice: (id: practice.PixelPracticeId) => { practiceStart?.(id); render(); },
+        practiceEnabled: () => practiceEnabled,
+        // Read real hook-owned model refs without saving/exporting (which would
+        // legitimately finish a live stroke and alter the saved checkpoint).
+        inspectWork: () => {
+            const refs = slots.filter((value): value is { current: unknown } => !!value && typeof value === 'object' && 'current' in value).map(value => value.current);
+            const grids = refs.filter((value): value is core.PixelGrid => !!value && typeof value === 'object' && 'pixels' in value && !('name' in value));
+            const history = refs.find(value => value instanceof core.GridHistory) as core.GridHistory;
+            const source = refs.find(value => !!value && typeof value === 'object' && 'pixels' in value && 'name' in value) as localeNavigation.PixelSourceImage | undefined;
+            const crop = refs.find(value => !!value && typeof value === 'object' && 'sourceWidth' in value);
+            const stroke = refs.find(value => !!value && typeof value === 'object' && 'id' in value && 'tool' in value);
+            return { grids: grids.map(grid => core.serializeProject(grid)), history: history.snapshot(), source: source ? { name: source.name, width: source.width, height: source.height, rgbaSha256: createHash('sha256').update(Uint8Array.from(source.pixels)).digest('hex') } : undefined, crop, stroke: stroke ? JSON.stringify(stroke) : null,
+                settings: ['pixel-width', 'pixel-height', 'pixel-image-mode', 'pixel-color', 'pixel-alpha', 'pixel-color-limit', 'pixel-export-scale', 'pixel-zoom', 'pixel-print-paper', 'pixel-print-mode', 'pixel-print-content'].map(id => byId(id).props.value),
+            };
+        },
         click: (label: string) => { invoke(button(label), 'onClick'); render(); },
         change: (id: string, value: string) => { invoke(byId(id), 'onChange', { target: { value } }); render(); },
         loadImage: async () => {
@@ -477,6 +506,100 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         unmount: () => { for (const cleanup of cleanups) cleanup(); },
     };
 }
+
+describe('one-click examples through the real workspace handler', () => {
+    const decoded = { width: 792, height: 960, pixels: new Uint8ClampedArray(792 * 960 * 4) };
+    for (let i = 0; i < decoded.width * decoded.height; i++) decoded.pixels.set([i % 2 ? 12 : 221, 83, 176, i % 3 ? 255 : 128], i * 4);
+    const catBytes = readFileSync('public/guides/photo-to-pattern/cat-source.jpg');
+    const validResponse = () => new Response(catBytes, { headers: { 'content-type': 'image/jpeg' } });
+    const decode = async () => decoded;
+
+    async function prepareOld(ui: ReturnType<typeof interactiveWorkspace>, locale: messages.PixelGridLocale) {
+        const text = copy[locale];
+        await ui.loadImage(); ui.paint();
+        ui.change('pixel-color-limit', '8'); ui.click(text.reduceCurrent); ui.click(text.undo);
+        ui.click(cropCopy.PIXEL_CROP_COPY[locale].open);
+        invoke(ui.cropDialog(), 'onApply', { sourceWidth: 64, sourceHeight: 32, x: 17, y: 2, width: 37, height: 23 }); ui.render();
+        ui.change('pixel-width', '17'); ui.change('pixel-height', '');
+        ui.change('pixel-color', '#224466'); ui.change('pixel-alpha', '73'); ui.change('pixel-zoom', '8'); ui.change('pixel-export-scale', '4');
+        ui.change('pixel-print-paper', 'letter'); ui.change('pixel-print-mode', 'tiled'); ui.change('pixel-print-content', 'blank');
+    }
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('cancel preserves the actual %s source, ROI, past/future, invalid pending inputs and print choices', async locale => {
+        const confirm = vi.fn(() => false);
+        const ui = interactiveWorkspace({ locale, experience: locale === 'en' ? 'grid' : 'converter' }, { confirm, practice: { fetch: async () => validResponse(), decode } });
+        await prepareOld(ui, locale);
+        const before = ui.inspectWork();
+        expect(before.history.redo).toHaveLength(1);
+        ui.startPractice('cat-64-16-colors'); await ui.settle(); await ui.settle();
+        expect(confirm).toHaveBeenCalledOnce(); expect(ui.inspectWork()).toEqual(before);
+        expect(ui.status()).toContain(practiceCopy.PIXEL_PRACTICE_COPY[locale].cancelled);
+        expect(ui.practiceEnabled()).toBe(true); ui.unmount();
+    });
+
+    it.each(['bad-fetch', 'cancel'] as const)('request-induced blur/capture loss does not finish the real active stroke on %s; the next gesture and Undo work', async outcome => {
+        let release!: (response: Response) => void;
+        const waiting = new Promise<Response>(resolve => { release = resolve; });
+        const ui = interactiveWorkspace({ locale: 'en' }, { confirm: () => false, practice: { fetch: async () => waiting, decode } });
+        await prepareOld(ui, 'en');
+        const beforeStroke = ui.inspectWork();
+        ui.pointer('onPointerDown', .7, .7, 1);
+        const before = ui.inspectWork(); expect(before.stroke).not.toBeNull(); expect(ui.captures.size).toBe(1);
+        ui.startPractice('cat-64-original'); expect(ui.practiceEnabled()).toBe(false);
+        ui.blurWindow(); ui.blurCanvas(); ui.pointer('onLostPointerCapture', .7, .7, 1); ui.pointer('onPointerCancel', .7, .7, 1);
+        expect(ui.inspectWork()).toEqual(before); expect(ui.captures.size).toBe(0);
+        release(outcome === 'cancel' ? validResponse() : new Response('Unavailable', { status: 500 }));
+        await ui.settle(); await ui.settle();
+        expect(ui.status()).toContain(outcome === 'cancel' ? practiceCopy.PIXEL_PRACTICE_COPY.en.cancelled : practiceCopy.PIXEL_PRACTICE_COPY.en.failed);
+        expect(ui.inspectWork()).toEqual(before); expect(ui.button(copy.en.redo).props.disabled).toBe(false);
+        ui.pointer('onPointerMove', .1, .1, 1); expect(ui.inspectWork()).toEqual(before); // Hover after lost capture must not paint.
+        ui.pointer('onPointerDown', .1, .1, 2); ui.pointer('onPointerUp', .1, .1, 2);
+        const after = ui.inspectWork();
+        expect(after.stroke).toBeNull(); expect(after.history.undo.length).toBe(before.history.undo.length + 2); expect(after.history.redo).toHaveLength(0);
+        ui.click(copy.en.undo); expect(ui.inspectWork().grids[0]).toBe(before.grids[0]);
+        ui.click(copy.en.undo); expect(ui.inspectWork().grids[0]).toBe(beforeStroke.grids[0]);
+        ui.unmount();
+    });
+
+    it('direct callback invocation is gated during crop, bead modal, busy work and after unmount', async () => {
+        let release!: (response: Response) => void;
+        const fetch = vi.fn(async () => new Promise<Response>(resolve => { release = resolve; }));
+        const ui = interactiveWorkspace({ locale: 'en' }, { practice: { fetch, decode } });
+        await ui.loadImage();
+        ui.click(cropCopy.PIXEL_CROP_COPY.en.open); expect(ui.practiceEnabled()).toBe(false);
+        ui.startPractice('cat-64-original'); expect(fetch).not.toHaveBeenCalled();
+        invoke(ui.cropDialog(), 'onCancel'); ui.render();
+        ui.click(beadCopy.getPixelBeadCopy('en').open); expect(ui.practiceEnabled()).toBe(false);
+        ui.startPractice('cat-64-original'); expect(fetch).not.toHaveBeenCalled();
+        invoke(ui.beadDialog(), 'onClose'); ui.render();
+        ui.startPractice('cat-64-original'); ui.startPractice('cat-32-original'); expect(fetch).toHaveBeenCalledOnce();
+        ui.unmount(); const before = ui.inspectWork(); release(validResponse()); await ui.settle();
+        ui.startPractice('cat-32-original'); expect(fetch).toHaveBeenCalledOnce(); expect(ui.inspectWork()).toEqual(before);
+    });
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('accepted %s example clears old past/future, keeps print, marks unsaved and can reopen a complete file', async locale => {
+        const ui = interactiveWorkspace({ locale, experience: locale === 'en' ? 'grid' : 'converter' }, { confirm: () => true, practice: { fetch: async () => validResponse(), decode } });
+        await prepareOld(ui, locale);
+        ui.startPractice('cat-64-16-colors'); await ui.settle(); await ui.settle();
+        expect(ui.status()).toContain(practiceCopy.PIXEL_PRACTICE_COPY[locale].loaded);
+        expect(ui.status()).toContain(copy[locale].dirty);
+        const actual = ui.inspectWork();
+        expect(actual.history).toEqual({ undo: [], redo: [] }); expect(actual.crop).toBeUndefined(); expect(actual.stroke).toBeNull();
+        expect(actual.source).toEqual({ width: decoded.width, height: decoded.height, name: 'cat-source.jpg', rgbaSha256: createHash('sha256').update(decoded.pixels).digest('hex') });
+        expect(actual.settings).toEqual(['64', '64', 'fit', '#f06a45', 255, 16, 8, 'fit', 'letter', 'tiled', 'blank']);
+        expect(ui.button(copy[locale].undo).props.disabled).toBe(true); expect(ui.button(copy[locale].redo).props.disabled).toBe(true);
+        ui.paint(); ui.click(copy[locale].undo); ui.click(copy[locale].redo);
+        const saved = await ui.download(copy[locale].saveWorkspace);
+        const raw = await saved.blob.text(), full = workspaceProject.parsePixelWorkspaceProject(raw);
+        expect(createHash('sha256').update(Uint8Array.from(full.snapshot.source!.pixels)).digest('hex')).toBe(createHash('sha256').update(decoded.pixels).digest('hex')); expect(full.snapshot.sourceCrop).toBeNull();
+        expect(full.print).toEqual({ paper: 'letter', mode: 'tiled', content: 'blank' });
+        const reopened = interactiveWorkspace({ locale, experience: locale === 'en' ? 'grid' : 'converter' }, { confirm: () => true });
+        await reopened.loadProject(raw);
+        expect(reopened.inspectWork().source).toEqual(actual.source);
+        expect(reopened.inspectWork().history).toEqual(full.snapshot.history);
+        reopened.unmount(); ui.unmount();
+    });
+});
 
 describe('pixel original-image area workflow', () => {
     const chosen = { sourceWidth: 64, sourceHeight: 32, x: 37, y: 5, width: 19, height: 23 };

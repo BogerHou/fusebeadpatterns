@@ -16,6 +16,10 @@
 .card strong { font-weight: 650; color: var(--color-ink); }
 .card figcaption > a, .downloads a { display: inline-flex; align-items: center; min-height: 44px; }
 .downloads { display: flex; flex-wrap: wrap; column-gap: 14px; }
+.practice { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-top: 4px; padding: 8px 12px; border: 1px solid var(--color-accent); border-radius: 6px; color: var(--color-accent); background: transparent; font: inherit; font-weight: 600; line-height: 1.45; text-align: center; cursor: pointer; }
+.practice:hover:enabled { background: var(--color-paper); }
+.practice:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+.practice:disabled { opacity: .5; cursor: default; }
 .note { max-width: 75ch; margin-top: 16px; font-size: .875rem; }
 .steps { margin-top: 28px; max-width: 75ch; }
 .steps ol { list-style: decimal; padding-left: 20px; margin-top: 12px; }

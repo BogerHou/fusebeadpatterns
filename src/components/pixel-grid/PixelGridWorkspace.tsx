@@ -5,6 +5,9 @@ import { Undo2, Redo2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
 import { PIXEL_CROP_COPY } from '@/lib/pixel-grid/crop-copy';
+import { decodePixelPracticeImage, openPixelPractice, type PixelPracticeId } from '@/lib/pixel-grid/practice';
+import { PIXEL_PRACTICE_COPY } from '@/lib/pixel-grid/practice-copy';
+import { usePixelPracticeRegistration } from './PixelPracticeProvider';
 import { cropPixelSource, validatePixelSourceCrop, type PixelSourceCrop } from '@/lib/pixel-grid/source-crop';
 import { savePixelBeadTransfer, readPixelBeadReturn, finishPixelBeadReturn, isPixelBeadReturn, clearPixelBeadReturnQuery } from '@/lib/pixel-grid/bead-transfer';
 import { trackPixelGridExport } from '@/lib/analytics';
@@ -91,6 +94,10 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const printPreferences = useSyncExternalStore(subscribePixelGridPrintPreferences, getPixelGridPrintPreferences, getServerPixelGridPrintPreferences);
     const beadText = getPixelBeadCopy(locale);
     const cropText = PIXEL_CROP_COPY[locale];
+    const practiceText = PIXEL_PRACTICE_COPY[locale];
+    const practiceController = useRef<AbortController | null>(null);
+    const practiceFocusFrame = useRef<number | null>(null);
+    const workspaceRef = useRef<HTMLDivElement>(null);
     const [cropSource, setCropSource] = useState<SourceImage | null>(null);
     const cropDialogRef = useRef(false);
     const [sourceCrop, setSourceCrop] = useState<PixelSourceCrop | null>(null);
@@ -137,6 +144,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const sourceRef = useRef<SourceImage | null>(null);
     const historyRef = useRef(new GridHistory(50));
     const strokeRef = useRef<Stroke | null>(null);
+    const practiceProtectedStroke = useRef<Stroke | null>(null);
     const dirtyRef = useRef(false);
     const busyRef = useRef(false);
     const mountedRef = useRef(false);
@@ -165,6 +173,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         const current = strokeRef.current;
         if (!current || (pointerId !== undefined && pointerId !== current.id)) return;
         strokeRef.current = null;
+        practiceProtectedStroke.current = null;
         if (current.tool === 'brush' || current.tool === 'eraser') historyRef.current.push(current.before, gridRef.current);
         const canvas = canvasRef.current;
         if (canvas?.hasPointerCapture(current.id)) canvas.releasePointerCapture(current.id);
@@ -271,7 +280,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             if (event.key.toLowerCase() === 'z') { event.preventDefault(); undo(event.shiftKey); }
             else if (event.key.toLowerCase() === 'y') { event.preventDefault(); undo(true); }
         };
-        const blur = () => finishStroke();
+        const blur = () => { if (!strokeRef.current || practiceProtectedStroke.current !== strokeRef.current) finishStroke(); };
         const pageShow = () => { allowUnload.current = false; };
         window.addEventListener('beforeunload', beforeUnload);
         window.addEventListener('blur', blur);
@@ -282,8 +291,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             mountedRef.current = false;
             sequence.current++;
             beadController.current?.abort();
+            practiceController.current?.abort();
+            if (practiceFocusFrame.current !== null) window.cancelAnimationFrame(practiceFocusFrame.current);
             busyRef.current = false;
             strokeRef.current = null;
+            practiceProtectedStroke.current = null;
             sourceRef.current = null;
             window.removeEventListener('beforeunload', beforeUnload);
             window.removeEventListener('blur', blur);
@@ -481,7 +493,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
-        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || strokeRef.current || event.button !== 0 || event.isPrimary === false) return;
+        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || event.button !== 0 || event.isPrimary === false) return;
+        // A cancelled example can retain an unfinished stroke after the browser
+        // loses capture. The next real gesture settles it once before drawing.
+        if (strokeRef.current && practiceProtectedStroke.current === strokeRef.current && !event.currentTarget.hasPointerCapture(strokeRef.current.id)) finishStroke();
+        if (strokeRef.current) return;
         const cell = point(event), viewport = viewportRef.current;
         if (!cell || !viewport) return;
         event.preventDefault();
@@ -505,6 +521,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     function pointerMove(event: PointerEvent<HTMLCanvasElement>) {
         const stroke = strokeRef.current;
         if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !stroke || stroke.id !== event.pointerId) return;
+        if (practiceProtectedStroke.current === stroke && !event.currentTarget.hasPointerCapture(stroke.id)) return;
         event.preventDefault();
         if (stroke.tool === 'pan') {
             const viewport = viewportRef.current;
@@ -694,6 +711,66 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         }, false);
     }
 
+    function startPractice(id: PixelPracticeId) {
+        // The examples sit outside the workspace's inert modal content. Check the
+        // live refs as well as the buttons' rendered availability.
+        if (beadDialogRef.current || busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || !mountedRef.current) return;
+        if (practiceFocusFrame.current !== null) {
+            window.cancelAnimationFrame(practiceFocusFrame.current);
+            practiceFocusFrame.current = null;
+        }
+        practiceProtectedStroke.current = strokeRef.current;
+        let opened = false;
+        let isCurrent = () => false;
+        void task(practiceText.loading, async current => {
+            isCurrent = current;
+            const controller = new AbortController();
+            practiceController.current = controller;
+            const timeout = window.setTimeout(() => controller.abort(), 15_000);
+            try {
+                const result = await openPixelPractice(id, {
+                    signal: controller.signal, current, fetch: window.fetch.bind(window), decode: decodePixelPracticeImage, converter,
+                    needsConfirmation: () => dirtyRef.current || strokeRef.current !== null || hasPixelLocaleWork({
+                        grid: gridRef.current, saved: savedRef.current, source: sourceRef.current, sourceCrop: sourceCropRef.current,
+                        history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
+                        zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
+                    }, initialSide, converter),
+                    confirm: () => window.confirm(practiceText.replace),
+                    commit: snapshot => {
+                        // No old stroke, source, settings or history changes until
+                        // preparation and the replacement confirmation succeed.
+                        const stroke = strokeRef.current;
+                        strokeRef.current = null;
+                        practiceProtectedStroke.current = null;
+                        if (stroke && canvasRef.current?.hasPointerCapture(stroke.id)) canvasRef.current.releasePointerCapture(stroke.id);
+                        setPanning(false);
+                        applyLocaleSnapshot(snapshot);
+                        if (viewportRef.current) viewportRef.current.scrollLeft = viewportRef.current.scrollTop = 0;
+                        setStatus({ text: practiceText.loaded, error: false });
+                        opened = true;
+                    },
+                });
+                if (current() && result === 'cancelled') setStatus({ text: practiceText.cancelled, error: false });
+            } catch {
+                if (current()) setStatus({ text: practiceText.failed, error: true });
+            } finally {
+                window.clearTimeout(timeout);
+                if (practiceController.current === controller) practiceController.current = null;
+            }
+        }, false).then(() => {
+            if (!opened || !isCurrent()) return;
+            practiceFocusFrame.current = window.requestAnimationFrame(() => {
+                practiceFocusFrame.current = null;
+                if (!isCurrent() || beadDialogRef.current || cropDialogRef.current || busyRef.current || localeRecoveryPendingRef.current) return;
+                const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+                workspaceRef.current?.scrollIntoView({ behavior, block: 'start' });
+                canvasRef.current?.focus({ preventScroll: true });
+            });
+        });
+    }
+
+    usePixelPracticeRegistration(startPractice, !locked && !beadDialog);
+
     function importProject(file?: File) {
         if (!file) return;
         void task(text.opening, async current => {
@@ -726,6 +803,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 // Failed/cancelled reads must not finish an old active stroke.
                 const stroke = strokeRef.current;
                 strokeRef.current = null;
+                practiceProtectedStroke.current = null;
                 if (stroke && canvasRef.current?.hasPointerCapture(stroke.id)) canvasRef.current.releasePointerCapture(stroke.id);
                 setPanning(false);
                 applyLocaleSnapshot(workspace.snapshot);
@@ -852,7 +930,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     );
 
     return (
-        <div className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
+        <div ref={workspaceRef} className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
             <div className="contents" inert={beadDialog || cropSource !== null}>
             {localeRecoveryPending && <section className={`${styles.panel} ${styles.converterImport}`} aria-label={text.languageRetry}>
                 <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
@@ -907,7 +985,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                         <button type="button" disabled={locked} onClick={() => action(() => commit(createGrid(gridRef.current.width, gridRef.current.height), text.cleared))}>{text.clear}</button>
                     </div>
                     <div ref={viewportRef} className={styles.viewport} aria-label={text.scrollArea}>
-                        <div className={styles.stage}><canvas ref={canvasRef} width={grid.width * scale} height={grid.height * scale} tabIndex={locked ? -1 : 0} inert={locked} role="img" aria-label={text.canvasAria(grid.width, grid.height, cursor[0] + 1, cursor[1] + 1)} aria-describedby="pixel-canvas-help pixel-cursor" className={styles.canvas} style={{ width: grid.width * scale, height: grid.height * scale, cursor: tool === 'pan' ? panning ? 'grabbing' : 'grab' : 'crosshair' }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishStroke(event.pointerId)} onPointerCancel={event => finishStroke(event.pointerId)} onLostPointerCapture={event => finishStroke(event.pointerId)} onKeyDown={keyboard} onFocus={() => setFocused(true)} onBlur={() => { finishStroke(); setFocused(false); }} /></div>
+                        <div className={styles.stage}><canvas ref={canvasRef} width={grid.width * scale} height={grid.height * scale} tabIndex={locked ? -1 : 0} inert={locked} role="img" aria-label={text.canvasAria(grid.width, grid.height, cursor[0] + 1, cursor[1] + 1)} aria-describedby="pixel-canvas-help pixel-cursor" className={styles.canvas} style={{ width: grid.width * scale, height: grid.height * scale, cursor: tool === 'pan' ? panning ? 'grabbing' : 'grab' : 'crosshair' }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishStroke(event.pointerId)} onPointerCancel={event => { if (practiceProtectedStroke.current !== strokeRef.current) finishStroke(event.pointerId); }} onLostPointerCapture={event => { if (practiceProtectedStroke.current !== strokeRef.current) finishStroke(event.pointerId); }} onKeyDown={keyboard} onFocus={() => setFocused(true)} onBlur={() => { if (practiceProtectedStroke.current !== strokeRef.current) finishStroke(); setFocused(false); }} /></div>
                     </div>
                     <p id="pixel-cursor" className={styles.hint}>{text.cursor(cursor[0] + 1, cursor[1] + 1, scale)}</p>
                     <p id="pixel-canvas-help" className={styles.hint}>{text.drawingHelp}</p>
