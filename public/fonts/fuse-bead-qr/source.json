@@ -1,0 +1,13 @@
+{
+  "family": "Fuse Bead QR",
+  "purpose": "Only QR pattern four-language PDF labels; unchanged editor fonts remain separate.",
+  "upstream": "https://github.com/google/fonts/tree/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp",
+  "sourceFontSHA256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "sourceOFL_SHA256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "fontSHA256": "57e712727694f380d8887b64e0aaf0267d3a318ec2c26819cbbc591f5db1c848",
+  "weight": 400,
+  "fontTools": "4.60.1",
+  "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ßàäèéôöü’、。あいえかきくこさしすせただってでとなにのはべまみめらりるわをんアイォコサジスズトドビフブプペマラレロン・ー不並余作使個分切列刷印原取号合含四図子安定実寸後態数料未材枚格案検正測濃物状用画番白目確空紙線置自色薄行要訂計設証認誤読辺配際面％：",
+  "characterCount": 225,
+  "messageSourceSHA256": "2145c9e934c65707d7e7ff2d97b8714726fd94ddf3f4da72c0305a57385aa449"
+}

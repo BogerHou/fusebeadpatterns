@@ -1,3 +1,4 @@
+import { qrBeadPaths } from '@/lib/qr-beads/routes';
 import { hamaMakerPaths } from '@/lib/hama-maker/routes';
 import { perlerColorChartPaths } from '@/lib/color-chart/routes';
 import { beadLetterPaths } from '@/lib/bead-letters/routes';
@@ -198,6 +199,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
             url: `https://fusebeadpatterns.art${getPatternHref(pattern)}`,
             lastModified: new Date(pattern.updatedAt > patternContentUpdatedAt ? pattern.updatedAt : patternContentUpdatedAt),
             images: [`https://fusebeadpatterns.art${pattern.assets.preview}`],
+        })),
+        ...Object.values(qrBeadPaths).map(path => ({
+            url: `https://fusebeadpatterns.art${path}`,
+            lastModified: new Date('2026-10-16T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
         })),
     ];
 }

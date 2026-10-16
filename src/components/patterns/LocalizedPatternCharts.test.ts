@@ -26,6 +26,7 @@ import * as hamaMakerRoutes from '../../lib/hama-maker/routes';
 import * as colorChartRoutes from '../../lib/color-chart/routes';
 import * as beadLetterRoutes from '../../lib/bead-letters/routes';
 import * as blockShapeRoutes from '../../lib/block-shapes/routes';
+import * as qrBeadRoutes from '../../lib/qr-beads/routes';
 import * as guideRoutes from '../../lib/guides/routes';
 import * as sitePageRoutes from '../../lib/site-pages/routes';
 import * as localeRoutes from '../../lib/i18n/routes';
@@ -53,6 +54,7 @@ const modules: Record<string, unknown> = {
     '@/lib/color-chart/routes': colorChartRoutes,
     '@/lib/bead-letters/routes': beadLetterRoutes,
     '@/lib/block-shapes/routes': blockShapeRoutes,
+    '@/lib/qr-beads/routes': qrBeadRoutes,
     './HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
     '@/components/patterns/HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
     './HamaOriginalDownloads': { ...defaultModule(HamaOriginalDownloads), HamaOriginalLink },
@@ -333,7 +335,15 @@ describe('native pattern chart journeys', () => {
             expect('changeFrequency' in record).toBe(true);
             if ('changeFrequency' in record) expect(record.changeFrequency).toBe('monthly');
         }
-        const previous = records.filter(record => !adultAdditions.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const qrBeadUrls = Object.values(qrBeadRoutes.qrBeadPaths).map(path => `https://fusebeadpatterns.art${path}`);
+        const qrBeads = records.filter(record => qrBeadUrls.includes(record.url));
+        expect(qrBeads.map(record => record.url)).toEqual(qrBeadUrls);
+        for (const record of qrBeads) {
+            expect(record.lastModified.toISOString()).toBe('2026-10-16T00:00:00.000Z');
+            expect('changeFrequency' in record).toBe(true);
+            if ('changeFrequency' in record) expect(record.changeFrequency).toBe('monthly');
+        }
+        const previous = records.filter(record => !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 
