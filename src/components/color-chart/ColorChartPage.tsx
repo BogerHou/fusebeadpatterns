@@ -9,6 +9,7 @@ import { guideHref } from '@/lib/guides/routes';
 import { localeRoutes } from '@/lib/i18n/routes';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import ColorChart from './ColorChart';
+import ColorLabelDownloads from './ColorLabelDownloads';
 
 export default function ColorChartPage({ locale }: { locale: SiteLocale }) {
     const copy = colorChartCopy[locale];
@@ -29,6 +30,7 @@ export default function ColorChartPage({ locale }: { locale: SiteLocale }) {
             ]} />
             <h1 className="page-heading">{copy.heading}</h1>
             <p className="mt-4 max-w-[70ch] text-base leading-7 text-muted">{copy.intro}</p>
+            <ColorLabelDownloads locale={locale} />
             <ColorChart colors={chart.colors} locale={locale} />
             <section aria-labelledby="color-chart-about" className="mt-10 max-w-[75ch] border-t border-line pt-8">
                 <h2 id="color-chart-about" className="section-heading">{copy.aboutTitle}</h2>
