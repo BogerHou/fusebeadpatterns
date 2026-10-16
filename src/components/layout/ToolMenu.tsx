@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { siteNavigation, type SiteLocale } from '../../lib/i18n/locales';
 import { localeRoutes } from '../../lib/i18n/routes';
+import { beadLetterLabels } from '../../lib/bead-letters/routes';
 import styles from './LanguageSwitcher.module.css';
 
 export default function ToolMenu({ locale }: { locale: SiteLocale }) {
@@ -17,6 +18,7 @@ export default function ToolMenu({ locale }: { locale: SiteLocale }) {
         { href: routes.hamaMaker, label: copy.hamaMaker },
         { href: routes.pixelGrid!, label: copy.pixelGrid },
         { href: routes.beadLoom, label: copy.beadLoom },
+        { href: routes.beadLetters, label: beadLetterLabels[locale] },
     ];
 
     useEffect(() => {
