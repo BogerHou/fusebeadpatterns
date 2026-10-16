@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { PIXEL_GRID_MESSAGES, type PixelGridLocale } from '@/lib/pixel-grid/messages';
+import { PixelPracticeButton } from './PixelPracticeProvider';
 import styles from './PixelConversionExamples.module.css';
 
 const copy = {
@@ -22,9 +23,9 @@ const copy = {
         downloadPng: 'Download PNG',
         downloadProject: 'Download project',
         stepsHeading: 'Try the same settings',
-        firstStep: 'Download a source image and import it above. Choose “Keep proportions” and “Original colors” in “Canvas & image settings”.',
+        firstStep: 'Choose “Try this example” under a preview to open its image with those settings. Save your current full workspace first: starting an example replaces its image, edits, history and settings. You can also download a source image and import it yourself.',
         secondStep: 'Use the 32 × 32 and 64 × 64 buttons to compare detail. At 64 × 64, choose “Up to 16 colors” and click “Reconvert original image” to compare a smaller palette.',
-        thirdStep: 'To edit an example, download its project and choose “Open a pixel project or full workspace” above.',
+        thirdStep: 'Select a subject from the source image, reconvert it, then edit individual pixels. Use “Save full workspace” to keep the source image, your edits, settings and history. The separate example projects below each preview can also be downloaded and opened above.',
         previewNote: 'Previews are enlarged for comparison. Each PNG download is 32 × 32 or 64 × 64 pixels, without grid lines.',
         transparencyNote: 'The checkerboard shows transparency. “Keep proportions” can add transparent margins; it does not remove the background inside a photo. Reducing colors keeps each pixel’s opacity.',
         projectNote: 'These example projects save the current pixels, dimensions and transparency, without the source image, settings or history. After importing a source image, use Save full workspace to keep it with your edits, settings and history.',
@@ -48,9 +49,9 @@ const copy = {
         downloadPng: 'PNG herunterladen',
         downloadProject: 'Projekt herunterladen',
         stepsHeading: 'Dieselben Einstellungen ausprobieren',
-        firstStep: 'Lade ein Originalbild herunter und importiere es oben. Wähle unter „Zeichenfläche und Bild einstellen“ die Optionen „Seitenverhältnis erhalten“ und „Originalfarben“.',
+        firstStep: 'Wähle unter einer Vorschau „Dieses Beispiel ausprobieren“, um das Bild mit diesen Einstellungen zu öffnen. Speichere vorher deinen vollständigen Arbeitsstand: Das Beispiel ersetzt Bild, Änderungen, Verlauf und Einstellungen. Du kannst ein Originalbild auch herunterladen und selbst importieren.',
         secondStep: 'Vergleiche die Details mit den Schaltflächen 32 × 32 und 64 × 64. Wähle bei 64 × 64 „Bis zu 16 Farben“ und klicke auf „Originalbild neu umwandeln“, um eine kleinere Palette zu vergleichen.',
-        thirdStep: 'Um ein Beispiel zu bearbeiten, lade sein Projekt herunter und wähle oben „Pixel-Projekt oder vollständigen Arbeitsstand öffnen“.',
+        thirdStep: 'Wähle ein Motiv im Originalbild aus, wandle es neu um und bearbeite einzelne Pixel. Mit „Vollständigen Arbeitsstand speichern“ behältst du Bild, Änderungen, Einstellungen und Verlauf. Die separaten Beispielprojekte unter den Vorschauen lassen sich weiterhin herunterladen und oben öffnen.',
         previewNote: 'Die Vorschauen sind zum Vergleich vergrößert. Die heruntergeladenen PNGs haben 32 × 32 oder 64 × 64 Pixel und keine Rasterlinien.',
         transparencyNote: 'Das Schachbrett zeigt Transparenz. „Seitenverhältnis erhalten“ kann transparente Ränder hinzufügen; der Hintergrund im Foto bleibt erhalten. Die Farbreduktion erhält die Deckkraft jedes Pixels.',
         projectNote: 'Diese Beispielprojekte speichern Pixel, Maße und Transparenz, ohne Originalbild, Einstellungen oder Verlauf. Importiere ein Originalbild und nutze Vollständigen Arbeitsstand speichern, um es mit deinen Änderungen, Einstellungen und dem Verlauf zu behalten.',
@@ -74,9 +75,9 @@ const copy = {
         downloadPng: 'Télécharger le PNG',
         downloadProject: 'Télécharger le projet',
         stepsHeading: 'Essayer les mêmes réglages',
-        firstStep: 'Téléchargez une image d’origine et importez-la ci-dessus. Dans « Dimensions et cadrage », choisissez « Conserver les proportions » et « Couleurs d’origine ».',
+        firstStep: 'Choisissez « Essayer cet exemple » sous un aperçu pour ouvrir l’image avec ces réglages. Enregistrez d’abord tout votre espace de travail : l’exemple remplace l’image, les retouches, l’historique et les réglages. Vous pouvez aussi télécharger une image d’origine et l’importer vous-même.',
         secondStep: 'Comparez les détails avec les boutons 32 × 32 et 64 × 64. À 64 × 64, choisissez « Jusqu’à 16 couleurs », puis cliquez sur « Reconvertir l’image d’origine » pour comparer une palette réduite.',
-        thirdStep: 'Pour retoucher un exemple, téléchargez son projet, puis choisissez « Ouvrir un projet pixel ou un espace de travail complet » ci-dessus.',
+        thirdStep: 'Sélectionnez un sujet dans l’image d’origine, reconvertissez-la, puis retouchez les pixels. Utilisez « Enregistrer tout l’espace de travail » pour conserver l’image, les retouches, les réglages et l’historique. Les projets séparés sous les aperçus restent disponibles au téléchargement et peuvent être ouverts ci-dessus.',
         previewNote: 'Les aperçus sont agrandis pour faciliter la comparaison. Les PNG téléchargés font 32 × 32 ou 64 × 64 pixels, sans quadrillage.',
         transparencyNote: 'Le damier indique la transparence. « Conserver les proportions » peut ajouter des marges transparentes ; le fond de la photo reste présent. La réduction des couleurs conserve l’opacité de chaque pixel.',
         projectNote: 'Ces projets d’exemple conservent les pixels, les dimensions et la transparence, sans l’image d’origine, les réglages ni l’historique. Après avoir importé une image source, utilisez Enregistrer tout l’espace de travail pour la garder avec vos retouches, réglages et historique.',
@@ -100,9 +101,9 @@ const copy = {
         downloadPng: 'PNGをダウンロード',
         downloadProject: 'プロジェクトをダウンロード',
         stepsHeading: '同じ設定で試す',
-        firstStep: '元画像をダウンロードし、上のツールで読み込みます。「サイズと画像の設定」で「縦横比を保つ」と「元の色を保つ」を選んでください。',
+        firstStep: 'プレビューの下にある「この作例で試す」を押すと、その画像と設定で始められます。現在の画像、編集内容、履歴、設定は置き換わるので、先に「作業全体を保存」を使ってください。元画像をダウンロードして自分で読み込むこともできます。',
         secondStep: '32 × 32と64 × 64のボタンで細かさを比べます。64 × 64で「最大16色」を選び、「元画像から再変換」を押すと、減色した結果を比較できます。',
-        thirdStep: '作例を編集するにはプロジェクトをダウンロードし、上の「ピクセル図案または作業ファイルを開く」で読み込んでください。',
+        thirdStep: '元画像の使う範囲を選び、再変換やピクセルの修正を試してください。「作業全体を保存」で元画像、編集内容、設定、履歴を残せます。各プレビューの図案ファイルも、ダウンロードして上のツールで開けます。',
         previewNote: '比較しやすいようにプレビューを拡大しています。ダウンロードするPNGは32 × 32または64 × 64ピクセルで、グリッド線は入りません。',
         transparencyNote: '市松模様は透明部分です。「縦横比を保つ」では透明な余白ができることがありますが、写真の中の背景は残ります。減色しても各ピクセルの不透明度は保たれます。',
         projectNote: 'この作例のファイルはピクセル、サイズ、透明度を保存し、元画像、設定、履歴は含みません。元画像を読み込んでから「作業全体を保存」を使うと、その画像と編集内容、設定、履歴を残せます。',
@@ -166,6 +167,7 @@ export default function PixelConversionExamples({ locale = 'en' }: { locale?: Pi
                             <figcaption>
                                 <strong>{variant.side} × {variant.side}</strong>
                                 <span>{palette}</span>
+                                <PixelPracticeButton id={`${source.id}-${variant.suffix}`} locale={locale} label={`${title}, ${caption}`} />
                                 <div className={styles.downloads}>
                                     <a href={`${asset}.png`} download aria-label={`${text.downloadPng}: ${title}, ${caption}`}>{text.downloadPng}</a>
                                     <a href={`${asset}.pixel-grid.json`} download aria-label={`${text.downloadProject}: ${title}, ${caption}`}>{text.downloadProject}</a>

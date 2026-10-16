@@ -6,6 +6,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
 import PixelConversionExamples from '@/components/pixel-grid/PixelConversionExamples';
+import PixelPracticeProvider from '@/components/pixel-grid/PixelPracticeProvider';
 
 const title = 'Pixel Art Grid Maker — Draw & Export PNG | Fuse Bead Patterns';
 const description = 'Draw pixel art or import an image on a free grid up to 128 × 128. Edit individual pixels and download a transparent PNG or editable project.';
@@ -41,8 +42,10 @@ export default function PixelArtGridPage() {
                         or choose a smaller palette, edit individual pixels, then save a PNG and editable project.
                     </p>
                 </div>
-                <PixelGridWorkspace />
-                <PixelConversionExamples />
+                <PixelPracticeProvider>
+                    <PixelGridWorkspace />
+                    <PixelConversionExamples />
+                </PixelPracticeProvider>
                 <section aria-labelledby="pixel-grid-help" className="mt-10 max-w-[75ch] border-t border-[#d9ded5] pt-8 text-base leading-7 text-[#59685d]">
                     <h2 id="pixel-grid-help" className="font-display text-2xl font-semibold tracking-[-0.025em] text-[#243e36]">From a grid to a finished image</h2>
                     <ol className="mt-4 list-decimal space-y-3 pl-5">
