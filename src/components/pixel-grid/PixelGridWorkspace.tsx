@@ -4,6 +4,8 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState, useSyncExtern
 import { Undo2, Redo2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
+import { PIXEL_CROP_COPY } from '@/lib/pixel-grid/crop-copy';
+import { cropPixelSource, validatePixelSourceCrop, type PixelSourceCrop } from '@/lib/pixel-grid/source-crop';
 import { savePixelBeadTransfer, readPixelBeadReturn, finishPixelBeadReturn, isPixelBeadReturn, clearPixelBeadReturnQuery } from '@/lib/pixel-grid/bead-transfer';
 import { trackPixelGridExport } from '@/lib/analytics';
 import {
@@ -22,6 +24,7 @@ import { consumePixelLocaleSnapshot, consumeLargePixelLocaleSnapshot, hasLargePi
 import styles from './PixelGridWorkspace.module.css';
 
 const PixelBeadDialog = dynamic(() => import('./PixelBeadDialog'), { ssr: false });
+const PixelSourceCropDialog = dynamic(() => import('./PixelSourceCropDialog'), { ssr: false });
 
 type Tool = PixelTool;
 type Zoom = 'fit' | '4' | '8' | '16' | '24' | '32';
@@ -87,6 +90,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const printText = PIXEL_GRID_PRINT_COPY[locale];
     const printPreferences = useSyncExternalStore(subscribePixelGridPrintPreferences, getPixelGridPrintPreferences, getServerPixelGridPrintPreferences);
     const beadText = getPixelBeadCopy(locale);
+    const cropText = PIXEL_CROP_COPY[locale];
+    const [cropSource, setCropSource] = useState<SourceImage | null>(null);
+    const cropDialogRef = useRef(false);
+    const [sourceCrop, setSourceCrop] = useState<PixelSourceCrop | null>(null);
+    const sourceCropRef = useRef<PixelSourceCrop | null>(null);
     const [beadDialog, setBeadDialog] = useState(false);
     const beadDialogRef = useRef(false);
     const [beadError, setBeadError] = useState<string | null>(null);
@@ -139,7 +147,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const localeRestoreRef = useRef<PixelLocaleSnapshot | null | undefined>(undefined);
     const largeLocaleRestoreRef = useRef<Promise<PixelLocaleSnapshot | null> | null>(null);
     const localeRecoveryPendingRef = useRef(false);
-    const locked = busy || localeRecoveryPending;
+    const locked = busy || localeRecoveryPending || cropSource !== null;
 
     const scale = zoom === 'fit'
         ? Math.max(1, Math.min(24, Math.floor(Math.min(Math.max(1, viewportSize.width - 24) / grid.width, Math.max(1, viewportSize.height - 24) / grid.height))))
@@ -186,7 +194,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }, [finishStroke, publish]);
 
     const action = useCallback((callback: () => void) => {
-        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current) return;
+        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current) return;
         finishStroke();
         try { callback(); } catch (error) { setStatus({ text: pixelGridErrorMessage(error, locale), error: true }); }
     }, [finishStroke, locale]);
@@ -239,7 +247,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         // their client-router handlers. Confirmed exits use a real navigation so the
         // workspace does not need to inject state into the shared site layout.
         const navigate = (event: MouseEvent) => {
-            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (!dirtyRef.current && !busyRef.current && !localeRecoveryPendingRef.current)) return;
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (!dirtyRef.current && !busyRef.current && !localeRecoveryPendingRef.current && !cropDialogRef.current)) return;
             const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
             if (!(anchor instanceof HTMLAnchorElement) || anchor.hasAttribute('download') || (anchor.target && anchor.target !== '_self')) return;
             const destination = new URL(anchor.href, location.href);
@@ -248,6 +256,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             if (destination.origin === location.origin && destination.pathname === location.pathname && destination.search === location.search) return;
             event.preventDefault();
             event.stopImmediatePropagation();
+            if (cropDialogRef.current) return;
             if (localeRecoveryPendingRef.current) { setStatus({ text: text.languageRestoreFailed, error: true }); return; }
             if (busyRef.current) { setStatus({ text: text.languageBusy, error: true }); return; }
             finishStroke();
@@ -257,7 +266,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             }
         };
         const keyboard = (event: globalThis.KeyboardEvent) => {
-            if (beadDialogRef.current || busyRef.current || localeRecoveryPendingRef.current || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+            if (beadDialogRef.current || cropDialogRef.current || busyRef.current || localeRecoveryPendingRef.current || !(event.ctrlKey || event.metaKey) || event.altKey) return;
             if (event.target instanceof Element && event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
             if (event.key.toLowerCase() === 'z') { event.preventDefault(); undo(event.shiftKey); }
             else if (event.key.toLowerCase() === 'y') { event.preventDefault(); undo(true); }
@@ -290,6 +299,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         if (snapshot) {
             gridRef.current = snapshot.grid; savedRef.current = snapshot.saved;
             sourceRef.current = snapshot.source; cursorRef.current = snapshot.cursor;
+            sourceCropRef.current = snapshot.sourceCrop ?? null; setSourceCrop(sourceCropRef.current);
             historyRef.current.restore(snapshot.history);
             setGrid(snapshot.grid); setCursor(snapshot.cursor);
             setWidth(snapshot.width); setHeight(snapshot.height); setMode(snapshot.mode);
@@ -393,7 +403,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     const handleLocaleNavigation = useEffectEvent((event: Event) => {
             const detail = (event as CustomEvent<LocaleNavigationDetail>).detail;
             if (!detail?.href || !isPixelLocaleNavigation(window.location.href, detail.href)) return;
-            if (!localeReadyRef.current || busyRef.current) {
+            if (!localeReadyRef.current || busyRef.current || cropDialogRef.current) {
                 event.preventDefault();
                 setStatus({ text: localeRecoveryPendingRef.current ? text.languageRestoreFailed : text.languageBusy, error: true });
                 return;
@@ -401,7 +411,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             try {
                 finishStroke();
                 const snapshot: PixelLocaleSnapshot = {
-                    grid: gridRef.current, saved: savedRef.current, source: sourceRef.current,
+                    grid: gridRef.current, saved: savedRef.current, source: sourceRef.current, sourceCrop: sourceCropRef.current,
                     history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
                     zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
                 };
@@ -471,7 +481,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
-        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || strokeRef.current || event.button !== 0 || event.isPrimary === false) return;
+        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || strokeRef.current || event.button !== 0 || event.isPrimary === false) return;
         const cell = point(event), viewport = viewportRef.current;
         if (!cell || !viewport) return;
         event.preventDefault();
@@ -494,7 +504,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
 
     function pointerMove(event: PointerEvent<HTMLCanvasElement>) {
         const stroke = strokeRef.current;
-        if (busyRef.current || localeRecoveryPendingRef.current || !stroke || stroke.id !== event.pointerId) return;
+        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !stroke || stroke.id !== event.pointerId) return;
         event.preventDefault();
         if (stroke.tool === 'pan') {
             const viewport = viewportRef.current;
@@ -510,7 +520,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     }
 
     function keyboard(event: KeyboardEvent<HTMLCanvasElement>) {
-        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || event.ctrlKey || event.metaKey || event.altKey || event.nativeEvent?.isComposing || event.target !== event.currentTarget) return;
+        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current || event.ctrlKey || event.metaKey || event.altKey || event.nativeEvent?.isComposing || event.target !== event.currentTarget) return;
         const key = event.key.toLowerCase();
         const selectedTool = Object.hasOwn(TOOL_KEYS, key) ? TOOL_KEYS[key] : undefined;
         if (selectedTool) {
@@ -556,7 +566,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             const target = dimensions(Number(width), Number(height));
             const source = fromSource ? sourceRef.current : gridRef.current;
             if (!source) return;
-            const resized = resizeImage(source, target.width, target.height, mode);
+            const resized = resizeImage(fromSource ? cropPixelSource(source, sourceCropRef.current) : source, target.width, target.height, mode);
             const next = fromSource ? reducePixelGridColors(resized, colorLimit) : resized;
             commit(next, fromSource ? text.converted(next.width, next.height, countVisibleColors(next)) : text.resized(false, target.width, target.height, mode));
         });
@@ -565,7 +575,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
     function detailSize(side: number) {
         action(() => {
             const source = sourceRef.current;
-            const next = source ? reducePixelGridColors(resizeImage(source, side, side, mode), colorLimit) : createGrid(side, side);
+            const next = source ? reducePixelGridColors(resizeImage(cropPixelSource(source, sourceCropRef.current), side, side, mode), colorLimit) : createGrid(side, side);
             commit(next, source ? text.converted(side, side, countVisibleColors(next)) : text.created(side, side));
         });
     }
@@ -590,9 +600,10 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         }
     }
 
-    async function task(message: string, callback: (current: () => boolean) => Promise<void>) {
-        if (busyRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current) return;
-        finishStroke(); busyRef.current = true; setBusy(true);
+    async function task(message: string, callback: (current: () => boolean) => Promise<void>, finishCurrentStroke = true) {
+        if (busyRef.current || cropDialogRef.current || localeRecoveryPendingRef.current || !localeReadyRef.current) return;
+        if (finishCurrentStroke) finishStroke();
+        busyRef.current = true; setBusy(true);
         setStatus({ text: message, error: false });
         const id = ++taskId.current;
         const current = () => mountedRef.current && taskId.current === id;
@@ -614,7 +625,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         void task(beadText.preparing, async current => {
             const controller = new AbortController(); beadController.current = controller;
             const snapshot: PixelLocaleSnapshot = {
-                grid: gridRef.current, saved: savedRef.current, source: sourceRef.current,
+                grid: gridRef.current, saved: savedRef.current, source: sourceRef.current, sourceCrop: sourceCropRef.current,
                 history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
                 zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
             };
@@ -674,12 +685,13 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                 const next = reducePixelGridColors(resized, colorLimit);
                 commit(next, text.imported(file.name, source.width, source.height, target.width, target.height, mode));
                 sourceRef.current = source;
+                sourceCropRef.current = null; setSourceCrop(null);
                 setSourceInfo({ name: source.name, width: source.width, height: source.height });
             } finally {
                 bitmap?.close();
                 if (sourceCanvas) sourceCanvas.width = sourceCanvas.height = 0;
             }
-        });
+        }, false);
     }
 
     function importProject(file?: File) {
@@ -701,7 +713,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                     if (input.value !== value) throw new PixelGridError('WORKSPACE_INVALID');
                 }
                 const previous: PixelLocaleSnapshot = {
-                    grid: gridRef.current, saved: savedRef.current, source: sourceRef.current,
+                    grid: gridRef.current, saved: savedRef.current, source: sourceRef.current, sourceCrop: sourceCropRef.current,
                     history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
                     zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
                 };
@@ -710,6 +722,12 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
                     return;
                 }
                 if (!current()) return;
+                // The accepted complete workspace replaces all old history.
+                // Failed/cancelled reads must not finish an old active stroke.
+                const stroke = strokeRef.current;
+                strokeRef.current = null;
+                if (stroke && canvasRef.current?.hasPointerCapture(stroke.id)) canvasRef.current.releasePointerCapture(stroke.id);
+                setPanning(false);
                 applyLocaleSnapshot(workspace.snapshot);
                 setPixelGridPrintPreferences(workspace.print);
                 setStatus({ text: text.workspaceOpened(file.name), error: false });
@@ -718,10 +736,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             const next = parseProject(contents);
             commit(next, text.opened(file.name, next.width, next.height));
             sourceRef.current = null;
+            sourceCropRef.current = null; setSourceCrop(null);
             setSourceInfo(null);
             savedRef.current = createGrid(next.width, next.height, next.pixels);
             syncHistory();
-        });
+        }, false);
     }
 
     function savePng(withGrid = false) {
@@ -772,7 +791,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
         action(() => {
             const checkpoint = createGrid(gridRef.current.width, gridRef.current.height, gridRef.current.pixels);
             const snapshot: PixelLocaleSnapshot = {
-                grid: checkpoint, saved: checkpoint, source: sourceRef.current,
+                grid: checkpoint, saved: checkpoint, source: sourceRef.current, sourceCrop: sourceCropRef.current,
                 history: historyRef.current.snapshot(), width, height, mode, tool, color, alpha,
                 zoom, showGrid, colorLimit, exportScale, cursor: cursorRef.current, settingsExpanded,
             };
@@ -817,6 +836,11 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             <label htmlFor="pixel-image-file">{text.chooseImage}<input ref={imageFileRef} hidden={locale !== 'en'} id="pixel-image-file" type="file" accept="image/png,image/jpeg,image/webp" disabled={locked} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; importImage(file); }} /></label>
             {locale !== 'en' && <button className={styles.spaced} type="button" disabled={locked} onClick={() => imageFileRef.current?.click()} aria-describedby="pixel-import-title">{text.chooseFile}</button>}
             <p className={styles.hint}>{text.converterImportHelp}</p>
+            <button className={styles.spaced} type="button" disabled={locked || !sourceInfo} onClick={() => action(() => {
+                if (!sourceRef.current) return;
+                cropDialogRef.current = true; setCropSource(sourceRef.current);
+            })}>{cropText.open}</button>
+            {sourceInfo && <p className={styles.hint}>{sourceCrop ? cropText.summary(sourceCrop.x, sourceCrop.y, sourceCrop.width, sourceCrop.height) : cropText.wholeSummary}</p>}
             <div className={styles.detailChoices}>
                 <p>{text.detail}</p>
                 <div className={styles.buttons}>{[32, 64, 128].map(side => <button type="button" key={side} disabled={locked} onClick={() => detailSize(side)}>{text.detailButton(side)}</button>)}</div>
@@ -829,7 +853,7 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
 
     return (
         <div className={`${styles.workspace}${converter ? ` ${styles.converter}` : ''}`} id="pixel-grid-workspace" aria-busy={busy} lang={locale}>
-            <div className="contents" inert={beadDialog}>
+            <div className="contents" inert={beadDialog || cropSource !== null}>
             {localeRecoveryPending && <section className={`${styles.panel} ${styles.converterImport}`} aria-label={text.languageRetry}>
                 <p className={`${styles.status} ${status.error ? styles.error : ''}`} role="status" aria-live="polite" aria-atomic="true">{status.text}</p>
                 <button type="button" disabled={busy} onClick={restoreLocale}>{beadReturnPending ? beadText.returnRetry : text.languageRetry}</button>
@@ -922,6 +946,18 @@ export default function PixelGridWorkspace({ locale = 'en', experience = 'grid' 
             </div>
             </div>
             {beadDialog && <PixelBeadDialog locale={locale} width={grid.width} height={grid.height} busy={busy} error={beadError} onPrepare={prepareBeadPattern} onClose={closeBeadDialog} />}
+            {cropSource && <PixelSourceCropDialog source={cropSource} initialCrop={sourceCrop} locale={locale}
+                targetWidth={Number.isInteger(Number(width)) && Number(width) >= 1 && Number(width) <= 128 ? Number(width) : grid.width}
+                targetHeight={Number.isInteger(Number(height)) && Number(height) >= 1 && Number(height) <= 128 ? Number(height) : grid.height}
+                mode={mode} colorLimit={colorLimit}
+                onCancel={() => { cropDialogRef.current = false; setCropSource(null); }}
+                onApply={crop => {
+                    if (!cropDialogRef.current || sourceRef.current !== cropSource) return;
+                    const checked = validatePixelSourceCrop(crop, sourceRef.current);
+                    sourceCropRef.current = checked; setSourceCrop(checked);
+                    cropDialogRef.current = false; setCropSource(null);
+                    setStatus({ text: cropText.applied, error: false });
+                }} />}
         </div>
     );
 }

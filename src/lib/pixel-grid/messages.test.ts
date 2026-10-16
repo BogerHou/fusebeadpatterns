@@ -14,6 +14,8 @@ import * as printPreferences from './print-preferences';
 import type { createPixelGridPdf } from './pdf';
 import * as localeNavigation from './locale-navigation';
 import * as workspaceProject from './workspace-project';
+import * as cropCopy from './crop-copy';
+import * as sourceCrop from './source-crop';
 import * as beadCopy from './bead-copy';
 import * as beadTransfer from './bead-transfer';
 import * as beadConversion from './bead-conversion';
@@ -178,6 +180,8 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
                 localeNavigation.parsePixelWorkspaceSnapshot(localeNavigation.serializePixelWorkspaceSnapshot(snapshot)), { ...print }),
         };
         if (id === '@/lib/pixel-grid/conversion') return conversion;
+        if (id === '@/lib/pixel-grid/crop-copy') return cropCopy;
+        if (id === '@/lib/pixel-grid/source-crop') return sourceCrop;
         if (id === '@/lib/pixel-grid/messages') return messages;
         if (id === '@/lib/pixel-grid/print-copy') return printCopy;
         if (id === '@/lib/pixel-grid/print-preferences') return printPreferences;
@@ -189,7 +193,7 @@ function workspace(overrides: Record<string, unknown> = {}, globals: Record<stri
         if (id === '@/lib/editor/palette-defaults') return paletteDefaults;
         // The separate modal is lazy-loaded in production. These tests drive
         // the workspace-owned boundary callbacks, not its modal rendering.
-        if (id === 'next/dynamic') return { __esModule: true, default: () => 'pixel-bead-dialog' };
+        if (id === 'next/dynamic') return { __esModule: true, default: (loader: () => unknown) => loader.toString().includes('PixelSourceCropDialog') ? 'pixel-crop-dialog' : 'pixel-bead-dialog' };
         if (id === '@/lib/i18n/routes') return localeRoutes;
         if (id === '@/lib/analytics') return { trackPixelGridExport: () => false };
         if (id.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_target, name) => String(name) }) };
@@ -410,6 +414,7 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
     return {
         source, byId, button, render, downloads, events, storage, assignments, location, captures, nativeViewport,
         beadDialog: () => find(node => node.type === 'pixel-bead-dialog'),
+        cropDialog: () => find(node => node.type === 'pixel-crop-dialog'),
         key: (key: string, shiftKey = false) => {
             const event = { key, shiftKey, ctrlKey: true, metaKey: false, altKey: false, target: null as EventTarget | null, preventDefault() {} };
             for (const callback of documentListeners.get('keydown') ?? []) callback(event as unknown as Event);
@@ -472,6 +477,113 @@ function interactiveWorkspace(props: { locale?: messages.PixelGridLocale; experi
         unmount: () => { for (const cleanup of cleanups) cleanup(); },
     };
 }
+
+describe('pixel original-image area workflow', () => {
+    const chosen = { sourceWidth: 64, sourceHeight: 32, x: 37, y: 5, width: 19, height: 23 };
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('applies an area without changing the %s drawing, then reconverts and preserves grid-only Undo', async locale => {
+        const ui = interactiveWorkspace({ locale, experience: 'converter' });
+        const text = copy[locale], cropText = cropCopy.PIXEL_CROP_COPY[locale];
+        await ui.loadImage(); ui.paint(); const previous = await ui.currentProject();
+        ui.click(cropText.open);
+        expect(ui.cropDialog().props.source).toMatchObject({ width: 64, height: 32, name: 'source.png' });
+        expect(ui.cropDialog().props.initialCrop).toBeNull();
+        const downloads = ui.downloads.length;
+        ui.key('z'); ui.canvasKey('f'); ui.pointer('onPointerDown'); ui.click(text.reconvert); ui.click(text.saveWorkspace);
+        expect(ui.downloads).toHaveLength(downloads); expect(ui.captures.size).toBe(0);
+        expect(ui.switchLanguage('/de/pixel-art-generator').blocked).toBe(true);
+        invoke(ui.cropDialog(), 'onApply', chosen); ui.render();
+        expect(ui.status()).toContain(cropText.applied);
+        expect(await ui.currentProject()).toEqual(previous);
+        const file = await ui.download(text.saveWorkspace);
+        const full = workspaceProject.parsePixelWorkspaceProject(await file.blob.text());
+        expect(full.version).toBe(2); expect(full.snapshot.sourceCrop).toEqual(chosen);
+        expect(full.snapshot.source!.pixels).toEqual(ui.source.pixels);
+        ui.change('pixel-width', '17'); ui.change('pixel-height', '31'); ui.change('pixel-image-mode', 'stretch');
+        ui.click(text.reconvert);
+        expect(await ui.currentProject()).toEqual(core.resizeImage(sourceCrop.cropPixelSource(ui.source, chosen), 17, 31, 'stretch'));
+        ui.click(text.undo); expect(await ui.currentProject()).toEqual(previous);
+        ui.click(cropText.open); expect(ui.cropDialog().props.initialCrop).toEqual(chosen);
+        invoke(ui.cropDialog(), 'onCancel'); ui.render();
+        ui.click(text.redo);
+        expect([ui.canvas().props.width, ui.canvas().props.height]).not.toEqual([0, 0]);
+        ui.click(cropText.open); invoke(ui.cropDialog(), 'onApply', null); ui.render();
+        ui.click(text.detailButton(32));
+        expect(await ui.currentProject()).toEqual(core.resizeImage(ui.source, 32, 32, 'stretch'));
+        ui.unmount();
+    });
+
+    it('keeps an applied crop on cancel, broken/newer files and late async reads; new images and old basic files reset it only on success', async () => {
+        const ui = interactiveWorkspace({ locale: 'en' }, { confirm: () => false });
+        await ui.loadImage(); ui.click(cropCopy.PIXEL_CROP_COPY.en.open);
+        invoke(ui.cropDialog(), 'onApply', chosen); ui.render();
+        const full = workspaceProject.parsePixelWorkspaceProject(await (await ui.download(copy.en.saveWorkspace)).blob.text());
+        full.snapshot.sourceCrop = { ...chosen, x: 1 };
+        await ui.loadProject(workspaceProject.serializePixelWorkspaceProject(full.snapshot, full.print)); // Confirmation cancelled.
+        for (const raw of ['{', JSON.stringify({ format: 'pixel-grid-workspace', version: 99 }), (() => {
+            const value = JSON.parse(workspaceProject.serializePixelWorkspaceProject(full.snapshot, full.print)); value.snapshot.sourceCrop.width = 99; return JSON.stringify(value);
+        })()]) await ui.loadProject(raw);
+        ui.click(cropCopy.PIXEL_CROP_COPY.en.open); expect(ui.cropDialog().props.initialCrop).toEqual(chosen);
+        invoke(ui.cropDialog(), 'onCancel'); ui.render();
+        const badImage = { name: 'broken.png', size: 1, type: 'image/png', arrayBuffer: async () => new Uint8Array([0]).buffer };
+        invoke(ui.byId('pixel-image-file'), 'onChange', { currentTarget: { files: [badImage], value: '' } }); await ui.settle();
+        ui.click(cropCopy.PIXEL_CROP_COPY.en.open); expect(ui.cropDialog().props.initialCrop).toEqual(chosen);
+        invoke(ui.cropDialog(), 'onCancel'); ui.render();
+        await ui.loadImage(); ui.click(cropCopy.PIXEL_CROP_COPY.en.open); expect(ui.cropDialog().props.initialCrop).toBeNull();
+        invoke(ui.cropDialog(), 'onApply', chosen); ui.render();
+        await ui.loadProject(core.serializeProject(core.createGrid(2, 3)));
+        expect(ui.button(cropCopy.PIXEL_CROP_COPY.en.open).props.disabled).toBe(true);
+        const reset = workspaceProject.parsePixelWorkspaceProject(await (await ui.download(copy.en.saveWorkspace)).blob.text());
+        expect(reset.snapshot.source).toBeNull(); expect(reset.snapshot.sourceCrop).toBeNull();
+        let complete!: (raw: string) => void;
+        const pending = new Promise<string>(resolve => { complete = resolve; });
+        invoke(ui.byId('pixel-project-file'), 'onChange', { currentTarget: { files: [{ name: 'late.json', size: 100, text: () => pending }], value: '' } });
+        ui.render();
+        const before = ui.status(); ui.unmount();
+        complete(workspaceProject.serializePixelWorkspaceProject(full.snapshot, full.print)); await ui.settle();
+        expect(ui.status()).toBe(before);
+    });
+
+    it('does not finish a live stroke or clear its existing Redo before a bad import is rejected', async () => {
+        const ui = interactiveWorkspace({ locale: 'en' });
+        await ui.loadImage(); ui.paint(); ui.click(copy.en.undo);
+        expect(ui.button(copy.en.redo).props.disabled).toBe(false);
+        ui.pointer('onPointerDown'); expect(ui.captures.size).toBe(1);
+        await ui.loadProject('{');
+        expect(ui.captures.size).toBe(1); expect(ui.button(copy.en.redo).props.disabled).toBe(false);
+        const broken = { name: 'broken.png', size: 1, type: 'image/png', arrayBuffer: async () => new Uint8Array([0]).buffer };
+        invoke(ui.byId('pixel-image-file'), 'onChange', { currentTarget: { files: [broken], value: '' } }); await ui.settle();
+        expect(ui.captures.size).toBe(1); expect(ui.button(copy.en.redo).props.disabled).toBe(false);
+        ui.pointer('onPointerUp'); expect(ui.captures.size).toBe(0);
+        ui.unmount();
+    });
+
+    it('restores area, original pixels and both history branches from v2 and through all four equivalent language routes', async () => {
+        const first = interactiveWorkspace({ locale: 'en' }, { confirm: () => true });
+        await first.loadImage(); first.paint();
+        first.click(cropCopy.PIXEL_CROP_COPY.en.open); invoke(first.cropDialog(), 'onApply', chosen); first.render();
+        first.click(copy.en.undo);
+        const file = await first.download(copy.en.saveWorkspace), raw = await file.blob.text();
+        const original = workspaceProject.parsePixelWorkspaceProject(raw);
+        const imported = interactiveWorkspace({ locale: 'de', experience: 'converter' }, { confirm: () => true });
+        await imported.loadProject(raw);
+        const restored = workspaceProject.parsePixelWorkspaceProject(await (await imported.download(copy.de.saveWorkspace)).blob.text());
+        expect(restored.snapshot.source).toEqual(original.snapshot.source);
+        expect(restored.snapshot.history).toEqual(original.snapshot.history);
+        expect(restored.snapshot.sourceCrop).toEqual(chosen);
+        let previous = imported;
+        for (const locale of ['fr', 'ja', 'en'] as const) {
+            expect(previous.switchLanguage(localeRoutes.localeRoutes[locale].pixelGrid!).blocked).toBe(false);
+            const next = interactiveWorkspace({ locale, experience: locale === 'en' ? 'grid' : 'converter' }, { storage: previous.storage });
+            next.click(cropCopy.PIXEL_CROP_COPY[locale].open); expect(next.cropDialog().props.initialCrop).toEqual(chosen);
+            invoke(next.cropDialog(), 'onCancel'); next.render();
+            next.change('pixel-width', '17'); next.change('pixel-height', '31'); next.click(copy[locale].reconvert);
+            expect(await next.currentProject()).toEqual(core.resizeImage(sourceCrop.cropPixelSource(first.source, chosen), 17, 31, 'fit'));
+            previous.unmount(); previous = next;
+        }
+        first.unmount(); previous.unmount();
+    });
+});
 
 describe('pixel grid printable PDF integration', () => {
     const printableBytes = new TextEncoder().encode('%PDF-test-handler-contract');

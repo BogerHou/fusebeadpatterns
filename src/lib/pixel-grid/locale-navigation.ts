@@ -1,6 +1,7 @@
 import { LIMITS, type GridHistorySnapshot, type PixelGrid, type PixelPoint, type ResizeMode, type RgbaSource } from './core';
 import type { ColorLimit } from './conversion';
 import { createPixelLocaleStore, type PixelLocaleStore } from './locale-storage';
+import { validatePixelSourceCrop, type PixelSourceCrop } from './source-crop';
 
 export const PIXEL_LOCALE_STORAGE_KEY = 'pixel-grid-locale-transfer-v1';
 const MAX_AGE = 5 * 60 * 1000;
@@ -14,6 +15,8 @@ export type PixelLocaleSnapshot = {
     grid: PixelGrid;
     saved: PixelGrid;
     source: PixelSourceImage | null;
+    /** Absent only in legacy in-memory callers/payloads; decoded data uses null. */
+    sourceCrop?: PixelSourceCrop | null;
     history: GridHistorySnapshot;
     width: string;
     height: string;
@@ -86,6 +89,7 @@ function decodeSnapshot(value: unknown): PixelLocaleSnapshot {
     }
     return {
         ...(value as unknown as PixelLocaleSnapshot), grid, saved, source,
+        sourceCrop: validatePixelSourceCrop(value.sourceCrop, source),
         history: { undo: value.history.undo.map(item => decode(item)), redo: value.history.redo.map(item => decode(item)) },
         cursor: [value.cursor[0], value.cursor[1]],
     };
@@ -94,6 +98,7 @@ function decodeSnapshot(value: unknown): PixelLocaleSnapshot {
 function encodeSnapshot(snapshot: PixelLocaleSnapshot) {
     return {
         ...snapshot,
+        sourceCrop: validatePixelSourceCrop(snapshot.sourceCrop, snapshot.source),
         grid: encode(snapshot.grid), saved: encode(snapshot.saved),
         source: snapshot.source ? { ...encode(snapshot.source), name: snapshot.source.name } : null,
         history: { undo: snapshot.history.undo.map(encode), redo: snapshot.history.redo.map(encode) },

@@ -27,11 +27,27 @@ function fixture(): PixelLocaleSnapshot {
         grid, saved, source: { ...createGrid(3, 1, [88, 99, 100, 0, 55, 66, 77, 64, 22, 33, 44, 255]), name: '元画像.png' },
         history: history.snapshot(), width: '17', height: '31', mode: 'crop', tool: 'eraser',
         color: '#123abc', alpha: 53, zoom: '24', showGrid: false, colorLimit: 16,
-        exportScale: 4, cursor: [1, 0], settingsExpanded: true,
+        exportScale: 4, cursor: [1, 0], settingsExpanded: true, sourceCrop: null,
     };
 }
 
 describe('pixel workspace language transfer', () => {
+    it('keeps the exact crop through small and large transfers and migrates old snapshots without a crop', async () => {
+        const session = storage(), bulk = largeStorage(), snapshot = fixture();
+        snapshot.sourceCrop = { sourceWidth: 3, sourceHeight: 1, x: 1, y: 0, width: 2, height: 1 };
+        for (const path of ['/pixel-art-grid', '/de/pixel-art-generator', '/fr/image-en-pixel-art', '/ja/pixel-art-converter']) {
+            expect(savePixelLocaleSnapshot(snapshot, path, session, 1000)).toBe(true);
+            expect(consumePixelLocaleSnapshot(path, session, 1001)).toEqual(snapshot);
+            expect(await saveLargePixelLocaleSnapshot(snapshot, path, session, bulk.store, 1000)).toBe(true);
+            expect(await consumeLargePixelLocaleSnapshot(path, session, bulk.store, 1001)).toEqual(snapshot);
+        }
+        savePixelLocaleSnapshot(snapshot, '/pixel-art-grid', session, 1000);
+        const old = JSON.parse(session.getItem(PIXEL_LOCALE_STORAGE_KEY)!); delete old.snapshot.sourceCrop;
+        session.setItem(PIXEL_LOCALE_STORAGE_KEY, JSON.stringify(old));
+        expect(consumePixelLocaleSnapshot('/pixel-art-grid', session, 1001)).toEqual({ ...snapshot, sourceCrop: null });
+        expect(savePixelLocaleSnapshot({ ...snapshot, source: null }, '/pixel-art-grid', session, 1000)).toBe(false);
+        expect(session.getItem(PIXEL_LOCALE_STORAGE_KEY)).toBeNull();
+    });
     it.each(['fill', 'picker'] as const)('keeps %s with exact opacity and both history branches through every language and storage codec', async tool => {
         const paths = ['/pixel-art-grid', '/de/pixel-art-generator', '/fr/image-en-pixel-art', '/ja/pixel-art-converter'];
         for (const path of paths) {

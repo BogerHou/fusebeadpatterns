@@ -63,6 +63,7 @@ function fixture(largeSource = false): PixelLocaleSnapshot {
         width: '57', height: '31', mode: 'crop', tool: 'eraser', color: '#aB12fE', alpha: 53,
         zoom: '24', showGrid: false, colorLimit: 16, exportScale: 4,
         cursor: [36, 22], settingsExpanded: true,
+        sourceCrop: { sourceWidth, sourceHeight, x: 1, y: 1, width: 2, height: 1 },
     };
 }
 

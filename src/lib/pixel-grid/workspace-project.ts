@@ -2,9 +2,10 @@ import { LIMITS, type RgbaPixels } from './core';
 import { PixelGridError } from './errors';
 import { parsePixelWorkspaceSnapshot, serializePixelWorkspaceSnapshot, type PixelLocaleSnapshot } from './locale-navigation';
 import type { PixelGridPrintPreferences } from './print-preferences';
+import { validatePixelSourceCrop } from './source-crop';
 
 export const PIXEL_WORKSPACE_PROJECT_FORMAT = 'pixel-grid-workspace';
-export const PIXEL_WORKSPACE_PROJECT_VERSION = 1;
+export const PIXEL_WORKSPACE_PROJECT_VERSION = 2;
 export const MAX_PIXEL_WORKSPACE_PROJECT_BYTES = 32 * 1024 * 1024;
 
 export type PixelWorkspaceProject = {
@@ -90,8 +91,10 @@ function rgba(value: unknown, wire: boolean, source = false) {
 }
 
 /** Structural validation precedes the existing codec's semantic validation. */
-function snapshotData(value: unknown, wire: boolean) {
-    const row = fields(value, SNAPSHOT_KEYS);
+function snapshotData(value: unknown, wire: boolean, legacy = false) {
+    // Old v1 files are validated against their exact old schema: no crop may be
+    // smuggled into v1 and silently discarded by an older reader.
+    const row = fields(value, legacy ? SNAPSHOT_KEYS : [...SNAPSHOT_KEYS, 'sourceCrop']);
     const history = fields(row.history, ['undo', 'redo']);
     const undo = array(history.undo, 50), redo = array(history.redo, 50);
     if (undo.length + redo.length > 50) return invalid();
@@ -103,9 +106,12 @@ function snapshotData(value: unknown, wire: boolean) {
         || (row.settingsExpanded !== null && typeof row.settingsExpanded !== 'boolean')) return invalid();
     const cursor = array(row.cursor, 2);
     if (cursor.length !== 2 || cursor.some(value => typeof value !== 'number' || !Number.isFinite(value))) return invalid();
+    const source = row.source === null ? null : rgba(row.source, wire, true);
+    const sourceCrop = validatePixelSourceCrop(legacy ? null : row.sourceCrop, source);
+    if (!legacy && row.sourceCrop === undefined) return invalid();
     return {
         ...row,
-        grid: rgba(row.grid, wire), saved: rgba(row.saved, wire), source: row.source === null ? null : rgba(row.source, wire, true),
+        grid: rgba(row.grid, wire), saved: rgba(row.saved, wire), source, sourceCrop,
         history: { undo: undo.map(value => rgba(value, wire)), redo: redo.map(value => rgba(value, wire)) }, cursor,
     };
 }
@@ -131,7 +137,10 @@ function stableError(error: unknown): never {
 /** A separate user-downloaded format; no storage, migration or network effects. */
 export function serializePixelWorkspaceProject(snapshot: PixelLocaleSnapshot, print: PixelGridPrintPreferences): string {
     try {
-        const data = snapshotData(snapshot, false);
+        // Only older JS callers may omit the field. Preserve strict own-data
+        // inspection rather than spreading unknown/getter-bearing input first.
+        const hasCrop = Object.hasOwn(snapshot, 'sourceCrop');
+        const data = snapshotData(snapshot, false, !hasCrop);
         const preferences = printData(print);
         const encoded = serializePixelWorkspaceSnapshot(data as unknown as PixelLocaleSnapshot);
         const raw = `{"format":"${PIXEL_WORKSPACE_PROJECT_FORMAT}","version":${PIXEL_WORKSPACE_PROJECT_VERSION},"snapshot":${encoded},"print":${JSON.stringify(preferences)}}`;
@@ -148,9 +157,9 @@ export function parsePixelWorkspaceProject(raw: string): PixelWorkspaceProject {
         const value: unknown = JSON.parse(raw);
         if (!value || typeof value !== 'object' || Array.isArray(value)) return invalid();
         const header = value as Record<string, unknown>;
-        if (header.format !== PIXEL_WORKSPACE_PROJECT_FORMAT || header.version !== PIXEL_WORKSPACE_PROJECT_VERSION) throw new PixelGridError('WORKSPACE_UNSUPPORTED_FORMAT');
+        if (header.format !== PIXEL_WORKSPACE_PROJECT_FORMAT || (header.version !== 1 && header.version !== PIXEL_WORKSPACE_PROJECT_VERSION)) throw new PixelGridError('WORKSPACE_UNSUPPORTED_FORMAT');
         const row = fields(value, ['format', 'version', 'snapshot', 'print']);
-        const data = snapshotData(row.snapshot, true);
+        const data = snapshotData(row.snapshot, true, header.version === 1);
         const print = printData(row.print);
         const snapshot = parsePixelWorkspaceSnapshot(JSON.stringify(data));
         return { format: PIXEL_WORKSPACE_PROJECT_FORMAT, version: PIXEL_WORKSPACE_PROJECT_VERSION, snapshot, print };
