@@ -16,3 +16,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Vercel 图片转换检查
 
 部署到 Vercel 的项目，在确定技术方案、修改图片处理方式和上线前，检查是否涉及 Vercel 图片转换及其额度消耗，避免默认配置产生不必要的转换。
+
+## IndexNow 发布步骤
+
+- 正式部署成功、页面验收通过后，使用 `npm run indexnow -- --check` 核实静态验证文件，再用 `npm run indexnow -- --submit <本次变化的规范URL...>` 通知新增或实质修改页面；删除/迁移使用 `--submit --removed`。具体用法见 README。
+- 默认命令仅 dry-run；不在构建、Preview 或未上线时提交，不为日更重复提交未变化的整站，不在五分钟内重复相同 URL。只处理本站公开规范 URL，不发送私有或 noindex 页面。
+- 记录实际响应：200 为收到通知，202 为收到且验证待完成；两者均不证明收录。失败不自动重试，沿用原发布记录保存精简结果。保持独立静态 key，无新增 Vercel 函数、定时器或图片转换。

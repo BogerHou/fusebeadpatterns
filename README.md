@@ -150,3 +150,21 @@ node scripts/check-public-pages.mjs compare --snapshot /tmp/fusebead-public-page
 - 图纸达到 4096 格时，配色优先使用 Web Worker；小图或 Worker 不可用时使用相同算法在主线程计算。换图或修改参数会终止过期 Worker；已保存的编辑像素直接恢复，不重新配色。单次计算最多缓存 4096 种颜色的匹配结果。
 - PDF / SVG 内嵌 monospace 字体体积较大，lint 时会看到 Babel deopt 提示。当前已经通过动态 import 避免影响首页首屏，并在导出时显示 loading；后续仍应把字体 payload 移到静态资源或进一步拆分导出包。
 - 多色板混合时仍沿用旧版核心模型；如果后续发现跨品牌色号冲突，需要继续细化 usage key 设计
+
+## IndexNow 发布通知
+
+正式部署成功并核对实际页面后，显式通知本次新增、实质修改或删除的规范 URL。使用 Node.js 22+；`indexnow.config.json` 对应本站，验证文件由 `public/` 静态发布。不要把验证文件移入私有目录。
+
+```bash
+# 先确认正式域名已提供正确验证文件
+npm run indexnow -- --check
+# 默认只预览，不发网络请求；将参数换成本次实际变化的 URL
+npm run indexnow -- /changed-page
+npm run indexnow -- --submit /changed-page
+# 删除或迁移页面：线上应已返回 404、410 或重定向
+npm run indexnow -- --submit --removed /old-page
+```
+
+多页可直接列出多个 URL，或使用 `--file changed-urls.txt`（每行一个 URL）。脚本只接受本站 HTTPS 规范 URL，真实提交前验证公开 key、HTTP 状态、HTML、noindex 与 canonical；删除/迁移模式另外允许相应状态。不要在 Preview、构建前或页面尚未上线时提交，不重发整份未变化的 sitemap，也不要在五分钟内重复提交相同 URL。
+
+HTTP 200 仅表示收到通知；202 表示已收到、验证文件仍待搜索引擎确认。两者均不代表已抓取、已收录或排名提升。将执行时间、提交 URL、响应状态留在既有私有发布记录；失败不自动重试。此接入没有新增定时任务、浏览器埋点、动态服务或图片转换，后续每次发布仍须按此步骤显式执行。
