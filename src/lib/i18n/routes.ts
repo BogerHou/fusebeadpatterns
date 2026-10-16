@@ -1,6 +1,7 @@
 import { hamaMakerPaths } from '../hama-maker/routes';
 import { perlerColorChartPaths } from '../color-chart/routes';
 import { beadLetterPaths } from '../bead-letters/routes';
+import { blockShapePaths } from '../block-shapes/routes';
 import { guideRouteGroups, guideIndexHref } from '../guides/routes';
 import { patternSectionRouteGroups } from '../patterns/section-routes';
 import { sitePageHref, sitePageRouteGroups } from '../site-pages/routes';
@@ -13,11 +14,11 @@ const siteInfoRoutes = (locale: SiteLocale) => ({
     privacy: sitePageHref('privacy-policy', locale),
     terms: sitePageHref('terms-of-service', locale),
 });
-export const localeRoutes: Record<SiteLocale, { home: string; hamaMaker: string; patterns: string; hamaPatterns: string; editor: string; guides: string; pixelGrid?: string; beadLoom: string; beadLoomPatterns: string; beadLetters: string; about: string; privacy: string; terms: string }> = {
-    en: { ...siteInfoRoutes('en'), beadLetters: beadLetterPaths.en, guides: guideIndexHref('en'), home: '/', hamaMaker: hamaMakerPaths.en, patterns: '/patterns', hamaPatterns: '/patterns/hama', editor: '/editor', pixelGrid: '/pixel-art-grid', beadLoom: '/bead-loom-pattern-maker', beadLoomPatterns: loomPatternLibraryPaths.en },
-    de: { ...siteInfoRoutes('de'), beadLetters: beadLetterPaths.de, guides: guideIndexHref('de'), home: '/de', hamaMaker: hamaMakerPaths.de, patterns: '/de/patterns', hamaPatterns: '/de/hama-perlen-vorlagen', editor: '/de/editor', pixelGrid: '/de/pixel-art-generator', beadLoom: '/de/perlenwebmuster-generator', beadLoomPatterns: loomPatternLibraryPaths.de },
-    fr: { ...siteInfoRoutes('fr'), beadLetters: beadLetterPaths.fr, guides: guideIndexHref('fr'), home: '/fr', hamaMaker: hamaMakerPaths.fr, patterns: '/fr/patterns', hamaPatterns: '/fr/patterns/hama', editor: '/fr/editor', pixelGrid: '/fr/image-en-pixel-art', beadLoom: '/fr/generateur-motif-metier-a-perles', beadLoomPatterns: loomPatternLibraryPaths.fr },
-    ja: { ...siteInfoRoutes('ja'), beadLetters: beadLetterPaths.ja, guides: guideIndexHref('ja'), home: '/ja', hamaMaker: hamaMakerPaths.ja, patterns: '/ja/patterns', hamaPatterns: '/ja/patterns/hama', editor: '/ja/editor', pixelGrid: '/ja/pixel-art-converter', beadLoom: '/ja/bead-loom-pattern-maker', beadLoomPatterns: loomPatternLibraryPaths.ja },
+export const localeRoutes: Record<SiteLocale, { home: string; hamaMaker: string; patterns: string; hamaPatterns: string; editor: string; guides: string; pixelGrid?: string; beadLoom: string; beadLoomPatterns: string; beadLetters: string; blockShapes: string; about: string; privacy: string; terms: string }> = {
+    en: { ...siteInfoRoutes('en'), beadLetters: beadLetterPaths.en, blockShapes: blockShapePaths.en, guides: guideIndexHref('en'), home: '/', hamaMaker: hamaMakerPaths.en, patterns: '/patterns', hamaPatterns: '/patterns/hama', editor: '/editor', pixelGrid: '/pixel-art-grid', beadLoom: '/bead-loom-pattern-maker', beadLoomPatterns: loomPatternLibraryPaths.en },
+    de: { ...siteInfoRoutes('de'), beadLetters: beadLetterPaths.de, blockShapes: blockShapePaths.de, guides: guideIndexHref('de'), home: '/de', hamaMaker: hamaMakerPaths.de, patterns: '/de/patterns', hamaPatterns: '/de/hama-perlen-vorlagen', editor: '/de/editor', pixelGrid: '/de/pixel-art-generator', beadLoom: '/de/perlenwebmuster-generator', beadLoomPatterns: loomPatternLibraryPaths.de },
+    fr: { ...siteInfoRoutes('fr'), beadLetters: beadLetterPaths.fr, blockShapes: blockShapePaths.fr, guides: guideIndexHref('fr'), home: '/fr', hamaMaker: hamaMakerPaths.fr, patterns: '/fr/patterns', hamaPatterns: '/fr/patterns/hama', editor: '/fr/editor', pixelGrid: '/fr/image-en-pixel-art', beadLoom: '/fr/generateur-motif-metier-a-perles', beadLoomPatterns: loomPatternLibraryPaths.fr },
+    ja: { ...siteInfoRoutes('ja'), beadLetters: beadLetterPaths.ja, blockShapes: blockShapePaths.ja, guides: guideIndexHref('ja'), home: '/ja', hamaMaker: hamaMakerPaths.ja, patterns: '/ja/patterns', hamaPatterns: '/ja/patterns/hama', editor: '/ja/editor', pixelGrid: '/ja/pixel-art-converter', beadLoom: '/ja/bead-loom-pattern-maker', beadLoomPatterns: loomPatternLibraryPaths.ja },
 };
 
 // These groups share the same purpose and content. Selected pattern collections
@@ -27,6 +28,7 @@ export const localizedRouteGroups: ReadonlyArray<Partial<Record<SiteLocale, stri
     hamaMakerPaths,
     perlerColorChartPaths,
     beadLetterPaths,
+    blockShapePaths,
     { en: '/patterns', de: '/de/patterns', fr: '/fr/patterns', ja: '/ja/patterns' },
     ...patternSlugs.map(slug => ({ en: `/patterns/${slug}`, de: `/de/patterns/${slug}`, fr: `/fr/patterns/${slug}`, ja: `/ja/patterns/${slug}` })),
     ...patternSectionRouteGroups,

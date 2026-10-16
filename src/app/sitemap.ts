@@ -1,6 +1,7 @@
 import { hamaMakerPaths } from '@/lib/hama-maker/routes';
 import { perlerColorChartPaths } from '@/lib/color-chart/routes';
 import { beadLetterPaths } from '@/lib/bead-letters/routes';
+import { blockShapePaths } from '@/lib/block-shapes/routes';
 import { guideRouteGroups } from '@/lib/guides/routes';
 import { sitePageRouteGroups } from '@/lib/site-pages/routes';
 import { localeRoutes } from '@/lib/i18n/routes';
@@ -19,6 +20,11 @@ const translationBaseline = Date.parse('2026-10-09T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
+        ...Object.values(blockShapePaths).map(path => ({
+            url: `https://fusebeadpatterns.art${path}`,
+            lastModified: new Date('2026-10-16T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
+        })),
         ...Object.values(beadLetterPaths).map(path => ({
             url: `https://fusebeadpatterns.art${path}`,
             lastModified: new Date('2026-10-16T00:00:00.000Z'),

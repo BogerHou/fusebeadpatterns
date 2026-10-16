@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { SITE_LOCALES, isSiteLocale } from './locales';
 import { getLocaleDestination, getLocaleFromPath, localeRoutes, localizedRouteGroups } from './routes';
+import { blockShapePaths } from '../block-shapes/routes';
 
 describe('site language routes', () => {
+    it('keeps all four block-building tools in one equivalent language group', () => {
+        for (const from of SITE_LOCALES) {
+            for (const to of SITE_LOCALES) {
+                expect(getLocaleDestination(blockShapePaths[from], to, { hash: '#block-shapes-how' })).toEqual({
+                    href: blockShapePaths[to] + '#block-shapes-how',
+                    isFallback: false,
+                });
+            }
+        }
+    });
     it('round-trips only registered equivalent pages and retains their query and fragment', () => {
         for (const group of localizedRouteGroups) {
             for (const source of Object.values(group)) {
