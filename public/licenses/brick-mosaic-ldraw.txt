@@ -1,0 +1,61 @@
+Brick mosaic colour attribution and material sources
+Retrieved: 2026-10-17
+Catalogue version: 3024-2026-10-17
+
+DIGITAL COLOUR CHART
+Original creator: LDraw.org
+Original work: LDraw.org Colour Definition Reference
+Source: https://ldraw.org/parts/colour.html
+Applicable website-content licence statement:
+https://www.ldraw.org/docs-main/licenses/legal-info.html
+Licence: Creative Commons Attribution 4.0 International (CC BY 4.0)
+Licence summary and legal code:
+https://creativecommons.org/licenses/by/4.0/
+https://creativecommons.org/licenses/by/4.0/legalcode
+
+Digital colour approximations adapted from the LDraw.org Colour Definition
+Reference, by LDraw.org, under CC BY 4.0. Selected and relabelled by
+Fuse Bead Patterns for a finite LEGO design 3024 palette.
+
+Changes: selected 20 opaque colours; mapped colour names and independent LDraw
+codes to separately verified manufacturer part/colour combinations. The selected
+LDraw RGB values are unchanged. Product-card colour names are used for labels.
+No LDraw part geometry, full library, LEGO product photograph or instruction
+artwork is included. The raw LDConfig file is not represented as CC0.
+
+This attribution does not suggest that LDraw.org endorses Fuse Bead Patterns.
+CC BY 4.0 allows sharing and adaptation, including commercial use, subject to
+its attribution, licence-link and indication-of-changes conditions. The licence
+supplies no warranty and does not grant trademark or other third-party rights.
+
+MANUFACTURER PART/COLOUR FACTS
+Part: Plate 1 x 1, LEGO design ID 3024, with a top stud.
+Part/colour facts were checked against the same public product cards and their
+embedded structured records, published by The LEGO Group, at these URLs:
+https://www.lego.com/en-gb/pick-and-build/pick-a-brick?appearsIn=40872
+https://www.lego.com/de-de/pick-and-build/pick-a-brick?appearsIn=72163
+https://www.lego.com/en-gb/pick-and-build/pick-a-brick?appearsIn=40859
+https://www.lego.com/da-dk/pick-and-build/pick-a-brick?elementGroup=EG00029&includeOutOfStock=true&perPage=200
+https://www.lego.com/en-gb/pick-and-build/pick-a-brick?appearsIn=40354
+https://www.lego.com/fr-fr/pick-and-build/pick-a-brick?appearsIn=40861
+https://www.lego.com/en-gb/pick-and-build/pick-a-brick?appearsIn=75375&perPage=200
+https://www.lego.com/en-us/pick-and-build/pick-a-brick?appearsIn=40413&perPage=200
+
+The part/colour facts above are a curated finite subset; the LEGO website,
+product artwork and trademarks are not described as licensed under CC BY 4.0.
+LEGO design ID, colour ID and element ID are separate identifiers. LDraw colour
+codes are a fourth system and are not BrickLink colour IDs. Several element IDs
+can refer to the same design/colour combination; the tool uses observed IDs
+rather than constructing them from design and colour numbers.
+
+RGB values and the drawn stud preview are digital approximations. LDraw RGB
+values can differ from the manufacturer's own digital swatches, and neither is
+a promise of exact physical colour. A catalogue listing establishes an observed
+part/colour combination, not current stock, price, delivery or continued
+production. The tool does not promise BrickLink import compatibility, structural
+strength or wall-mount safety. Nominal stud pitch is approximately 8 mm, derived
+from the LDraw specification's 20 LDU at approximately 0.4 mm per LDU:
+https://www.ldraw.org/article/218.html
+
+LEGO is a trademark of the LEGO Group. Fuse Bead Patterns is independent and is
+not sponsored, endorsed or authorised by the LEGO Group or LDraw.org.

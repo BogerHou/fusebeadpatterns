@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { SITE_LOCALES, siteNavigation } from '../../lib/i18n/locales';
 import { localeRoutes } from '../../lib/i18n/routes';
+import { brickPaths } from '../../lib/brick-mosaic/routes';
 import ToolMenu from './ToolMenu';
 
 let pathname = '/pixel-art-grid';
@@ -14,8 +15,8 @@ describe('tool navigation', () => {
             const routes = localeRoutes[locale];
             pathname = routes.pixelGrid!;
             const html = renderToStaticMarkup(createElement(ToolMenu, { locale }));
-            for (const href of [routes.home, routes.hamaMaker, routes.pixelGrid, routes.beadLoom, routes.beadLetters, routes.blockShapes, routes.qrBeads, routes.sprites, routes.bannerMaker]) expect(html).toContain(`href="${href}"`);
-            expect(html.match(/<a\b/g)).toHaveLength(9);
+            for (const href of [routes.home, routes.hamaMaker, routes.pixelGrid, routes.beadLoom, routes.beadLetters, routes.blockShapes, routes.qrBeads, routes.sprites, brickPaths[locale], routes.bannerMaker]) expect(html).toContain(`href="${href}"`);
+            expect(html.match(/<a\b/g)).toHaveLength(10);
             expect(html).toContain(`aria-label="${siteNavigation[locale].tools}"`);
             expect(html.match(/aria-current="page"/g)).toHaveLength(1);
             expect(html).not.toContain('data-locale-navigation');

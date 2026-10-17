@@ -1,5 +1,6 @@
 import { qrBeadPaths } from '@/lib/qr-beads/routes';
 import { spritePaths } from '@/lib/sprites/routes';
+import { brickPaths } from '@/lib/brick-mosaic/routes';
 import { bannerPaths } from '@/lib/minecraft-banners/routes';
 import { hamaMakerPaths } from '@/lib/hama-maker/routes';
 import { perlerColorChartPaths } from '@/lib/color-chart/routes';
@@ -215,6 +216,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         ...[...Object.values(bannerPaths.designer), ...Object.values(bannerPaths.letters)].map(path => ({
             url: `https://fusebeadpatterns.art${path}`,
             lastModified: new Date('2026-10-16T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
+        })),
+        ...Object.values(brickPaths).map(path => ({
+            url: `https://fusebeadpatterns.art${path}`,
+            lastModified: new Date('2026-10-17T00:00:00.000Z'),
             changeFrequency: 'monthly' as const,
         })),
     ];

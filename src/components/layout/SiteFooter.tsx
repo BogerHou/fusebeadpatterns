@@ -1,5 +1,6 @@
 import { qrBeadLabels, qrBeadPaths } from '@/lib/qr-beads/routes';
 import { spriteLabels, spritePaths } from '@/lib/sprites/routes';
+import { brickLabels, brickPaths } from '@/lib/brick-mosaic/routes';
 import { bannerLabels, bannerPaths } from '@/lib/minecraft-banners/routes';
 import Link from 'next/link';
 import { getGuideSummaries } from '@/lib/guides/localized';
@@ -22,6 +23,7 @@ type SiteFooterSection =
     | 'bead-loom'
     | 'qr-beads'
     | 'sprites'
+    | 'brick-mosaic'
     | 'banner-maker'
     | 'banner-letters'
     | 'bead-letters'
@@ -63,6 +65,7 @@ const footerGroups: Array<{
             { id: 'block-shapes', label: blockShapeLabels.en, href: blockShapePaths.en, nativeNavigation: true },
             { id: 'qr-beads', label: qrBeadLabels.en, href: qrBeadPaths.en, nativeNavigation: true },
             { id: 'sprites', label: spriteLabels.en, href: spritePaths.en, nativeNavigation: true },
+            { id: 'brick-mosaic', label: brickLabels.en, href: brickPaths.en, nativeNavigation: true },
             { id: 'banner-maker', label: bannerLabels.designer.en, href: bannerPaths.designer.en, nativeNavigation: true },
             { id: 'banner-letters', label: bannerLabels.letters.en, href: bannerPaths.letters.en, nativeNavigation: true },
             {
@@ -120,6 +123,7 @@ export default function SiteFooter({
                 { id: 'block-shapes', label: blockShapeLabels[locale], href: routes.blockShapes, lang: locale, nativeNavigation: true },
                 { id: 'qr-beads', label: qrBeadLabels[locale], href: routes.qrBeads, lang: locale, nativeNavigation: true },
                 { id: 'sprites', label: spriteLabels[locale], href: routes.sprites, lang: locale, nativeNavigation: true },
+                { id: 'brick-mosaic', label: brickLabels[locale], href: brickPaths[locale], lang: locale, nativeNavigation: true },
                 { id: 'banner-maker', label: bannerLabels.designer[locale], href: routes.bannerMaker, lang: locale, nativeNavigation: true },
                 { id: 'banner-letters', label: bannerLabels.letters[locale], href: routes.bannerLetters, lang: locale, nativeNavigation: true },
             ] as FooterLink[],

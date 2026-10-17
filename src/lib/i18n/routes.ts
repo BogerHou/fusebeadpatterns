@@ -1,5 +1,6 @@
 import { qrBeadPaths } from '../qr-beads/routes';
 import { spritePaths } from '../sprites/routes';
+import { brickPaths } from '../brick-mosaic/routes';
 import { bannerPaths } from '../minecraft-banners/routes';
 import { hamaMakerPaths } from '../hama-maker/routes';
 import { perlerColorChartPaths } from '../color-chart/routes';
@@ -33,6 +34,7 @@ export const localizedRouteGroups: ReadonlyArray<Partial<Record<SiteLocale, stri
     beadLetterPaths,
     qrBeadPaths,
     spritePaths,
+    brickPaths,
     bannerPaths.designer,
     bannerPaths.letters,
     blockShapePaths,
