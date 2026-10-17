@@ -1,0 +1,48 @@
+.tool { margin-top: 2rem; border: 1px solid #d6ded3; border-radius: 12px; background: #fff; color: #243e36; overflow: hidden; }
+.tool fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.tool legend, .tool h2, .tool h3 { font-size: 1rem; font-weight: 650; margin: 0 0 10px; }
+.tool label { display: flex; flex-direction: column; gap: 5px; font-size: .8125rem; font-weight: 550; min-width: 0; }
+.tool button, .tool select, .tool input:not([type=checkbox]):not([type=color]) { min-height: 44px; min-width: 0; max-width: 100%; padding: 8px 11px; border: 1px solid #b9c5ba; border-radius: 6px; background: #fff; color: #243e36; font: inherit; font-size: .8125rem; }
+.tool button { font-weight: 600; cursor: pointer; }
+.tool button:hover { background: #f0f4ed; }
+.tool button:disabled { opacity: .45; cursor: not-allowed; }
+.tool button[aria-pressed=true] { background: #e6eddf; border-color: #315f4a; }
+.tool :is(button, input, select, canvas):focus-visible { outline: 2px solid #315f4a; outline-offset: 3px; }
+.header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #f5f6f2; padding: 16px 22px; border-bottom: 1px solid #d6ded3; font-size: .8rem; }
+.header h2 { margin: 0; margin-right: auto; }
+.actions, .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.row input[type=number] { width: 76px; }
+.setup, .materials { padding: 22px; border-bottom: 1px solid #d6ded3; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 260px; }
+.editor { min-width: 0; padding: 22px; }
+.editor fieldset { margin-bottom: 22px; }
+.toolbar { margin-bottom: 12px !important; }
+.canvasScroll { max-height: 640px; overflow: auto; padding: 6px; margin-top: 10px; border: 1px solid #d6ded3; border-radius: 8px; background: #eef1eb; }
+.canvasScroll canvas { display: block; max-width: none; touch-action: none; image-rendering: pixelated; background: repeating-conic-gradient(#e3e7df 0% 25%, #fff 0% 50%) 0 0 / 12px 12px; }
+.check { flex-direction: row !important; min-height: 44px; align-items: center; font-weight: 400 !important; }
+.check input { width: 16px; height: 16px; }
+.palette { margin-top: 22px !important; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
+.swatches button { display: flex; align-items: center; gap: 7px; text-align: left; font-size: .72rem; padding: 7px; }
+.swatches button > span:first-child { display: block; width: 23px; height: 23px; border-radius: 4px; border: 1px solid #0003; flex: 0 0 23px; }
+.side { padding: 22px; min-width: 0; border-left: 1px solid #d6ded3; background: #f7f8f4; }
+.side fieldset + fieldset { margin-top: 28px; padding-top: 24px; border-top: 1px solid #d6ded3; }
+.side label { margin-top: 12px; }
+.side input[type=color] { width: 46px; height: 38px; padding: 2px; border: 1px solid #b9c5ba; border-radius: 4px; background: #fff; }
+.photo { display: block; width: 100%; height: 140px; object-fit: contain; margin-top: 12px; }
+.exports { display: grid; gap: 8px; margin-top: 14px; }
+.tool .primary { color: #fff; border-color: #315f4a; background: #315f4a; }
+.tool .primary:hover { background: #244735; }
+.hint, .local { color: #536359; font-size: .75rem; line-height: 1.65; margin-top: 10px; }
+.materials > p { font-size: .875rem; }
+.tableScroll { overflow: auto; margin-top: 14px; }
+.tool table { width: 100%; border-collapse: collapse; font-size: .8125rem; text-align: left; font-variant-numeric: tabular-nums; }
+.tool th, .tool td { padding: 9px 10px; border-bottom: 1px solid #d6ded3; white-space: nowrap; }
+.tool th { font-size: .75rem; font-weight: 600; background: #f7f8f4; }
+.tool td:last-child { font-weight: 650; }
+.dot { display: inline-block; width: 16px; height: 16px; border: 1px solid #0003; border-radius: 3px; vertical-align: middle; margin-right: 8px; }
+.notice { margin: 16px 22px; padding: 12px; background: #faf4e8; border-left: 3px solid #8d6b36; font-size: .875rem; line-height: 1.7; overflow-wrap: anywhere; }
+.notice button { margin: 6px 6px 0 0; }
+.local { padding: 16px 22px; margin: 0; border-top: 1px solid #d6ded3; }
+@media (max-width: 850px) { .workspace { grid-template-columns: 1fr; } .side { border-left: 0; border-top: 1px solid #d6ded3; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } .side fieldset + fieldset { border: 0; padding: 0; margin: 0; } .canvasScroll { max-height: 500px; } }
+@media (max-width: 520px) { .header, .setup, .editor, .side, .materials, .local { padding: 16px; } .side { grid-template-columns: 1fr; } .side fieldset + fieldset { border-top: 1px solid #d6ded3; padding-top: 22px; } .notice { margin: 12px 16px; } .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tool th, .tool td { padding: 8px; } }

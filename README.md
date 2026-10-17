@@ -53,6 +53,21 @@ Next.js 版串珠图案生成器。上传图片后，应用会把图像量化到
   - XLSX
   - Grid PNG
 
+### 独立积木马赛克工具
+
+英文入口为 `/brick-mosaic-maker`，德语、法语和日语提供对应工具。
+支持本地照片转换、手绘修格、32／48格底板分区，以及 PNG、逐色／逐板
+CSV、A4／US Letter 编号 PDF 和独立工程 JSON。尺寸为每边1–128格。
+该工具只使用经过核对的 LEGO design 3024（1×1凸点板）配色；design、
+element、LEGO色号和LDraw色号各自保存，不混用。空格与底板边缘补齐区
+不计零件，屏幕颜色不保证实物色差或现货。
+
+色值来源和 CC BY 4.0 署名见 `public/licenses/brick-mosaic-ldraw.txt`。
+工程只保存尺寸、底板和色号，不含原照片、转换参数或撤销历史。
+PDF按需读取独立OFL字体，不修改既有PDF字体。维护字体时使用
+`fonttools==4.60.1` 运行 `scripts/build-brick-mosaic-font.py --check-only`；
+确认文案变更后可用 `--rebuild --work-dir <仓库外临时目录>` 重建。
+
 ## 开发
 
 安装依赖：

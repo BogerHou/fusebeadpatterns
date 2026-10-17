@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "revision": "66a36c8c94b1a5d992ee4e7f392fccfe4945767c",
+  "fontUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+  "fontSha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+  "licenseUrl": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/OFL.txt",
+  "licenseSha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+  "weight": 400,
+  "license": "SIL Open Font License 1.1",
+  "family": "Fuse Bead Brick Mosaic",
+  "characters": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~«®·»ÄÉ×Üßàäçèéêïôöü–—’“„…、。「」あいうえおかがきくけこごさしじすずせそただっつてでとなにのはぱびぶへべまみめもやょらりるれわをんァアィイウェエカキクグゴサザジスズセタダッツデトドパビピフブプペホポマムメモャュラリルレロン・ー一上下不中丸今他付以伸位体余作使供価係保修個倍値停側備像元先入全典内再写処出分切列別利刷削前効動半印原去収号各合同名含商囲図固在基場塗壁変外大失始存安定実容寸属履帰幅平度庫形後復態成戻承抜択押描提換携操数整料方明時景更書替最有未末板枚果枠格案構標横機止正歴残法消準点無状独率現理用由画番登白目直真矢確礎示移種空突立端算管範粋約紙組結続編縦縮置背能自色行表要視覧言設証試認語説読調護資購起転辺込送透造適選部配重録開関除集離面類高（）：？～",
+  "sha256": "69ae3ddeec41740706bb60f6dac1d8234c77856e09b8c51d81c5c46ded7fc136",
+  "bytes": 124128,
+  "fonttoolsVersion": "4.60.1",
+  "builderSha256": "9a218af5c0df47e5bb6c3f6fe8521fc2ab1a5996466be5949292c863dfaff00d",
+  "copySHA256AtBuild": "6755d4e8b9ab87110f94e313248e619d96418be8948b074ac32208b20b61db0e"
+}

@@ -28,6 +28,7 @@ import * as beadLetterRoutes from '../../lib/bead-letters/routes';
 import * as blockShapeRoutes from '../../lib/block-shapes/routes';
 import * as qrBeadRoutes from '../../lib/qr-beads/routes';
 import * as spriteRoutes from '../../lib/sprites/routes';
+import * as brickRoutes from '../../lib/brick-mosaic/routes';
 import * as bannerRoutes from '../../lib/minecraft-banners/routes';
 import * as guideRoutes from '../../lib/guides/routes';
 import * as sitePageRoutes from '../../lib/site-pages/routes';
@@ -58,6 +59,7 @@ const modules: Record<string, unknown> = {
     '@/lib/block-shapes/routes': blockShapeRoutes,
     '@/lib/qr-beads/routes': qrBeadRoutes,
     '@/lib/sprites/routes': spriteRoutes,
+    '@/lib/brick-mosaic/routes': brickRoutes,
     '@/lib/minecraft-banners/routes': bannerRoutes,
     './HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
     '@/components/patterns/HamaCharacterDownloads': { ...defaultModule(HamaCharacterDownloads), HamaCharacterLink },
@@ -351,7 +353,10 @@ describe('native pattern chart journeys', () => {
         expect(records.filter(record => spriteUrls.includes(record.url)).map(record => record.url)).toEqual(spriteUrls);
         const bannerUrls = [...Object.values(bannerRoutes.bannerPaths.designer), ...Object.values(bannerRoutes.bannerPaths.letters)].map(path => `https://fusebeadpatterns.art${path}`);
         expect(records.filter(record => bannerUrls.includes(record.url)).map(record => record.url)).toEqual(bannerUrls);
-        const previous = records.filter(record => !bannerUrls.includes(record.url) && !spriteUrls.includes(record.url) && !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const brickUrls = Object.values(brickRoutes.brickPaths).map(path => `https://fusebeadpatterns.art${path}`);
+        expect(records.filter(record => brickUrls.includes(record.url)).map(record => record.url)).toEqual(brickUrls);
+        for (const record of records.filter(record => brickUrls.includes(record.url))) expect(record.lastModified.toISOString()).toBe('2026-10-17T00:00:00.000Z');
+        const previous = records.filter(record => !brickUrls.includes(record.url) && !bannerUrls.includes(record.url) && !spriteUrls.includes(record.url) && !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 
