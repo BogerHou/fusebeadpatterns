@@ -1,6 +1,6 @@
-# Bead Capture — Chrome beta
+# Perler Bead Pattern Maker — Bead Capture
 
-Bead Capture 0.2.6 contains only the website’s **image-to-bead converter, controls, styles and fonts** inside a local Manifest V3 extension page. There is no website navigation, hero, default sample picture or pattern-library promotion. It supports Chrome 123 or later. This is an unpacked beta, not a Chrome Web Store listing.
+Bead Capture 0.2.7 contains only the website’s **image-to-bead converter, controls, styles and fonts** inside a local Manifest V3 extension page. There is no website navigation, hero, default sample picture or pattern-library promotion. It supports Chrome 123 or later. The store title is **Perler Bead Pattern Maker — Bead Capture**; the workspace brand remains Bead Capture. Building a package does not publish a Chrome Web Store listing.
 
 ## Build and try
 
