@@ -24,6 +24,11 @@ const translationBaseline = Date.parse('2026-10-09T00:00:00.000Z');
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
+        ...Object.values(localeRoutes).map(({ extension: path }) => ({
+            url: `https://fusebeadpatterns.art${path}`,
+            lastModified: new Date('2026-10-20T00:00:00.000Z'),
+            changeFrequency: 'monthly' as const,
+        })),
         ...Object.values(blockShapePaths).map(path => ({
             url: `https://fusebeadpatterns.art${path}`,
             lastModified: new Date('2026-10-16T00:00:00.000Z'),
