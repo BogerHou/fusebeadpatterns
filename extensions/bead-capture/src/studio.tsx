@@ -4,11 +4,13 @@ import Editor from '../../../src/components/editor/Editor';
 import type { EditorHomeHost } from '../../../src/lib/editor/home-host';
 import { serializeEditorProject, type EditorDraft } from '../../../src/lib/editor/draft';
 import { isExtensionToken, sanitizeHomepageCaptureDraft, WEBSITE_ORIGIN } from '../../../src/lib/browser-extension/protocol';
-import { SourceImportError, importCapturedSource, sourceImportErrorMessage, type SourceImportResponse } from '../../../src/lib/browser-extension/source-import';
+import { SourceImportError, importCapturedSource, type SourceImportResponse } from '../../../src/lib/browser-extension/source-import';
+import { getSourceCropCopy } from '../../../src/lib/editor/source-crop-copy';
 import type { SiteLocale } from '../../../src/lib/i18n/locales';
 import { CaptureSiteContext } from './site-adapter';
 import LanguageSwitcher from './LanguageSwitcher';
 import { capturedImageFile } from '../../../src/lib/browser-extension/captured-file';
+import { captureCopy, captureSourceErrorKey, type CaptureTextKey } from './capture-copy';
 import '../../../src/app/globals.css';
 import './studio.css';
 
@@ -18,6 +20,7 @@ const browser = typeof chrome !== 'undefined' && typeof chrome.runtime?.sendMess
 type SourceInfo = { ok: boolean; originPattern?: string; permissionGranted?: boolean; error?: string };
 type ImageAccessScope = 'selected-host' | 'all-websites';
 type CaptureProgress = 'checking' | 'loading' | 'preparing' | 'openingEditor';
+type CaptureNotice = CaptureTextKey | 'imageReady' | 'imageImportFailed';
 
 const progressCopy = {
     en: { checking: 'Getting your selected image ready…', loading: 'Loading your selected image…', preparing: 'Preparing your image and making the bead pattern…', openingEditor: 'Opening the website editor…', ready: 'Image loaded. Adjust the pattern below, or open the editor to refine it.' },
@@ -39,7 +42,7 @@ function CaptureApp() {
     const [cancelIncomingImage, setCancelIncomingImage] = useState(0);
     const [incomingImage, setIncomingImage] = useState<EditorHomeHost['incomingImage']>();
     const [origin, setOrigin] = useState<string | null>(null);
-    const [notice, setNotice] = useState('');
+    const [notice, setNotice] = useState<CaptureNotice | null>(null);
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState<CaptureProgress | null>(() => new URLSearchParams(location.search).has('source') ? 'checking' : null);
@@ -61,7 +64,7 @@ function CaptureApp() {
         setLoading(false);
         setProgress(null);
         setPendingPermission(false);
-        setNotice('');
+        setNotice(null);
         setError(false);
     }, []);
 
@@ -72,7 +75,7 @@ function CaptureApp() {
         let handedToEditor = false;
         setError(false);
         setLoading(true);
-        setNotice('');
+        setNotice(null);
         setProgress('checking');
         try {
             await importCapturedSource({
@@ -109,9 +112,7 @@ function CaptureApp() {
                 permissionGranted.current = false;
                 setPendingPermission(true);
             }
-            setNotice(code === 'image_dimensions'
-                ? 'This image is larger than 2048 pixels per side. Choose a smaller image.'
-                : sourceImportErrorMessage(cause));
+            setNotice(captureSourceErrorKey(cause));
             setError(true);
             setProgress(null);
         } finally {
@@ -123,7 +124,7 @@ function CaptureApp() {
         if (!sourceToken || !browser) return;
         if (!isExtensionToken(sourceToken)) {
             setProgress(null);
-            setNotice('This image link is invalid. Right-click the image again, or choose a local image.');
+            setNotice('invalidSource');
             setError(true);
             return;
         }
@@ -141,11 +142,11 @@ function CaptureApp() {
             else {
                 setProgress(null);
                 setPendingPermission(true);
-                setNotice('Allow all websites once to load future images automatically, or allow only this image host. Bead Capture only fetches images you select.');
+                setNotice('permissionChoices');
             }
         }).catch(cause => {
             if (stopped || consumed.current || revision.current !== version) return;
-            setNotice(sourceImportErrorMessage(cause));
+            setNotice(captureSourceErrorKey(cause));
             setError(true);
             setProgress(null);
         });
@@ -153,10 +154,11 @@ function CaptureApp() {
     }, [sourceToken, readImage]);
 
     const openEditor = useCallback(async (draft: EditorDraft) => {
-        if (!transferEnabled) throw new Error('Website transfer is not available in this build. Save the project, then open it in the website editor.');
-        if (!browser) throw new Error('Install Bead Capture in Chrome to send a pattern to the website editor.');
+        const text = captureCopy[locale];
+        if (!transferEnabled) throw new Error(text.transferUnavailable);
+        if (!browser) throw new Error(text.installExtension);
         const safeDraft = sanitizeHomepageCaptureDraft(draft);
-        if (!safeDraft) throw new Error('Could not prepare this pattern. Save the project and open it in the website editor.');
+        if (!safeDraft) throw new Error(text.prepareFailed);
         setProgress('openingEditor');
         let response: { ok: boolean; error?: string };
         try {
@@ -167,11 +169,11 @@ function CaptureApp() {
             setProgress(null);
         }
         if (!response.ok) throw new Error(response.error === 'handoff_too_large'
-            ? 'This pattern is too large for direct transfer. Save the project, then open that file in the website editor.'
+            ? text.transferTooLarge
             : response.error === 'handoff_storage_full'
-                ? 'Finish opening your other transferred patterns first, or save this project and open the file in the website editor.'
-                : 'Could not send the pattern. Save the project and open it in the website editor.');
-        setNotice('Website editor opened. Your pattern will load there; this copy stays here.');
+                ? text.transferFull
+                : text.transferFailed);
+        setNotice('editorOpened');
         setError(false);
     }, [locale]);
 
@@ -179,7 +181,7 @@ function CaptureApp() {
         incomingImage, requestOpenEditor, cancelIncomingImage,
         onOpenEditor: openEditor,
         onUserSourceChange: cancelSource,
-        onImageError: (id, cause) => { if (incomingId.current === id) { setNotice(cause.message); setError(true); setProgress(null); } },
+        onImageError: id => { if (incomingId.current === id) { setNotice('imageImportFailed'); setError(true); setProgress(null); } },
         onImageConsumed: id => {
             if (incomingId.current !== id) return;
             incomingId.current = null;
@@ -187,20 +189,24 @@ function CaptureApp() {
             setIncomingImage(undefined);
             setLoading(false);
             setProgress(null);
-            setNotice(current => current || progressCopy[locale].ready);
+            setNotice(current => current || 'imageReady');
         },
-    }), [incomingImage, requestOpenEditor, cancelIncomingImage, openEditor, cancelSource, locale]);
+    }), [incomingImage, requestOpenEditor, cancelIncomingImage, openEditor, cancelSource]);
 
     const context = useMemo(() => ({ locale, setLocale, openEditor: () => setRequestOpenEditor(value => value + 1) }), [locale]);
     const copy = workspaceCopy[locale];
-    const statusText = progress ? progressCopy[locale][progress] : notice;
+    const text = captureCopy[locale];
+    const statusText = progress ? progressCopy[locale][progress]
+        : notice === 'imageReady' ? progressCopy[locale].ready
+        : notice === 'imageImportFailed' ? getSourceCropCopy(locale).uploadError
+        : notice ? text[notice] : '';
     return <CaptureSiteContext.Provider value={context}>
             <main id="main-content" tabIndex={-1} className="capture-workspace">
                 <header className="capture-heading">
                     <h1>{copy.title}</h1>
                     <LanguageSwitcher locale={locale} />
                 </header>
-                {statusText ? <section className="capture-notice" data-error={error && !progress} data-progress={progress || undefined} aria-label="Selected image">
+                {statusText ? <section className="capture-notice" data-error={error && !progress} data-progress={progress || undefined} aria-label={text.selectedImage}>
                     <p className="capture-loading-status" role={error && !progress ? 'alert' : 'status'} aria-live={error && !progress ? 'assertive' : 'polite'} aria-atomic="true">
                         {progress ? <span className="capture-loading-spinner" aria-hidden="true" /> : null}
                         <span>{statusText}</span>
@@ -208,12 +214,12 @@ function CaptureApp() {
                     {origin && !consumed.current ? <p className="text-muted text-xs">{origin.replace(/\/\*$/, '')}</p> : null}
                     {origin && sourceToken && !consumed.current ? <>
                         <button type="button" className="button-primary" disabled={loading} onClick={() => void readImage(sourceToken, origin, permissionGranted.current, pendingPermission ? 'all-websites' : 'selected-host')}>
-                            {loading ? 'Loading image…' : pendingPermission ? 'Allow all websites & make pattern' : 'Try loading again'}
+                            {loading ? text.loadingImage : pendingPermission ? text.allowAll : text.retryImage}
                         </button>
                         {pendingPermission ? <button type="button" className="button-secondary" disabled={loading} onClick={() => void readImage(sourceToken, origin, false, 'selected-host')}>
-                            Only allow this image host
+                            {text.allowHost}
                         </button> : null}
-                        <button type="button" className="button-secondary" onClick={cancelSource}>Use a local image instead</button>
+                        <button type="button" className="button-secondary" onClick={cancelSource}>{text.useLocal}</button>
                     </> : null}
                 </section> : null}
                 <section id="generator" aria-label={copy.title}>

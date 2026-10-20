@@ -19,22 +19,6 @@ type HandoffRecord = HandoffBinding & { project: string; launchUrl?: string; lau
 type RuntimeResult = { ok: true; [key: string]: unknown } | { ok: false; error: string };
 let sessionQueue: Promise<void> = Promise.resolve();
 
-function requestLaunchPermission(originPattern?: string): Promise<boolean> {
-    const allWebsites = ['http://*/*', 'https://*/*'];
-    // Chrome carries the click interaction into native API callbacks. Do not
-    // put an await, storage read or session queue before request() in this
-    // callback; an existing single-host grant must not trigger an upgrade.
-    return new Promise(resolve => {
-        try {
-            chrome.permissions.contains({ origins: originPattern ? [originPattern] : allWebsites }, granted => {
-                if (granted) { resolve(true); return; }
-                try { void chrome.permissions.request({ origins: allWebsites }).then(resolve, () => resolve(false)); }
-                catch { resolve(false); }
-            });
-        } catch { resolve(false); }
-    });
-}
-
 function withSessionLock<T>(operation: () => Promise<T>): Promise<T> {
     const pending = sessionQueue.then(operation, operation);
     sessionQueue = pending.then((): void => undefined, (): void => undefined);
@@ -249,15 +233,13 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId !== MENU_ID || info.mediaType !== 'image') return;
-    // Unsupported sources need an explanation, not additional site access.
-    const originPattern = getImageOriginPattern(info.srcUrl);
-    const permission = originPattern ? requestLaunchPermission(originPattern) : Promise.resolve(false);
-    void permission.then(() => withSessionLock(() => openStudio(info, tab))).catch((): void => undefined);
+    // The studio reuses existing access or explains the exact-host/all-sites
+    // choice before requesting a permission from the person's selected button.
+    void withSessionLock(() => openStudio(info, tab)).catch((): void => undefined);
 });
 chrome.action.onClicked.addListener(() => {
-    const permission = requestLaunchPermission();
-    // Declining still leaves local-file conversion available in the workspace.
-    void permission.then(() => withSessionLock(() => openStudio())).catch((): void => undefined);
+    // A local-file workflow does not need access to any website.
+    void withSessionLock(() => openStudio()).catch((): void => undefined);
 });
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     void handleCaptureMessage(message, sender).then(sendResponse, () => sendResponse({ ok: false, error: 'operation_failed' }));
