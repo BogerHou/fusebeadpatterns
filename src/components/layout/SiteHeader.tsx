@@ -8,7 +8,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import ToolMenu from './ToolMenu';
 import styles from './LanguageSwitcher.module.css';
 
-type SiteHeaderSection = 'generator' | 'patterns' | 'editor' | 'guides' | 'about';
+type SiteHeaderSection = 'generator' | 'patterns' | 'editor' | 'guides' | 'about' | 'chrome-extension';
 
 type SiteHeaderProps = {
     active?: SiteHeaderSection;
@@ -26,12 +26,17 @@ type HeaderLink = {
 export default function SiteHeader({ active, locale = 'en' }: SiteHeaderProps) {
     const copy = siteNavigation[locale];
     const routes = localeRoutes[locale];
+    const extensionLabel = {
+        en: 'Chrome Extension', de: 'Chrome-Erweiterung',
+        fr: 'Extension Chrome', ja: 'Chrome 拡張機能',
+    }[locale];
     const navItems: HeaderLink[] = [
         { id: 'generator', label: copy.generator, href: routes.home },
         { id: 'patterns', label: copy.patterns, href: routes.patterns },
         { id: 'editor', label: copy.editor, href: routes.editor, prefetch: false },
         { id: 'guides', label: copy.guides, href: routes.guides },
         { id: 'about', label: copy.about, href: routes.about },
+        { id: 'chrome-extension', label: extensionLabel, href: routes.extension },
     ];
     return (
         <header className="site-header">
@@ -39,12 +44,12 @@ export default function SiteHeader({ active, locale = 'en' }: SiteHeaderProps) {
             <div className={`site-header-inner ${styles.headerInner}`}>
                 <Link href={routes.home} prefetch={false} className={`site-brand ${styles.brand}`}>
                     <Image src={brandAssets.headerLogo} alt="Fuse Bead Patterns Logo" width={36} height={36} unoptimized preload />
-                    <span className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
+                    <span className="site-brand-name">Fuse Bead Patterns</span>
                 </Link>
                 <nav className={`site-nav ${styles.navigation}`} aria-label={copy.main}>
                     {navItems.map((item) => (
                         <Fragment key={item.id}>
-                            <Link href={item.href} hrefLang={item.hrefLang} prefetch={false} aria-label={item.label} aria-current={item.id === active ? 'page' : undefined}>
+                            <Link href={item.href} hrefLang={item.hrefLang} prefetch={false} className={item.id === 'chrome-extension' ? styles.extensionLink : undefined} aria-label={item.label} aria-current={item.id === active ? 'page' : undefined}>
                                 {item.label}
                             </Link>
                             {item.id === 'generator' ? <ToolMenu locale={locale} /> : null}

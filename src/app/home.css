@@ -4,9 +4,13 @@
 .hero-copy h1 span { display: block; color: var(--color-accent); }
 .hero-description { margin-top: 24px; max-width: 500px; font-size: .9375rem; line-height: 1.85; color: var(--color-muted); }
 .hero-description strong { font-weight: 500; }
-.hero-actions { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 26px; }
-.hero-note { margin-top: 16px; font-size: .6875rem; color: var(--color-muted); }
+.hero-actions { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; }
+.hero-extension-link { flex-direction: column; gap: 2px; text-align: center; }
+.hero-extension-status { font-size: .6875rem; font-weight: 400; line-height: 1.35; color: var(--color-muted); }
+.hero-footnotes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; margin-top: 12px; }
+.hero-note { font-size: .6875rem; color: var(--color-muted); }
 .hero-note span { margin-inline: 8px; }
+.hero-browse { min-height: 32px; font-size: .6875rem; }
 .home-featured-patterns { margin-bottom: 32px; }
 .featured-patterns-intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px 28px; margin-bottom: 18px; }
 .featured-patterns-intro .eyebrow { margin-bottom: 10px; }
@@ -70,8 +74,10 @@
   .home-hero { grid-template-columns: 1fr; padding: 30px 0 28px; gap: 28px; }
   .hero-copy h1 { font-size: clamp(2.25rem, 9vw, 3.5rem); max-width: 550px; margin-top: 14px; }
   .hero-description { font-size: .875rem; line-height: 1.8; margin-top: 18px; }
-  .hero-actions { gap: 20px; margin-top: 20px; }
-  .hero-note { margin-top: 14px; }
+  .hero-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+  .hero-actions > .button-primary, .hero-actions > .button-secondary { padding-inline: 10px; }
+  .hero-actions > .button-primary { gap: 8px; }
+  .hero-footnotes { margin-top: 10px; column-gap: 14px; }
   .home-featured-patterns { margin-bottom: 24px; }
   .featured-patterns-intro { flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .featured-patterns-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }

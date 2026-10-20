@@ -41,7 +41,7 @@ export default function ChromeExtensionPage({ locale }: { locale: SiteLocale }) 
     }[locale];
     return (
         <div className="min-h-screen flex flex-col">
-            <SiteHeader locale={locale} />
+            <SiteHeader locale={locale} active="chrome-extension" />
             <main id="main-content" tabIndex={-1} className={`page-shell flex-1 ${styles.main}`}>
                 <Breadcrumbs label={navigation.breadcrumb} items={[
                     { label: navigation.home, href: routes.home },
