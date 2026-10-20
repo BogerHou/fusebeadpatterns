@@ -96,7 +96,7 @@ describe('extension background boundary', () => {
     it('captures the actual context-menu image and binds the studio before serving it', async () => {
         const listener = vi.mocked(mockChrome.contextMenus.onClicked.addListener).mock.calls[0][0];
         listener({ menuItemId: 'make-bead-pattern', mediaType: 'image', srcUrl: 'https://i.ebayimg.com/images/g/public/s-l1600.webp' }, { id: 7, windowId: 5 });
-        expect(mockChrome.permissions.contains).toHaveBeenCalledWith({ origins: ['https://i.ebayimg.com/*'] }, expect.any(Function));
+        expect(mockChrome.permissions.contains).not.toHaveBeenCalled();
         expect(mockChrome.permissions.request).not.toHaveBeenCalled();
         expect(mockChrome.storage.session.get).not.toHaveBeenCalled();
         await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
@@ -111,23 +111,24 @@ describe('extension background boundary', () => {
             ok: true, originPattern: 'https://i.ebayimg.com/*', permissionGranted: true,
             source: { url: 'https://i.ebayimg.com/images/g/public/s-l1600.webp', tabId: 7 },
         });
+        expect(mockChrome.permissions.contains).toHaveBeenCalledWith({ origins: ['https://i.ebayimg.com/*'] });
+        expect(mockChrome.permissions.request).not.toHaveBeenCalled();
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('waits for launch permission before opening the studio and still offers a workspace after refusal', async () => {
-        let resolve!: (granted: boolean) => void;
-        vi.mocked(mockChrome.permissions.request).mockReturnValue(new Promise(done => { resolve = done; }));
-        vi.mocked(mockChrome.permissions.contains).mockImplementation((_permissions, callback?: (granted: boolean) => void) => { callback?.(false); return Promise.resolve(false); });
+    it('opens an ungranted image in the studio without requesting broader access or fetching it', async () => {
+        vi.mocked(mockChrome.permissions.contains).mockResolvedValue(false);
         const listener = vi.mocked(mockChrome.contextMenus.onClicked.addListener).mock.calls[0][0];
         listener({ menuItemId: 'make-bead-pattern', mediaType: 'image', srcUrl: 'https://images.example.com/p.png' }, { id: 7 });
-        expect(mockChrome.permissions.request).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] });
-        expect(mockChrome.tabs.create).not.toHaveBeenCalled();
-        expect(mockChrome.storage.session.get).not.toHaveBeenCalled();
-        resolve(false);
         await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
         const url = vi.mocked(mockChrome.tabs.create).mock.calls[0][0].url;
         const capturedToken = new URL(url).searchParams.get('source');
-        expect(await handle({ type: 'read-source', token: capturedToken }, { id: extensionId, url, frameId: 0 })).toMatchObject({ ok: true, permissionGranted: false });
+        expect(await handle({ type: 'read-source', token: capturedToken }, { id: extensionId, url, frameId: 0 })).toMatchObject({
+            ok: true, originPattern: 'https://images.example.com/*', permissionGranted: false,
+            source: { url: 'https://images.example.com/p.png' },
+        });
+        expect(mockChrome.permissions.contains).toHaveBeenCalledWith({ origins: ['https://images.example.com/*'] });
+        expect(mockChrome.permissions.request).not.toHaveBeenCalled();
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
@@ -151,10 +152,11 @@ describe('extension background boundary', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('opens a genuinely blank studio only for a toolbar launch', async () => {
+    it('opens a genuinely blank studio from the toolbar without checking or requesting any host access', async () => {
+        vi.mocked(mockChrome.permissions.contains).mockResolvedValue(false);
         const listener = vi.mocked(mockChrome.action.onClicked.addListener).mock.calls[0][0];
         listener({ id: 7 });
-        expect(mockChrome.permissions.contains).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }, expect.any(Function));
+        expect(mockChrome.permissions.contains).not.toHaveBeenCalled();
         expect(mockChrome.permissions.request).not.toHaveBeenCalled();
         expect(mockChrome.storage.session.get).not.toHaveBeenCalled();
         await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
@@ -162,6 +164,9 @@ describe('extension background boundary', () => {
             url: `chrome-extension://${extensionId}/studio.html`, active: true,
         });
         expect(Object.keys(stored)).toHaveLength(0);
+        expect(mockChrome.permissions.contains).not.toHaveBeenCalled();
+        expect(mockChrome.permissions.request).not.toHaveBeenCalled();
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('does not fetch before a host permission exists, or for local/blob/credential sources', async () => {

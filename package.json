@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --webpack",
     "extension:build": "node scripts/build-extension.mjs",
+    "extension:store": "node scripts/build-extension.mjs --store",
+    "extension:check": "node scripts/check-extension-package.mjs",
     "brand:build": "node scripts/build-brand-icons.mjs",
     "brand:check": "node scripts/build-brand-icons.mjs --check",
     "build": "next build --webpack",

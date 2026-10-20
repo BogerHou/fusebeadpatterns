@@ -41,7 +41,7 @@ jobs:
         run: npm run build
 
       - name: Package Chrome extension
-        run: npm run extension:build
+        run: npm run extension:store
 
       - name: Vercel cost guard
         run: npm run cost:check
