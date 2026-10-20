@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import loomPatternLibrary from './src/lib/bead-loom/patterns.json';
+import brandAssets from './src/lib/brand-assets.json';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -106,6 +107,10 @@ const nextConfig: NextConfig = {
             },
             {
                 source: '/brand/logo-108-1550e3d22f75.webp',
+                headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+            },
+            {
+                source: brandAssets.headerLogo,
                 headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
             },
             ...loomPatternLibrary.patterns.flatMap(({ id }) =>

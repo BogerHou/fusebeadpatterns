@@ -4,10 +4,11 @@ import postcss from 'postcss';
 import tailwindcss from '@tailwindcss/postcss';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
+import { renderBrandIcon } from './build-brand-icons.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const sharedIconSource = path.join(root, 'public/brand/square-bead.svg');
 const args = process.argv.slice(2);
 const directTransfer = args.includes('--enable-editor-transfer');
 if (directTransfer) args.splice(args.indexOf('--enable-editor-transfer'), 1);
@@ -94,38 +95,11 @@ await mkdir(path.join(output, 'licenses'), { recursive: true });
 for (const file of ['Inter-OFL.txt', 'Manrope-OFL.txt']) await copyFile(path.join(source, 'fonts', file), path.join(output, 'licenses', file));
 await mkdir(path.join(output, 'icons'));
 
-function crc32(bytes) {
-    let crc = 0xffffffff;
-    for (const byte of bytes) {
-        crc ^= byte;
-        for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
-    }
-    return (crc ^ 0xffffffff) >>> 0;
+// Website and extension icons come from one SVG; PNGs are generated locally.
+for (const size of [16, 32, 48, 128]) {
+    await writeFile(path.join(output, `icons/icon-${size}.png`), await renderBrandIcon(size));
 }
-function chunk(type, data) {
-    const name = Buffer.from(type), length = Buffer.alloc(4), checksum = Buffer.alloc(4);
-    length.writeUInt32BE(data.length); checksum.writeUInt32BE(crc32(Buffer.concat([name, data])));
-    return Buffer.concat([length, name, data, checksum]);
-}
-/** Tiny source-controlled icon, rasterized without a new image dependency. */
-function iconPng(size) {
-    const scanlines = Buffer.alloc(size * (1 + size * 4));
-    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-        const px = (x + .5) / size, py = (y + .5) / size;
-        const offset = y * (size * 4 + 1) + 1 + x * 4;
-        let color = [51, 78, 56, 255];
-        for (const cy of [.34, .66]) for (const cx of [.34, .66]) {
-            const distance = Math.hypot(px - cx, py - cy);
-            if (distance <= .126) color = [239, 209, 148, 255];
-            if (distance <= .048) color = [51, 78, 56, 255];
-        }
-        scanlines.set(color, offset);
-    }
-    const header = Buffer.alloc(13); header.writeUInt32BE(size, 0); header.writeUInt32BE(size, 4); header[8] = 8; header[9] = 6;
-    return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(scanlines)), chunk('IEND', Buffer.alloc(0))]);
-}
-for (const size of [16, 48, 128]) await writeFile(path.join(output, `icons/icon-${size}.png`), iconPng(size));
-await copyFile(path.join(source, 'icons/icon.svg'), path.join(output, 'icons/icon.svg'));
+await copyFile(sharedIconSource, path.join(output, 'icons/icon.svg'));
 
 const manifest = JSON.parse(await readFile(path.join(output, 'manifest.json'), 'utf8'));
 const packedFiles = (await readdir(output)).filter(file => file !== marker);

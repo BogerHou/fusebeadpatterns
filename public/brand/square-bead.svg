@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>Fuse Bead Patterns</title>
+  <defs>
+    <linearGradient id="bead" x1="20" y1="26" x2="234" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff492e"/>
+      <stop offset="1" stop-color="#ff4028"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="128" y1="72" x2="128" y2="192" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffaf8a" stop-opacity=".9"/>
+      <stop offset=".55" stop-color="#ff9573" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#ff9573" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#bead)" fill-rule="evenodd" d="M72 26H180Q188 26 188 34V47Q188 50 192 50H205Q213 50 213 58V69Q213 72 217 72H226Q234 72 234 80V184C234 211 212 232 184 232H72C43 232 20 210 20 180V80C20 50 43 26 72 26ZM100 90C91 90 84 97 84 106V162C84 171 91 178 100 178H156C165 178 172 171 172 162V106C172 97 165 90 156 90Z"/>
+  <rect x="68" y="73" width="120" height="120" rx="24" fill="none" stroke="url(#rim)" stroke-width="4"/>
+</svg>

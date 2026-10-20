@@ -86,6 +86,11 @@ npm run dev
 
 ## 质量检查
 
+网站与 Chrome 插件共用 `public/brand/square-bead.svg` 图标源。修改后运行
+`npm run brand:build` 更新网站 PNG、带内容哈希的页头 WebP 和资源清单，再运行
+`npm run extension:build` 生成插件各尺寸 PNG。`npm run brand:check` 验证网站资源未过期，
+已纳入本地 verify 与 CI；旧哈希图标保留，供缓存中的页面继续访问。所有转换只在本地构建时执行。
+
 运行单元测试：
 
 ```bash

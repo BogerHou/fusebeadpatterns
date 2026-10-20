@@ -1,10 +1,12 @@
 # Bead Capture — Chrome beta
 
-Bead Capture 0.2.4 contains only the website’s **image-to-bead converter, controls, styles and fonts** inside a local Manifest V3 extension page. There is no website navigation, hero, default sample picture or pattern-library promotion. It supports Chrome 123 or later. This is an unpacked beta, not a Chrome Web Store listing.
+Bead Capture 0.2.5 contains only the website’s **image-to-bead converter, controls, styles and fonts** inside a local Manifest V3 extension page. There is no website navigation, hero, default sample picture or pattern-library promotion. It supports Chrome 123 or later. This is an unpacked beta, not a Chrome Web Store listing.
 
 ## Build and try
 
 Run `npm ci` and `npm run extension:build` from the repository root. The Node/zip build creates `artifacts/bead-capture-extension/` and an adjacent ZIP, both ignored by Git and excluded from the website build. Supply `--out /absolute/dedicated/output` for a separate generated folder. The script refuses to replace a nonempty directory without its own build marker.
+
+The website and extension share `public/brand/square-bead.svg` as their icon source. The extension build uses Sharp locally to produce 16, 32, 48 and 128 px PNGs, and includes an unchanged copy of the SVG. The toolbar, extension pages and installation icon use this same design; no independent extension drawing or Vercel image transformation is involved.
 
 Until the companion website release has been verified, the default build leaves direct website transfer unavailable with an explanatory message; local conversion and project downloads work. **After that verification**, build the user package with `npm run extension:build -- --enable-editor-transfer`. The package flag never changes the installed browser’s permissions.
 

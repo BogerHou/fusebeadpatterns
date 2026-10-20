@@ -28,6 +28,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Shared brand assets
+        run: npm run brand:check
+
       - name: Lint
         run: npm run lint
 
