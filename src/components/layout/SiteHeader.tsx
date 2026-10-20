@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Fragment } from 'react';
 import { siteNavigation, type SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
+import brandAssets from '@/lib/brand-assets.json';
 import LanguageSwitcher from './LanguageSwitcher';
 import ToolMenu from './ToolMenu';
 import styles from './LanguageSwitcher.module.css';
@@ -37,7 +38,7 @@ export default function SiteHeader({ active, locale = 'en' }: SiteHeaderProps) {
             <a href="#main-content" className="skip-link">{copy.skip}</a>
             <div className={`site-header-inner ${styles.headerInner}`}>
                 <Link href={routes.home} prefetch={false} className={`site-brand ${styles.brand}`}>
-                    <Image src="/brand/logo-108-1550e3d22f75.webp" alt="Fuse Bead Patterns Logo" width={36} height={36} unoptimized preload />
+                    <Image src={brandAssets.headerLogo} alt="Fuse Bead Patterns Logo" width={36} height={36} unoptimized preload />
                     <span className="site-brand-name">Fuse Bead Patterns<span className="text-accent" aria-hidden="true">.</span></span>
                 </Link>
                 <nav className={`site-nav ${styles.navigation}`} aria-label={copy.main}>
