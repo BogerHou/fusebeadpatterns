@@ -1,6 +1,6 @@
 # Bead Capture — Chrome beta
 
-Bead Capture 0.2.3 contains only the website’s **image-to-bead converter, controls, styles and fonts** inside a local Manifest V3 extension page. There is no website navigation, hero, default sample picture or pattern-library promotion. It supports Chrome 123 or later. This is an unpacked beta, not a Chrome Web Store listing.
+Bead Capture 0.2.4 contains only the website’s **image-to-bead converter, controls, styles and fonts** inside a local Manifest V3 extension page. There is no website navigation, hero, default sample picture or pattern-library promotion. It supports Chrome 123 or later. This is an unpacked beta, not a Chrome Web Store listing.
 
 ## Build and try
 

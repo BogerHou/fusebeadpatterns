@@ -12,33 +12,4 @@
 .capture-notice[data-error="true"] { border-color: #ba7066; }
 .capture-footer { padding-top: 16px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; color: var(--color-muted); font-size: .75rem; line-height: 1.7; }
 .capture-footer a { text-decoration: underline; text-underline-offset: 3px; }
-/* The standalone converter scrolls as one page, without the homepage's fixed-height sidebar. */
-.capture-workspace .editor-workspace > .contents > .sm\:grid {
-    height: auto;
-    min-height: 0;
-    max-height: none;
-}
-.capture-workspace .editor-workspace > .contents > .sm\:grid > div {
-    min-width: 0;
-    height: auto;
-}
-.capture-workspace .editor-workspace > .contents > .sm\:grid > div:first-child > .overflow-y-auto {
-    height: auto;
-    overflow: visible;
-}
-@media (min-width: 640px) {
-    .capture-workspace .editor-workspace > .contents > .sm\:grid > div:last-child {
-        height: clamp(480px, calc(100svh - 120px), 720px);
-    }
-    .capture-workspace .editor-workspace > .contents > .sm\:grid > div:last-child > div {
-        height: 100%;
-    }
-}
-@media (min-width: 1280px) {
-    .capture-workspace .editor-workspace > .contents > .sm\:grid > div:last-child {
-        position: sticky;
-        top: 24px;
-        align-self: start;
-    }
-}
 @media (max-width: 760px) { .capture-workspace { padding: 16px; } .capture-heading { margin-bottom: 16px; } .capture-heading h1 { font-size: 1rem; } }
