@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildBeadLoomExportEvent, buildPatternEvent, buildPixelGridExportEvent, getPatternLinkEvent, isProductionAnalyticsHost, trackBeadLoomExport, trackPatternEvent, trackPixelGridExport } from './analytics';
+import { buildBeadLoomExportEvent, buildPatternEvent, buildPixelGridExportEvent, buildToolEvent, createToolGenerationTracker, getPatternLinkEvent, isProductionAnalyticsHost, trackBeadLoomExport, trackPatternEvent, trackPixelGridExport, trackToolEvent } from './analytics';
 import { startAnalytics, stopAnalytics } from './analytics-consent';
 
 const grantedStorage = { getItem: () => 'granted' };
@@ -13,6 +13,78 @@ const download = {
 };
 
 afterEach(() => { stopAnalytics(); vi.unstubAllGlobals(); });
+
+describe('new tool measurement privacy and action semantics', () => {
+    const formats = {
+        bead_letters: ['png', 'pdf', 'project'], block_shapes: ['png', 'pdf', 'project', 'layer_project'],
+        qr_beads: ['png', 'grid_png', 'pdf', 'project'], sprite: ['png', 'sprite_sheet_png', 'gif', 'coordinates_json', 'project'],
+        minecraft_banners: ['png', 'json', 'txt', 'project'], brick_mosaic: ['png', 'csv', 'pdf', 'project'],
+    } as const;
+
+    it('accepts only existing tool and supported export combinations', () => {
+        for (const [tool, allowed] of Object.entries(formats)) {
+            expect(buildToolEvent({ name: 'tool_generate', tool })).toEqual({ name: 'tool_generate', parameters: { entry_point: tool } });
+            for (const format of allowed) expect(buildToolEvent({ name: 'tool_export', tool, format })).toEqual({ name: 'tool_export', parameters: { entry_point: tool, file_format: format } });
+            expect(buildToolEvent({ name: 'tool_generate', tool, format: 'png' })).toBeNull();
+            expect(buildToolEvent({ name: 'tool_export', tool })).toBeNull();
+        }
+        for (const tool of ['__proto__', 'constructor', 'private-project', 'https://example.com/secret.png', '']) expect(buildToolEvent({ name: 'tool_generate', tool })).toBeNull();
+        expect(buildToolEvent({ name: 'private-action', tool: 'sprite' })).toBeNull();
+        expect(buildToolEvent({ name: 'tool_export', tool: 'brick_mosaic', format: 'gif' })).toBeNull();
+        expect(buildToolEvent({ name: 'tool_export', tool: 'sprite', format: 'private-file.png' })).toBeNull();
+    });
+
+    it('never reads caller image, text, URL, project or analytics overrides', () => {
+        const input = {
+            name: 'tool_export', tool: 'qr_beads', format: 'pdf', entry_point: 'private-value',
+            get text() { throw new Error('Private QR contents must not be read'); },
+            get image() { throw new Error('Private image must not be read'); },
+            get url() { throw new Error('Private URL must not be read'); },
+            get fileName() { throw new Error('Private filename must not be read'); },
+            get project() { throw new Error('Private project must not be read'); },
+        };
+        const gtag = vi.fn(); measuredBrowser(gtag);
+        expect(trackToolEvent(input)).toBe(true);
+        expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'tool_export', { entry_point: 'qr_beads', file_format: 'pdf' });
+    });
+
+    it('counts the first successful creative action once, and never replays consent-denied work', () => {
+        const gtag = vi.fn(); measuredBrowser(gtag);
+        const tracker = createToolGenerationTracker('sprite');
+        expect(gtag).not.toHaveBeenCalled();
+        expect(tracker.record()).toBe(true);
+        for (let n = 0; n < 100; n++) expect(tracker.record()).toBe(false);
+        expect(gtag).toHaveBeenCalledExactlyOnceWith('event', 'tool_generate', { entry_point: 'sprite' });
+        tracker.reset(); expect(gtag).toHaveBeenCalledTimes(1);
+        expect(tracker.record()).toBe(true); expect(gtag).toHaveBeenCalledTimes(2);
+
+        stopAnalytics(); vi.stubGlobal('window', { localStorage: { getItem: () => 'denied' }, location: { hostname: 'fusebeadpatterns.art' }, gtag });
+        const denied = createToolGenerationTracker('bead_letters');
+        expect(denied.record()).toBe(false); expect(denied.recorded).toBe(true);
+        measuredBrowser(gtag);
+        expect(denied.record()).toBe(false); expect(gtag).not.toHaveBeenCalled();
+    });
+
+    it('requires consent, a public host and an initialized matching page context', () => {
+        const gtag = vi.fn();
+        for (const hostname of ['localhost', '127.0.0.1', 'preview.fusebeadpatterns.art', 'fusebeadpatterns-git-preview.vercel.app']) {
+            vi.stubGlobal('window', { localStorage: grantedStorage, location: { hostname }, gtag });
+            expect(trackToolEvent({ name: 'tool_export', tool: 'brick_mosaic', format: 'png' })).toBe(false);
+        }
+        measuredBrowser(gtag);
+        (window as Window).location.pathname = '/editor';
+        expect(trackToolEvent({ name: 'tool_generate', tool: 'qr_beads' })).toBe(false);
+        expect(gtag).not.toHaveBeenCalled();
+    });
+
+    it('keeps analytics failure outside a completed tool operation', () => {
+        const gtag = vi.fn(); measuredBrowser(gtag);
+        gtag.mockImplementation(() => { throw new Error('SDK blocked'); });
+        expect(() => trackToolEvent({ name: 'tool_export', tool: 'minecraft_banners', format: 'txt' })).not.toThrow();
+        expect(trackToolEvent({ name: 'tool_export', tool: 'minecraft_banners', format: 'txt' })).toBe(false);
+        expect(() => trackToolEvent({ get name(): string { throw new Error('input denied'); }, tool: 'sprite' })).not.toThrow();
+    });
+});
 
 function measuredBrowser(gtag: ReturnType<typeof vi.fn>, hostname = 'fusebeadpatterns.art') {
     stopAnalytics();

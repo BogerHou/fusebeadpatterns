@@ -12,6 +12,7 @@ import * as exportsModule from '../../lib/brick-mosaic/export';
 import * as pixelCore from '../../lib/pixel-grid/core';
 import * as localeRoutes from '../../lib/i18n/routes';
 import { brickPaths } from '../../lib/brick-mosaic/routes';
+import * as analytics from '../../lib/analytics';
 
 type TestNode = { type: unknown; props: Record<string, unknown> };
 function nodes(value: unknown): TestNode[] {
@@ -40,6 +41,7 @@ const labels = copy.brickCopy.en;
  * This does not prove a real browser's canvas rendering, BFCache or image decoder behavior.
  */
 function harness(faults = { access: false, read: false, remove: false }) {
+    const measured = { generated: 0, exported: vi.fn() };
     const data = new Map<string, string>([['unrelated-editor-key', 'keep user work']]);
     const io = { filePickers: 0, reads: 0, writes: 0, removes: 0, closedBitmaps: 0 };
     const storage = {
@@ -98,6 +100,8 @@ function harness(faults = { access: false, read: false, remove: false }) {
     };
     const jsx = (type: unknown, props: Record<string, unknown>) => ({ type, props });
     const modules: Record<string, unknown> = {
+        '../../lib/analytics': { ...analytics, trackToolEvent: measured.exported,
+            createToolGenerationTracker: (tool: analytics.MeasuredTool) => { const tracker = analytics.createToolGenerationTracker(tool), record = tracker.record; tracker.record = () => { measured.generated++; return record(); }; return tracker; } },
         react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx },
         '../../lib/i18n/routes': localeRoutes,
         '../../lib/brick-mosaic/catalog': catalog, '../../lib/brick-mosaic/copy': copy,
@@ -136,7 +140,7 @@ function harness(faults = { access: false, read: false, remove: false }) {
     }
     render();
     return {
-        data, faults, io, downloads, render, button, click, canvas, pointer,
+        data, faults, io, downloads, render, button, click, canvas, pointer, measured,
         status: () => text(tree), locked: () => find(node => node.type === 'fieldset').props.disabled,
         hasPending: () => nodes(tree).some(node => node.props.role === 'alert'),
         source: () => nodes(tree).find(node => typeof node.type === 'function' && node.props.source)?.props.source,
@@ -155,6 +159,21 @@ function harness(faults = { access: false, read: false, remove: false }) {
 }
 
 describe('real brick workspace import, recovery and history handlers', () => {
+    it('does not count blank/default or imported projects, and counts the first real edit once', async () => {
+        const app = harness(); app.settle();
+        expect(app.measured.generated).toBe(0); expect(app.measured.exported).not.toHaveBeenCalled();
+        const model = core.createMosaic(32, 32, 32, catalog.brickCatalog);
+        model.cells[0] = catalog.brickCatalog.colors[0].id;
+        const raw = project.serializeMosaicProject(model, catalog.brickCatalog);
+        await app.load({ size: raw.length, text: async () => raw });
+        expect(app.measured.generated).toBe(0);
+        app.pointer('onPointerDown', 1, 0); app.pointer('onPointerMove', 2, 0); app.pointer('onPointerUp', 2, 0);
+        app.pointer('onPointerDown', 3, 0); app.pointer('onPointerUp', 3, 0);
+        expect(app.measured.generated).toBe(1);
+        app.click(labels.save);
+        expect(app.downloads).toHaveLength(1);
+        expect(app.measured.exported).toHaveBeenCalledExactlyOnceWith({ name: 'tool_export', tool: 'brick_mosaic', format: 'project' });
+    });
     it('loads an image onto a blank workspace without leaving the busy lock, then converts and exports the current model', async () => {
         const app = harness(); app.settle();
         const png = await pixelCore.encodePng(pixelCore.createGrid(1, 1, [255, 0, 0, 255]));

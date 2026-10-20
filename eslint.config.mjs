@@ -11,6 +11,10 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Generated downloads/prototypes and private operational records are not
+    // application sources. Their vendored bundles must not enter app linting.
+    "artifacts/**",
+    "docs/网站运营数据分析/**",
     "next-env.d.ts",
     "fix_monofont.js",
     "scripts/**/*.js",

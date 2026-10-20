@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
                     </h1>
                     
                     <div className="max-w-[70ch] space-y-6 text-base leading-8 text-[#43564d] sm:text-lg sm:leading-8">
-                        <p><strong>Last Updated:</strong> <time dateTime="2026-10-15">October 15, 2026</time></p>
+                        <p><strong>Last Updated:</strong> <time dateTime="2026-10-20">October 20, 2026</time></p>
 
                         <p>At Fuse Bead Patterns (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), your privacy is a core part of the product. We designed our perler bead pattern generator so image processing runs locally in your browser.</p>
 
@@ -60,6 +60,11 @@ export default function PrivacyPolicyPage() {
 
                         <h2 className="section-heading !mb-4 !mt-12">7. Advertising</h2>
                         <p>Normal pages load a Google AdSense script to associate this site with our publisher account. The script contacts Google and may process device and network information, even when optional Google Analytics is off. Ads are not currently displayed. Analytics preferences control only Google Analytics; they are not an advertising consent system. Before ads are shown, this policy and the applicable consent controls will be updated, including any required Google-certified consent platform for visitors in the EEA, UK and Switzerland.</p>
+
+                        <h2 className="section-heading !mb-4 !mt-12">8. Bead Capture Browser Extension</h2>
+                        <p>Bead Capture packages the homepage converter for local use, without analytics or advertising in the extension. Right-clicking an image records that selected image’s URL temporarily in Chrome’s session storage. To retrieve it, the extension requests access to that image host and contacts it directly without sending cookies. Chrome keeps the granted host permission until you revoke it. Original images are not uploaded to our servers.</p>
+                        <p>Choosing “Edit Pattern” transfers only the generated bead grid and its settings through Chrome to the official website editor in your browser, not to our backend. The transfer does not include the original image or its URL. Its single-use identifier and the image retrieval record expire after 10 minutes; expired records are removed during subsequent extension activity. Closing the relevant tab also removes its temporary record, and accepting or dismissing a transfer removes that transfer record.</p>
+                        <p>Work in the extension stays in the open page’s memory: save a project file before closing it. Once you open the website, its analytics choices and AdSense behavior described above apply to that website page.</p>
                     </div>
                 </div>
             </main>

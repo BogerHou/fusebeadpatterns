@@ -11,6 +11,7 @@ import { MOSAIC_PROJECT_MAX_BYTES, parseMosaicProject, serializeMosaicProject } 
 import { BRICK_LOCALE_KEY, discardBrickTransfer, isBrickLocaleNavigation, readBrickTransfer, saveBrickTransfer } from '../../lib/brick-mosaic/transfer';
 import { inspectImage, LIMITS, type ResizeMode, type RgbaSource } from '../../lib/pixel-grid/core';
 import { downloadBlob } from '../../lib/core/printer/download';
+import { createToolGenerationTracker, trackToolEvent } from '../../lib/analytics';
 import type { BrickPaper } from '../../lib/brick-mosaic/pdf-layout';
 import styles from './BrickMosaicTool.module.css';
 
@@ -68,6 +69,7 @@ export default function BrickMosaicTool({ locale }: { locale: SiteLocale }) {
     const canvas = useRef<HTMLCanvasElement>(null), imageInput = useRef<HTMLInputElement>(null), projectInput = useRef<HTMLInputElement>(null);
     const live = useRef({ mosaic, saved, ready: false, busy: false }), mounted = useRef(false), epoch = useRef(0), leaving = useRef(false), transferBlocked = useRef(false);
     const operation = useRef<AbortController | null>(null), stroke = useRef<{ last: Point; pointerId: number } | null>(null);
+    const generation = useRef(createToolGenerationTracker('brick_mosaic'));
     const locked = !ready || busy || !!pending;
     const materials = useMemo(() => collectMosaicMaterials(mosaic, brickCatalog), [mosaic]);
     const shownBoard = materials.boards[selectedBoard], usage = shownBoard?.counts ?? materials.usedColors;
@@ -126,13 +128,17 @@ export default function BrickMosaicTool({ locale }: { locale: SiteLocale }) {
     }, [copy.leaveConfirm, copy.transferFailed, pending]);
 
     function finishStroke() { if (stroke.current) { stroke.current = null; history.current!.commit(live.current.mosaic); refreshHistory(value => value + 1); } }
-    function change(next: Mosaic) { finishStroke(); const committed = history.current!.commit(next); install(committed, false); setNotice(''); refreshHistory(value => value + 1); }
+    function measureCreation(before: Mosaic, next: Mosaic) {
+        if (!generation.current.recorded && next.cells.some(Boolean)
+            && (before.width !== next.width || before.height !== next.height || before.cells.some((cell, index) => cell !== next.cells[index]))) generation.current.record();
+    }
+    function change(next: Mosaic, measure = true) { finishStroke(); const before = live.current.mosaic, committed = history.current!.commit(next); install(committed, false); setNotice(''); refreshHistory(value => value + 1); if (measure) measureCreation(before, committed); }
     function undo(redo = false) { if (locked) return; finishStroke(); install(redo ? history.current!.redo() : history.current!.undo(), false, true); setNotice(''); refreshHistory(value => value + 1); }
     function offer(next: Mosaic, message: string, isSaved = false) {
         if (live.current.mosaic.cells.some(Boolean)) setPending({ model: next, message, saved: isSaved });
         else accept(next, isSaved);
     }
-    function accept(next: Mosaic, isSaved: boolean) { change(next); if (isSaved) history.current = new MosaicHistory(next, brickCatalog); install(next, isSaved, true); setPending(null); if (isSaved) setSource(null); setNotice(isSaved ? copy.loaded : ''); }
+    function accept(next: Mosaic, isSaved: boolean) { change(next, !isSaved); if (isSaved) history.current = new MosaicHistory(next, brickCatalog); if (isSaved || !next.cells.some(Boolean)) generation.current.reset(); install(next, isSaved, true); setPending(null); if (isSaved) setSource(null); setNotice(isSaved ? copy.loaded : ''); }
     function point(event: PointerEvent<HTMLCanvasElement>): Point | null {
         const rect = event.currentTarget.getBoundingClientRect(), model = live.current.mosaic;
         const x = Math.floor((event.clientX - rect.left) / rect.width * model.width), y = Math.floor((event.clientY - rect.top) / rect.height * model.height);
@@ -141,7 +147,8 @@ export default function BrickMosaicTool({ locale }: { locale: SiteLocale }) {
     function paint(at: Point, from = at) {
         if (tool === 'picker') { const picked = live.current.mosaic.cells[at[1] * live.current.mosaic.width + at[0]]; if (picked) setColor(picked); return; }
         const next = tool === 'fill' ? fillMosaic(live.current.mosaic, at[0], at[1], color, brickCatalog) : paintMosaicLine(live.current.mosaic, from, at, tool === 'erase' ? null : color, brickCatalog);
-        install(next, false); setNotice('');
+        const before = live.current.mosaic;
+        install(next, false); setNotice(''); measureCreation(before, next);
     }
     function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
         if (locked || event.button !== 0 || stroke.current) return;
@@ -204,13 +211,14 @@ export default function BrickMosaicTool({ locale }: { locale: SiteLocale }) {
             offer(next, copy.replace, true);
         }, copy.invalid);
     }
-    function saveProject() { if (!ready || busy) return; finishStroke(); try { downloadBlob(new Blob([serializeMosaicProject(live.current.mosaic, brickCatalog)], { type: 'application/json' }), 'brick-mosaic-project.json'); live.current.saved = true; setSaved(true); setNotice(copy.saveNotice); } catch { setNotice(copy.exportFailed); } }
+    function saveProject() { if (!ready || busy) return; finishStroke(); try { downloadBlob(new Blob([serializeMosaicProject(live.current.mosaic, brickCatalog)], { type: 'application/json' }), 'brick-mosaic-project.json'); trackToolEvent({ name: 'tool_export', tool: 'brick_mosaic', format: 'project' }); live.current.saved = true; setSaved(true); setNotice(copy.saveNotice); } catch { setNotice(copy.exportFailed); } }
     function exportFile(kind: 'png' | 'csv' | 'pdf') {
         void run(async signal => {
             const snapshot = cloneMosaic(live.current.mosaic, brickCatalog), filename = `brick-mosaic-${snapshot.width}x${snapshot.height}`;
             if (kind === 'csv') { const csv = brickMaterialsCsv(snapshot, brickCatalog); signal.throwIfAborted(); downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${filename}-parts.csv`); }
             else if (kind === 'png') { const bytes = await brickMosaicPng(snapshot, brickCatalog, scale, signal); signal.throwIfAborted(); downloadBlob(new Blob([bytes], { type: 'image/png' }), `${filename}.png`); }
             else { const { createBrickPdf } = await import('../../lib/brick-mosaic/pdf'); signal.throwIfAborted(); const bytes = await createBrickPdf(snapshot, brickCatalog, locale, paper, signal); signal.throwIfAborted(); downloadBlob(new Blob([bytes], { type: 'application/pdf' }), `${filename}-${locale}-${paper}.pdf`); }
+            trackToolEvent({ name: 'tool_export', tool: 'brick_mosaic', format: kind });
             setNotice(copy.exported);
         }, copy.exportFailed);
     }

@@ -8,6 +8,7 @@ import { buildQrProject, defaultQrState, parseQrProject, serializeQrProject } fr
 import { acknowledgeQrLocaleSnapshot, discardQrLocaleSnapshot, isQrLocaleNavigation, readQrLocaleSnapshot, saveQrLocaleSnapshot } from '@/lib/qr-beads/locale-navigation';
 import type { QrColor, QrPalette, QrProjectResult, QrState } from '@/lib/qr-beads/types';
 import { downloadBlob } from '@/lib/core/printer/download';
+import { createToolGenerationTracker, trackToolEvent } from '@/lib/analytics';
 import { LOCALE_NAVIGATION_EVENT, localeRoutes, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import styles from './QrWorkspace.module.css';
@@ -28,6 +29,7 @@ export default function QrWorkspace({ locale, palettes }: { locale: SiteLocale; 
     const inputFile = useRef<HTMLInputElement>(null);
     const leaving = useRef(false), mounted = useRef(false);
     const operation = useRef<AbortController | null>(null);
+    const generation = useRef(createToolGenerationTracker('qr_beads'));
     const live = useRef({ state, saved, ready, busy: false });
     useEffect(() => { live.current = { state, saved, ready, busy: busy !== null }; }, [state, saved, ready, busy]);
     useEffect(() => {
@@ -116,6 +118,10 @@ export default function QrWorkspace({ locale, palettes }: { locale: SiteLocale; 
         const next = { ...live.current.state, ...patch };
         live.current = { ...live.current, state: next, saved: false };
         leaving.current = false; setState(next); setSaved(false); setNotice(''); setChecked(null);
+        if (!generation.current.recorded && Object.keys(patch).some(key => key !== 'paper')) {
+            try { buildQrProject(next, palettes); generation.current.record(); }
+            catch { /* Invalid or incomplete input must not count as generation. */ }
+        }
     }
     function changeBrand(value: string) {
         if (!live.current.ready || live.current.busy) return;
@@ -172,6 +178,7 @@ export default function QrWorkspace({ locale, palettes }: { locale: SiteLocale; 
                 else if (kind === 'chart') await exporter.exportQrChartPng(snapshot, task.signal);
                 else await exporter.exportQrPdf(snapshot, settings, locale, task.signal);
             }
+            trackToolEvent({ name: 'tool_export', tool: 'qr_beads', format: kind === 'chart' ? 'grid_png' : kind });
         } catch { if (current(task)) setNotice(copy.exportFailed); }
         finally { finish(task); }
     }
@@ -188,6 +195,7 @@ export default function QrWorkspace({ locale, palettes }: { locale: SiteLocale; 
             if (!current(task)) return;
             live.current = { state: restored, saved: true, ready: true, busy: true };
             leaving.current = false; setState(restored); setSaved(true); setChecked(null); setNotice(copy.loaded);
+            generation.current.reset();
         } catch { if (current(task)) setNotice(copy.invalidProject); }
         finally { finish(task); }
     }

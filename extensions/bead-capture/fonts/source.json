@@ -1,0 +1,13 @@
+{
+  "source": "Google Fonts WOFF2 assets already fetched by the production Next/font Inter and Manrope configuration. Unmodified Latin and Latin Extended subsets.",
+  "copyrightSources": [
+    "https://raw.githubusercontent.com/google/fonts/main/ofl/inter/OFL.txt",
+    "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/OFL.txt"
+  ],
+  "files": {
+    "inter-latin-ext.woff2": "a28eb6d3ccb534ae0c94ca999371df024aab60b08c3c8a5720ee9e32fa0faaa2",
+    "inter-latin.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "manrope-latin-ext.woff2": "ce093b341d9c10658ee1eaa85c5f8042ff3307bc6ccfc5f405616eb437f0009e",
+    "manrope-latin.woff2": "e310b55a7fd9677f5e3555e6c6c4d064fa1f1d24393f0ddbe217cea12a8c432f"
+  }
+}

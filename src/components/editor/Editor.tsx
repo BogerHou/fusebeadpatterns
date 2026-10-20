@@ -26,6 +26,7 @@ import { EditorDialog } from './EditorDialog';
 import { SourceCropDialog } from './SourceCropDialog';
 import { SourceBackgroundDialog } from './SourceBackgroundDialog';
 import { PixelBeadEntry } from './PixelBeadEntry';
+import { ExtensionPatternEntry } from './ExtensionPatternEntry';
 import { preparePixelBeadEditorDraft } from '@/lib/editor/pixel-bead-entry';
 import { getPixelBeadReturnHref } from '@/lib/pixel-grid/bead-transfer';
 import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
@@ -59,6 +60,7 @@ import { SourceImageTransactions, readSourceImageFile, prepareSourceImagePattern
 import { getProjectOpenCopy } from '@/lib/editor/project-open-copy';
 import { prepareEditorProjectFile } from '@/lib/editor/project-file-preparation';
 import { DEFAULT_EDITOR_PALETTE_ID as DEFAULT_PALETTE_ID, getInitialEditorConfiguration } from '@/lib/editor/initial-configuration';
+import { HomeHostImageRequests, type EditorHomeHost } from '@/lib/editor/home-host';
 
 import {
     BOARD_OPTIONS,
@@ -250,6 +252,7 @@ type EditorProps = {
     mode?: 'home' | 'editor';
     locale?: SiteLocale;
     initialPaletteId?: string;
+    homeHost?: EditorHomeHost;
 };
 
 const EDITOR_TOOLS: {
@@ -558,7 +561,8 @@ function LibraryPatternRequest(props: LibraryPatternEntryProps) {
     return patternId === null ? null : <LibraryPatternEntry key={patternId} patternId={patternId} {...props} />;
 }
 
-export default function Editor({ mode = 'home', locale = 'en', initialPaletteId }: EditorProps) {
+export default function Editor({ mode = 'home', locale = 'en', initialPaletteId, homeHost }: EditorProps) {
+    const hasHomeHost = Boolean(homeHost);
     const t = getEditorTranslator(locale);
     const localHome = localeRoutes[locale].home;
     const localEditor = localeRoutes[locale].editor;
@@ -615,6 +619,12 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         DEFAULT_RENDERER_SETTINGS
     );
     const [processing, setProcessing] = useState(false);
+    const [homeHostOpening, setHomeHostOpening] = useState(false);
+    const homeHostOpeningRef = useRef(false);
+    const homeHostImagesRef = useRef(new HomeHostImageRequests());
+    const homeHostOpenRequestRef = useRef(0);
+    const homeHostCancelRequestRef = useRef(0);
+    const homeHostSourceRef = useRef<AbortController | null>(null);
     const [exportingId, setExportingId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [draftWarning, setDraftWarning] = useState<string | null>(null);
@@ -1240,6 +1250,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     ]);
 
     const persistEditorDraft = useCallback((draft: EditorDraft) => {
+        // Packaged hosts keep the source in this tab and use explicit transfers.
+        if (hasHomeHost) return true;
         if (reducedColorRef.current && !draft.editedPattern) {
             if (reducedColorRef.current.byteLength > EDITOR_DRAFT_PATTERN_MAX_BYTES) {
                 setDraftWarning(
@@ -1254,7 +1266,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             'Automatic recovery is unavailable. Save a project file before leaving this page.'
         );
         return saved;
-    }, []);
+    }, [hasHomeHost]);
 
     const cancelProjectFileOperation = useCallback(() => {
         projectFileTransactionsRef.current.cancel();
@@ -1411,6 +1423,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
 
     useEffect(() => {
         if (initialDraftAppliedRef.current) return;
+        if (hasHomeHost) {
+            initialDraftAppliedRef.current = true;
+            setIsEditorDraftReady(true);
+            return;
+        }
         let active = true;
         // StrictMode can replay this effect. Both passes observe the same read,
         // and only the live pass installs its complete recovery once.
@@ -1450,7 +1467,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             setLocaleRestoreBlocked(true);
         });
         return () => { active = false; };
-    }, [isEditorPage, localeRestoreAttempt, restoreEditorDraft]);
+    }, [isEditorPage, localeRestoreAttempt, restoreEditorDraft, hasHomeHost]);
 
     const restorePendingLocaleContext = useCallback((data: Uint8ClampedArray, width: number, height: number) => {
         const context = pendingLocaleContextRef.current;
@@ -2170,13 +2187,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         sourceMode,
     ]);
 
-    const installPixelBeadDraft = useCallback(async (input: EditorDraft, signal: AbortSignal) => {
+    const installPixelBeadDraft = useCallback(async (input: EditorDraft, signal: AbortSignal, allowIndependentBoardLayout = false) => {
         if (signal.aborted || processing || exportingId !== null || imageGenerationRef.current || settingsUpdateRef.current || sourceTransactionsRef.current.pending) {
             throw new Error('Pixel bead installation is unavailable.');
         }
         // Everything that can fail is prepared without modifying the live
         // document. The transfer's saved cells are authoritative, not an image.
-        const { draft, prepared } = preparePixelBeadEditorDraft(input);
+        const { draft, prepared } = preparePixelBeadEditorDraft(input, { allowIndependentBoardLayout });
         const board = getBoardOption(draft.boardId)!;
         const usage = computeUsage(prepared.pixels, prepared.project.paletteConfiguration.palettes);
         const preview = createPatternPreviewDataUrl(prepared.pixels, prepared.width, prepared.height,
@@ -2370,8 +2387,63 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
     };
 
+    const handleUserSourceChange = () => {
+        if (!homeHost) return;
+        homeHostImagesRef.current.cancel(homeHost.incomingImage?.id);
+        homeHost.onUserSourceChange?.();
+    };
+
+    const importHomeHostImage = React.useEffectEvent(() => {
+        const incoming = homeHost?.incomingImage;
+        if (!homeHost || !incoming || !isEditorDraftReady || homeHostOpeningRef.current ||
+            processing || imageGenerationRef.current || settingsUpdateRef.current ||
+            sourceTransactionsRef.current.pending || isLibraryPatternLoading ||
+            exportInProgressRef.current || localeTransferPending || localeContextInstalling ||
+            !selectedBoard || !activePalettes.length ||
+            JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds)) return;
+        const request = homeHostImagesRef.current.claim(incoming.id);
+        if (!request) return;
+        const callbacks = homeHost;
+        const running = runSourceCandidate(incoming.file, null, 'upload');
+        const controller = sourceCandidateControllerRef.current;
+        homeHostSourceRef.current = controller;
+        void running.then(accepted => {
+            if (!projectFileMountedRef.current || !homeHostImagesRef.current.isCurrent(request)) return;
+            if (!accepted) callbacks.onImageError?.(incoming.id, new Error(getSourceCropCopy(locale).uploadError));
+            callbacks.onImageConsumed?.(incoming.id);
+        }).catch(() => {
+            if (!projectFileMountedRef.current || !homeHostImagesRef.current.isCurrent(request)) return;
+            callbacks.onImageError?.(incoming.id, new Error(getSourceCropCopy(locale).uploadError));
+            callbacks.onImageConsumed?.(incoming.id);
+        }).finally(() => {
+            if (homeHostSourceRef.current === controller) homeHostSourceRef.current = null;
+        });
+    });
+
+    const cancelHomeHostImage = React.useEffectEvent(() => {
+        homeHostImagesRef.current.cancel(homeHost?.incomingImage?.id);
+        const owned = homeHostSourceRef.current;
+        if (owned && sourceCandidateControllerRef.current === owned) cancelSourceOperation();
+        homeHostSourceRef.current = null;
+    });
+    useEffect(() => {
+        const request = homeHost?.cancelIncomingImage ?? 0;
+        if (request <= homeHostCancelRequestRef.current) return;
+        homeHostCancelRequestRef.current = request;
+        cancelHomeHostImage();
+    }, [homeHost?.cancelIncomingImage]);
+
+    useEffect(() => {
+        importHomeHostImage();
+    }, [homeHost?.incomingImage?.id, isEditorDraftReady, processing, activePalettes,
+        selectedPaletteIds, isLibraryPatternLoading, exportingId, localeTransferPending,
+        localeContextInstalling, homeHostOpening]);
+
     const loadSelectedFile = (file: File | null) => {
-        if (file) void runSourceCandidate(file, null, 'upload');
+        if (file) {
+            handleUserSourceChange();
+            void runSourceCandidate(file, null, 'upload');
+        }
     };
 
     const prepareBackgroundCandidate = async (background: SourceBackground | null, signal: AbortSignal) => {
@@ -2686,6 +2758,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             return;
         }
 
+        handleUserSourceChange();
         cancelProjectFileOperation();
         projectDocumentAcceptedRef.current = true;
         cancelSourceOperation();
@@ -3420,8 +3493,37 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
         }
     };
 
-    const handleOpenEditorPage = () => {
+    const handleOpenEditorPage = async () => {
         if (processing || imageGenerationRef.current || settingsUpdateRef.current) {
+            if (homeHost) setErrorMessage(getSourceCropCopy(locale).wait);
+            return;
+        }
+        if (homeHost) {
+            if (homeHostOpeningRef.current) return;
+            if (!isEditorDraftReady || exportInProgressRef.current || sourceTransactionsRef.current.pending ||
+                isLibraryPatternLoading || localeTransferPending || localeContextInstalling ||
+                !previewDataUrl || !currentProjectRef.current ||
+                JSON.stringify(resolvedPaletteIdsRef.current) !== JSON.stringify(selectedPaletteIds) ||
+                (sourceMode === 'image' && lastProcessedImageSettingsKeyRef.current !== sourceProcessingKey(sourceCrop)) ||
+                !isEditorPatternSnapshotReady(reducedColorRef.current, canvasRef.current, previewSize)) {
+                setErrorMessage(getSourceCropCopy(locale).wait);
+                return;
+            }
+            homeHostOpeningRef.current = true;
+            setHomeHostOpening(true);
+            try {
+                finishActiveStroke();
+                const draft = createCurrentEditorDraft(true);
+                if (!draft.editedPattern) throw new Error('Pattern snapshot unavailable.');
+                await homeHost.onOpenEditor(draft);
+                if (projectFileMountedRef.current) setErrorMessage(null);
+            } catch (error) {
+                if (projectFileMountedRef.current) setErrorMessage(error instanceof Error
+                    ? error.message : 'Could not prepare the pattern for editing. Try generating it again.');
+            } finally {
+                homeHostOpeningRef.current = false;
+                if (projectFileMountedRef.current) setHomeHostOpening(false);
+            }
             return;
         }
         try {
@@ -3437,6 +3539,14 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             setErrorMessage('Could not prepare the pattern for editing. Try generating it again.');
         }
     };
+
+    const openEditorFromHost = React.useEffectEvent(() => { void handleOpenEditorPage(); });
+    useEffect(() => {
+        const request = homeHost?.requestOpenEditor ?? 0;
+        if (request <= homeHostOpenRequestRef.current) return;
+        homeHostOpenRequestRef.current = request;
+        openEditorFromHost();
+    }, [homeHost?.requestOpenEditor]);
 
     const toggleEditorMobilePanel = (panel: Exclude<EditorMobilePanel, null>) => {
         setEditorMobilePanel((currentPanel) =>
@@ -3519,6 +3629,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             return;
         }
 
+        handleUserSourceChange();
+        if (homeHost) cancelSourceOperation();
         const jobs = projectFileTransactionsRef.current;
         jobs.cancel();
         const copy = getProjectOpenCopy(locale);
@@ -3851,10 +3963,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
     });
 
     useEffect(() => {
+        if (hasHomeHost) return;
         const listener = (event: Event) => handleLocaleNavigation(event);
         window.addEventListener(LOCALE_NAVIGATION_EVENT, listener);
         return () => window.removeEventListener(LOCALE_NAVIGATION_EVENT, listener);
-    }, []);
+    }, [hasHomeHost]);
 
     useEffect(() => {
         localeSaveMountedRef.current = true;
@@ -3903,7 +4016,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                     : 'editor-studio editor-workspace w-full space-y-6'
             }
         >
-            <div className="contents" inert={Boolean(craftPattern) || craftEntryBusy || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || sourceTransactionKind !== null}>
+            <div className="contents" inert={Boolean(craftPattern) || craftEntryBusy || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || sourceTransactionKind !== null || homeHostOpening}>
             {localeRestoreBlocked ? (
                 <div role="alert" className="flex min-h-48 flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-[#d9ded5] bg-brutal-bg p-6 font-sans text-brutal-black">
                     <p>{t('Your saved language change could not be restored. Retry or open a saved project to continue.')}</p>
@@ -3937,13 +4050,13 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 </div>
             )}
 
-            {isEditorDraftReady && (
+            {!homeHost && isEditorDraftReady && (
                 <Suspense fallback={null}>
                     <LibraryPatternRequest
                         locale={locale}
                         hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
-                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceBackgroundOpen}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceBackgroundOpen || isLibraryPatternLoading}
                         onOpen={(draft, patternId) => {
                             restoreEditorDraft(draft);
                             libraryPatternIdRef.current = patternId;
@@ -3955,12 +4068,19 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                 </Suspense>
             )}
 
-            {isEditorPage && isEditorDraftReady && (
+            {!homeHost && isEditorPage && isEditorDraftReady && (
                 <Suspense fallback={null}>
+                    <ExtensionPatternEntry locale={locale}
+                        hasCurrentPattern={sourceMode === 'blank' || Boolean(imageSrc) || hasEditablePattern}
+                        canSaveCurrentPattern={canSaveProject}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || isLibraryPatternLoading}
+                        onOpen={(draft, signal) => installPixelBeadDraft(draft, signal, true)}
+                        onSave={handleSaveProject}
+                        onLoadingChange={handleLibraryPatternLoading} />
                     <PixelBeadEntry locale={locale}
                         hasCurrentPattern={hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
-                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen}
+                        busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || isLibraryPatternLoading}
                         onOpen={installPixelBeadDraft}
                         onSave={handleSaveProject}
                         onLoadingChange={handleLibraryPatternLoading}
@@ -5384,7 +5504,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                 <button
                                     type="button"
                                     onClick={handleOpenEditorPage}
-                                    disabled={!previewDataUrl || processing}
+                                    disabled={!previewDataUrl || processing || homeHostOpening}
                                     className="flex min-h-[50px] min-w-0 flex-col items-center justify-center bg-brand-purple px-1.5 py-1.5 text-brutal-black hover:bg-brand-cyan disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                                     aria-label={t("Open editor")}
                                 >
@@ -6482,7 +6602,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
                                 <button
                                     type="button"
                                     onClick={handleOpenEditorPage}
-                                    disabled={!previewDataUrl || processing}
+                                    disabled={!previewDataUrl || processing || homeHostOpening}
                                     className="hidden rounded-lg border border-[#d9ded5] bg-white px-1.5 py-0.5 font-sans text-xs font-semibold leading-none text-black shadow-sm transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:border-brutal-black/20 disabled:text-gray-400 disabled:shadow-none disabled:hover:translate-y-0 sm:block"
                                 >
                                     {t("Edit Pattern")}
@@ -7143,7 +7263,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId 
             ) : null}
             {sourceTransactionKind === 'upload' ? (
                 <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-line bg-white p-3 shadow-sm">
-                    <button type="button" className="min-h-11 px-4 text-sm font-semibold text-accent" onClick={cancelSourceOperation}>{getSourceCropCopy(locale).cancel}</button>
+                    <button type="button" className="min-h-11 px-4 text-sm font-semibold text-accent" onClick={() => { handleUserSourceChange(); cancelSourceOperation(); }}>{getSourceCropCopy(locale).cancel}</button>
                 </div>
             ) : null}
             {isSourceBackgroundOpen && imageSrc ? (

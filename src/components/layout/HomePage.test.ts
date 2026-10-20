@@ -42,6 +42,8 @@ function load(file: string) {
 modules['./PatternCards'] = load('../patterns/PatternCards.tsx');
 modules['../patterns/FeaturedPatterns'] = load('../patterns/FeaturedPatterns.tsx');
 modules['../patterns/PatternStudy'] = load('../patterns/PatternStudy.tsx');
+modules['./HomeHero'] = load('./HomeHero.tsx');
+modules['./HomeGeneratorSection'] = load('./HomeGeneratorSection.tsx');
 const homeModule = load('./HomePage.tsx');
 modules['@/components/layout/HomePage'] = modules['./HomePage'] = homeModule;
 modules['@/components/layout/LocalizedGeneratorPage'] = load('./LocalizedGeneratorPage.tsx');

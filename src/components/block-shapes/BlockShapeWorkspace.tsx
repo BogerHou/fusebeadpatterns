@@ -9,6 +9,7 @@ import { BLOCK_SHAPE_PROJECT_MAX_BYTES, defaultShapeState, draftMatchesSpec, par
 import { acknowledgeShapeLocaleSnapshot, discardShapeLocaleSnapshot, isShapeLocaleNavigation, readShapeLocaleSnapshot, saveShapeLocaleSnapshot } from '@/lib/block-shapes/locale-navigation';
 import type { ShapeExportKind } from '@/lib/block-shapes/export';
 import { planShapePdf } from '@/lib/block-shapes/pdf';
+import { createToolGenerationTracker, trackToolEvent } from '@/lib/analytics';
 import styles from './BlockShapeWorkspace.module.css';
 
 const format = (text: string, values: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (match, key: string) => String(values[key] ?? match));
@@ -25,6 +26,7 @@ export default function BlockShapeWorkspace({ locale }: { locale: SiteLocale }) 
     const live = useRef({ state, draft, saved, busy, ready });
     const canvas = useRef<HTMLCanvasElement>(null), fileInput = useRef<HTMLInputElement>(null);
     const operation = useRef<AbortController | null>(null), leaving = useRef(false);
+    const generation = useRef(createToolGenerationTracker('block_shapes'));
     useEffect(() => { live.current = { state, draft, saved, busy, ready }; }, [state, draft, saved, busy, ready]);
     useEffect(() => () => operation.current?.abort(), []);
     const model = useMemo(() => generateShape(state.spec), [state.spec]);
@@ -98,6 +100,7 @@ export default function BlockShapeWorkspace({ locale }: { locale: SiteLocale }) 
             const spec = specFromDraft(live.current.draft), next = validateShapeState({ ...live.current.state, spec, layer: 0, completedLayers: [] }), raw = shapeDraft(spec);
             live.current = { ...live.current, state: next, draft: raw, saved: false }; leaving.current = false;
             setState(next); setDraft(raw); setSaved(false); setNotice(copy.applied);
+            generation.current.record();
         } catch { setNotice(copy.invalidDimensions + ' ' + copy.invalidOptions); }
     }
     async function exportFile(kind: ShapeExportKind) {
@@ -107,6 +110,7 @@ export default function BlockShapeWorkspace({ locale }: { locale: SiteLocale }) 
         try {
             const { exportBlockShape } = await import('@/lib/block-shapes/export'); task.signal.throwIfAborted();
             await exportBlockShape(current.state, locale, kind, task.signal, current.draft);
+            trackToolEvent({ name: 'tool_export', tool: 'block_shapes', format: kind === 'allPdf' ? 'pdf' : kind === 'layerProject' ? 'layer_project' : kind });
             if (kind === 'project') { live.current.saved = true; setSaved(true); setNotice(copy.saved); }
         } catch { if (!task.signal.aborted) setNotice(copy.exportFailed); }
         finally { if (!task.signal.aborted) { live.current.busy = false; setBusy(false); operation.current = null; } }
@@ -122,6 +126,7 @@ export default function BlockShapeWorkspace({ locale }: { locale: SiteLocale }) 
             if (!live.current.saved && !window.confirm(copy.replaceProject)) { setNotice(''); return; }
             live.current = { ...live.current, ...project, saved: true }; leaving.current = false;
             setState(project.state); setDraft(project.draft); setSaved(true); setNotice(copy.loaded);
+            generation.current.reset();
         } catch { if (!task.signal.aborted) setNotice(copy.invalidProject); }
         finally { if (!task.signal.aborted) { live.current.busy = false; setBusy(false); operation.current = null; } }
     }

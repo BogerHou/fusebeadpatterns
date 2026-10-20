@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import * as analytics from '../../lib/analytics';
 import { createRequire } from 'node:module';
 import { Script } from 'node:vm';
 import { createElement } from 'react';
@@ -76,6 +77,7 @@ function harness(mode: routes.BannerMode = 'designer', locale: SiteLocale = 'en'
     };
     const vmModule = { exports: {} as Record<string, unknown> };
     const imports: Record<string, unknown> = {
+        '../../lib/analytics': analytics,
         react: hooks, '../../lib/i18n/routes': siteRoutes, '../../lib/minecraft-banners/core': core, '../../lib/minecraft-banners/data': data,
         '../../lib/minecraft-banners/geometry': geometry, '../../lib/minecraft-banners/letters': letters, '../../lib/minecraft-banners/project': project,
         '../../lib/minecraft-banners/locale': navigation, '../../lib/minecraft-banners/routes': routes, '../../lib/minecraft-banners/copy': { bannerCopy },
