@@ -1,0 +1,107 @@
+.editor-loading-frame {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr) 312px;
+    grid-template-rows: 48px minmax(0, 1fr);
+    width: 100%;
+    height: 100svh;
+    min-height: 320px;
+    overflow: hidden;
+    background: #f8f9f5;
+    color: #172b24;
+    font-family: var(--font-inter), sans-serif;
+}
+.editor-loading-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 0 16px;
+    border-bottom: 1px solid #d9ded5;
+    background: #fff;
+    font-size: 14px;
+}
+.editor-loading-header .editor-loading-bar {
+    width: 120px;
+    margin: 0;
+}
+.editor-loading-tools, .editor-loading-details {
+    padding: 24px 16px;
+    background: #fff;
+    border-right: 1px solid #d9ded5;
+}
+.editor-loading-details {
+    border-right: 0;
+    border-left: 1px solid #d9ded5;
+}
+.editor-loading-frame h2 {
+    margin: 0 0 16px;
+    color: #627168;
+    font-size: 12px;
+    font-weight: 600;
+}
+.editor-loading-tool-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+}
+.editor-loading-tool-row span {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #edf0e8;
+}
+.editor-loading-bar {
+    display: block;
+    height: 32px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+    background: #edf0e8;
+}
+.editor-loading-canvas, .editor-transfer-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 24px;
+    background: #f8f9f5;
+}
+.editor-transfer-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+}
+.editor-loading-status {
+    display: flex;
+    max-width: 340px;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #627168;
+}
+.editor-loading-status strong {
+    color: #172b24;
+    font-size: 16px;
+    font-weight: 600;
+}
+.editor-loading-spinner {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border: 3px solid #d9ded5;
+    border-top-color: #375849;
+    border-radius: 50%;
+    animation: editor-loading-turn .9s linear infinite;
+}
+@keyframes editor-loading-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .editor-loading-spinner { animation: none; }
+}
+@media (max-width: 1279px) {
+    .editor-loading-frame { grid-template-columns: minmax(0, 1fr); }
+    .editor-loading-tools, .editor-loading-details { display: none; }
+}

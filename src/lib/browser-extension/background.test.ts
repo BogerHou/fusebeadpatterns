@@ -44,7 +44,7 @@ beforeEach(async () => {
         contextMenus: { create: vi.fn(), removeAll: vi.fn().mockResolvedValue(undefined), onClicked: event() },
         action: { onClicked: event() },
         tabs: { create: vi.fn().mockResolvedValue({ id: 77 }), update: vi.fn().mockResolvedValue({ id: 77 }), remove: vi.fn().mockResolvedValue(undefined), onRemoved: event() },
-        permissions: { contains: vi.fn().mockResolvedValue(true), request: vi.fn().mockResolvedValue(true), remove: vi.fn().mockResolvedValue(true) },
+        permissions: { contains: vi.fn().mockImplementation((_permissions, callback?: (granted: boolean) => void) => { callback?.(true); return Promise.resolve(true); }), request: vi.fn().mockResolvedValue(true), remove: vi.fn().mockResolvedValue(true) },
         storage: { session: {
             get: vi.fn(async (keys?: string | string[] | null) => {
                 const result: Record<string, unknown> = {};
@@ -96,6 +96,9 @@ describe('extension background boundary', () => {
     it('captures the actual context-menu image and binds the studio before serving it', async () => {
         const listener = vi.mocked(mockChrome.contextMenus.onClicked.addListener).mock.calls[0][0];
         listener({ menuItemId: 'make-bead-pattern', mediaType: 'image', srcUrl: 'https://i.ebayimg.com/images/g/public/s-l1600.webp' }, { id: 7, windowId: 5 });
+        expect(mockChrome.permissions.contains).toHaveBeenCalledWith({ origins: ['https://i.ebayimg.com/*'] }, expect.any(Function));
+        expect(mockChrome.permissions.request).not.toHaveBeenCalled();
+        expect(mockChrome.storage.session.get).not.toHaveBeenCalled();
         await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
         const call = vi.mocked(mockChrome.tabs.create).mock.calls[0][0];
         expect(call).toMatchObject({ active: true, windowId: 5 });
@@ -109,6 +112,56 @@ describe('extension background boundary', () => {
             source: { url: 'https://i.ebayimg.com/images/g/public/s-l1600.webp', tabId: 7 },
         });
         expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('waits for launch permission before opening the studio and still offers a workspace after refusal', async () => {
+        let resolve!: (granted: boolean) => void;
+        vi.mocked(mockChrome.permissions.request).mockReturnValue(new Promise(done => { resolve = done; }));
+        vi.mocked(mockChrome.permissions.contains).mockImplementation((_permissions, callback?: (granted: boolean) => void) => { callback?.(false); return Promise.resolve(false); });
+        const listener = vi.mocked(mockChrome.contextMenus.onClicked.addListener).mock.calls[0][0];
+        listener({ menuItemId: 'make-bead-pattern', mediaType: 'image', srcUrl: 'https://images.example.com/p.png' }, { id: 7 });
+        expect(mockChrome.permissions.request).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] });
+        expect(mockChrome.tabs.create).not.toHaveBeenCalled();
+        expect(mockChrome.storage.session.get).not.toHaveBeenCalled();
+        resolve(false);
+        await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
+        const url = vi.mocked(mockChrome.tabs.create).mock.calls[0][0].url;
+        const capturedToken = new URL(url).searchParams.get('source');
+        expect(await handle({ type: 'read-source', token: capturedToken }, { id: extensionId, url, frameId: 0 })).toMatchObject({ ok: true, permissionGranted: false });
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('keeps an explicit failed source for an image address that cannot be retained', async () => {
+        const listener = vi.mocked(mockChrome.contextMenus.onClicked.addListener).mock.calls[0][0];
+        const oversizedAddress = 'data:image/png;base64,' + 'A'.repeat(8192);
+        listener({ menuItemId: 'make-bead-pattern', mediaType: 'image', srcUrl: oversizedAddress }, { id: 7 });
+        expect(mockChrome.permissions.request).not.toHaveBeenCalled();
+        await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
+        const call = vi.mocked(mockChrome.tabs.create).mock.calls[0][0];
+        const capturedToken = new URL(call.url).searchParams.get('source');
+        expect(capturedToken).toBeTruthy();
+        const sender = { id: extensionId, url: call.url, tab: { id: 77 }, frameId: 0 };
+        expect(await handle({ type: 'read-source', token: capturedToken }, sender)).toMatchObject({
+            ok: true, originPattern: null, permissionGranted: false, source: { url: '' },
+        });
+        expect(await handle({ type: 'fetch-source', token: capturedToken }, sender)).toEqual({
+            ok: false, error: 'unsupported_source',
+        });
+        expect(JSON.stringify(stored)).not.toContain(oversizedAddress);
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('opens a genuinely blank studio only for a toolbar launch', async () => {
+        const listener = vi.mocked(mockChrome.action.onClicked.addListener).mock.calls[0][0];
+        listener({ id: 7 });
+        expect(mockChrome.permissions.contains).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }, expect.any(Function));
+        expect(mockChrome.permissions.request).not.toHaveBeenCalled();
+        expect(mockChrome.storage.session.get).not.toHaveBeenCalled();
+        await vi.waitFor(() => expect(mockChrome.tabs.create).toHaveBeenCalledOnce());
+        expect(mockChrome.tabs.create).toHaveBeenCalledWith({
+            url: `chrome-extension://${extensionId}/studio.html`, active: true,
+        });
+        expect(Object.keys(stored)).toHaveLength(0);
     });
 
     it('does not fetch before a host permission exists, or for local/blob/credential sources', async () => {
@@ -144,19 +197,44 @@ describe('extension background boundary', () => {
         expect(await result).toEqual({ ok: false, error: 'fetch_timeout' });
     });
 
-    it('stores a sanitized project before navigating a bound tab, never the supplied hidden fields', async () => {
+    it('binds a sanitized project to a local loading page and waits for its first paint before navigating', async () => {
         const raw = JSON.parse(projectString()); raw.draft.secret = 'private-image-url';
         expect(await handle({ type: 'create-handoff', project: JSON.stringify(raw), locale: 'ja' }, studio)).toMatchObject({ ok: true, tabId: 77 });
         const entry = Object.entries(stored).find(([key]) => key.startsWith('bead-capture:handoff:'));
         expect(entry).toBeDefined();
-        const record = entry![1] as { project: string; targetUrl: string; token: string; tabId: number };
+        const record = entry![1] as { project: string; targetUrl: string; token: string; tabId: number; launchUrl: string };
         expect(record.project).not.toContain('private-image-url');
         expect(record.project).toContain('Bead Capture');
         expect(record.targetUrl).toBe(makeHandoffUrl(record.token, 'ja'));
-        expect(mockChrome.tabs.create).toHaveBeenCalledWith({ url: 'about:blank', active: true });
+        expect(record.launchUrl).toBe(`chrome-extension://${extensionId}/handoff.html?token=${record.token}&lang=ja`);
+        expect(mockChrome.tabs.create).toHaveBeenCalledWith({ url: record.launchUrl, active: true });
+        expect(mockChrome.tabs.update).not.toHaveBeenCalled();
+        const sender = { id: extensionId, url: record.launchUrl, frameId: 0, tab: { id: 77 } };
+        expect(await handle({ type: 'launch-handoff', token: record.token, targetUrl: 'https://evil.example.com' }, sender)).toEqual({ ok: true });
         expect(mockChrome.tabs.update).toHaveBeenCalledWith(77, { url: record.targetUrl });
+        expect(stored[entry![0]]).toBeDefined();
+        expect(await handle({ type: 'launch-handoff', token: record.token }, sender)).toEqual({ ok: true });
+        expect(mockChrome.tabs.update).toHaveBeenCalledOnce();
         expect(await handle({ type: 'create-handoff', project: '{}', locale: 'en' }, studio)).toEqual({ ok: false, error: 'invalid_project' });
         expect(await handle({ type: 'create-handoff', project: projectString(), locale: 'https://evil.example' }, studio)).toEqual({ ok: false, error: 'invalid_message' });
+    });
+
+    it('refuses a loading-page launch from another tab or document and preserves failed navigation for retry', async () => {
+        await handle({ type: 'create-handoff', project: projectString() }, studio);
+        const [key, record] = Object.entries(stored).find(([key]) => key.startsWith('bead-capture:handoff:'))! as [string, { token: string; launchUrl: string }];
+        const sender = { id: extensionId, url: record.launchUrl, frameId: 0, tab: { id: 77 } };
+        for (const invalid of [{ ...sender, id: 'another' }, { ...sender, frameId: 1 }, { ...sender, tab: { id: 78 } },
+            { ...sender, url: studio.url }, { ...sender, url: record.launchUrl + '&extra=1' }]) {
+            expect(await handle({ type: 'launch-handoff', token: record.token, tabId: 77 }, invalid)).toEqual({ ok: false, error: 'unauthorized' });
+        }
+        expect(mockChrome.tabs.update).not.toHaveBeenCalled();
+        expect(await handle({ type: 'launch-handoff', token: record.token, tabId: 77 }, { ...sender, tab: undefined })).toEqual({ ok: false, error: 'unauthorized' });
+        vi.mocked(mockChrome.tabs.update).mockRejectedValueOnce(new Error('navigation failed'));
+        expect(await handle({ type: 'launch-handoff', token: record.token }, sender)).toEqual({ ok: false, error: 'handoff_failed' });
+        expect(stored[key]).toBeDefined();
+        expect(await handle({ type: 'launch-handoff', token: record.token }, sender)).toEqual({ ok: true });
+        (stored[key] as Record<string, unknown>).delivered = true;
+        expect(await handle({ type: 'launch-handoff', token: record.token }, sender)).toEqual({ ok: false, error: 'unauthorized' });
     });
 
     it('keeps concurrent large handoffs within the session budget and retains source records', async () => {

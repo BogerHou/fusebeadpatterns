@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opening your editor — Bead Capture</title>
+  <link rel="icon" href="icons/icon-48.png">
+  <link rel="stylesheet" href="loading.css">
+  <script type="module" src="handoff.js"></script>
+</head>
+<body>
+  <main class="capture-loading">
+    <h1 class="capture-loading-heading" id="handoff-heading">Your bead pattern</h1>
+    <section class="capture-loading-stage" aria-busy="true" id="handoff-stage">
+      <div>
+        <p class="capture-loading-status" role="status">
+          <span class="capture-loading-spinner" aria-hidden="true" id="handoff-spinner"></span>
+          <span id="handoff-status">Opening the website editor…</span>
+        </p>
+        <p class="capture-loading-description" id="handoff-description">Your pattern is ready. The editor will receive it as soon as it opens.</p>
+        <button class="capture-loading-reload" type="button" id="handoff-retry" hidden>Try again</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

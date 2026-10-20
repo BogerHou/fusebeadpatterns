@@ -1,0 +1,23 @@
+/* Small first-paint styles. Kept separate from the converter bundle. */
+html { background: #f7f6f2; color: #243e36; }
+body { margin: 0; }
+.capture-loading { box-sizing: border-box; width: 100%; max-width: 1248px; margin-inline: auto; padding: 24px 40px; font-family: system-ui, sans-serif; }
+.capture-loading *, .capture-loading *::before, .capture-loading *::after { box-sizing: border-box; }
+.capture-loading [hidden] { display: none !important; }
+.capture-loading-heading { margin: 0 0 20px; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -.02em; }
+.capture-loading-status { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 14px; line-height: 1.6; }
+.capture-loading-spinner { display: inline-block; flex: none; width: 20px; height: 20px; border: 2px solid #d9ded5; border-top-color: #28614e; border-radius: 50%; animation: capture-loading-turn .8s linear infinite; }
+.capture-loading-description { margin: 10px 0 0; max-width: 440px; color: #59685f; font-size: 13px; line-height: 1.7; }
+.capture-loading-workspace { display: grid; grid-template-columns: minmax(230px, 340px) minmax(0, 1fr); gap: 16px; }
+.capture-loading-sidebar, .capture-loading-stage { border: 1px solid #d9ded5; border-radius: 8px; background: #fffefa; }
+.capture-loading-sidebar { padding: 24px; }
+.capture-loading-line { height: 12px; width: 65%; margin-bottom: 18px; border-radius: 4px; background: #e8ece4; }
+.capture-loading-line:nth-child(2n) { width: 100%; height: 38px; margin-bottom: 28px; background: #f0f2ec; }
+.capture-loading-stage { min-height: 480px; display: flex; align-items: center; justify-content: center; padding: 32px; }
+.capture-loading-stage > div { max-width: 400px; }
+.capture-loading-reload { margin-top: 18px; padding: 10px 16px; border: 1px solid #a8b7ac; border-radius: 6px; background: #fffefa; color: #243e36; font: inherit; cursor: pointer; }
+.capture-loading-reload:focus-visible { outline: 3px solid #28614e; outline-offset: 3px; }
+@keyframes capture-loading-turn { to { transform: rotate(360deg); } }
+@media (max-width: 760px) { .capture-loading { padding: 16px; } .capture-loading-heading { font-size: 16px; } }
+@media (max-width: 639px) { .capture-loading-workspace { grid-template-columns: 1fr; } .capture-loading-sidebar { display: none; } .capture-loading-stage { min-height: 360px; padding: 24px; } }
+@media (prefers-reduced-motion: reduce) { .capture-loading-spinner { animation: none; } }
