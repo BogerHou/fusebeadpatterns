@@ -32,6 +32,13 @@ const englishCopy = {
     editor: 'Open the editor', learn: 'Printing and making guides', learnHref: '/guides',
 };
 
+const extensionEntryCopy: Record<SiteLocale, { text: string; link: string }> = {
+    en: { text: 'Found a picture while browsing?', link: 'Meet Bead Capture for Chrome' },
+    de: { text: 'Beim Surfen ein schönes Bild entdeckt?', link: 'Bead Capture für Chrome kennenlernen' },
+    fr: { text: 'Une image vous plaît sur le Web ?', link: 'Découvrez Bead Capture pour Chrome' },
+    ja: { text: 'ウェブで気に入った画像を見つけましたか？', link: 'Chrome 用 Bead Capture を見る' },
+};
+
 /** Every home uses the same workflow, featured designs, and content sections. */
 export default function HomePage({ locale, structuredData, faqs: englishFaqs = [] }: HomePageProps) {
     const native = locale === 'en' ? undefined : localizedHomeCopy[locale];
@@ -79,6 +86,11 @@ export default function HomePage({ locale, structuredData, faqs: englishFaqs = [
                 <HomeGeneratorSection locale={locale}>
                     <Editor locale={locale} />
                 </HomeGeneratorSection>
+
+                <p className="-mt-10 mb-14 text-sm leading-6 text-muted min-[761px]:-mt-16 min-[761px]:mb-[88px]">
+                    {extensionEntryCopy[locale].text}{' '}
+                    <Link href={routes.extension} prefetch={false} className="text-link">{extensionEntryCopy[locale].link}</Link>
+                </p>
 
                 <section className="home-section" aria-labelledby="how-it-works">
                     <div className="section-intro"><p className="eyebrow">{copy.stepsEyebrow}</p><h2 id="how-it-works" className="section-heading">{copy.stepsHeading}</h2></div>

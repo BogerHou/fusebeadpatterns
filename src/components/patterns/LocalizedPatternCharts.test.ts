@@ -356,7 +356,16 @@ describe('native pattern chart journeys', () => {
         const brickUrls = Object.values(brickRoutes.brickPaths).map(path => `https://fusebeadpatterns.art${path}`);
         expect(records.filter(record => brickUrls.includes(record.url)).map(record => record.url)).toEqual(brickUrls);
         for (const record of records.filter(record => brickUrls.includes(record.url))) expect(record.lastModified.toISOString()).toBe('2026-10-17T00:00:00.000Z');
-        const previous = records.filter(record => !brickUrls.includes(record.url) && !bannerUrls.includes(record.url) && !spriteUrls.includes(record.url) && !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
+        const extensionUrls = [
+            'https://fusebeadpatterns.art/chrome-extension',
+            'https://fusebeadpatterns.art/de/chrome-extension',
+            'https://fusebeadpatterns.art/fr/chrome-extension',
+            'https://fusebeadpatterns.art/ja/chrome-extension',
+        ];
+        const extensionPages = records.filter(record => extensionUrls.includes(record.url));
+        expect(extensionPages.map(record => record.url)).toEqual(extensionUrls);
+        for (const record of extensionPages) expect(record.lastModified.toISOString()).toBe('2026-10-20T00:00:00.000Z');
+        const previous = records.filter(record => !extensionUrls.includes(record.url) && !brickUrls.includes(record.url) && !bannerUrls.includes(record.url) && !spriteUrls.includes(record.url) && !adultAdditions.includes(record.url) && !qrBeadUrls.includes(record.url) && !blockShapeUrls.includes(record.url) && !letterUrls.includes(record.url) && !colorChartUrls.includes(record.url) && !record.url.endsWith('/patterns/cross') && !record.url.endsWith('/guides/beadifier-alternative') && !record.url.endsWith('/guides/perler-beads-for-beginners') && !['rave', 'alien-head', 'rainbow-smiley', 'crescent-moon-mushroom', 'sunset-mountain-lake', 'strawberry'].some(slug => record.url.endsWith('/patterns/' + slug)));
         expect(createHash('sha256').update(JSON.stringify(previous)).digest('hex')).toBe('3dd5f87d37aa13fa352020a4ba73f71ac1556ff351497814f223b09d142f53be');
     });
 

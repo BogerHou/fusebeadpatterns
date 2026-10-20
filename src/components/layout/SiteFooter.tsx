@@ -30,6 +30,7 @@ type SiteFooterSection =
     | 'block-shapes'
     | 'guides'
     | 'color-chart'
+    | 'chrome-extension'
     | 'about'
     | 'privacy'
     | 'terms';
@@ -48,6 +49,13 @@ type FooterLink = {
     prefetch?: false;
     lang?: string;
     nativeNavigation?: true;
+};
+
+const chromeExtensionLabels: Record<SiteLocale, string> = {
+    en: 'Chrome Extension',
+    de: 'Chrome-Erweiterung',
+    fr: 'Extension Chrome',
+    ja: 'Chrome 拡張機能',
 };
 
 const footerGroups: Array<{
@@ -91,6 +99,7 @@ const footerGroups: Array<{
     {
         title: 'Site',
         links: [
+            { id: 'chrome-extension', label: chromeExtensionLabels.en, href: localeRoutes.en.extension },
             { id: 'about', label: 'About', href: '/about' },
             { id: 'privacy', label: 'Privacy Policy', href: '/privacy-policy' },
             { id: 'terms', label: 'Terms of Service', href: '/terms-of-service' },
@@ -139,6 +148,7 @@ export default function SiteFooter({
         {
             title: copy.site,
             links: [
+                { id: 'chrome-extension', label: chromeExtensionLabels[locale], href: routes.extension, lang: locale },
                 { id: 'about', label: copy.about, href: routes.about, lang: locale },
                 { id: 'privacy', label: copy.privacy, href: routes.privacy, lang: locale },
                 { id: 'terms', label: copy.terms, href: routes.terms, lang: locale },

@@ -6,6 +6,7 @@ import { hamaMakerPaths } from '../hama-maker/routes';
 import { perlerColorChartPaths } from '../color-chart/routes';
 import { beadLetterPaths } from '../bead-letters/routes';
 import { blockShapePaths } from '../block-shapes/routes';
+import { chromeExtensionPaths } from '../chrome-extension/routes';
 import { guideRouteGroups, guideIndexHref } from '../guides/routes';
 import { patternSectionRouteGroups } from '../patterns/section-routes';
 import { sitePageHref, sitePageRouteGroups } from '../site-pages/routes';
@@ -14,11 +15,12 @@ import { loomPatternLibraryPaths } from '../bead-loom/patterns';
 import { isSiteLocale, type SiteLocale } from './locales';
 
 const siteInfoRoutes = (locale: SiteLocale) => ({
+    extension: chromeExtensionPaths[locale],
     about: sitePageHref('about', locale),
     privacy: sitePageHref('privacy-policy', locale),
     terms: sitePageHref('terms-of-service', locale),
 });
-export const localeRoutes: Record<SiteLocale, { home: string; hamaMaker: string; patterns: string; hamaPatterns: string; editor: string; guides: string; pixelGrid?: string; beadLoom: string; beadLoomPatterns: string; qrBeads: string; sprites: string; bannerMaker: string; bannerLetters: string; beadLetters: string; blockShapes: string; about: string; privacy: string; terms: string }> = {
+export const localeRoutes: Record<SiteLocale, { home: string; hamaMaker: string; patterns: string; hamaPatterns: string; editor: string; guides: string; pixelGrid?: string; beadLoom: string; beadLoomPatterns: string; qrBeads: string; sprites: string; bannerMaker: string; bannerLetters: string; beadLetters: string; blockShapes: string; extension: string; about: string; privacy: string; terms: string }> = {
     en: { ...siteInfoRoutes('en'), qrBeads: qrBeadPaths.en, sprites: spritePaths.en, bannerMaker: bannerPaths.designer.en, bannerLetters: bannerPaths.letters.en, beadLetters: beadLetterPaths.en, blockShapes: blockShapePaths.en, guides: guideIndexHref('en'), home: '/', hamaMaker: hamaMakerPaths.en, patterns: '/patterns', hamaPatterns: '/patterns/hama', editor: '/editor', pixelGrid: '/pixel-art-grid', beadLoom: '/bead-loom-pattern-maker', beadLoomPatterns: loomPatternLibraryPaths.en },
     de: { ...siteInfoRoutes('de'), qrBeads: qrBeadPaths.de, sprites: spritePaths.de, bannerMaker: bannerPaths.designer.de, bannerLetters: bannerPaths.letters.de, beadLetters: beadLetterPaths.de, blockShapes: blockShapePaths.de, guides: guideIndexHref('de'), home: '/de', hamaMaker: hamaMakerPaths.de, patterns: '/de/patterns', hamaPatterns: '/de/hama-perlen-vorlagen', editor: '/de/editor', pixelGrid: '/de/pixel-art-generator', beadLoom: '/de/perlenwebmuster-generator', beadLoomPatterns: loomPatternLibraryPaths.de },
     fr: { ...siteInfoRoutes('fr'), qrBeads: qrBeadPaths.fr, sprites: spritePaths.fr, bannerMaker: bannerPaths.designer.fr, bannerLetters: bannerPaths.letters.fr, beadLetters: beadLetterPaths.fr, blockShapes: blockShapePaths.fr, guides: guideIndexHref('fr'), home: '/fr', hamaMaker: hamaMakerPaths.fr, patterns: '/fr/patterns', hamaPatterns: '/fr/patterns/hama', editor: '/fr/editor', pixelGrid: '/fr/image-en-pixel-art', beadLoom: '/fr/generateur-motif-metier-a-perles', beadLoomPatterns: loomPatternLibraryPaths.fr },
@@ -29,6 +31,7 @@ export const localeRoutes: Record<SiteLocale, { home: string; hamaMaker: string;
 // and translated guides with different coverage are intentionally not equivalents.
 export const localizedRouteGroups: ReadonlyArray<Partial<Record<SiteLocale, string>>> = [
     { en: '/', de: '/de', fr: '/fr', ja: '/ja' },
+    chromeExtensionPaths,
     hamaMakerPaths,
     perlerColorChartPaths,
     beadLetterPaths,
