@@ -9,6 +9,9 @@
 .fallback { font-size: .6875rem; line-height: 1.5; color: var(--color-muted, #59685d); }
 .headerInner.headerInner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 20px; }
 .navigation.navigation { justify-content: flex-end; flex-wrap: wrap; }
+.navigation > a, .navigation .toolSummary { white-space: nowrap; }
+.navigation > .extensionLink { color: var(--color-accent); background: #e5ece2; border: 1px solid #bccdbd; font-weight: 650; }
+.navigation > .extensionLink:hover { background: #d9e7d8; border-color: var(--color-accent); }
 .brand.brand { min-width: 0; flex-shrink: 1; }
 .brand img { flex-shrink: 0; }
 .headerSwitcher { grid-column: 3; grid-row: 1; }
@@ -18,7 +21,7 @@
 .toolList a { display: flex; width: 100%; }
 .footerSwitcher { margin-left: auto; }
 .footerNote { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-@media (max-width: 1040px) {
+@media (max-width: 1200px) {
     .headerInner.headerInner { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; }
     .navigation.navigation { grid-column: 1 / -1; grid-row: 2; width: 100%; justify-content: flex-start; }
     .headerSwitcher { grid-column: 2; }

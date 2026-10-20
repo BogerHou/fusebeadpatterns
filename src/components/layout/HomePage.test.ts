@@ -13,6 +13,7 @@ import * as presentation from '../../lib/patterns/presentation';
 import * as guides from '../../lib/guides/localized';
 import * as guideData from '../../app/(english)/guides/guide-data';
 import * as routes from '../../lib/i18n/routes';
+import * as extensionRoutes from '../../lib/chrome-extension/routes';
 import * as metadata from '../../lib/i18n/metadata';
 import type { SiteLocale } from '../../lib/i18n/locales';
 import type { HomePageProps } from './HomePage';
@@ -23,6 +24,7 @@ const require = createRequire(import.meta.url);
 const modules: Record<string, unknown> = {
     '@/lib/i18n/home': home, '@/lib/i18n/home-patterns': patternsCopy,
     '@/lib/i18n/routes': routes, '@/lib/i18n/metadata': metadata,
+    '@/lib/chrome-extension/routes': extensionRoutes,
     '@/lib/patterns/catalog': catalog, '@/lib/patterns/localized-content': localizedPatterns,
     '@/lib/patterns/presentation': presentation, '@/lib/guides/localized': guides,
     '@/app/(english)/guides/guide-data': guideData, './guides/guide-data': guideData,
