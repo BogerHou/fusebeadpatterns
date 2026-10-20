@@ -80,31 +80,15 @@ await build({
     absWorkingDir: root,
     entryPoints: {
         background: 'extensions/bead-capture/src/background.ts',
+        handoff: 'extensions/bead-capture/src/handoff.ts',
         'website-bridge': 'extensions/bead-capture/src/website-bridge.ts',
         'quantize-worker': 'src/lib/editor/pattern-quantization.worker.ts',
     },
     outdir: output, bundle: true, splitting: false, format: 'esm', platform: 'browser', target: 'chrome123',
     minify: true, sourcemap: false, legalComments: 'external', tsconfig: path.join(root, 'tsconfig.json'),
 });
-for (const file of ['manifest.json', 'studio.html', 'README.md']) await copyFile(path.join(source, file), path.join(output, file));
+for (const file of ['manifest.json', 'studio.html', 'handoff.html', 'loading.css', 'README.md']) await copyFile(path.join(source, file), path.join(output, file));
 await cp(path.join(root, 'public/palettes'), path.join(output, 'palettes'), { recursive: true });
-await mkdir(path.join(output, 'brand'));
-await copyFile(path.join(root, 'public/brand/logo-108-1550e3d22f75.webp'), path.join(output, 'brand/logo-108-1550e3d22f75.webp'));
-await mkdir(path.join(output, 'sample'));
-await copyFile(path.join(root, 'public/patterns/original-halloween-bat/pixels.png'), path.join(output, 'sample/pixels.png'));
-// Render the existing original's exact grid as beads, without adding a new
-// pattern or redistributing the website hero's third-party character artwork.
-const sample = JSON.parse(await readFile(path.join(root, 'public/patterns/original-halloween-bat/pattern.bead-pattern.json'), 'utf8')).draft.editedPattern;
-const samplePixels = Buffer.from(sample.data, 'base64');
-if (sample.width !== 29 || sample.height !== 29 || samplePixels.length !== 29 * 29 * 4) throw new Error('Unexpected sample pattern.');
-const beads = [];
-for (let y = 0; y < 29; y++) for (let x = 0; x < 29; x++) {
-    const offset = (y * 29 + x) * 4;
-    if (!samplePixels[offset + 3]) continue;
-    const color = `rgb(${samplePixels[offset]},${samplePixels[offset + 1]},${samplePixels[offset + 2]})`;
-    beads.push(`<circle cx="${x + .5}" cy="${y + .5}" r=".46" fill="${color}"/><circle cx="${x + .5}" cy="${y + .5}" r=".15" fill="#edf0e5"/>`);
-}
-await writeFile(path.join(output, 'sample/beads.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" width="580" height="580">${beads.join('')}</svg>`);
 await cp(path.join(root, 'public/fonts/fuse-bead-japanese'), path.join(output, 'fonts/fuse-bead-japanese'), { recursive: true });
 await mkdir(path.join(output, 'licenses'), { recursive: true });
 for (const file of ['Inter-OFL.txt', 'Manrope-OFL.txt']) await copyFile(path.join(source, 'fonts', file), path.join(output, 'licenses', file));

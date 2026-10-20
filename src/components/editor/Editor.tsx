@@ -27,6 +27,7 @@ import { SourceCropDialog } from './SourceCropDialog';
 import { SourceBackgroundDialog } from './SourceBackgroundDialog';
 import { PixelBeadEntry } from './PixelBeadEntry';
 import { ExtensionPatternEntry } from './ExtensionPatternEntry';
+import EditorLoadingFrame, { EditorLoadingStatus } from './EditorLoadingFrame';
 import { preparePixelBeadEditorDraft } from '@/lib/editor/pixel-bead-entry';
 import { getPixelBeadReturnHref } from '@/lib/pixel-grid/bead-transfer';
 import { getPixelBeadCopy } from '@/lib/pixel-grid/bead-copy';
@@ -650,6 +651,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
     const [homeMobilePanel, setHomeMobilePanel] =
         useState<HomeMobilePanel>(null);
     const [isEditorDraftReady, setIsEditorDraftReady] = useState(false);
+    const [extensionPatternPhase, setExtensionPatternPhase] = useState<'receiving' | 'preparing' | null>(null);
     const [localeRestoreAttempt, setLocaleRestoreAttempt] = useState(0);
     const [localeRestoreBlocked, setLocaleRestoreBlocked] = useState(false);
     const [localeTransferPending, setLocaleTransferPending] = useState(false);
@@ -4031,9 +4033,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                     </div>
                 </div>
             ) : isEditorPage && !isEditorDraftReady ? (
-                <div className="flex h-full min-h-[100svh] items-center justify-center rounded-lg border border-[#d9ded5] bg-brutal-bg font-sans text-lg text-brutal-black sm:border sm:text-xl">
-                    {t("Loading Editor...")}
-                </div>
+                <EditorLoadingFrame locale={locale} />
             ) : null}
 
             {localeTransferPending ? <p role="status" className="bg-brand-yellow px-3 py-2 text-sm font-semibold">{t('Saving your pattern for the language change...')}</p> : null}
@@ -4076,7 +4076,8 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                         busy={processing || exportingId !== null || craftEntryBusy || Boolean(craftPattern) || isSourceCropOpen || isColorLimitOpen || isSourceBackgroundOpen || isLibraryPatternLoading}
                         onOpen={(draft, signal) => installPixelBeadDraft(draft, signal, true)}
                         onSave={handleSaveProject}
-                        onLoadingChange={handleLibraryPatternLoading} />
+                        onLoadingChange={handleLibraryPatternLoading}
+                        onPendingChange={setExtensionPatternPhase} />
                     <PixelBeadEntry locale={locale}
                         hasCurrentPattern={hasEditablePattern}
                         canSaveCurrentPattern={canSaveProject}
@@ -4391,6 +4392,11 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                     </aside>
 
                     <main className="relative min-h-0 overflow-hidden bg-brutal-bg xl:col-start-2">
+                        {extensionPatternPhase && !hasEditablePattern && (
+                            <div className="editor-transfer-loading">
+                                <EditorLoadingStatus locale={locale} phase={extensionPatternPhase} />
+                            </div>
+                        )}
                         {processing && (
                             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
                                 <span className="max-w-[280px] animate-pulse rounded-lg border border-[#d9ded5] bg-brand-yellow p-4 text-center font-sans text-xl leading-none text-black shadow-brutal">

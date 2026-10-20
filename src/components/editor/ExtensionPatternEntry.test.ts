@@ -107,7 +107,7 @@ beforeEach(() => {
     vi.stubGlobal('window', fakeWindow);
     props = { locale: 'en', hasCurrentPattern: false, canSaveCurrentPattern: false, busy: false,
         onOpen: vi.fn<(draft: EditorDraft, signal: AbortSignal) => Promise<void>>().mockResolvedValue(undefined),
-        onSave: vi.fn(), onLoadingChange: vi.fn() };
+        onSave: vi.fn(), onLoadingChange: vi.fn(), onPendingChange: vi.fn() };
 });
 afterEach(() => {
     for (const slot of hooks.slots) if (slot && typeof slot === 'object' && 'cleanup' in slot) (slot as EffectSlot).cleanup?.();
@@ -118,18 +118,23 @@ describe('extension project entry', () => {
     it('opens once in a ready empty editor and accepts only after installation finishes', async () => {
         let finish!: () => void;
         props.onOpen = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
-        render(); await flush(); const draft = incoming(); await receive(draft);
+        render(); await flush();
+        expect(props.onPendingChange).toHaveBeenLastCalledWith('receiving');
+        const draft = incoming(); await receive(draft);
+        expect(props.onPendingChange).toHaveBeenLastCalledWith('preparing');
         expect(props.onOpen).toHaveBeenCalledOnce(); expect(fakeWindow.confirm).not.toHaveBeenCalled();
         expect(vi.mocked(props.onOpen).mock.calls[0][0].editedPattern).toEqual(draft.editedPattern);
         expect(fakeWindow.postMessage.mock.calls.some(([data]) => data.type === 'extension-accepted')).toBe(false);
         finish(); await flush();
         expect(fakeWindow.postMessage.mock.calls.filter(([data]) => data.type === 'extension-accepted')).toHaveLength(1);
         expect(fakeWindow.location.href).toBe('https://fusebeadpatterns.art/editor');
+        expect(props.onPendingChange).toHaveBeenLastCalledWith(null);
     });
     it('preserves existing work and its save option until explicit confirmation', async () => {
         props.hasCurrentPattern = true; props.canSaveCurrentPattern = true;
         render(); await flush(); await receive();
         expect(props.onOpen).not.toHaveBeenCalled();
+        expect(props.onPendingChange).toHaveBeenLastCalledWith(null);
         button('Save current bead project').onClick(); expect(props.onSave).toHaveBeenCalledOnce();
         fakeWindow.confirm.mockReturnValue(false); button('Open this pattern').onClick(); await flush();
         expect(props.onOpen).not.toHaveBeenCalled();
@@ -156,5 +161,30 @@ describe('extension project entry', () => {
         expect(props.onOpen).toHaveBeenCalledOnce();
         expect(fakeWindow.postMessage.mock.calls.some(([data]) => data.type === 'extension-accepted')).toBe(false);
         button('Open this pattern').onClick(); await flush(); expect(props.onOpen).toHaveBeenCalledTimes(2);
+    });
+    it('clears the waiting indicator on transfer failure and restores it on retry', async () => {
+        render(); await flush();
+        expect(props.onPendingChange).toHaveBeenLastCalledWith('receiving');
+        for (const listener of listeners) listener({ source: fakeWindow, origin: fakeWindow.location.origin,
+            data: { source: EXTENSION_MESSAGE_SOURCE, type: 'extension-error', token } } as unknown as MessageEvent);
+        await flush();
+        expect(props.onPendingChange).toHaveBeenLastCalledWith(null);
+        button('Try again').onClick(); await flush();
+        expect(props.onPendingChange).toHaveBeenLastCalledWith('receiving');
+    });
+    it('stops waiting after the reply timeout instead of leaving a permanent spinner', async () => {
+        render(); await flush();
+        const tick = fakeWindow.setInterval.mock.calls[0][0] as () => void;
+        for (let attempt = 0; attempt < 15; attempt++) tick();
+        await flush();
+        expect(props.onPendingChange).toHaveBeenLastCalledWith(null);
+        expect(props.onOpen).not.toHaveBeenCalled();
+    });
+    it('does not show a transfer spinner for an invalid or absent token', async () => {
+        for (const search of ['', '?extension-project=invalid']) {
+            fakeWindow.location.href = `https://fusebeadpatterns.art/editor${search}`;
+            render(); await flush();
+            expect(props.onPendingChange).toHaveBeenLastCalledWith(null);
+        }
     });
 });

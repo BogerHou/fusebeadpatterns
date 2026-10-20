@@ -15,9 +15,25 @@ const MAX_HANDOFF_RECORDS = 3;
 const MAX_SESSION_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 type SourceRecord = ExtensionSource & { studioTabId?: number };
-type HandoffRecord = HandoffBinding & { project: string; deliveredDocumentId?: string; delivered?: boolean };
+type HandoffRecord = HandoffBinding & { project: string; launchUrl?: string; launched?: boolean; deliveredDocumentId?: string; delivered?: boolean };
 type RuntimeResult = { ok: true; [key: string]: unknown } | { ok: false; error: string };
 let sessionQueue: Promise<void> = Promise.resolve();
+
+function requestLaunchPermission(originPattern?: string): Promise<boolean> {
+    const allWebsites = ['http://*/*', 'https://*/*'];
+    // Chrome carries the click interaction into native API callbacks. Do not
+    // put an await, storage read or session queue before request() in this
+    // callback; an existing single-host grant must not trigger an upgrade.
+    return new Promise(resolve => {
+        try {
+            chrome.permissions.contains({ origins: originPattern ? [originPattern] : allWebsites }, granted => {
+                if (granted) { resolve(true); return; }
+                try { void chrome.permissions.request({ origins: allWebsites }).then(resolve, () => resolve(false)); }
+                catch { resolve(false); }
+            });
+        } catch { resolve(false); }
+    });
+}
 
 function withSessionLock<T>(operation: () => Promise<T>): Promise<T> {
     const pending = sessionQueue.then(operation, operation);
@@ -52,10 +68,13 @@ async function cleanSession(): Promise<void> {
 async function openStudio(info?: { srcUrl?: string }, tab?: BeadCaptureTab): Promise<void> {
     await cleanSession();
     const token = crypto.randomUUID();
-    // Unsupported image addresses remain visible only to the local studio so it
-    // can explain the fallback. Large data URLs are never retained in storage.
+    // A toolbar launch has no image. A context-menu launch always keeps a source
+    // token, even when its address cannot be retained, so the studio can explain
+    // why the selected image was not loaded instead of showing an empty session.
+    if (!info) { await chrome.tabs.create({ url: chrome.runtime.getURL('studio.html'), active: true }); return; }
+    // Unsupported short addresses remain visible only to the local studio.
+    // Large data URLs are never retained in session storage.
     const url = info?.srcUrl && info.srcUrl.length <= 8192 ? info.srcUrl : '';
-    if (!url) { await chrome.tabs.create({ url: chrome.runtime.getURL('studio.html'), active: true }); return; }
     const record: SourceRecord = { url, capturedAt: Date.now(), tabId: tab?.id, windowId: tab?.windowId };
     await chrome.storage.session.set({ [SOURCE_PREFIX + token]: record });
     try {
@@ -143,14 +162,14 @@ async function createHandoff(project: unknown, locale: unknown): Promise<Runtime
         return { ok: false, error: 'handoff_storage_full' };
     }
     if (remove.length) await chrome.storage.session.remove(remove);
-    // Reserve an empty tab first so the record is bound before the website can
-    // load its bridge. No image or private address is ever put in the URL.
-    const tab = await chrome.tabs.create({ url: 'about:blank', active: true });
+    // Paint a small local loading page before any website navigation. Its ready
+    // message waits behind this lock, so the project is bound before launch.
+    const launchUrl = `${chrome.runtime.getURL('handoff.html')}?token=${token}&lang=${locale ?? 'en'}`;
+    const tab = await chrome.tabs.create({ url: launchUrl, active: true });
     if (tab.id === undefined) return { ok: false, error: 'handoff_failed' };
-    const record: HandoffRecord = { ...pending, tabId: tab.id };
+    const record: HandoffRecord = { ...pending, tabId: tab.id, launchUrl };
     try {
         await chrome.storage.session.set({ [key]: record });
-        await chrome.tabs.update(tab.id, { url: targetUrl });
         return { ok: true, token, tabId: tab.id };
     } catch {
         await chrome.storage.session.remove(key);
@@ -161,6 +180,24 @@ async function createHandoff(project: unknown, locale: unknown): Promise<Runtime
 
 export async function handleCaptureMessage(message: unknown, sender: BeadCaptureSender): Promise<RuntimeResult> {
     if (!isRecord(message) || typeof message.type !== 'string') return { ok: false, error: 'invalid_message' };
+    if (message.type === 'launch-handoff') {
+        if (!isExtensionToken(message.token)) return { ok: false, error: 'invalid_message' };
+        const token = message.token;
+        return withSessionLock(async () => {
+            const key = HANDOFF_PREFIX + token;
+            const record = (await chrome.storage.session.get(key))[key] as HandoffRecord | undefined;
+            if (!record || !isFreshTimestamp(record.createdAt)) return { ok: false, error: 'handoff_expired' };
+            if (record.delivered || record.token !== token || !record.launchUrl ||
+                sender.id !== chrome.runtime.id || sender.frameId !== 0 || sender.url !== record.launchUrl ||
+                sender.tab?.id !== record.tabId) return { ok: false, error: 'unauthorized' };
+            if (record.launched) return { ok: true };
+            try {
+                await chrome.tabs.update(record.tabId, { url: record.targetUrl });
+                await chrome.storage.session.set({ [key]: { ...record, launched: true } });
+                return { ok: true };
+            } catch { return { ok: false, error: 'handoff_failed' }; }
+        });
+    }
     // Authorize before touching storage or starting network work.
     const studio = isStudioSender(sender, chrome.runtime.id);
     if (['read-source', 'fetch-source', 'create-handoff'].includes(message.type)) {
@@ -211,9 +248,17 @@ chrome.runtime.onInstalled.addListener(() => {
     }).catch((): void => undefined);
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === MENU_ID && info.mediaType === 'image') void withSessionLock(() => openStudio(info, tab)).catch((): void => undefined);
+    if (info.menuItemId !== MENU_ID || info.mediaType !== 'image') return;
+    // Unsupported sources need an explanation, not additional site access.
+    const originPattern = getImageOriginPattern(info.srcUrl);
+    const permission = originPattern ? requestLaunchPermission(originPattern) : Promise.resolve(false);
+    void permission.then(() => withSessionLock(() => openStudio(info, tab))).catch((): void => undefined);
 });
-chrome.action.onClicked.addListener(() => { void withSessionLock(() => openStudio()).catch((): void => undefined); });
+chrome.action.onClicked.addListener(() => {
+    const permission = requestLaunchPermission();
+    // Declining still leaves local-file conversion available in the workspace.
+    void permission.then(() => withSessionLock(() => openStudio())).catch((): void => undefined);
+});
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     void handleCaptureMessage(message, sender).then(sendResponse, () => sendResponse({ ok: false, error: 'operation_failed' }));
     return true;

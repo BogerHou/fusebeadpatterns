@@ -160,7 +160,7 @@ node scripts/check-public-pages.mjs compare --snapshot /tmp/fusebead-public-page
 
 ## 当前边界
 
-Chrome 插件 Bead Capture 的本地测试包可通过 `npm run extension:build` 构建。它复用网站首页的实际界面、四语制图控件和导出功能，在扩展本地处理图片；点击编辑后，网站空白编辑器自动接续当前图纸，已有作品仍须确认替换。安装、权限与首版限制见 `extensions/bead-capture/README.md`。插件构建独立于 Next.js，不发布到网站静态资源，也不增加 Vercel 图片转换。
+Chrome 插件 Bead Capture 的本地测试包可通过 `npm run extension:build` 构建。它只复用网站的图片转拼豆工作区、四语制图控件和导出功能，在扩展本地处理所选图片；点击编辑后，网站空白编辑器自动接续当前图纸，已有作品仍须确认替换。安装、权限与首版限制见 `extensions/bead-capture/README.md`。插件构建独立于 Next.js，不发布到网站静态资源，也不增加 Vercel 图片转换。
 
 - 自动草稿使用当前标签页的 `sessionStorage`，图纸像素数据上限为 1.5 MB；超限或浏览器存储不可用时会提示保存项目文件。正式 `.bead-pattern.json` 文件完整保留支持范围内的图纸，不受自动草稿的 1.5 MB 限制。
 - 撤销历史按修改格子的差量保存，最多保留 200 步、合计 32 MiB；超过限制会移除最早的记录。颜色用量与自动草稿在每笔结束后更新。

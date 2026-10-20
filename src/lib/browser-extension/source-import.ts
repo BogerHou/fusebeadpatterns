@@ -38,6 +38,7 @@ type SourceImportOptions = {
     openImage(dataUrl: string): Promise<boolean>;
     makePattern(): Promise<void>;
     isCurrent(): boolean;
+    onPermissionGranted?(): void;
     onLoading?(): void;
 };
 
@@ -50,6 +51,7 @@ export async function importCapturedSource(options: SourceImportOptions): Promis
         if (!options.isCurrent()) return 'cancelled';
         if (!granted) throw new SourceImportError('permission_denied');
     }
+    options.onPermissionGranted?.();
     options.onLoading?.();
     const response = await options.readSource();
     if (!options.isCurrent()) return 'cancelled';

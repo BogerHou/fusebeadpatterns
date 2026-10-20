@@ -5,10 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bead Capture — Fuse Bead Patterns</title>
   <link rel="icon" href="icons/icon-48.png">
-  <link rel="stylesheet" href="studio.css">
+  <link rel="stylesheet" href="loading.css">
+  <link rel="preload" as="style" href="studio.css">
   <script type="module" src="studio.js"></script>
 </head>
 <body class="min-h-full flex flex-col font-sans">
-  <div id="capture-root"></div>
+  <div id="capture-root">
+    <main class="capture-loading" aria-label="Image to bead pattern">
+      <h1 class="capture-loading-heading">Image to bead pattern</h1>
+      <div class="capture-loading-workspace">
+        <div class="capture-loading-sidebar" aria-hidden="true">
+          <div class="capture-loading-line"></div><div class="capture-loading-line"></div>
+          <div class="capture-loading-line"></div><div class="capture-loading-line"></div>
+          <div class="capture-loading-line"></div><div class="capture-loading-line"></div>
+        </div>
+        <section class="capture-loading-stage">
+          <div>
+            <p class="capture-loading-status" role="status" aria-live="polite" aria-atomic="true">
+              <span class="capture-loading-spinner" aria-hidden="true"></span>
+              <span id="capture-startup-status">Opening the converter…</span>
+            </p>
+            <p id="capture-startup-description" class="capture-loading-description">Your image and pattern will appear here when ready.</p>
+            <noscript><p class="capture-loading-description">JavaScript is required to convert an image.</p></noscript>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

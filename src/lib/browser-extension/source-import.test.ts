@@ -15,6 +15,7 @@ function setup() {
         openImage: vi.fn().mockResolvedValue(true),
         makePattern: vi.fn().mockResolvedValue(undefined),
         isCurrent: vi.fn().mockReturnValue(true),
+        onPermissionGranted: vi.fn(),
         onLoading: vi.fn(),
     };
 }
@@ -42,6 +43,7 @@ describe('captured image import', () => {
         const steps = setup(); steps.requestPermission.mockResolvedValue(false);
         await expect(importCapturedSource(steps)).rejects.toMatchObject({ code: 'permission_denied' });
         expect(steps.readSource).not.toHaveBeenCalled();
+        expect(steps.onPermissionGranted).not.toHaveBeenCalled();
         expect(steps.makePattern).not.toHaveBeenCalled();
     });
 
@@ -83,6 +85,20 @@ describe('captured image import', () => {
         await expect(importCapturedSource(steps)).rejects.toMatchObject({ code: 'fetch_timeout' });
         expect(steps.openImage).not.toHaveBeenCalled();
         expect(steps.makePattern).not.toHaveBeenCalled();
+    });
+
+    it('remembers successful permission before a failed download so retry does not ask again', async () => {
+        const steps = setup();
+        steps.onPermissionGranted.mockImplementation(() => { steps.permissionGranted = true; });
+        steps.readSource.mockResolvedValueOnce({ ok: false, error: 'fetch_timeout' });
+        await expect(importCapturedSource(steps)).rejects.toMatchObject({ code: 'fetch_timeout' });
+        expect(steps.permissionGranted).toBe(true);
+        expect(steps.onPermissionGranted).toHaveBeenCalledOnce();
+        expect(steps.openImage).not.toHaveBeenCalled();
+        expect(await importCapturedSource(steps)).toBe('finished');
+        expect(steps.requestPermission).toHaveBeenCalledOnce();
+        expect(steps.readSource).toHaveBeenCalledTimes(2);
+        expect(steps.makePattern).toHaveBeenCalledOnce();
     });
 
     it('does not auto-convert an image rejected by the decoder', async () => {

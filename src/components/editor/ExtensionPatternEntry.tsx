@@ -57,6 +57,7 @@ type Props = {
     onOpen: (draft: EditorDraft, signal: AbortSignal) => Promise<void>;
     onSave: () => void;
     onLoadingChange: (loading: boolean) => void;
+    onPendingChange?: (phase: 'receiving' | 'preparing' | null) => void;
 };
 
 /** The parent mounts this only after draft restoration. A fresh editor can open
@@ -75,6 +76,14 @@ export function ExtensionPatternEntry(props: Props) {
     const taskRef = useRef<AbortController | null>(null);
     const autoAttemptRef = useRef<EditorDraft | null>(null);
     const incomingQueryRef = useRef<string | null>(null);
+
+    const pendingPhase = isExtensionToken(query) && !error
+        ? loading ? 'preparing' : !incoming ? 'receiving' : null
+        : null;
+    useEffect(() => {
+        latest.current.onPendingChange?.(pendingPhase);
+        return () => latest.current.onPendingChange?.(null);
+    }, [pendingPhase]);
 
     useEffect(() => {
         taskRef.current?.abort();
@@ -176,8 +185,8 @@ export function ExtensionPatternEntry(props: Props) {
         <p className="font-semibold">{copy.title}</p>
         {incoming?.editedPattern ? <p>{incoming.editedPattern.width} × {incoming.editedPattern.height} · {incoming.selectedPaletteIds.map(id => getPaletteDisplayLabel(getPaletteOption(id))).join(', ')}</p> : null}
         {props.hasCurrentPattern ? <p>{copy.warning}</p> : null}
-        {error ? <p role="alert">{copy.error}</p> : !incoming ? <p role="status">{copy.waiting}</p> : null}
-        {loading ? <p role="status">{common.preparing}</p> : null}
+        {error ? <p role="alert">{copy.error}</p> : !incoming ? <p role="status" className="flex items-center gap-2"><span className="editor-loading-spinner !h-4 !w-4 !border-2" aria-hidden="true" />{copy.waiting}</p> : null}
+        {loading ? <p role="status" className="flex items-center gap-2"><span className="editor-loading-spinner !h-4 !w-4 !border-2" aria-hidden="true" />{common.preparing}</p> : null}
         <div className="flex flex-wrap gap-2">
             {incoming ? <Button type="button" size="sm" disabled={props.busy || loading} onClick={() => void open()}>{copy.open}</Button> : null}
             {error && !incoming ? <Button type="button" size="sm" disabled={props.busy || loading} onClick={() => setAttempt(n => n + 1)}>{common.retry}</Button> : null}
