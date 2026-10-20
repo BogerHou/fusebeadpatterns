@@ -8,6 +8,7 @@ import { buildLetterProject, defaultLetterState, parseLetterProject, serializeLe
 import { acknowledgeLetterLocaleSnapshot, discardLetterLocaleSnapshot, isLetterLocaleNavigation, readLetterLocaleSnapshot, saveLetterLocaleSnapshot } from '@/lib/bead-letters/locale-navigation';
 import type { LetterColor, LetterPalette, LetterState } from '@/lib/bead-letters/types';
 import { downloadBlob } from '@/lib/core/printer/download';
+import { createToolGenerationTracker, trackToolEvent } from '@/lib/analytics';
 import { LOCALE_NAVIGATION_EVENT, localeRoutes, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import styles from './LetterWorkspace.module.css';
@@ -28,6 +29,7 @@ export default function LetterWorkspace({ locale, palettes }: { locale: SiteLoca
     const inputFile = useRef<HTMLInputElement>(null);
     const leaving = useRef(false);
     const operation = useRef<AbortController | null>(null);
+    const generation = useRef(createToolGenerationTracker('bead_letters'));
     const live = useRef({ state, saved, busy, ready });
     useEffect(() => { live.current = { state, saved, busy, ready }; }, [state, saved, busy, ready]);
     useEffect(() => () => { operation.current?.abort(); }, []);
@@ -150,6 +152,10 @@ export default function LetterWorkspace({ locale, palettes }: { locale: SiteLoca
         leaving.current = false;
         live.current = { ...live.current, state: next, saved: false };
         setState(next); setSaved(false); setNotice('');
+        if (!generation.current.recorded && Object.keys(patch).some(key => key !== 'paper')) {
+            try { buildLetterProject(next, palettes); generation.current.record(); }
+            catch { /* An invalid preview is not a successful generation. */ }
+        }
     }
     function changeBrand(paletteId: string) {
         if (!live.current.ready || live.current.busy) return;
@@ -176,6 +182,7 @@ export default function LetterWorkspace({ locale, palettes }: { locale: SiteLoca
                 if (kind === 'png') await exporter.exportLetterPng(currentResult, task.signal);
                 else await exporter.exportLetterPdf(currentResult, current, locale, task.signal);
             }
+            trackToolEvent({ name: 'tool_export', tool: 'bead_letters', format: kind });
         } catch { if (!task.signal.aborted) setNotice(copy.exportFailed); }
         finally { if (!task.signal.aborted) { live.current.busy = false; setBusy(false); operation.current = null; } }
     }
@@ -193,6 +200,7 @@ export default function LetterWorkspace({ locale, palettes }: { locale: SiteLoca
             live.current = { state: restored, saved: true, busy: true, ready: true };
             leaving.current = false;
             setState(restored); setSaved(true); setNotice(copy.loaded);
+            generation.current.reset();
         } catch { if (!task.signal.aborted) setNotice(copy.invalidProject); }
         finally { if (!task.signal.aborted) { live.current.busy = false; setBusy(false); operation.current = null; } }
     }

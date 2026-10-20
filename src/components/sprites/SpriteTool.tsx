@@ -1,5 +1,7 @@
 'use client';
 
+import { createToolGenerationTracker, trackToolEvent } from '../../lib/analytics';
+
 import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import { addFrame, animationsEqual, cloneAnimation, createAnimation, moveFrame, parseAnimation, removeFrame, replaceFrame, resizeAnimation, serializeAnimation, setActiveFrame, setAnimationFps, SpriteHistory, type SpriteAnimation } from '../../lib/sprites/core';
 import { floodFill, readPixel, setPixel, type PixelGrid } from '../../lib/pixel-grid/core';
@@ -110,6 +112,7 @@ export default function SpriteTool({ locale = 'en' }: { locale?: SiteLocale }) {
     const transferBlocked = useRef(false);
     const invalidate = useCallback(() => { epoch.current++; }, []);
     const stroke = useRef<{ before: SpriteAnimation; last: Point; pointerId: number } | null>(null);
+    const generation = useRef(createToolGenerationTracker('sprite'));
     const locked = !ready || busy;
 
     const install = useCallback((next: SpriteAnimation, isSaved: boolean) => {
@@ -144,7 +147,7 @@ export default function SpriteTool({ locale = 'en' }: { locale?: SiteLocale }) {
 
     function finishStroke() {
         const current = stroke.current; stroke.current = null;
-        if (current && history.current!.push(current.before, live.current.animation)) refreshHistory(value => value + 1);
+        if (current && history.current!.push(current.before, live.current.animation)) { refreshHistory(value => value + 1); generation.current.record(); }
     }
 
     useEffect(() => {
@@ -224,7 +227,7 @@ export default function SpriteTool({ locale = 'en' }: { locale?: SiteLocale }) {
         gridRef.current?.querySelector<HTMLButtonElement>(`[data-cell="${at[1] * animation.width + at[0]}"]`)?.focus({ preventScroll: true });
         if (tool === 'picker') { pick(at); return; }
         const before = cloneAnimation(live.current.animation);
-        if (tool === 'fill') { paint([at], true); if (history.current!.push(before, live.current.animation)) refreshHistory(value => value + 1); return; }
+        if (tool === 'fill') { paint([at], true); if (history.current!.push(before, live.current.animation)) { refreshHistory(value => value + 1); generation.current.record(); } return; }
         event.currentTarget.setPointerCapture(event.pointerId);
         stroke.current = { before, last: at, pointerId: event.pointerId }; paint([at]);
     }
@@ -251,7 +254,7 @@ export default function SpriteTool({ locale = 'en' }: { locale?: SiteLocale }) {
         } else if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault(); if (event.repeat) return;
             if (tool === 'picker') pick(cursor);
-            else { const before = cloneAnimation(live.current.animation); paint([cursor], tool === 'fill'); if (history.current!.push(before, live.current.animation)) refreshHistory(value => value + 1); }
+            else { const before = cloneAnimation(live.current.animation); paint([cursor], tool === 'fill'); if (history.current!.push(before, live.current.animation)) { refreshHistory(value => value + 1); generation.current.record(); } }
         }
     }
 
@@ -282,6 +285,7 @@ export default function SpriteTool({ locale = 'en' }: { locale?: SiteLocale }) {
             }
             if (!current(token)) return;
             downloadBlob(data, name);
+            trackToolEvent({ name: 'tool_export', tool: 'sprite', format: kind === 'frame' ? 'png' : kind === 'sheet' ? 'sprite_sheet_png' : kind === 'coordinates' ? 'coordinates_json' : kind });
             if (kind === 'project') { live.current.saved = true; setSaved(true); setNotice(copy.saveNotice); }
             else setNotice(copy.exported);
         } catch { if (current(token)) setNotice(copy.exportFailed); }
@@ -298,6 +302,7 @@ export default function SpriteTool({ locale = 'en' }: { locale?: SiteLocale }) {
             if (!live.current.saved && !window.confirm(copy.replace)) return;
             if (!current(token)) return;
             install(restored, true); history.current!.clear(); refreshHistory(value => value + 1); setNotice(copy.loaded);
+            generation.current.reset();
         } catch { if (current(token)) setNotice(copy.invalid); }
         finally { finish(token); }
     }

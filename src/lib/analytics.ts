@@ -12,6 +12,20 @@ const DOWNLOAD_FORMATS = new Set(['pdf', 'grid_png', 'project', 'png']);
 const EXPORT_FORMATS = new Set(['pdf', 'grid_png', 'svg', 'png', 'jpg', 'xlsx']);
 const PIXEL_GRID_EXPORT_FORMATS = new Set(['png', 'grid_png', 'project', 'pdf']);
 const BEAD_LOOM_EXPORT_FORMATS = new Set(['pdf', 'png', 'project']);
+const TOOL_EXPORT_FORMATS = {
+    bead_letters: ['png', 'pdf', 'project'],
+    block_shapes: ['png', 'pdf', 'project', 'layer_project'],
+    qr_beads: ['png', 'grid_png', 'pdf', 'project'],
+    sprite: ['png', 'sprite_sheet_png', 'gif', 'coordinates_json', 'project'],
+    minecraft_banners: ['png', 'json', 'txt', 'project'],
+    brick_mosaic: ['png', 'csv', 'pdf', 'project'],
+} as const;
+export type MeasuredTool = keyof typeof TOOL_EXPORT_FORMATS;
+type ToolEventInput = { name: string; tool: string; format?: string };
+type ToolEvent = {
+    name: 'tool_generate' | 'tool_export';
+    parameters: { entry_point: MeasuredTool; file_format?: string };
+};
 
 export type PatternEventInput = {
     name: string;
@@ -68,8 +82,50 @@ export function buildPatternEvent(input: PatternEventInput): PatternEvent | null
 }
 
 type AnalyticsWindow = Pick<Window, 'location'> & {
-    gtag?: (command: 'event', name: string, parameters: PatternEvent['parameters'] | PixelGridExportEvent['parameters'] | BeadLoomExportEvent['parameters']) => void;
+    gtag?: (command: 'event', name: string, parameters: PatternEvent['parameters'] | PixelGridExportEvent['parameters'] | BeadLoomExportEvent['parameters'] | ToolEvent['parameters']) => void;
 };
+
+export function buildToolEvent(input: ToolEventInput): ToolEvent | null {
+    if (!Object.hasOwn(TOOL_EXPORT_FORMATS, input.tool)) return null;
+    const tool = input.tool as MeasuredTool;
+    if (input.name === 'tool_generate') {
+        if (input.format !== undefined) return null;
+        return { name: 'tool_generate', parameters: { entry_point: tool } };
+    }
+    if (input.name !== 'tool_export' || !(TOOL_EXPORT_FORMATS[tool] as readonly string[]).includes(input.format ?? '')) return null;
+    return { name: 'tool_export', parameters: { entry_point: tool, file_format: input.format } };
+}
+
+// Only the fixed tool/action/format are read. Export means a download was started,
+// not that the user saved it. Call after downloadBlob()/the exporter resolves.
+export function trackToolEvent(input: ToolEventInput): boolean {
+    try {
+        if (!canMeasureAnalytics()) return false;
+        const analyticsWindow = window as AnalyticsWindow;
+        if (typeof analyticsWindow.gtag !== 'function') return false;
+        const event = buildToolEvent(input);
+        if (!event) return false;
+        analyticsWindow.gtag('event', event.name, event.parameters);
+        return true;
+    } catch { return false; }
+}
+
+// One successful user-created preview/edit per workspace project, rather than
+// one event per keystroke, pixel, effect, restore, or settings slider. Mark it
+// attempted even without consent: a later consent choice must not replay work.
+// Reset only after an explicit project replacement; reset itself sends nothing.
+export function createToolGenerationTracker(tool: MeasuredTool) {
+    let recorded = false;
+    return {
+        get recorded() { return recorded; },
+        reset() { recorded = false; },
+        record() {
+            if (recorded) return false;
+            recorded = true;
+            return trackToolEvent({ name: 'tool_generate', tool });
+        },
+    };
+}
 
 export function trackPatternEvent(input: PatternEventInput): boolean {
     // Measurement is best effort. A blocked/missing/late GA script must never

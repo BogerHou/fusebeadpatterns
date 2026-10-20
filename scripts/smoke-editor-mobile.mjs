@@ -69,12 +69,58 @@ async function findChrome() {
 }
 
 class CdpSocket {
-    constructor(webSocketUrl) {
+    constructor(webSocketUrl, { requestTimeoutMs = 60_000 } = {}) {
         this.url = new URL(webSocketUrl);
         this.nextId = 1;
         this.pending = new Map();
         this.buffer = Buffer.alloc(0);
         this.socket = null;
+        this.requestTimeoutMs = requestTimeoutMs;
+        this.stage = 'startup';
+        this.expectedDialog = null;
+        this.fatalError = null;
+    }
+
+    setStage(stage) {
+        this.stage = stage;
+        console.log(`[mobile smoke] ${stage}`);
+    }
+
+    expectJavaScriptDialog(type, message) {
+        if (this.expectedDialog) throw new Error('An expected dialog is already pending.');
+        const expected = { type, message, observed: false };
+        this.expectedDialog = expected;
+        return () => {
+            if (this.expectedDialog === expected) this.expectedDialog = null;
+            if (!expected.observed) throw new Error(`Expected ${type} was not shown during ${this.stage}.`);
+        };
+    }
+
+    rejectPending(error) {
+        for (const { reject, timeout } of this.pending.values()) {
+            clearTimeout(timeout);
+            reject(error);
+        }
+        this.pending.clear();
+    }
+
+    handleJavaScriptDialog(dialog) {
+        const expected = this.expectedDialog;
+        const matches = expected && expected.type === dialog.type && expected.message === dialog.message;
+        if (matches) {
+            expected.observed = true;
+            this.expectedDialog = null;
+        }
+        // This CDP socket belongs only to the dedicated headless smoke profile.
+        // Unexpected prompts fail the run instead of silently consenting.
+        void this.send('Page.handleJavaScriptDialog', { accept: Boolean(matches) }).catch(error => {
+            this.fatalError ??= error;
+            this.rejectPending(error);
+        });
+        if (!matches) {
+            this.fatalError = new Error(`Unexpected ${dialog.type} during ${this.stage}: ${dialog.message}`);
+            this.rejectPending(this.fatalError);
+        }
     }
 
     connect() {
@@ -100,6 +146,10 @@ class CdpSocket {
                     );
                 }
             );
+            const timeout = setTimeout(() => {
+                reject(new Error('Chrome websocket connection timed out.'));
+                socket.destroy();
+            }, 10_000);
 
             let handshake = Buffer.alloc(0);
             let connected = false;
@@ -115,12 +165,14 @@ class CdpSocket {
 
                     const header = handshake.slice(0, marker).toString('utf8');
                     if (!header.includes(' 101 ')) {
+                        clearTimeout(timeout);
                         reject(new Error(`Chrome websocket handshake failed: ${header}`));
                         socket.destroy();
                         return;
                     }
 
                     connected = true;
+                    clearTimeout(timeout);
                     this.socket = socket;
                     const rest = handshake.slice(marker + 4);
                     if (rest.length > 0) {
@@ -133,12 +185,15 @@ class CdpSocket {
                 this.consume(chunk);
             });
 
-            socket.on('error', reject);
+            socket.on('error', error => {
+                clearTimeout(timeout);
+                reject(error);
+                this.rejectPending(error);
+            });
             socket.on('close', () => {
-                for (const { reject: rejectPending } of this.pending.values()) {
-                    rejectPending(new Error('Chrome websocket closed.'));
-                }
-                this.pending.clear();
+                clearTimeout(timeout);
+                if (!connected) reject(new Error('Chrome websocket closed before connecting.'));
+                this.rejectPending(new Error('Chrome websocket closed.'));
             });
         });
     }
@@ -196,9 +251,14 @@ class CdpSocket {
             }
 
             const message = JSON.parse(payload.toString('utf8'));
+            if (message.method === 'Page.javascriptDialogOpening') {
+                this.handleJavaScriptDialog(message.params);
+                continue;
+            }
             if (message.id && this.pending.has(message.id)) {
-                const { resolve, reject } = this.pending.get(message.id);
+                const { resolve, reject, timeout } = this.pending.get(message.id);
                 this.pending.delete(message.id);
+                clearTimeout(timeout);
 
                 if (message.error) {
                     reject(new Error(message.error.message));
@@ -210,6 +270,8 @@ class CdpSocket {
     }
 
     send(method, params = {}) {
+        if (this.fatalError) return Promise.reject(this.fatalError);
+        if (!this.socket) return Promise.reject(new Error('Chrome websocket is not connected.'));
         const id = this.nextId;
         this.nextId += 1;
         const payload = JSON.stringify({ id, method, params });
@@ -247,9 +309,14 @@ class CdpSocket {
         }
 
         return new Promise((resolve, reject) => {
-            this.pending.set(id, { resolve, reject });
+            const timeout = setTimeout(() => {
+                this.pending.delete(id);
+                reject(new Error(`Chrome request timed out during ${this.stage}: ${method}`));
+            }, this.requestTimeoutMs);
+            this.pending.set(id, { resolve, reject, timeout });
             this.socket.write(frame, (error) => {
                 if (error) {
+                    clearTimeout(timeout);
                     this.pending.delete(id);
                     reject(error);
                 }
@@ -277,6 +344,7 @@ class CdpSocket {
     }
 
     close() {
+        this.rejectPending(new Error('Chrome websocket closed.'));
         this.socket?.destroy();
     }
 }
@@ -284,7 +352,7 @@ class CdpSocket {
 async function waitForChrome(port) {
     for (let attempt = 0; attempt < 80; attempt += 1) {
         try {
-            const response = await fetch(`http://127.0.0.1:${port}/json/version`);
+            const response = await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(1500) });
             if (response.ok) {
                 return response.json();
             }
@@ -1399,14 +1467,18 @@ async function main() {
         await waitForChrome(port);
         const targetResponse = await fetch(
             `http://127.0.0.1:${port}/json/new?about:blank`,
-            { method: 'PUT' }
+            { method: 'PUT', signal: AbortSignal.timeout(5000) }
         );
         const target = await targetResponse.json();
         cdp = new CdpSocket(target.webSocketDebuggerUrl);
         await cdp.connect();
+        cdp.setStage('homepage generator');
 
         await cdp.send('Page.enable');
         await cdp.send('Runtime.enable');
+        const downloadPath = path.join(userDataDir, 'downloads');
+        await fs.mkdir(downloadPath, { recursive: true });
+        await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath });
         await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
             source: `
                 window.__qaErrors = [];
@@ -1744,6 +1816,7 @@ async function main() {
         }
 
         const editorUrl = new URL('/editor', baseUrl).toString();
+        cdp.setStage('editor controls and keyboard focus');
         await cdp.send('Page.navigate', { url: editorUrl });
 
         for (let attempt = 0; attempt < 80; attempt += 1) {
@@ -1837,6 +1910,9 @@ async function main() {
         const colorPanelFocus = await runMobileColorPanelFocusRegression(cdp);
         const exportDialogKeyboard = await runDialogKeyboardRegression(cdp, 'Export', 'button', 'Export');
 
+        cdp.setStage('project save and confirmed replacement');
+        const assertProjectConfirmation = cdp.expectJavaScriptDialog('confirm',
+            'Opening this project replaces your current pattern, original image and settings, and clears Undo/Redo history. Save a project copy first if needed; project files do not save that history. Cancel keeps your current work. Open this project?');
         const projectRoundTrip = await cdp.evaluate(`
             (async () => {
                 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1941,6 +2017,7 @@ async function main() {
                 }
             })()
         `);
+        assertProjectConfirmation();
 
         if (!projectRoundTrip.ok) {
             throw new Error(
@@ -1948,6 +2025,7 @@ async function main() {
             );
         }
 
+        cdp.setStage('palette remapping');
         const paletteChange = await runPaletteChangeRegression(cdp);
 
         const exportButton = await cdp.evaluate(`
@@ -2011,7 +2089,9 @@ async function main() {
             throw new Error(`Browser errors: ${result.errors.join('; ')}`);
         }
 
+        cdp.setStage('pattern and export preservation');
         const patternPreservation = await runPatternPreservationRegression(cdp);
+        cdp.setStage('worker completion and cancellation');
         const workerRegression = await runWorkerRegression(cdp);
 
         console.log(

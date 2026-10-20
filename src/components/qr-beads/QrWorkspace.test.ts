@@ -11,6 +11,7 @@ import * as brandColors from '../../lib/qr-beads/brand-colors';
 import { getLetterPalettes } from '../../lib/bead-letters/data';
 import { qrBeadPaths } from '../../lib/qr-beads/routes';
 import * as siteRoutes from '../../lib/i18n/routes';
+import * as analytics from '../../lib/analytics';
 import type { QrPalette, QrState } from '../../lib/qr-beads/types';
 import type { SiteLocale } from '../../lib/i18n/locales';
 
@@ -47,10 +48,11 @@ function rawTransfer(state: QrState, saved = false, destination = qrBeadPaths.ja
 // Execute the real component and handlers with React scheduling and the DOM
 // boundary modeled. This is not a browser/canvas or BFCache-engine test.
 function harness(raw?: string, locale: SiteLocale = 'ja') {
+    const measurements = { generated: 0, exported: vi.fn() };
     const data = new Map<string, string>();
     if (raw !== undefined) data.set(navigation.QR_LOCALE_KEY, raw);
     data.set('bead-pattern-editor-draft-v1', 'unrelated editor work');
-    const faults = { read: false, remove: false, write: false, access: false };
+    const faults = { read: false, remove: false, write: false, access: false, download: false };
     const io = { reads: 0, writes: 0, removes: 0, filePicker: 0 };
     const storage = {
         getItem(key: string) { io.reads++; if (faults.read) throw new Error('read blocked'); return data.get(key) ?? null; },
@@ -110,6 +112,8 @@ function harness(raw?: string, locale: SiteLocale = 'ja') {
     };
     const jsx = (type: unknown, props: Record<string, unknown>) => ({ type, props });
     const modules: Record<string, unknown> = {
+        '@/lib/analytics': { ...analytics, trackToolEvent: measurements.exported,
+            createToolGenerationTracker: (tool: analytics.MeasuredTool) => { const tracker = analytics.createToolGenerationTracker(tool), record = tracker.record; tracker.record = () => { measurements.generated++; return record(); }; return tracker; } },
         react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx },
         '@/lib/qr-beads/copy': { qrBeadCopy },
         '@/lib/qr-beads/core': core,
@@ -123,7 +127,7 @@ function harness(raw?: string, locale: SiteLocale = 'ja') {
             buildQrProject: (state: QrState, colors: QrPalette[]) => project.buildQrProject({ ...state }, colors),
             serializeQrProject: (state: QrState, colors: QrPalette[]) => project.serializeQrProject({ ...state }, colors),
         },
-        '@/lib/core/printer/download': { downloadBlob: (blob: Blob, filename: string) => { downloads.push({ blob, filename }); } },
+        '@/lib/core/printer/download': { downloadBlob: (blob: Blob, filename: string) => { if (faults.download) throw new Error('Download not started'); downloads.push({ blob, filename }); } },
         '@/lib/i18n/routes': siteRoutes,
         './QrWorkspace.module.css': { __esModule: true, default: new Proxy({}, { get: (_target, key) => String(key) }) },
     };
@@ -152,7 +156,7 @@ function harness(raw?: string, locale: SiteLocale = 'ja') {
     const dispatch = (name: string, event: unknown) => { for (const listener of listeners.get(name) ?? []) listener(event as Event); };
     render();
     return {
-        data, faults, io, downloads, checks, browser, render, button, storage,
+        data, faults, io, downloads, checks, browser, render, button, storage, measurements,
         status: () => text(tree),
         disabled: () => find(node => node.type === 'fieldset').props.disabled,
         input: () => find(node => node.type === 'textarea').props.value,
@@ -182,6 +186,22 @@ function harness(raw?: string, locale: SiteLocale = 'ja') {
 }
 
 describe('QR workspace actual handlers, with modeled React/DOM and decoder boundary', () => {
+    it('measures only the first successful input, and exports only after an actual prepared download', async () => {
+        const h = harness(), copy = qrBeadCopy.ja; h.settle();
+        expect(h.measurements.generated).toBe(0); expect(h.measurements.exported).not.toHaveBeenCalled();
+        h.changeSelect(copy.paper, 'letter'); expect(h.measurements.generated).toBe(0);
+        h.changeText(''); expect(h.measurements.generated).toBe(0);
+        h.click(copy.downloadPdf); await h.flush(); expect(h.measurements.exported).not.toHaveBeenCalled();
+        h.changeText('private QR content'); h.changeText('other private content'); h.render();
+        expect(h.measurements.generated).toBe(1);
+        h.click(copy.saveProject); await h.flush();
+        expect(h.downloads).toHaveLength(1);
+        expect(h.measurements.exported).toHaveBeenCalledExactlyOnceWith({ name: 'tool_export', tool: 'qr_beads', format: 'project' });
+        h.measurements.exported.mockClear();
+        h.faults.download = true;
+        h.click(copy.saveProject); await h.flush();
+        expect(h.downloads).toHaveLength(1); expect(h.measurements.exported).not.toHaveBeenCalled();
+    });
     it.each(['en', 'de', 'fr', 'ja'] as const)('%s has bounded natural metadata and localized recovery', locale => {
         const copy = qrBeadCopy[locale];
         expect(copy.description.length).toBeLessThanOrEqual(160);

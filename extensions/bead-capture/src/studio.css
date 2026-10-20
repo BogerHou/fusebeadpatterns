@@ -1,0 +1,13 @@
+@font-face { font-family: Inter; font-style: normal; font-weight: 100 900; font-display: swap; src: url('../fonts/inter-latin.woff2') format('woff2'); }
+@font-face { font-family: Inter; font-style: normal; font-weight: 100 900; font-display: swap; src: url('../fonts/inter-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: Manrope; font-style: normal; font-weight: 200 800; font-display: swap; src: url('../fonts/manrope-latin.woff2') format('woff2'); }
+@font-face { font-family: Manrope; font-style: normal; font-weight: 200 800; font-display: swap; src: url('../fonts/manrope-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+:root { --font-inter: Inter; --font-display: Manrope; }
+.capture-notice { margin-bottom: 18px; border: 1px solid var(--color-line); border-radius: 8px; padding: 16px 20px; background: #fffefa; font-size: .875rem; line-height: 1.6; }
+.capture-notice p + p { margin-top: 6px; }
+.capture-notice button { margin-top: 12px; margin-right: 12px; }
+.capture-notice[data-error="true"] { border-color: #ba7066; }
+.capture-footer { border-top: 1px solid var(--color-line); padding: 24px 40px; color: var(--color-muted); font-size: .75rem; line-height: 1.7; }
+.capture-footer > div { max-width: 1168px; margin: auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.capture-footer a { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 760px) { .capture-footer { padding: 24px 20px; } }

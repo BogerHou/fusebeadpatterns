@@ -13,6 +13,7 @@ import { acknowledgeBannerTransfer, discardBannerTransfer, isBannerNavigation, r
 import { bannerCopy, type BannerCopy } from '../../lib/minecraft-banners/copy';
 import { bannerLabels, bannerPaths, type BannerMode } from '../../lib/minecraft-banners/routes';
 import { downloadBlob } from '../../lib/core/printer/download';
+import { createToolGenerationTracker, trackToolEvent } from '../../lib/analytics';
 import styles from './BannerWorkspace.module.css';
 
 const format = (value: string, values: Record<string, string | number>) => value.replace(/\{(\w+)\}/g, (match, key: string) => String(values[key] ?? match));
@@ -113,12 +114,22 @@ export default function BannerWorkspace({ locale, mode }: { locale: SiteLocale; 
         return () => { window.removeEventListener(LOCALE_NAVIGATION_EVENT, language); window.removeEventListener('beforeunload', protect); window.removeEventListener('pageshow', resume); window.removeEventListener('pagehide', suspend); document.removeEventListener('click', follow, true); };
     }, [copy.transferFailed, copy.leave, copy.cancelled, invalidate]);
 
-    function commit(next: Workspace) {
+    const generation = useRef(createToolGenerationTracker('minecraft_banners'));
+    function commit(next: Workspace, measure = true) {
         if (!live.current.ready || live.current.busy) return;
         try {
             const checked = validateWorkspace(next);
             if (serializeBannerProject(checked) === serializeBannerProject(live.current.workspace)) return;
+            const previous = live.current.workspace;
+            const changedPattern = mode === 'designer' ? JSON.stringify(checked.design) !== JSON.stringify(previous.design) : JSON.stringify(checked.letters) !== JSON.stringify(previous.letters);
             invalidate(); install(history.current!.commit(checked), false); setNotice('');
+            if (measure && changedPattern && !generation.current.recorded) {
+                try {
+                    if (mode === 'letters') buildLetterBanners(checked.letters);
+                    else renderBanner(checked.design);
+                    generation.current.record();
+                } catch { /* Keep incomplete text visible without counting it. */ }
+            }
         } catch (error) { setNotice(bannerErrorMessage(error, copy)); }
     }
     function changeDesign(design: BannerDesign, activeLayer = design.layers.length) { commit({ ...live.current.workspace, design, activeLayer }); }
@@ -143,6 +154,7 @@ export default function BannerWorkspace({ locale, mode }: { locale: SiteLocale; 
         if (!pending || pending.token !== expectedToken || !current(expectedToken)) return;
         pendingProject.current = null; setReplacementToken(null);
         history.current = new BannerHistory(pending.workspace); install(pending.workspace, true); setNotice(copy.loaded); finish(pending.token);
+        generation.current.reset();
     }
     async function exportFile(kind: ExportKind) {
         const token = begin(); if (token === null) return;
@@ -160,6 +172,7 @@ export default function BannerWorkspace({ locale, mode }: { locale: SiteLocale; 
             }
             if (!current(token)) return;
             downloadBlob(blob, filename);
+            trackToolEvent({ name: 'tool_export', tool: 'minecraft_banners', format: kind === 'text' ? 'txt' : kind });
             if (kind === 'project') { live.current.saved = true; setSaved(true); }
             setNotice(kind === 'project' ? copy.projectSaved : copy.downloadStarted);
         } catch (error) { if (current(token)) setNotice(kind === 'project' ? copy.exportFailed : bannerErrorMessage(error, copy) === copy.errorGeneral ? copy.exportFailed : bannerErrorMessage(error, copy)); }
@@ -175,6 +188,7 @@ export default function BannerWorkspace({ locale, mode }: { locale: SiteLocale; 
             const next = parseBannerProject(raw);
             if (!live.current.saved) { pendingProject.current = { workspace: next, token }; setReplacementToken(token); return; }
             history.current = new BannerHistory(next); install(next, true); setNotice(copy.loaded);
+            generation.current.reset();
         } catch { if (current(token)) setNotice(copy.invalidProject); }
         finally { if (pendingProject.current?.token !== token) finish(token); }
     }
@@ -195,7 +209,7 @@ export default function BannerWorkspace({ locale, mode }: { locale: SiteLocale; 
         <div className={styles.toolbar}>
             <button disabled={disabled || !history.current.canUndo()} onClick={() => historyMove('undo')}>{copy.undo}</button>
             <button disabled={disabled || !history.current.canRedo()} onClick={() => historyMove('redo')}>{copy.redo}</button>
-            <button disabled={disabled} onClick={() => { if (window.confirm(copy.resetConfirm)) commit(defaultBannerWorkspace()); }}>{copy.reset}</button>
+            <button disabled={disabled} onClick={() => { if (window.confirm(copy.resetConfirm)) { commit(defaultBannerWorkspace(), false); generation.current.reset(); } }}>{copy.reset}</button>
             <span>{saved ? copy.saved : copy.unsaved}</span>
         </div>
         <p className={styles.hint}>{copy.historyHint}</p>

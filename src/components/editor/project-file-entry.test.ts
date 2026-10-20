@@ -11,13 +11,14 @@ import { SourceImageTransactions, commitSourceImageCanvas, type PreparedSourceIm
 import { getProjectOpenCopy } from '../../lib/editor/project-open-copy';
 import { prepareEditorProjectFile, type PreparedEditorProjectFile } from '../../lib/editor/project-file-preparation';
 import { computeUsage } from '../../lib/core/utils/utils';
+import { HomeHostImageRequests } from '../../lib/editor/home-host';
 
 // Run the production file callback, helpers and mount cleanup. File.text and
 // React's publication/storage seam, image decode and preview are controlled;
 // parsing, candidate preparation, Canvas commit, palettes, transactions and
 // both undo branches use the real implementations. This is not a browser test.
 const source = ts.createSourceFile('Editor.tsx', readFileSync(new URL('./Editor.tsx', import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-const names = ['cancelProjectFileOperation', 'handleLibraryPatternLoading', 'isProjectFileOpenBusy', 'hasCurrentProjectWork', 'handleProjectFileUpload'];
+const names = ['cancelProjectFileOperation', 'cancelSourceOperation', 'handleUserSourceChange', 'cancelHomeHostImage', 'handleLibraryPatternLoading', 'isProjectFileOpenBusy', 'hasCurrentProjectWork', 'handleProjectFileUpload'];
 const nodes = new Map<string, ts.VariableDeclaration>();
 let mountEffect: ts.CallExpression | null = null;
 function visit(node: ts.Node) {
@@ -29,7 +30,7 @@ visit(source);
 if (nodes.size !== names.length || !mountEffect) throw new Error('Missing production project-file callbacks or mount cleanup');
 const compiled = ts.transpileModule(names.map(name => `const ${nodes.get(name)!.getText(source)};`).join('\n') +
     (mountEffect ? `\n${(mountEffect as ts.CallExpression).getText(source)};` : '') +
-    '\nmodule.exports={open:handleProjectFileUpload,cancel:cancelProjectFileOperation,libraryLoading:handleLibraryPatternLoading,busy:isProjectFileOpenBusy,hasWork:hasCurrentProjectWork};',
+    '\nmodule.exports={open:handleProjectFileUpload,cancel:cancelProjectFileOperation,cancelHost:cancelHomeHostImage,libraryLoading:handleLibraryPatternLoading,busy:isProjectFileOpenBusy,hasWork:hasCurrentProjectWork};',
 { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 
 function deferred<T>() {
@@ -49,7 +50,7 @@ function fileEvent(read: Promise<string> | null) {
     const text = vi.fn(() => read), input = { files: read ? [{ text }] : [], value: 'selected-project.json' };
     return { event: { currentTarget: input }, input, text };
 }
-function harness({ work = true, recovery = false } = {}) {
+function harness({ work = true, recovery = false, host = false } = {}) {
     const activePalettes = palette(), config = { palettes: activePalettes, boardOption: getBoardOption('midi')!, boardWidth: 1, boardHeight: 1,
         matchingId: 'euclidean', ditheringId: 'none', imageAdjustments: { brightness: 100, contrast: 100, saturation: 100, grayscale: 0 },
         rendererSettings: { center: true, fit: true, showGrid: false }, useSymbols: false };
@@ -68,6 +69,9 @@ function harness({ work = true, recovery = false } = {}) {
         settings: { current: null as AbortController | null }, localeSave: { current: false }, pendingLocale: { current: null as object | null },
         exporting: { current: false } };
     const jobs = new SourceImageTransactions(), sourceJobs = new SourceImageTransactions(), order: string[] = [], cleanups: Array<() => void> = [];
+    const hostImages = new HomeHostImageRequests(), hostUserSourceChange = vi.fn();
+    const sourceCandidate = { current: null as AbortController | null };
+    const hostSource = { current: null as AbortController | null };
     let raster = pixels.slice();
     const write = vi.fn((value: { data: Uint8ClampedArray }) => { raster = value.data.slice(); });
     const context = { createImageData: (width: number, height: number) => ({ data: new Uint8ClampedArray(width * height * 4) }), putImageData: write };
@@ -90,6 +94,7 @@ function harness({ work = true, recovery = false } = {}) {
     const persist = vi.fn((next: EditorDraft) => { order.push('persist'); stored.set('editor-draft', serializeEditorProject(next)); return true; });
     const confirm = vi.fn(() => true), error = vi.fn((value: string) => { state.error = value; });
     const loaded = { exports: {} }, env: Record<string, unknown> = { module: loaded, useCallback: (fn: unknown) => fn,
+        React: { useEffectEvent: (fn: unknown) => fn },
         useEffect: (fn: () => (() => void) | undefined) => { const cleanup = fn(); if (cleanup) cleanups.push(cleanup); },
         SourceImageTransactions, AbortController, Uint8ClampedArray, Error, JSON, parseEditorProject, getProjectOpenCopy, getBoardOption,
         prepareEditorProjectFile: prepare, loadPalette, computeUsage, createPatternPreviewDataUrl: preview, commitSourceImageCanvas,
@@ -100,6 +105,9 @@ function harness({ work = true, recovery = false } = {}) {
         currentProjectRef: refs.project, reducedColorRef: refs.pixels, patternHistoryRef: refs.history, paletteHistoryRef: refs.paletteHistory,
         acceptedSourceConfigurationRef: refs.source, imageGenerationRef: refs.generation, settingsUpdateRef: refs.settings,
         sourceTransactionsRef: { current: sourceJobs }, exportInProgressRef: refs.exporting, localeSaveInProgressRef: refs.localeSave,
+        sourceCandidateControllerRef: sourceCandidate, homeHostImagesRef: { current: hostImages }, homeHostSourceRef: hostSource,
+        homeHost: host ? { incomingImage: { id: 'queued-right-click' }, onUserSourceChange: hostUserSourceChange } : undefined,
+        setSourceTransactionKind: vi.fn(), setColorLimitBusy: vi.fn(), setProcessing: (value: boolean) => { env.processing = value; },
         pendingLocaleContextRef: refs.pendingLocale, localeContextInstallingRef: { current: false },
         craftEntryBusyRef: { current: false }, lastProcessedImageSrcRef: { current: work ? 'original-source' : null }, activeStrokeRef: { current: null },
         sourceMode: 'blank', imageSrc: state.source, processing: false, isLibraryPatternLoading: false, localeTransferPending: false, localeContextInstalling: false,
@@ -111,10 +119,11 @@ function harness({ work = true, recovery = false } = {}) {
         setIsEditorDraftReady: vi.fn(), EDITOR_LOCALE_RESTORE_KEY: 'locale-restore',
         window: { confirm, location: { href: 'https://fusebeadpatterns.art/editor' }, sessionStorage: { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => { stored.set(key, value); }, removeItem: (key: string) => { stored.delete(key); } } } };
     new Script(compiled).runInNewContext(env);
-    const exports = loaded.exports as { open: (event: ReturnType<typeof fileEvent>['event']) => Promise<void>; cancel: () => void; libraryLoading: (loading: boolean) => void; busy: () => boolean; hasWork: () => boolean };
+    const exports = loaded.exports as { open: (event: ReturnType<typeof fileEvent>['event']) => Promise<void>; cancel: () => void; cancelHost: () => void; libraryLoading: (loading: boolean) => void; busy: () => boolean; hasWork: () => boolean };
     const before = { pixels: pixels.slice(), history: history.capture(pixels, 29, 29), palettes: clonePalettes(activePalettes), paletteHistory: structuredClone(refs.paletteHistory.current), source: structuredClone(acceptedSource), stored: new Map(stored) };
     return { ...exports, env, refs, state, before, pixels, project, history, jobs, sourceJobs, stored, restore, persist, confirm, finish, error, order,
         prepare, prepareImage, makeCandidate, loadPalette, canvas, canvasRef, write, raster: () => raster, preview, sync, large, sourceKey, skipRebuild,
+        hostImages, hostUserSourceChange, sourceCandidate, hostSource,
         rejectWrite() { write.mockImplementationOnce(() => { raster = new Uint8ClampedArray([99, 1, 2, 3]); throw new Error('Canvas rejected write'); }); },
         unmount() { for (const cleanup of cleanups) cleanup(); } };
 }
@@ -128,6 +137,51 @@ function unchanged(h: ReturnType<typeof harness>) {
 }
 
 describe('actual Editor complete-project file entry', () => {
+    it('an outside host cancel aborts its active conversion and invalidates its callbacks', () => {
+        const h = harness({ host: true }), request = h.hostImages.claim('queued-right-click')!;
+        const old = h.sourceJobs.begin();
+        h.hostSource.current = old;
+        h.sourceCandidate.current = old;
+        h.refs.generation.current = old;
+        h.cancelHost();
+        expect(old.signal.aborted).toBe(true);
+        expect(h.sourceJobs.pending).toBe(false);
+        expect(h.hostImages.isCurrent(request)).toBe(false);
+        expect(h.sourceCandidate.current).toBeNull();
+        unchanged(h);
+    });
+    it('a late host cancel cannot abort a newer manual file conversion', () => {
+        const h = harness({ host: true }), old = h.sourceJobs.begin();
+        h.hostSource.current = old;
+        const manual = h.sourceJobs.begin();
+        h.sourceCandidate.current = manual;
+        h.refs.generation.current = manual;
+        h.cancelHost();
+        expect(manual.signal.aborted).toBe(false);
+        expect(h.sourceJobs.isCurrent(manual)).toBe(true);
+        expect(h.sourceCandidate.current).toBe(manual);
+        expect(h.refs.generation.current).toBe(manual);
+        unchanged(h);
+    });
+    it('a host project selection invalidates a queued right-click image and cancels its owned generation before reading', async () => {
+        const h = harness({ host: true });
+        const oldImage = h.sourceJobs.begin();
+        h.sourceCandidate.current = oldImage;
+        h.refs.generation.current = oldImage;
+        await h.open(fileEvent(Promise.resolve(serializeEditorProject(draft('manual-project')))).event);
+        expect(oldImage.signal.aborted).toBe(true);
+        expect(h.hostImages.claim('queued-right-click')).toBeNull();
+        expect(h.hostUserSourceChange).toHaveBeenCalledOnce();
+        expect(h.state.draft.fileName).toBe('manual-project');
+        expect(h.sourceCandidate.current).toBeNull();
+    });
+    it('cancelling a host picker without choosing a file leaves a queued image alone', async () => {
+        const h = harness({ host: true });
+        await h.open(fileEvent(null).event);
+        expect(h.hostUserSourceChange).not.toHaveBeenCalled();
+        expect(h.hostImages.claim('queued-right-click')).not.toBeNull();
+        unchanged(h);
+    });
     it('only publishes the newest file when an older read finishes last', async () => {
         const h = harness(), a = deferred<string>(), b = deferred<string>(), first = fileEvent(a.promise), second = fileEvent(b.promise);
         const oldRun = h.open(first.event), newRun = h.open(second.event);

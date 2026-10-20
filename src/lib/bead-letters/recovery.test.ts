@@ -11,6 +11,7 @@ import * as brandColors from './brand-colors';
 import { getLetterPalettes } from './data';
 import { beadLetterPaths } from './routes';
 import * as siteRoutes from '../i18n/routes';
+import * as analytics from '../analytics';
 import type { LetterPalette, LetterState } from './types';
 import type { SiteLocale } from '../i18n/locales';
 
@@ -108,6 +109,7 @@ function harness(raw?: string, locale: SiteLocale = 'ja') {
     };
     const jsx = (type: unknown, props: Record<string, unknown>) => ({ type, props });
     const modules: Record<string, unknown> = {
+        '@/lib/analytics': analytics,
         react: hooks, 'react/jsx-runtime': { jsx, jsxs: jsx },
         '@/lib/bead-letters/copy': { beadLetterCopy },
         '@/lib/bead-letters/core': core,

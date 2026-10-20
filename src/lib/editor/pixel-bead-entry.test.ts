@@ -34,6 +34,32 @@ describe('pixel bead receiving document validation', () => {
         expect(prepared.project.paletteConfiguration.palettes[0].entries[0].enabled).toBe(true);
         expect(prepared.project.srcWidth).toBe(58); expect(prepared.project.srcHeight).toBe(29);
     });
+    it('accepts a generated homepage grid using several compatible brands without requantizing its cells', () => {
+        const input = incomingPixelDraft();
+        input.selectedPaletteIds.push('hama');
+        input.activePalettes.push(parsePaletteCsv('H03,Blue,B,0,0,255', getPaletteOption('hama')!));
+        input.ditheringId = 'atkinson';
+        const { draft, prepared } = preparePixelBeadEditorDraft(input);
+        expect(draft.selectedPaletteIds).toEqual(['perler', 'hama']);
+        expect(draft.editedPattern).toEqual(input.editedPattern);
+        expect(prepared.project.paletteConfiguration.palettes).toEqual(input.activePalettes);
+        input.selectedPaletteIds[1] = 'hama_mini';
+        expect(() => preparePixelBeadEditorDraft(input)).toThrow('Invalid pixel bead board');
+        input.selectedPaletteIds[1] = 'perler';
+        expect(() => preparePixelBeadEditorDraft(input)).toThrow('Invalid pixel bead project');
+    });
+    it('accepts an explicitly independent homepage board only when its saved raster still matches that board', () => {
+        const input = incomingPixelDraft(), option = getPaletteOption('artkal_s')!;
+        input.selectedPaletteIds = [option.id];
+        input.activePalettes = [parsePaletteCsv('S01,Black,B,0,0,0\nS02,Red,R,255,0,0', option)];
+        expect(() => preparePixelBeadEditorDraft(input)).toThrow('Invalid pixel bead board');
+        const received = preparePixelBeadEditorDraft(input, { allowIndependentBoardLayout: true });
+        expect(received.draft.editedPattern).toEqual(input.editedPattern);
+        expect(received.draft.boardId).toBe('midi');
+        expect(received.prepared.project.boardConfiguration.board.nbBeadPerRow).toBe(29);
+        input.boardWidth = 3;
+        expect(() => preparePixelBeadEditorDraft(input, { allowIndependentBoardLayout: true })).toThrow('Invalid pixel bead board');
+    });
     it.each(['image', 'layout', 'board', 'palette', 'alpha', 'color', 'disabled', 'data'] as const)('rejects an invalid %s without changing the input', kind => {
         const input = incomingPixelDraft();
         if (kind === 'image') { input.sourceMode = 'image'; input.imageSrc = 'data:image/png;base64,AA=='; }

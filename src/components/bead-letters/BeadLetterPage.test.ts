@@ -18,6 +18,7 @@ import * as siteRoutes from '../../lib/i18n/routes';
 import type { LetterPalette } from '../../lib/bead-letters/types';
 import type { SiteLocale } from '../../lib/i18n/locales';
 import type { Metadata } from 'next';
+import * as analytics from '../../lib/analytics';
 
 type WorkspaceProps = { locale: SiteLocale; palettes: LetterPalette[] };
 const workspaceCalls: WorkspaceProps[] = [];
@@ -26,6 +27,7 @@ const require = createRequire(import.meta.url);
 // Render real server pages, route exports and Breadcrumbs. Site chrome and the
 // workspace stand-ins below inspect their props; they do not exercise browser UI.
 const modules: Record<string, unknown> = {
+    '@/lib/analytics': analytics,
     '@/lib/bead-letters/copy': copyModule,
     '@/lib/bead-letters/data': dataModule,
     '@/lib/bead-letters/routes': letterRoutes,

@@ -7,6 +7,8 @@ import { localeRoutes } from '@/lib/i18n/routes';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import SiteFooter from './SiteFooter';
 import SiteHeader from './SiteHeader';
+import HomeHero from './HomeHero';
+import HomeGeneratorSection from './HomeGeneratorSection';
 import FeaturedPatterns from '../patterns/FeaturedPatterns';
 import PatternStudy from '../patterns/PatternStudy';
 import '@/app/home.css';
@@ -19,8 +21,6 @@ export type HomePageProps = {
 };
 
 const englishCopy = {
-    eyebrow: 'A little color. Something you made.', start: 'Make a pattern', browse: 'Browse free printable patterns',
-    workspace: 'Your workspace', flow: 'Upload → Adjust → Make',
     stepsHeading: 'How The Generator Works', stepsEyebrow: 'One bead at a time',
     ideasEyebrow: 'Made for your imagination', ideasHeading: 'Perler Bead Project Ideas',
     guidesEyebrow: 'A few helpful notes', guidesHeading: 'Learn Before You Make',
@@ -72,26 +72,13 @@ export default function HomePage({ locale, structuredData, faqs: englishFaqs = [
             }).replace(/</g, '\\u003c') }} />}
             <SiteHeader active="generator" locale={locale} />
             <main id="main-content" tabIndex={-1} className="home-main">
-                <section className="home-hero" aria-labelledby="home-title">
-                    <div className="hero-copy">
-                        <p className="eyebrow">{copy.eyebrow}</p>
-                        <h1 id="home-title">{native ? native.heading : <>Free Perler Bead <span>Pattern Generator</span></>}</h1>
-                        <p className="hero-description">{native ? native.intro : <>Upload a photo, preview the bead layout, adjust the size, then export a printable <strong>perler bead pattern</strong> or open the editor for cleanup. Everything runs in your browser.</>}</p>
-                        <div className="hero-actions">
-                            <a href="#generator" className="button-primary">{copy.start} <span aria-hidden="true">↓</span></a>
-                            <Link href={routes.patterns} className="text-link">{copy.browse} <span aria-hidden="true">↗</span></Link>
-                        </div>
-                        <p className="hero-note">{native ? native.free : <>Free to use <span aria-hidden="true">·</span> No account needed</>}</p>
-                    </div>
-                    <PatternStudy locale={locale} />
-                </section>
+                <HomeHero locale={locale} illustration={<PatternStudy locale={locale} />} />
 
                 <FeaturedPatterns locale={locale} />
 
-                <section id="generator" aria-label={native?.workspace ?? 'Pattern generator'} className="home-generator">
-                    <div className="generator-label"><span className="eyebrow">{copy.workspace}</span><span>{copy.flow}</span></div>
+                <HomeGeneratorSection locale={locale}>
                     <Editor locale={locale} />
-                </section>
+                </HomeGeneratorSection>
 
                 <section className="home-section" aria-labelledby="how-it-works">
                     <div className="section-intro"><p className="eyebrow">{copy.stepsEyebrow}</p><h2 id="how-it-works" className="section-heading">{copy.stepsHeading}</h2></div>

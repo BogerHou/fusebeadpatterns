@@ -5,16 +5,19 @@ import type { PreparedSourceImage } from './source-image-transaction';
 
 /** Validate and prepare a detached runtime document. No live editor state is
  * touched and no sampling/quantization is repeated on the saved bead cells. */
-export function preparePixelBeadEditorDraft(input: EditorDraft): { draft: EditorDraft; prepared: PreparedSourceImage } {
+export function preparePixelBeadEditorDraft(
+    input: EditorDraft,
+    { allowIndependentBoardLayout = false }: { allowIndependentBoardLayout?: boolean } = {}
+): { draft: EditorDraft; prepared: PreparedSourceImage } {
     const draft = parseEditorProject(serializeEditorProject(input));
     if (!draft || draft.sourceMode !== 'blank' || draft.imageSrc !== null || draft.sourceCrop ||
-        draft.selectedPaletteIds.length !== 1 || !draft.activePalettes.length || !draft.editedPattern) {
+        new Set(draft.selectedPaletteIds).size !== draft.selectedPaletteIds.length || !draft.activePalettes.length || !draft.editedPattern) {
         throw new Error('Invalid pixel bead project');
     }
-    const board = getBoardOption(draft.boardId), palette = getPaletteOption(draft.selectedPaletteIds[0]);
+    const board = getBoardOption(draft.boardId), palettes = draft.selectedPaletteIds.map(getPaletteOption);
     const width = draft.boardWidth * (board?.beadsPerRow ?? 0), height = draft.boardHeight * (board?.beadsPerRow ?? 0);
     const pixels = decodeEditorPatternDraft(draft.editedPattern);
-    if (!board || !palette || palette.boardId !== board.id || !pixels ||
+    if (!board || palettes.some(palette => !palette || (!allowIndependentBoardLayout && palette.boardId !== board.id)) || !pixels ||
         draft.editedPattern.width !== width || draft.editedPattern.height !== height) {
         throw new Error('Invalid pixel bead board');
     }
