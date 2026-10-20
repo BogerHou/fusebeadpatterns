@@ -9,7 +9,6 @@ import { renderBrandIcon } from './build-brand-icons.mjs';
 import { checkExtensionPackage } from './check-extension-package.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const sharedIconSource = path.join(root, 'public/brand/square-bead.svg');
 const args = process.argv.slice(2);
 const store = args.includes('--store');
 if (store) args.splice(args.indexOf('--store'), 1);
@@ -101,11 +100,10 @@ await mkdir(path.join(output, 'licenses'), { recursive: true });
 for (const file of ['Inter-OFL.txt', 'Manrope-OFL.txt']) await copyFile(path.join(source, 'fonts', file), path.join(output, 'licenses', file));
 await mkdir(path.join(output, 'icons'));
 
-// Website and extension icons come from one SVG; PNGs are generated locally.
+// Website and extension icons share one master; PNGs are generated locally.
 for (const size of [16, 32, 48, 128]) {
     await writeFile(path.join(output, `icons/icon-${size}.png`), await renderBrandIcon(size));
 }
-await copyFile(sharedIconSource, path.join(output, 'icons/icon.svg'));
 
 const manifest = JSON.parse(await readFile(path.join(output, 'manifest.json'), 'utf8'));
 await writeFile(path.join(output, 'build-info.json'), JSON.stringify({

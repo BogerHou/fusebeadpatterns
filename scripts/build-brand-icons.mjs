@@ -1,6 +1,6 @@
 /**
  * Static brand assets for the website and extension. No request-time rendering.
- * The SVG is the only drawing source; Sharp is already locked with Next.js.
+ * One transparent master supplies every size; Sharp is already locked with Next.js.
  */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -12,12 +12,12 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const sharp = require('sharp');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const brandSourcePath = path.join(root, 'public/brand/square-bead.svg');
+export const brandSourcePath = path.join(root, 'assets/brand/bead-spirit.png');
 
 export async function renderBrandIcon(size, format = 'png') {
     assert(Number.isInteger(size) && size >= 16 && size <= 1024, 'Invalid brand icon size');
     assert(['png', 'webp'].includes(format), 'Unsupported brand icon format');
-    const image = sharp(await readFile(brandSourcePath), { density: 192 }).resize(size, size);
+    const image = sharp(await readFile(brandSourcePath)).resize(size, size);
     return format === 'webp'
         ? image.webp({ lossless: true }).toBuffer()
         : image.png({ compressionLevel: 9 }).toBuffer();
@@ -43,7 +43,7 @@ async function buildBrandIcons(check) {
         }
     }
     // Hashed assets from earlier releases remain available to cached HTML.
-    console.log(JSON.stringify({ check, headerLogo, source: 'public/brand/square-bead.svg', files: files.size }));
+    console.log(JSON.stringify({ check, headerLogo, source: path.relative(root, brandSourcePath), files: files.size }));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
