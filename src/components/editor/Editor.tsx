@@ -6105,9 +6105,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                         </div>
                     </div>
 
-            <div className="hidden items-stretch gap-4 sm:grid sm:gap-6 xl:h-[calc(100svh-330px)] xl:min-h-[560px] xl:max-h-[640px] xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
-                <div className="min-h-0 xl:h-full">
-                    <Card className="h-full overflow-y-auto bg-white p-3 sm:p-4">
+            <div className="hidden items-start gap-4 sm:grid sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+                <div className="min-w-0">
+                    <Card className="bg-white p-3 sm:p-4">
                         <div className="space-y-3">
                             <EditorSection title={t("Image")}>
                                 <label
@@ -6550,9 +6550,9 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
 
                 </div>
 
-                <div className="min-h-0 xl:h-full">
+                <div className="h-[clamp(480px,calc(100svh-120px),720px)] min-w-0 xl:sticky xl:top-6 xl:self-start">
                     <Card
-                        className="z-10 flex min-h-[320px] flex-1 flex-col border-[#d9ded5] bg-white p-0 [border-width:1px] shadow-sm sm:min-h-[480px] sm:[border-width:1px] sm:shadow-brutal xl:h-full xl:min-h-0"
+                        className="z-10 flex h-full min-h-[320px] flex-col border-[#d9ded5] bg-white p-0 [border-width:1px] shadow-sm sm:min-h-[480px] sm:[border-width:1px] sm:shadow-brutal"
                     >
                         <div className="relative min-h-[240px] flex-1 overflow-hidden bg-white sm:min-h-[280px]">
                             {processing && (
