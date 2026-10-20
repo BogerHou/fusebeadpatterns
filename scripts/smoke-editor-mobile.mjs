@@ -7,6 +7,7 @@ import path from 'node:path';
 import { URL } from 'node:url';
 
 const baseUrl = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
+const PROJECT_REPLACEMENT_CONFIRM = 'Opening this project replaces your current pattern, original image and settings, and clears Undo/Redo history. Save a project copy first if needed; project files do not save that history. Cancel keeps your current work. Open this project?';
 
 function sleep(ms) {
     return new Promise((resolve) => {
@@ -822,8 +823,10 @@ async function runPatternPreservationRegression(cdp) {
         document.querySelector('input[name="projectUpload"]'),
         new File([${JSON.stringify(savedProjectText)}], 'settings-regression.bead-pattern.json', { type: 'application/json' })
     )`;
+    const assertRestoreConfirmation = cdp.expectJavaScriptDialog('confirm', PROJECT_REPLACEMENT_CONFIRM);
     await cdp.evaluate(restoreProject);
     await waitForState(cdp, `window.__patternRegression.pixels() === ${JSON.stringify(editedPixels)}`, 'restored edited image');
+    assertRestoreConfirmation();
     await assertPatternState(cdp, editedPixels, 'Saving and reopening the edited image');
 
     const editorErrors = await cdp.evaluate('window.__qaErrors || []');
@@ -901,12 +904,14 @@ async function runStrokeHistoryRegression(cdp, projectTemplateText) {
         window.__strokeRegression = { projectText: JSON.stringify(project), blankPixels: data, firstRef: first.ref, secondRef: second.ref };
     })()`);
     const resetPattern = async () => {
+        const assertResetConfirmation = cdp.expectJavaScriptDialog('confirm', PROJECT_REPLACEMENT_CONFIRM);
         await cdp.evaluate(`window.__patternRegression.upload(
             document.querySelector('input[name="projectUpload"]'),
             new File([window.__strokeRegression.projectText], 'stroke-history.bead-pattern.json', { type: 'application/json' })
         )`);
         await waitForState(cdp, `window.__patternRegression.pixels() === window.__strokeRegression.blankPixels &&
             !window.__patternRegression.history().undo && !window.__patternRegression.history().redo`, 'blank stroke test project');
+        assertResetConfirmation();
         await assertPatternUsage(cdp, 0, 0, 'Blank project statistics');
         const firstRef = await cdp.evaluate('window.__strokeRegression.firstRef');
         await selectRegressionColor(cdp, firstRef);
@@ -1085,6 +1090,7 @@ async function runLargeProjectRegression(cdp, projectTemplateText) {
         `document.readyState === 'complete' && !!document.querySelector('input[name="projectUpload"]')`,
         'editor for large project');
     await installPatternRegressionHelpers(cdp);
+    const assertLargeImportConfirmation = cdp.expectJavaScriptDialog('confirm', PROJECT_REPLACEMENT_CONFIRM);
     await cdp.evaluate(`
         (() => {
             const project = JSON.parse(${JSON.stringify(projectTemplateText)});
@@ -1118,6 +1124,7 @@ async function runLargeProjectRegression(cdp, projectTemplateText) {
     await waitForState(cdp,
         'window.__patternRegression.pixels() === window.__largeRegression.initialPixels',
         'large project import');
+    assertLargeImportConfirmation();
     await sleep(700);
     const importedCorrectly = await cdp.evaluate('window.__patternRegression.pixels() === window.__largeRegression.initialPixels');
     if (!importedCorrectly) throw new Error('Large imported pattern changed after initialization.');
@@ -1147,6 +1154,7 @@ async function runLargeProjectRegression(cdp, projectTemplateText) {
     await waitForState(cdp,
         'window.__patternRegression.pixels() === window.__largeRegression.initialPixels',
         'large pattern undo before restore');
+    const assertLargeRestoreConfirmation = cdp.expectJavaScriptDialog('confirm', PROJECT_REPLACEMENT_CONFIRM);
     await cdp.evaluate(`window.__patternRegression.upload(
         document.querySelector('input[name="projectUpload"]'),
         new File([window.__largeRegression.savedText], 'large-pattern.bead-pattern.json', { type: 'application/json' })
@@ -1154,6 +1162,7 @@ async function runLargeProjectRegression(cdp, projectTemplateText) {
     await waitForState(cdp,
         'window.__patternRegression.pixels() === window.__largeRegression.editedPixels',
         'large edited project restoration');
+    assertLargeRestoreConfirmation();
     await sleep(700);
     const result = await cdp.evaluate(`({
         restoredSamePixels: window.__patternRegression.pixels() === window.__largeRegression.editedPixels,
@@ -1911,8 +1920,7 @@ async function main() {
         const exportDialogKeyboard = await runDialogKeyboardRegression(cdp, 'Export', 'button', 'Export');
 
         cdp.setStage('project save and confirmed replacement');
-        const assertProjectConfirmation = cdp.expectJavaScriptDialog('confirm',
-            'Opening this project replaces your current pattern, original image and settings, and clears Undo/Redo history. Save a project copy first if needed; project files do not save that history. Cancel keeps your current work. Open this project?');
+        const assertProjectConfirmation = cdp.expectJavaScriptDialog('confirm', PROJECT_REPLACEMENT_CONFIRM);
         const projectRoundTrip = await cdp.evaluate(`
             (async () => {
                 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
