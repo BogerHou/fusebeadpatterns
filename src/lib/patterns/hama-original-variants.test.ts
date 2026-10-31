@@ -97,7 +97,8 @@ describe('fixed original black cat Hama downloads', () => {
         const expectedPreview = await sharp(Buffer.from(rgba), { raw: { width: 29, height: 29, channels: 4 } })
             .resize(580, 580, { kernel: 'nearest' }).flatten({ background: '#faf8f3' }).removeAlpha().raw().toBuffer();
         expect([preview.info.width, preview.info.height, preview.info.channels]).toEqual([580, 580, 3]);
-        expect(preview.data).toEqual(expectedPreview);
+        // Keep the exact byte comparison native instead of deep-walking a 1 MB image.
+        expect(preview.data.equals(expectedPreview)).toBe(true);
         expect(parseEditorProject(serializeEditorProject(draft))).toEqual(draft);
     });
 

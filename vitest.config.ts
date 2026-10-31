@@ -5,6 +5,6 @@ export default defineConfig({
         environment: 'node',
         include: ['src/**/*.test.ts'],
         // Image/project fixtures are memory-heavy; bound local worker contention.
-        maxWorkers: 4,
+        maxWorkers: process.env.CI ? 2 : 4,
     },
 });
