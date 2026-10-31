@@ -1,5 +1,6 @@
 export const ANALYTICS_ID = 'G-K3EC5BK93E';
 export const ANALYTICS_CONSENT_KEY = 'fusebeadpatterns:analytics-consent:v1';
+export const ANALYTICS_EXCLUSION_KEY = 'fusebeadpatterns:analytics-excluded:v1';
 const SCRIPT_ID = 'fusebeadpatterns-analytics';
 const DISABLE_KEY = `ga-disable-${ANALYTICS_ID}`;
 const PRODUCTION_HOSTS = new Set(['fusebeadpatterns.art', 'www.fusebeadpatterns.art']);
@@ -53,9 +54,19 @@ function refreshAnalyticsConsent(): AnalyticsConsent {
 }
 
 export function canMeasureAnalytics(): boolean {
-    return typeof window !== 'undefined'
-        && PRODUCTION_HOSTS.has(window.location.hostname)
-        && refreshAnalyticsConsent() === 'granted';
+    if (typeof window === 'undefined' || !PRODUCTION_HOSTS.has(window.location.hostname)) return false;
+    try {
+        // Dedicated QA profiles can opt out without changing a visitor's consent.
+        // Standard WebDriver sessions never contribute to production analytics.
+        if (window.navigator?.webdriver === true || window.localStorage.getItem(ANALYTICS_EXCLUSION_KEY) === 'true') {
+            stopAnalytics();
+            return false;
+        }
+    } catch {
+        lockAnalyticsClosed();
+        return false;
+    }
+    return refreshAnalyticsConsent() === 'granted';
 }
 
 /** Delete only the two cookies used by this site's current GA measurement ID. */

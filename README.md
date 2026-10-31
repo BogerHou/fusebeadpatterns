@@ -103,6 +103,10 @@ npm run test:run
 npm run lint
 ```
 
+当前保留 `eslint-plugin-react-hooks` 7.0.1 的既有检查规则；升级其新增编译器规则时，
+需单独迁移旧工作区代码，不要通过整体关闭 Hooks 检查来消除报错。
+Vitest 在本机将并行 worker 限为4个、CI限为2个，避免大型图像与工程数据夹具争用内存；断言与超时标准保持。
+
 运行生产构建：
 
 ```bash
