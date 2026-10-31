@@ -40,6 +40,7 @@ import { getBoardMaterialsCopy } from '@/lib/editor/board-materials-copy';
 import { useDialogFocus } from './useDialogFocus';
 import './editor-studio.css';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import PrivacyPreferencesButton from '@/components/analytics/PrivacyPreferencesButton';
 import type { SiteLocale } from '@/lib/i18n/locales';
 import { localeRoutes, LOCALE_NAVIGATION_EVENT, type LocaleNavigationDetail } from '@/lib/i18n/routes';
 import { formatEditorNumber, getEditorErrorMessage, getEditorTranslator } from '@/lib/editor/messages';
@@ -4108,6 +4109,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                                 {t("Editor")}
                             </h1>
                             <LanguageSwitcher locale={locale} className="editor-language-switcher" />
+                            <PrivacyPreferencesButton locale={locale} compact />
                             {pixelReturnHref ? <a href={pixelReturnHref}
                                 className="max-w-32 truncate rounded-md px-2 py-1 text-xs font-semibold text-brutal-black underline underline-offset-2 hover:bg-brand-yellow"
                                 title={getPixelBeadCopy(locale).returnToPixels}>

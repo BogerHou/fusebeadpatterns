@@ -55,6 +55,30 @@ beforeEach(() => vi.resetModules());
 afterEach(() => vi.unstubAllGlobals());
 
 describe('optional analytics consent', () => {
+    it.each(['webdriver', 'profile'] as const)('excludes %s QA even with saved consent and preserves editor data', async mode => {
+        const fixture = browserFixture('granted');
+        if (mode === 'webdriver') Object.defineProperty(fixture.win, 'navigator', { value: { webdriver: true } });
+        else fixture.values.set('fusebeadpatterns:analytics-excluded:v1', 'true');
+        const consent = await import('./analytics-consent');
+        expect(consent.startAnalytics()).toBe(false);
+        expect(fixture.inserted).toHaveLength(0);
+        expect(fixture.win.dataLayer).toBeUndefined();
+        expect(fixture.values.get(key)).toBe('granted');
+        expect(fixture.values.get('editor-draft')).toBe('keep private drawing');
+    });
+
+    it('halts a loaded SDK when a dedicated QA profile opts out', async () => {
+        const fixture = browserFixture('granted');
+        const consent = await import('./analytics-consent');
+        consent.startAnalytics(); fixture.inserted[0].onload?.();
+        fixture.values.set('fusebeadpatterns:analytics-excluded:v1', 'true');
+        expect(consent.canMeasureAnalytics()).toBe(false);
+        expect(fixture.win[disableKey]).toBe(true);
+        fixture.win.gtag?.('event', 'qa-export');
+        expect(fixture.win.dataLayer).toEqual([]);
+        expect(fixture.values.get(key)).toBe('granted');
+    });
+
     it('does not inject or queue analytics for absent, denied or malformed choices', async () => {
         const consent = await import('./analytics-consent');
         for (const value of [undefined, 'denied', 'true', '{"granted":true}']) {
@@ -140,7 +164,7 @@ describe('optional analytics consent', () => {
         const consent = await import('./analytics-consent');
         let reads = 0;
         fixture.localStorage.getItem.mockImplementation(name => {
-            if (++reads === 2) {
+            if (name === key && ++reads === 2) {
                 if (failure === 'throws') throw new Error('Blocked mid-start');
                 fixture.values.set(key, 'denied');
             }

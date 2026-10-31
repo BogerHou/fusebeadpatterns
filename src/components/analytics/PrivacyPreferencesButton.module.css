@@ -1,4 +1,6 @@
 .trigger { display: inline-flex; align-items: center; min-height: 44px; color: inherit; font: inherit; font-size: .8125rem; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+.compactTrigger { justify-content: center; width: 44px; flex-shrink: 0; border-radius: .35rem; }
+.compactTrigger:hover { background: #e7eee5; }
 .dialog { margin: auto; width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.5rem; border: 1px solid #bcc9be; border-radius: 0.75rem; background: #f8faf6; color: #203c2d; font-size: 1rem; line-height: 1.6; }
 .dialog::backdrop { background: rgb(20 35 26 / 35%); }
 .dialog h2 { font-size: 1.3rem; font-weight: 650; margin-bottom: 1rem; }
@@ -7,3 +9,11 @@
 .actions button { min-height: 44px; border: 1px solid #657d68; padding: 0.55rem 0.8rem; border-radius: 0.35rem; cursor: pointer; font: inherit; }
 .actions button:hover { background: #e7eee5; }
 .actions button:focus-visible, .trigger:focus-visible { outline: 2px solid #2f653c; outline-offset: 3px; }
+.prompt { position: fixed; z-index: 60; inset: auto auto max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.1rem; border: 1px solid #bcc9be; border-radius: .75rem; background: #f8faf6; color: #203c2d; box-shadow: 0 8px 30px rgb(20 35 26 / 14%); text-align: start; font-size: .875rem; line-height: 1.55; }
+.prompt h2 { margin: 0 0 .5rem; font-family: inherit; font-size: 1rem; font-weight: 650; letter-spacing: normal; }
+.prompt p { margin: .5rem 0 0; max-width: none; font-size: .875rem; line-height: 1.55; color: #42594e; }
+.details { display: inline; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
+.promptActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-top: .9rem; }
+.promptActions button { min-height: 44px; padding: .6rem; border: 1px solid #657d68; border-radius: .35rem; background: transparent; color: #203c2d; font: inherit; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
+.promptActions button:hover { background: #e7eee5; }
+.details:focus-visible, .promptActions button:focus-visible { outline: 2px solid #2f653c; outline-offset: 3px; }

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PrivacyPreferencesButton from './PrivacyPreferencesButton';
 
 const runtime = vi.hoisted(() => ({
-    consent: 'unknown' as 'unknown' | 'granted' | 'denied', failed: false,
+    consent: 'unknown' as 'unknown' | 'granted' | 'denied', failed: false, client: true,
     dialog: { showModal: vi.fn(), close: vi.fn() },
     save: vi.fn<(value: 'granted' | 'denied') => boolean>(() => true),
     start: vi.fn(() => true),
@@ -22,11 +22,14 @@ vi.mock('react', async () => ({
     useId: () => 'privacy-heading',
     useRef: () => ({ current: runtime.dialog }),
     useState: () => [runtime.failed, (value: boolean) => { runtime.failed = value; }],
-    useSyncExternalStore: () => runtime.consent,
+    useSyncExternalStore: (_subscribe: unknown, getSnapshot: () => unknown) => {
+        const value = getSnapshot();
+        return typeof value === 'boolean' ? runtime.client : value;
+    },
 }));
 
 beforeEach(() => {
-    runtime.consent = 'unknown'; runtime.failed = false;
+    runtime.consent = 'unknown'; runtime.failed = false; runtime.client = true;
     vi.clearAllMocks(); runtime.save.mockReturnValue(true);
 });
 
@@ -36,8 +39,56 @@ function controls(locale: 'en' | 'de' | 'fr' | 'ja' = 'en') {
     const children = output.props.children as Node[];
     const dialog = children.find(child => child.type === 'dialog')!;
     const actions = (dialog.props.children as Node[]).find(child => child.type === 'div')!;
-    return { trigger: children.find(child => child.type === 'button')!, dialog, buttons: actions.props.children as Node[] };
+    return { trigger: children.find(child => child.type === 'button')!, prompt: children.find(child => child.type === 'section'), dialog, buttons: actions.props.children as Node[] };
 }
+
+describe('first-visit analytics choice', () => {
+    it.each(['en', 'de', 'fr', 'ja'] as const)('keeps the compact editor control named and usable in %s', locale => {
+        const output = PrivacyPreferencesButton({ locale, compact: true }) as ReactElement<{ children: ReactElement[] }>;
+        const trigger = output.props.children.find(child => child.type === 'button') as ReactElement<{ 'aria-label': string; title: string; onClick: () => void }>;
+        expect(trigger.props['aria-label']).toBeTruthy();
+        expect(trigger.props.title).toBe(trigger.props['aria-label']);
+        trigger.props.onClick();
+        expect(runtime.dialog.showModal).toHaveBeenCalledOnce();
+        expect(runtime.save).not.toHaveBeenCalled();
+    });
+
+    it('does not server-render a prompt or show one over a saved choice', () => {
+        runtime.client = false;
+        expect(controls().prompt).toBeUndefined();
+        runtime.client = true;
+        for (const choice of ['granted', 'denied'] as const) {
+            runtime.consent = choice;
+            expect(controls().prompt).toBeUndefined();
+        }
+    });
+
+    it.each(['en', 'de', 'fr', 'ja'] as const)('offers both choices on first visit in %s without auto-opening a modal', locale => {
+        const ui = controls(locale);
+        expect(ui.prompt).toBeDefined();
+        expect(runtime.dialog.showModal).not.toHaveBeenCalled();
+        expect(runtime.save).not.toHaveBeenCalled();
+        expect(runtime.start).not.toHaveBeenCalled();
+        const actions = (ui.prompt!.props.children as ReactElement<{ children: ReactElement[] }>[]).find(child => child && child.type === 'div')!;
+        const buttons = actions.props.children as ReactElement<{ onClick: () => void }>[];
+        buttons[0].props.onClick();
+        expect(runtime.save).toHaveBeenCalledExactlyOnceWith('denied');
+        vi.clearAllMocks();
+        buttons[1].props.onClick();
+        expect(runtime.save).toHaveBeenCalledExactlyOnceWith('granted');
+    });
+
+    it('keeps a failed first-visit choice visible, even if analytics fails closed', () => {
+        runtime.save.mockReturnValue(false);
+        const actions = (controls().prompt!.props.children as ReactElement<{ children: ReactElement[] }>[]).find(child => child && child.type === 'div')!;
+        (actions.props.children as ReactElement<{ onClick: () => void }>[])[1].props.onClick();
+        runtime.consent = 'denied'; // The consent store fails closed on a write error.
+        expect(controls().prompt).toBeDefined();
+        const alert = (controls().prompt!.props.children as ReactElement<{ role?: string; children: string }>[]).find(child => child && child.props.role === 'alert');
+        expect(alert?.props.children).toContain('could not save');
+        expect(runtime.start).not.toHaveBeenCalled();
+    });
+});
 
 describe('privacy dialog keyboard isolation', () => {
     it('reproduces why bubble stopPropagation cannot block another listener on the same document', () => {
