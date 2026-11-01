@@ -10,7 +10,19 @@ export default function LocalizedLoomPage({ locale }: { locale: LocalizedLoomLoc
     const copy = loomPageContent[locale];
     const home = { de: 'Startseite', fr: 'Accueil', ja: 'ホーム' }[locale];
     const breadcrumbLabel = { de: 'Brotkrümelnavigation', fr: 'Fil d’Ariane', ja: 'パンくずリスト' }[locale];
+    const applicationSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: copy.heading,
+        description: copy.description ?? copy.introduction,
+        url: `https://fusebeadpatterns.art${localeRoutes[locale].beadLoom}`,
+        inLanguage: locale,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'All',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    };
     return <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader locale={locale} />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1">
             <Breadcrumbs label={breadcrumbLabel} items={[{ label: home, href: localeRoutes[locale].home }, { label: copy.heading, href: localeRoutes[locale].beadLoom }]} />

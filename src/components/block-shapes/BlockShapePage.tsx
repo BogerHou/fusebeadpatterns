@@ -14,10 +14,55 @@ const breadcrumbLabels: Record<SiteLocale, string> = {
     ja: 'パンくずリスト',
 };
 
+const minecraftClusterLinks: Record<SiteLocale, {
+    label: string;
+    bannerMaker: { label: string; href: string };
+    bannerLetters: { label: string; href: string };
+    patterns: { label: string; href: string };
+}> = {
+    en: {
+        label: 'More Minecraft tools & patterns:',
+        bannerMaker: { label: 'Minecraft Banner Maker', href: '/minecraft-banner-maker' },
+        bannerLetters: { label: 'Minecraft Banner Letters', href: '/minecraft-banner-letters' },
+        patterns: { label: 'Minecraft Perler Bead Patterns', href: '/patterns/minecraft' },
+    },
+    de: {
+        label: 'Weitere Minecraft-Werkzeuge & Vorlagen:',
+        bannerMaker: { label: 'Minecraft-Banner-Generator', href: '/de/minecraft-banner-generator' },
+        bannerLetters: { label: 'Minecraft-Banner-Buchstaben', href: '/de/minecraft-banner-buchstaben' },
+        patterns: { label: 'Minecraft-Bügelperlen-Vorlagen', href: '/de/vorlagen/minecraft' },
+    },
+    fr: {
+        label: 'Autres outils et modèles Minecraft :',
+        bannerMaker: { label: 'Créateur de bannière Minecraft', href: '/fr/createur-banniere-minecraft' },
+        bannerLetters: { label: 'Lettres de bannière Minecraft', href: '/fr/lettres-banniere-minecraft' },
+        patterns: { label: 'Modèles Minecraft en perles à repasser', href: '/fr/modeles/minecraft' },
+    },
+    ja: {
+        label: '関連するマイクラツール・図案：',
+        bannerMaker: { label: 'マイクラ旗メーカー', href: '/ja/minecraft-banner-maker' },
+        bannerLetters: { label: 'マイクラ文字旗メーカー', href: '/ja/minecraft-banner-letters' },
+        patterns: { label: 'マイクラのアイロンビーズ図案', href: '/ja/patterns/minecraft' },
+    },
+};
+
 export default function BlockShapePage({ locale }: { locale: SiteLocale }) {
     const copy = blockShapeCopy[locale];
+    const cluster = minecraftClusterLinks[locale];
+    const applicationSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: copy.heading,
+        description: copy.description,
+        url: `https://fusebeadpatterns.art${blockShapePaths[locale]}`,
+        inLanguage: locale,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'All',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    };
 
     return <>
+        <script id="webapp-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader locale={locale} />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1">
             <Breadcrumbs label={breadcrumbLabels[locale]} items={[
@@ -39,6 +84,12 @@ export default function BlockShapePage({ locale }: { locale: SiteLocale }) {
                     {copy.notes.map(note => <li key={note}>{note}</li>)}
                 </ul>
             </section>
+            <p className="mt-8 flex max-w-[75ch] flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-6 text-sm leading-7 text-muted">
+                <span>{cluster.label}</span>
+                <a href={cluster.bannerMaker.href} className="text-link">{cluster.bannerMaker.label}</a>
+                <a href={cluster.bannerLetters.href} className="text-link">{cluster.bannerLetters.label}</a>
+                <a href={cluster.patterns.href} className="text-link">{cluster.patterns.label}</a>
+            </p>
         </main>
         <SiteFooter locale={locale} active="block-shapes" />
     </>;

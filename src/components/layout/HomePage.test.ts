@@ -77,6 +77,11 @@ describe('complete home experience in every site language', () => {
         expect(html.match(/<details\b/g)).toHaveLength(5);
         expect(html).toContain(`data-editor-locale="${locale}"`);
         expect(html).toContain('id="ready-patterns"');
+        expect(html).toContain(patternsCopy.homePatternCopy[locale].heading);
+        expect(html).toContain(`href="${routes.getLocaleDestination('/patterns/easy', locale).href}"`);
+        expect(html).toContain(`href="${routes.localeRoutes[locale].hamaPatterns}"`);
+        expect(html).toContain(`href="${routes.getLocaleDestination('/patterns/christmas', locale).href}"`);
+        expect(html).toContain(`href="${routes.getLocaleDestination('/patterns/halloween', locale).href}"`);
         expect(html).toContain('src="/studio/blue-chicken-beads.svg"');
         for (const id of patternsCopy.homeFeaturedPatternIds) {
             const pattern = catalog.getPatternById(id)!;
@@ -96,7 +101,7 @@ describe('complete home experience in every site language', () => {
         const html = main(render(locale));
         const hrefs = [...html.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map(match => match[1]);
         for (const href of hrefs) expect(href === '#generator' || href.startsWith(`/${locale}/`)).toBe(true);
-        for (const phrase of ['From pixel to pegboard', 'Pattern preview style', 'Free Printable Perler Bead Patterns', 'Game Sprite Patterns', 'Bead Color Choices', 'Frequently Asked Questions']) expect(html).not.toContain(phrase);
+        for (const phrase of ['From pixel to pegboard', 'Pattern preview style', 'Free Printable Perler Bead Patterns', 'Featured Printable Perler Bead Patterns', 'Game Sprite Patterns', 'Bead Color Choices', 'Frequently Asked Questions']) expect(html).not.toContain(phrase);
         expect(html).toContain(patternsCopy.homePatternCopy[locale].studyBeadAlt);
         expect(html).toContain(patternsCopy.homePatternCopy[locale].studyLink);
         for (const patternId of patternsCopy.homeFeaturedPatternIds) expect(html).toContain(localizedPatterns.getLocalizedPatternName(catalog.getPatternById(patternId)!, locale));

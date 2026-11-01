@@ -6,7 +6,14 @@ export class Lab {
     b: number;
 }
 
-export function ColorToLab(c: Color): Lab {
+const MAX_RGB_LAB_CACHE_SIZE = 16_384;
+const rgbLabCache = new Map<number, Lab>();
+const objectLabCache = new WeakMap<
+    Color,
+    { r: number; g: number; b: number; lab: Lab }
+>();
+
+function computeColorToLab(c: Color): Lab {
     let r = c.r / 255;
     let g = c.g / 255;
     let b = c.b / 255;
@@ -28,4 +35,36 @@ export function ColorToLab(c: Color): Lab {
     z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787 * z + 16 / 116;
 
     return { l: 116 * y - 16, a: 500 * (x - y), b: 200 * (y - z) };
+}
+
+export function ColorToLab(c: Color): Lab {
+    const r = c.r;
+    const g = c.g;
+    const b = c.b;
+    if (
+        (r | 0) === r &&
+        (g | 0) === g &&
+        (b | 0) === b &&
+        ((r | g | b) & ~255) === 0
+    ) {
+        const key = (r << 16) | (g << 8) | b;
+        const cached = rgbLabCache.get(key);
+        if (cached !== undefined) {
+            return cached;
+        }
+        const lab = computeColorToLab(c);
+        if (rgbLabCache.size >= MAX_RGB_LAB_CACHE_SIZE) {
+            rgbLabCache.clear();
+        }
+        rgbLabCache.set(key, lab);
+        return lab;
+    }
+
+    const cached = objectLabCache.get(c);
+    if (cached && cached.r === r && cached.g === g && cached.b === b) {
+        return cached.lab;
+    }
+    const lab = computeColorToLab(c);
+    objectLabCache.set(c, { r, g, b, lab });
+    return lab;
 }

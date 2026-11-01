@@ -23,10 +23,19 @@ export const metadata: Metadata = {
 };
 
 export default function HamaPatternsPage() {
+    const structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Free Hama Bead Patterns',
+        description,
+        url,
+        inLanguage: 'en',
+    };
     return (
         <>
             <SiteHeader active="patterns" />
             <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c') }} />
                 <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Patterns', href: '/patterns' }, { label: 'Hama patterns', href: '/patterns/hama' }]} />
                 <h1 className="page-heading">Free Hama Bead Patterns</h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-muted sm:text-lg">

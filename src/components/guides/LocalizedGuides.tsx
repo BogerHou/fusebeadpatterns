@@ -6,10 +6,20 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import GuideSections from './GuideSections';
 import PegboardCalculator from './PegboardCalculator';
+import type { GuideSection } from '@/app/(english)/guides/guide-data';
 import { siteNavigation } from '@/lib/i18n/locales';
 import { localeRoutes } from '@/lib/i18n/routes';
 import { getGuideSummaries, getLocalizedGuide, guideUi, type GuideLocale } from '@/lib/guides/localized';
 import { guideHref, guideIndexHref, guideLanguageAlternates, isTranslatedGuideSlug } from '@/lib/guides/routes';
+
+function getFirstGuideImage(sections?: GuideSection[]) {
+    if (!sections) return undefined;
+    for (const section of sections) {
+        if (section.figure) return section.figure;
+        if (section.comparison && section.comparison.length > 0) return section.comparison[0];
+    }
+    return undefined;
+}
 
 export function localizedGuideMetadata(locale: GuideLocale, slug?: string): Metadata {
     const guide = slug ? getLocalizedGuide(slug, locale) : undefined;
@@ -22,11 +32,28 @@ export function localizedGuideMetadata(locale: GuideLocale, slug?: string): Meta
     };
     const description = slug === 'beadifier-alternative' ? beadifierDescriptions[locale] : guide?.description ?? guideUi[locale].intro;
     const path = slug ? guideHref(slug, locale) : guideIndexHref(locale);
+    const ogLocale = { de: 'de_DE', fr: 'fr_FR', ja: 'ja_JP' }[locale];
+    const firstImage = getFirstGuideImage(guide?.sections);
     return {
         title, description,
         alternates: { canonical: path, languages: guideLanguageAlternates(slug && isTranslatedGuideSlug(slug) ? slug : undefined) },
-        openGraph: { title, description, url: `https://fusebeadpatterns.art${path}`, siteName: 'Fuse Bead Patterns', type: slug ? 'article' : 'website' },
-        twitter: { card: 'summary_large_image', title, description },
+        openGraph: {
+            title,
+            description,
+            url: `https://fusebeadpatterns.art${path}`,
+            siteName: 'Fuse Bead Patterns',
+            locale: ogLocale,
+            type: slug ? 'article' : 'website',
+            images: firstImage
+                ? [{ url: firstImage.src, width: firstImage.width, height: firstImage.height, alt: firstImage.alt }]
+                : ['/opengraph-image.png'],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [firstImage ? firstImage.src : '/opengraph-image.png'],
+        },
     };
 }
 
@@ -58,7 +85,19 @@ export function LocalizedGuidePage({ locale, slug }: { locale: GuideLocale; slug
     const guide = getLocalizedGuide(slug, locale);
     if (!guide) notFound();
     const copy = guideUi[locale];
+    const path = guideHref(slug, locale);
+    const articleSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: guide.title,
+        description: guide.description,
+        url: `https://fusebeadpatterns.art${path}`,
+        dateModified: '2026-04-01',
+        inLanguage: locale,
+        author: { '@type': 'Organization', name: 'Fuse Bead Patterns' },
+    };
     return <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader locale={locale} active="guides" />
         <main id="main-content" tabIndex={-1} className="page-shell reading-page flex flex-1 flex-col pb-16 sm:pb-24">
             <Breadcrumbs label={{ de: 'Brotkrümelnavigation', fr: 'Fil d’Ariane', ja: 'パンくずリスト' }[locale]} items={[

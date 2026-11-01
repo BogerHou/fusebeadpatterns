@@ -27,7 +27,10 @@ describe('one sprite animation tool across four equivalent language pages', () =
         expect(meta).not.toHaveProperty('keywords');
         expect(meta.alternates).toEqual({ canonical: spritePaths[locale], languages: spriteAlternates });
         expect(spriteAlternates['x-default']).toBe('https://fusebeadpatterns.art/sprite-maker');
-        expect(meta.openGraph).toMatchObject({ url: `https://fusebeadpatterns.art${spritePaths[locale]}`, images: [] });
+        expect(meta.openGraph).toMatchObject({
+            url: `https://fusebeadpatterns.art${spritePaths[locale]}`,
+            images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: copy.title }],
+        });
         expect(copy.steps.length).toBeGreaterThanOrEqual(3);
         expect(copy.notes.length).toBeGreaterThanOrEqual(3);
     });

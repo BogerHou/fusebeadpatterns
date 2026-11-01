@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Color } from '../core/model/color/color.model';
+import { ColorToLab } from '../core/model/color/lab.model';
 import { Palette, PaletteEntry } from '../core/model/palette/palette.model';
 import { MATCHING_OPTIONS } from './config';
 import { quantizePattern, WORKER_MIN_PATTERN_PIXELS } from './pattern-quantization';
@@ -303,5 +304,20 @@ describe('quantization protocol', () => {
         unknown.matchingId = 'unknown';
 
         expect(runPatternQuantization(unknown)).toEqual(runPatternQuantization(request));
+    });
+
+    it('caches ColorToLab for integer and floating-point colors while updating on in-place mutation', () => {
+        const intA = new Color(18, 25, 34, 255);
+        const intB = new Color(18, 25, 34, 128);
+        expect(ColorToLab(intA)).toBe(ColorToLab(intB));
+
+        const dithered = new Color(112.25, 160.5, 45.75, 255);
+        const initialLab = ColorToLab(dithered);
+        expect(ColorToLab(dithered)).toBe(initialLab);
+
+        dithered.add(new Color(10, -5, 2.5, 0));
+        const mutatedLab = ColorToLab(dithered);
+        expect(mutatedLab).not.toBe(initialLab);
+        expect(mutatedLab).toEqual(ColorToLab(new Color(122.25, 155.5, 48.25, 255)));
     });
 });

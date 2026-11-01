@@ -156,6 +156,13 @@ export const loomPatternLibraryLanguageAlternates = {
     'x-default': `${siteUrl}${localeRoutes.en.beadLoomPatterns}`,
 };
 
+const openGraphLocales: Record<SiteLocale, string> = {
+    en: 'en_US',
+    de: 'de_DE',
+    fr: 'fr_FR',
+    ja: 'ja_JP',
+};
+
 export function loomPatternLibraryMetadata(locale: SiteLocale): Metadata {
     const copy = loomPatternLibraryContent[locale];
     const url = `${siteUrl}${localeRoutes[locale].beadLoomPatterns}`;
@@ -163,7 +170,15 @@ export function loomPatternLibraryMetadata(locale: SiteLocale): Metadata {
         title: copy.title,
         description: copy.description,
         alternates: { canonical: url, languages: loomPatternLibraryLanguageAlternates },
-        openGraph: { title: copy.title, description: copy.description, url, siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
-        twitter: { card: 'summary', title: copy.title, description: copy.description, images: [] },
+        openGraph: {
+            title: copy.title,
+            description: copy.description,
+            url,
+            siteName: 'Fuse Bead Patterns',
+            locale: openGraphLocales[locale],
+            type: 'website',
+            images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: copy.title }],
+        },
+        twitter: { card: 'summary_large_image', title: copy.title, description: copy.description, images: ['/opengraph-image.png'] },
     };
 }

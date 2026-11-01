@@ -23,9 +23,9 @@ class Element {
 afterEach(() => vi.unstubAllGlobals());
 
 it.each(['de', 'fr', 'ja'] as const)('%s adds native SVG document labels without changing the drawing/raster input', (locale) => {
-    const recordings: unknown[][] = [];
+    const recordings: unknown[][][] = [];
     class RecordingCanvas {
-        operations: unknown[] = [];
+        operations: unknown[][] = [];
         svg = new Element('svg');
         fillStyle = ''; strokeStyle = ''; font = ''; textBaseline = ''; textAlign = '';
         constructor(width: number, height: number) {
@@ -58,6 +58,10 @@ it.each(['de', 'fr', 'ja'] as const)('%s adds native SVG document labels without
     printer.drawSVG(pixels, new Map([['H18', 1]]), project);
     const output = printer.drawSVG(pixels, new Map([['H18', 1]]), project, locale) as unknown as Element;
     expect(JSON.stringify(recordings[1]) === JSON.stringify(recordings[0])).toBe(true);
+    const textOperations = recordings[0].filter((operation) => operation[0] === 'text');
+    const textCoordinates = textOperations.map(([, , x, y]) => `${x},${y}`);
+    expect(textOperations).toHaveLength(4);
+    expect(new Set(textCoordinates).size).toBe(textCoordinates.length);
     expect(output.attributes.get('lang')).toBe(locale);
     expect(output.children.find((child) => child.tagName === 'title')?.textContent).toBe(EXPORT_MESSAGES[locale].title);
     expect(output.children.find((child) => child.tagName === 'desc')?.textContent).toBe(`${EXPORT_MESSAGES[locale].inventory}: ${EXPORT_MESSAGES[locale].reference} / ${EXPORT_MESSAGES[locale].symbol} / ${EXPORT_MESSAGES[locale].count}`);

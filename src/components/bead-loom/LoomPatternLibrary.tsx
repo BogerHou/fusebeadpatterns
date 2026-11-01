@@ -11,7 +11,22 @@ import { localeRoutes } from '@/lib/i18n/routes';
 export default function LoomPatternLibrary({ locale }: { locale: SiteLocale }) {
     const copy = loomPatternLibraryContent[locale];
     const routes = localeRoutes[locale];
+    const collectionSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: copy.heading,
+        description: copy.description ?? copy.introduction,
+        url: `https://fusebeadpatterns.art${routes.beadLoomPatterns}`,
+        inLanguage: locale,
+        hasPart: loomPatterns.map(pattern => ({
+            '@type': 'CreativeWork',
+            name: pattern.titles[locale],
+            description: pattern.descriptions[locale],
+            url: `https://fusebeadpatterns.art${routes.beadLoomPatterns}#${pattern.id}`,
+        })),
+    };
     return <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader locale={locale} />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1">
             <Breadcrumbs label={copy.breadcrumb} items={[{ label: copy.home, href: routes.home }, { label: copy.heading, href: routes.beadLoomPatterns }]} />
@@ -20,13 +35,13 @@ export default function LoomPatternLibrary({ locale }: { locale: SiteLocale }) {
             <section aria-label={copy.collectionLabel} className="mt-9">
                 <p className="mb-5 max-w-[75ch] text-sm leading-6 text-muted">{copy.previewCaption}</p>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-9 md:grid-cols-3">
-                    {loomPatterns.map(pattern => {
+                    {loomPatterns.map((pattern, index) => {
                         const name = pattern.titles[locale];
                         const pdfA4 = loomPatternAssetPath(pattern.id, locale, 'pdf', 'a4');
                         const pdfLetter = loomPatternAssetPath(pattern.id, locale, 'pdf', 'letter');
                         return <article key={pattern.id} id={pattern.id} className="pattern-card scroll-mt-6" aria-labelledby={`${pattern.id}-title`}>
                             <div className="overflow-hidden rounded-[10px] border border-line bg-[#faf8f3] p-3">
-                                <Image src={loomPatternAssetPath(pattern.id, locale, 'preview')} alt={name} width={768} height={180} unoptimized className="h-auto w-full" />
+                                <Image src={loomPatternAssetPath(pattern.id, locale, 'preview')} alt={name} width={768} height={180} unoptimized preload={index === 0} className="h-auto w-full" />
                             </div>
                             <div className="pattern-card-title"><h2 id={`${pattern.id}-title`}>{name}</h2></div>
                             <p className="text-sm leading-6 text-muted">{copy.dimensions(pattern.columns, pattern.rows)}</p>

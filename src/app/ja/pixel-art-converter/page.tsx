@@ -1,4 +1,5 @@
 import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
@@ -15,8 +16,8 @@ export const metadata: Metadata = {
     title,
     description,
     alternates: { canonical: pageUrl, languages: pixelLanguageAlternates },
-    openGraph: { title, description, url: pageUrl, locale: 'ja_JP', siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
-    twitter: { card: 'summary', title, description, images: [] },
+    openGraph: { title, description, url: pageUrl, locale: 'ja_JP', siteName: 'Fuse Bead Patterns', type: 'website', images: ['/opengraph-image.png'] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/opengraph-image.png'] },
 };
 
 export default function JapanesePixelConverterPage() {
@@ -26,16 +27,14 @@ export default function JapanesePixelConverterPage() {
                 '@context': 'https://schema.org', '@type': 'WebApplication',
                 name: 'ドット絵変換', description, url: pageUrl, inLanguage: 'ja',
                 applicationCategory: 'DesignApplication', operatingSystem: 'Web',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             }).replace(/</g, '\\u003c') }} />
             <SiteHeader locale="ja" />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16">
-                <nav aria-label="パンくずリスト" className="mb-6 text-sm text-muted">
-                    <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <li><Link href="/ja" prefetch={false} className="text-link">日本語ホーム</Link></li>
-                        <li aria-hidden="true">/</li>
-                        <li aria-current="page">ドット絵変換</li>
-                    </ol>
-                </nav>
+                <Breadcrumbs label="パンくずリスト" items={[
+                    { label: '日本語ホーム', href: '/ja' },
+                    { label: 'ドット絵変換', href: '/ja/pixel-art-converter' },
+                ]} />
                 <div className="mb-8">
                     <h1 className="page-heading !leading-snug">写真・画像をドット絵に変換</h1>
                     <p className="mt-4 max-w-3xl leading-8 text-muted">画像を選び、ドットの細かさと色数を調整します。気になるマスを直して、PNGを保存できます。無料・登録不要。画像の処理はこのブラウザー内で行います。</p>

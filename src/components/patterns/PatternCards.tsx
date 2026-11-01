@@ -17,7 +17,7 @@ export function PatternGrid({ patterns, headingLevel = 2 }: { patterns: PatternC
     const Heading = headingLevel === 3 ? 'h3' : 'h2';
     return (
         <div className="pattern-grid">
-            {patterns.map((pattern) => (
+            {patterns.map((pattern, index) => (
                 <article key={pattern.id} className="pattern-card" data-pattern-card={pattern.id}>
                     <Link href={pattern.href ?? `/patterns/${pattern.slug}`} prefetch={false} className="pattern-card-link">
                         <div className="pattern-art">
@@ -27,6 +27,7 @@ export function PatternGrid({ patterns, headingLevel = 2 }: { patterns: PatternC
                             width={580}
                             height={580}
                             unoptimized
+                            preload={index < 3}
                             className="pattern-image"
                         />
                         </div>

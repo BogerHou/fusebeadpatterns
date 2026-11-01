@@ -20,7 +20,16 @@ export const metadata: Metadata = {
             'Practical guides for making Perler bead patterns, choosing pegboards, planning mini bead projects, and organizing fuse bead supplies.',
         url: 'https://fusebeadpatterns.art/guides',
         siteName: 'Fuse Bead Patterns',
+        locale: 'en_US',
         type: 'website',
+        images: ['/opengraph-image.png'],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Perler Bead Guides | Fuse Bead Patterns',
+        description:
+            'Practical guides for making Perler bead patterns, choosing pegboards, planning mini bead projects, and organizing fuse bead supplies.',
+        images: ['/opengraph-image.png'],
     },
 };
 

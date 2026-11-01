@@ -4,7 +4,7 @@ export const homeFeaturedPatternIds = ['sdv-blue-chicken', 'pokemon-eevee-gen5',
 
 export const homePatternCopy = {
     en: {
-        eyebrow: 'The pattern library', heading: 'Free Printable Perler Bead Patterns',
+        eyebrow: 'The pattern library', heading: 'Featured Printable Perler Bead Patterns',
         description: 'Start with a ready-made design. Check the colors, download a chart, or open it in the editor.', browse: 'Browse all patterns',
         studyEyebrow: 'From pixel to pegboard', studyControls: 'Pattern preview style', pixels: 'Pixels', beads: 'Beads',
         studyTitle: 'Stardew Valley Blue Chicken', studyNote: 'Digital preview · ready to make your own',

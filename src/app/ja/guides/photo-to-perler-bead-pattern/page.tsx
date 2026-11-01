@@ -1,3 +1,4 @@
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
@@ -50,22 +51,33 @@ const editingTools = [
     ['元に戻す／やり直す', 'マスの編集を戻す／やり直す'],
 ];
 
+const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: '画像からアイロンビーズの図案を作る方法',
+    description,
+    url: `https://fusebeadpatterns.art${pagePath}`,
+    dateModified: '2026-04-01',
+    inLanguage: 'ja',
+    author: { '@type': 'Organization', name: 'Fuse Bead Patterns' },
+};
+
 export default function JapanesePhotoPatternGuide() {
     const workedExamples = getLocalizedGuide('photo-to-perler-bead-pattern', 'ja')!;
     return (
         <div className="flex min-h-screen flex-col">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema).replace(/</g, '\\u003c') }} />
             <SiteHeader locale="ja" active="guides" />
 
             <main id="main-content" tabIndex={-1} className="page-shell flex-1">
-                <nav aria-label="パンくずリスト" className="mb-6 text-xs font-medium text-muted">
-                    <ol className="flex flex-wrap items-center gap-x-2">
-                        <li><Link href="/ja" className="inline-flex min-h-10 items-center hover:underline">ホーム</Link></li>
-                        <li aria-hidden="true">/</li>
-                        <li><Link href="/ja/guides" className="inline-flex min-h-10 items-center hover:underline">使い方</Link></li>
-                        <li aria-hidden="true">/</li>
-                        <li aria-current="page">画像から図案を作る</li>
-                    </ol>
-                </nav>
+                <Breadcrumbs
+                    label="パンくずリスト"
+                    items={[
+                        { label: 'ホーム', href: '/ja' },
+                        { label: '使い方', href: '/ja/guides' },
+                        { label: '画像から図案を作る', href: pagePath },
+                    ]}
+                />
 
                 <article className="max-w-3xl">
                     <h1 className="page-heading !text-3xl !leading-snug sm:!text-4xl">画像からアイロンビーズの図案を作る方法</h1>

@@ -17,10 +17,12 @@ import AdSenseScript from '@/components/analytics/AdSenseScript';
 
 type SiteFooterSection =
     | 'generator'
+    | 'hama-maker'
     | 'patterns'
     | 'editor'
     | 'pixel-grid'
     | 'bead-loom'
+    | 'bead-loom-patterns'
     | 'qr-beads'
     | 'sprites'
     | 'brick-mosaic'
@@ -58,6 +60,13 @@ const chromeExtensionLabels: Record<SiteLocale, string> = {
     ja: 'Chrome 拡張機能',
 };
 
+const beadLoomPatternLabels: Record<SiteLocale, string> = {
+    en: 'Free Bead Loom Patterns',
+    de: 'Perlenwebmuster-Vorlagen',
+    fr: 'Modèles de métier à perles',
+    ja: 'ビーズ織り図案集',
+};
+
 const footerGroups: Array<{
     title: string;
     links: FooterLink[];
@@ -66,9 +75,11 @@ const footerGroups: Array<{
         title: 'Make',
         links: [
             { id: 'generator', label: 'Generator', href: '/' },
+            { id: 'hama-maker', label: siteNavigation.en.hamaMaker, href: localeRoutes.en.hamaMaker },
             { id: 'patterns', label: 'Browse Patterns', href: '/patterns' },
             { id: 'pixel-grid', label: 'Pixel Art Grid', href: '/pixel-art-grid', nativeNavigation: true },
             { id: 'bead-loom', label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker', nativeNavigation: true },
+            { id: 'bead-loom-patterns', label: beadLoomPatternLabels.en, href: localeRoutes.en.beadLoomPatterns },
             { id: 'bead-letters', label: beadLetterLabels.en, href: beadLetterPaths.en, nativeNavigation: true },
             { id: 'block-shapes', label: blockShapeLabels.en, href: blockShapePaths.en, nativeNavigation: true },
             { id: 'qr-beads', label: qrBeadLabels.en, href: qrBeadPaths.en, nativeNavigation: true },
@@ -124,10 +135,12 @@ export default function SiteFooter({
             title: copy.make,
             links: [
                 { id: 'generator', label: copy.generator, href: routes.home },
+                { id: 'hama-maker', label: copy.hamaMaker, href: routes.hamaMaker, lang: locale },
                 { id: 'patterns', label: copy.browse, href: routes.patterns },
                 { id: 'editor', label: copy.advancedEditor, href: routes.editor, prefetch: false },
                 { id: 'pixel-grid', label: routes.pixelGrid ? copy.pixelGrid : englishLabel(copy.pixelGrid), href: routes.pixelGrid ?? '/pixel-art-grid', lang: routes.pixelGrid ? locale : 'en', nativeNavigation: true },
                 { id: 'bead-loom', label: copy.beadLoom, href: routes.beadLoom, lang: locale, nativeNavigation: true },
+                { id: 'bead-loom-patterns', label: beadLoomPatternLabels[locale], href: routes.beadLoomPatterns, lang: locale },
                 { id: 'bead-letters', label: beadLetterLabels[locale], href: routes.beadLetters, lang: locale, nativeNavigation: true },
                 { id: 'block-shapes', label: blockShapeLabels[locale], href: routes.blockShapes, lang: locale, nativeNavigation: true },
                 { id: 'qr-beads', label: qrBeadLabels[locale], href: routes.qrBeads, lang: locale, nativeNavigation: true },

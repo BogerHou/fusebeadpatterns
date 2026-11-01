@@ -35,3 +35,37 @@ test('does not treat script literals or HTML comments as emitted tags', () => {
     const result = inspectMetadata(`<script>const example = '<meta name="keywords" content="sample">';</script><!-- <meta name="description" content=""> -->`);
     assert.deepEqual(result.issues, []);
 });
+
+test('checks that canonical URL and og:url match when both are present', () => {
+    const matching = inspectMetadata('<link rel="canonical" href="https://fusebeadpatterns.art/about"><meta property="og:url" content="https://fusebeadpatterns.art/about">');
+    assert.deepEqual(matching.issues, []);
+
+    const mismatching = inspectMetadata('<link rel="canonical" href="https://fusebeadpatterns.art/about"><meta property="og:url" content="https://fusebeadpatterns.art">');
+    assert.equal(mismatching.issues.length, 1);
+    assert.match(mismatching.issues[0], /canonical .* does not match og:url/);
+});
+
+test('enforces og:image and valid JSON-LD on indexable pages when requireIndexableCompleteness is enabled', () => {
+    const incomplete = inspectMetadata(
+        '<link rel="canonical" href="https://fusebeadpatterns.art/guides"><meta name="description" content="Valid">',
+        'guides.html',
+        { requireIndexableCompleteness: true }
+    );
+    assert.equal(incomplete.issues.length, 2);
+    assert.match(incomplete.issues[0], /missing og:image/);
+    assert.match(incomplete.issues[1], /missing JSON-LD/);
+
+    const complete = inspectMetadata(
+        '<link rel="canonical" href="https://fusebeadpatterns.art/guides"><meta property="og:image" content="/opengraph-image.png"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage"}</script>',
+        'guides.html',
+        { requireIndexableCompleteness: true }
+    );
+    assert.deepEqual(complete.issues, []);
+
+    const noindexPage = inspectMetadata(
+        '<link rel="canonical" href="https://fusebeadpatterns.art/editor"><meta name="robots" content="noindex, follow">',
+        'editor.html',
+        { requireIndexableCompleteness: true }
+    );
+    assert.deepEqual(noindexPage.issues, []);
+});

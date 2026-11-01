@@ -92,7 +92,7 @@ function section(html: string, id: string): string {
     return html.match(new RegExp('<section[^>]*aria-labelledby="' + id + '"[^>]*>[\\s\\S]*?<\\/section>'))![0];
 }
 function schemas(html: string): Array<Record<string, unknown>> {
-    return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+    return [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
 }
 
 beforeEach(() => { workspaceCalls.length = 0; });
@@ -133,19 +133,33 @@ describe('bead letter server pages and locale routes', () => {
         }
     });
 
-    it.each(cases)('$locale exposes the right home and current-page breadcrumb, with only BreadcrumbList schema', item => {
+    it.each(cases)('$locale exposes the right home and current-page breadcrumb, WebApplication schema, and generator link', item => {
         const Route = routeModules[item.locale].default as ComponentType;
         const html = renderToStaticMarkup(createElement(Route));
         const copy = copyModule.beadLetterCopy[item.locale];
-        expect(schemas(html)).toEqual([{
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-                { '@type': 'ListItem', position: 1, name: copy.home, item: siteUrl + item.home },
-                { '@type': 'ListItem', position: 2, name: item.heading, item: siteUrl + item.path },
-            ],
-        }]);
+        expect(schemas(html)).toEqual([
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebApplication',
+                name: copy.heading,
+                description: copy.description,
+                url: siteUrl + item.path,
+                inLanguage: item.locale,
+                applicationCategory: 'DesignApplication',
+                operatingSystem: 'All',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: copy.home, item: siteUrl + item.home },
+                    { '@type': 'ListItem', position: 2, name: item.heading, item: siteUrl + item.path },
+                ],
+            },
+        ]);
         expect(html).toContain('href="' + item.home + '"');
+        expect(html).toContain('href="' + item.home + '#generator"');
         expect(html).toContain('data-prefetch="false"');
         expect(html).toContain('aria-current="page">' + escape(item.heading));
     });
@@ -157,8 +171,15 @@ describe('bead letter server pages and locale routes', () => {
             title: copy.title,
             description: copy.description,
             alternates: { canonical: item.path, languages: expectedLanguages },
-            openGraph: { title: copy.title, description: copy.description, url: siteUrl + item.path, siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
-            twitter: { card: 'summary', title: copy.title, description: copy.description, images: [] },
+            openGraph: {
+                title: copy.title,
+                description: copy.description,
+                url: siteUrl + item.path,
+                siteName: 'Fuse Bead Patterns',
+                type: 'website',
+                images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: copy.title }],
+            },
+            twitter: { card: 'summary_large_image', title: copy.title, description: copy.description, images: ['/opengraph-image.png'] },
         });
         expect(Object.keys(meta.alternates!.languages!)).toHaveLength(5);
         expect(meta).not.toHaveProperty('keywords');

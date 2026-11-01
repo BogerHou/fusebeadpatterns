@@ -7,6 +7,20 @@ const { title, description } = localizedHomeCopy.fr;
 export const metadata: Metadata = {
     title, description,
     alternates: { canonical: '/fr', languages: homeLanguageAlternates },
-    openGraph: { title, description, url: 'https://fusebeadpatterns.art/fr', locale: 'fr_FR', type: 'website' },
+    openGraph: {
+        title,
+        description,
+        url: 'https://fusebeadpatterns.art/fr',
+        siteName: 'Fuse Bead Patterns',
+        locale: 'fr_FR',
+        type: 'website',
+        images: [{ url: '/patterns/sdv-blue-chicken/preview.png', width: 580, height: 580, alt: title }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: ['/patterns/sdv-blue-chicken/preview.png'],
+    },
 };
 export default function FrenchHome() { return <LocalizedGeneratorPage locale="fr" />; }

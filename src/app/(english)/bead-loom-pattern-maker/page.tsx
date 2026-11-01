@@ -9,6 +9,7 @@ import { localeRoutes } from '@/lib/i18n/routes';
 
 const title = 'Free Bead Loom Pattern Maker — PDF & Row Instructions';
 const description = 'Make a bead loom pattern with your own colors. Draw or convert an image, count beads, and save a lettered A4 or US Letter PDF, PNG or editable project.';
+const pageUrl = 'https://fusebeadpatterns.art/bead-loom-pattern-maker';
 
 export const metadata: Metadata = {
     title,
@@ -17,16 +18,30 @@ export const metadata: Metadata = {
     openGraph: {
         title,
         description,
-        url: 'https://fusebeadpatterns.art/bead-loom-pattern-maker',
+        url: pageUrl,
+        locale: 'en_US',
         siteName: 'Fuse Bead Patterns',
         type: 'website',
-        images: [],
+        images: ['/opengraph-image.png'],
     },
-    twitter: { card: 'summary', title, description, images: [] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/opengraph-image.png'] },
+};
+
+const applicationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Bead Loom Pattern Maker',
+    description,
+    url: pageUrl,
+    inLanguage: 'en',
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'All',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
 
 export default function BeadLoomPage() {
     return <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1">
             <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Bead Loom Pattern Maker', href: '/bead-loom-pattern-maker' }]} />
