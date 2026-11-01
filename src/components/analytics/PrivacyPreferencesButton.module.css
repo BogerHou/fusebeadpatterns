@@ -10,6 +10,7 @@
 .actions button:hover { background: #e7eee5; }
 .actions button:focus-visible, .trigger:focus-visible { outline: 2px solid #2f653c; outline-offset: 3px; }
 .prompt { position: fixed; z-index: 60; inset: auto auto max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.1rem; border: 1px solid #bcc9be; border-radius: .75rem; background: #f8faf6; color: #203c2d; box-shadow: 0 8px 30px rgb(20 35 26 / 14%); text-align: start; font-size: .875rem; line-height: 1.55; }
+@media (max-width: 1279px) { .compactPrompt { inset: auto auto max(4.25rem, calc(env(safe-area-inset-bottom) + 3.5rem)) max(1rem, env(safe-area-inset-left)); } }
 .prompt h2 { margin: 0 0 .5rem; font-family: inherit; font-size: 1rem; font-weight: 650; letter-spacing: normal; }
 .prompt p { margin: .5rem 0 0; max-width: none; font-size: .875rem; line-height: 1.55; color: #42594e; }
 .details { display: inline; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }

@@ -13,9 +13,30 @@ const licenseLabels: Record<SiteLocale, string> = { en: 'Open-source licenses', 
 const breadcrumbLabels: Record<SiteLocale, string> = {
     en: 'Breadcrumb', de: 'Brotkrümelnavigation', fr: 'Fil d’Ariane', ja: 'パンくずリスト',
 };
+
+const generatorLinks: Record<SiteLocale, { prompt: string; label: string }> = {
+    en: { prompt: 'Converting a photo or illustration instead?', label: 'Open the fuse bead pattern generator' },
+    de: { prompt: 'Stattdessen ein Foto oder Bild umwandeln?', label: 'Bügelperlen-Vorlagengenerator öffnen' },
+    fr: { prompt: 'Vous préférez convertir une photo ou une image ?', label: 'Ouvrir le générateur de modèles de perles' },
+    ja: { prompt: '写真やイラストから図案を作る場合は、', label: 'アイロンビーズ図案作成ツールを開く' },
+};
+
 export default function QrBeadPage({ locale }: { locale: SiteLocale }) {
     const copy = qrBeadCopy[locale];
+    const generator = generatorLinks[locale];
+    const applicationSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: copy.heading,
+        description: copy.description,
+        url: `https://fusebeadpatterns.art${qrBeadPaths[locale]}`,
+        inLanguage: locale,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'All',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    };
     return <>
+        <script id="webapp-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader locale={locale} />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1">
             <Breadcrumbs label={breadcrumbLabels[locale]} items={[
@@ -37,6 +58,10 @@ export default function QrBeadPage({ locale }: { locale: SiteLocale }) {
                     {copy.notes.map(note => <li key={note}>{note}</li>)}
                 </ul>
             </section>
+            <p className="mt-8 max-w-[75ch] border-t border-line pt-6 text-sm leading-7 text-muted">
+                {generator.prompt}{' '}
+                <a href={`${localeRoutes[locale].home}#generator`} className="text-link">{generator.label}</a>
+            </p>
             <p className="mt-6 text-xs text-muted">{licenseLabels[locale]}: <a className="underline" href="/licenses/qr-code-generator-mit.txt">Nayuki (MIT)</a>, <a className="underline" href="/licenses/jsqr-apache-2.0.txt">jsQR (Apache-2.0)</a></p>
         </main>
         <SiteFooter locale={locale} active="qr-beads" />

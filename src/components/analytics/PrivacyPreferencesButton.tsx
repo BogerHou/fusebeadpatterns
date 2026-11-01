@@ -81,7 +81,7 @@ export default function PrivacyPreferencesButton({ locale = 'en', compact = fals
                 {compact ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z" /><path d="M9 12h6m-3-3v6" /></svg> : copy.button}
             </button>
             {isClient && (consent === 'unknown' || failed) && (
-                <section className={styles.prompt} aria-labelledby={`${headingId}-prompt`} onKeyDownCapture={event => event.stopPropagation()}>
+                <section className={compact ? `${styles.prompt} ${styles.compactPrompt}` : styles.prompt} aria-labelledby={`${headingId}-prompt`} onKeyDownCapture={event => event.stopPropagation()}>
                     <h2 id={`${headingId}-prompt`}>{copy.prompt}</h2>
                     <p>{copy.promptDescription} <button type="button" className={styles.details} onClick={openDetails}>{copy.details}</button></p>
                     {failed && <p role="alert">{copy.error}</p>}

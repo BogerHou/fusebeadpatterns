@@ -1,4 +1,5 @@
 import { pixelLanguageAlternates } from '@/lib/i18n/metadata';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata } from 'next';
@@ -19,11 +20,12 @@ export const metadata: Metadata = {
         title,
         description,
         url: pageUrl,
+        locale: 'fr_FR',
         siteName: 'Fuse Bead Patterns',
         type: 'website',
-        images: [],
+        images: ['/opengraph-image.png'],
     },
-    twitter: { card: 'summary', title, description, images: [] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/opengraph-image.png'] },
 };
 
 const applicationSchema = {
@@ -35,6 +37,7 @@ const applicationSchema = {
     inLanguage: 'fr',
     applicationCategory: 'DesignApplication',
     operatingSystem: 'Web',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
 
 export default function ImageEnPixelArtPage() {
@@ -43,13 +46,10 @@ export default function ImageEnPixelArtPage() {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
             <SiteHeader locale="fr" />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1">
-                <nav aria-label="Fil d’Ariane" className="mb-6 text-sm text-muted">
-                    <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <li><Link href="/fr" prefetch={false} className="text-link">Accueil</Link></li>
-                        <li aria-hidden="true">/</li>
-                        <li aria-current="page">Image en pixel art</li>
-                    </ol>
-                </nav>
+                <Breadcrumbs label="Fil d’Ariane" items={[
+                    { label: 'Accueil', href: '/fr' },
+                    { label: 'Image en pixel art', href: '/fr/image-en-pixel-art' },
+                ]} />
                 <div className="mb-8">
                     <h1 className="page-heading">Convertir une image en pixel art</h1>
                     <p className="mt-4 max-w-[65ch] text-base leading-7 text-muted">

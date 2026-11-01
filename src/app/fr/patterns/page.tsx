@@ -16,9 +16,18 @@ export const metadata: Metadata = {
     openGraph: { title, description, locale: 'fr_FR', type: 'website', url: 'https://fusebeadpatterns.art/fr/patterns', images: ['/patterns/pokemon-pikachu-gen5/preview.png'] },
 };
 export default function Page() {
+    const structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Modèles de perles à repasser gratuits',
+        description,
+        url: 'https://fusebeadpatterns.art/fr/patterns',
+        inLanguage: 'fr',
+    };
     return <>
         <SiteHeader locale="fr" active="patterns" />
         <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c') }} />
             <Breadcrumbs label="Fil d’Ariane" items={[{ label: 'Accueil', href: '/fr' }, { label: 'Modèles', href: '/fr/patterns' }]} />
             <h1 className="page-heading">Modèles de perles à repasser gratuits</h1>
             <p className="mt-4 max-w-3xl leading-7 text-muted">Choisissez parmi {patternLibraryCount} modèles gratuits. Recherchez un personnage ou filtrez par thème. Chaque image mène au PDF en français, aux couleurs et au même motif dans l’éditeur en français.</p>

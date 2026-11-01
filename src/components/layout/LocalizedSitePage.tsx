@@ -8,13 +8,33 @@ import { sitePageCopy, sitePageUi } from '@/lib/site-pages/content';
 import { sitePageHref, sitePageLanguageAlternates, type SitePageSlug } from '@/lib/site-pages/routes';
 import type { SiteParagraph, TranslatedSiteLocale } from '@/lib/site-pages/types';
 
+const openGraphLocales: Record<TranslatedSiteLocale, string> = {
+    de: 'de_DE',
+    fr: 'fr_FR',
+    ja: 'ja_JP',
+};
+
 export function localizedSitePageMetadata(locale: TranslatedSiteLocale, slug: SitePageSlug): Metadata {
     const copy = sitePageCopy[locale][slug];
     const title = `${copy.title} | Fuse Bead Patterns`;
     return {
         title, description: copy.description,
         alternates: { canonical: sitePageHref(slug, locale), languages: sitePageLanguageAlternates(slug) },
-        openGraph: { title, description: copy.description, url: `https://fusebeadpatterns.art${sitePageHref(slug, locale)}`, siteName: 'Fuse Bead Patterns', type: 'website' },
+        openGraph: {
+            title,
+            description: copy.description,
+            url: `https://fusebeadpatterns.art${sitePageHref(slug, locale)}`,
+            siteName: 'Fuse Bead Patterns',
+            locale: openGraphLocales[locale],
+            type: 'website',
+            images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: title }],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description: copy.description,
+            images: ['/opengraph-image.png'],
+        },
     };
 }
 

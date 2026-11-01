@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteFooter from '@/components/layout/SiteFooter';
-import { getGuideBySlug, guidePages } from '../guide-data';
+import { getGuideBySlug, guidePages, type GuideSection } from '../guide-data';
 import GuideHeader from '../GuideHeader';
 import GuideSections from '@/components/guides/GuideSections';
 import PegboardCalculator from '@/components/guides/PegboardCalculator';
@@ -14,6 +14,14 @@ type GuideRouteProps = {
         slug: string;
     }>;
 };
+
+function getFirstGuideImage(sections: GuideSection[]) {
+    for (const section of sections) {
+        if (section.figure) return section.figure;
+        if (section.comparison && section.comparison.length > 0) return section.comparison[0];
+    }
+    return undefined;
+}
 
 // Unknown guide slugs use the complete global 404 rather than rendering an
 // unmatched runtime page inside one of the site's independent root layouts.
@@ -35,6 +43,8 @@ export async function generateMetadata({
         return {};
     }
 
+    const firstImage = getFirstGuideImage(guide.sections);
+
     return {
         title: `${guide.title} | Fuse Bead Patterns`,
         description: guide.description,
@@ -47,12 +57,17 @@ export async function generateMetadata({
             description: guide.description,
             url: `https://fusebeadpatterns.art/guides/${guide.slug}`,
             siteName: 'Fuse Bead Patterns',
+            locale: 'en_US',
             type: 'article',
+            images: firstImage
+                ? [{ url: firstImage.src, width: firstImage.width, height: firstImage.height, alt: firstImage.alt }]
+                : ['/opengraph-image.png'],
         },
         twitter: {
             card: 'summary_large_image',
             title: `${guide.title} | Fuse Bead Patterns`,
             description: guide.description,
+            images: [firstImage ? firstImage.src : '/opengraph-image.png'],
         },
     };
 }
@@ -65,8 +80,20 @@ export default async function GuidePage({ params }: GuideRouteProps) {
         notFound();
     }
 
+    const articleSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: guide.title,
+        description: guide.description,
+        url: `https://fusebeadpatterns.art/guides/${guide.slug}`,
+        dateModified: '2026-04-01',
+        inLanguage: 'en',
+        author: { '@type': 'Organization', name: 'Fuse Bead Patterns' },
+    };
+
     return (
         <>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema).replace(/</g, '\\u003c') }} />
             <GuideHeader />
             <main id="main-content" tabIndex={-1} className="page-shell reading-page flex flex-1 flex-col pb-16 sm:pb-24">
                 <Breadcrumbs

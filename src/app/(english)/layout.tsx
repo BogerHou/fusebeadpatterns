@@ -16,6 +16,7 @@ export const metadata: Metadata = {
         description: 'Turn a photo into a Perler bead pattern for free. Choose the size and colors, edit individual beads, then download a printable PDF or image.',
         url: 'https://fusebeadpatterns.art',
         siteName: 'Fuse Bead Patterns',
+        locale: 'en_US',
         type: 'website',
         images: [
             {

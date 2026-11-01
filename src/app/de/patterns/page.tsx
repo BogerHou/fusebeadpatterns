@@ -1,4 +1,5 @@
 import LocalizedPatternCatalog from '@/components/patterns/LocalizedPatternCatalog';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import { patternLanguageAlternates } from '@/lib/i18n/metadata';
@@ -29,17 +30,20 @@ export const metadata: Metadata = {
 };
 
 export default function GermanPatternsPage() {
+    const structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Kostenlose Bügelperlen-Vorlagen',
+        description,
+        url: 'https://fusebeadpatterns.art/de/patterns',
+        inLanguage: 'de',
+    };
     return (
         <>
             <SiteHeader locale="de" active="patterns" />
             <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
-                <nav aria-label="Brotkrümelnavigation" className="mb-6 text-xs font-medium text-muted">
-                    <ol className="flex flex-wrap items-center gap-x-2">
-                        <li><Link href="/de" className="inline-flex min-h-10 items-center hover:underline">Startseite</Link></li>
-                        <li aria-hidden="true">/</li>
-                        <li aria-current="page">Alle Vorlagen</li>
-                    </ol>
-                </nav>
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c') }} />
+                <Breadcrumbs label="Brotkrümelnavigation" items={[{ label: 'Startseite', href: '/de' }, { label: 'Alle Vorlagen', href: '/de/patterns' }]} />
                 <h1 className="page-heading leading-snug">Kostenlose Bügelperlen-Vorlagen</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
                     Wähle aus {patternLibraryCount} kostenlosen Motiven. Suche nach einer Figur oder filtere nach einem Thema. Jede Detailseite bietet ein deutsches PDF, die Farben und den deutschen Editor zum Bearbeiten.

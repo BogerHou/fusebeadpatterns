@@ -16,7 +16,19 @@ const labels: Record<SiteLocale, { breadcrumb: string; licenses: string; pixel: 
 
 export default function SpritePage({ locale }: { locale: SiteLocale }) {
     const copy = spriteCopy[locale];
+    const applicationSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: copy.heading,
+        description: copy.description ?? copy.intro,
+        url: `https://fusebeadpatterns.art${spritePaths[locale]}`,
+        inLanguage: locale,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'All',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    };
     return <>
+        <script id="webapp-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
         <SiteHeader locale={locale} />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1">
             <Breadcrumbs label={labels[locale].breadcrumb} items={[

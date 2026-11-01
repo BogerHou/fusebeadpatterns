@@ -4,7 +4,7 @@ import type { GuideSection } from '@/app/(english)/guides/guide-data';
 import GuidePatternGallery from '@/app/(english)/guides/GuidePatternGallery';
 import type { SiteLocale } from '@/lib/i18n/locales';
 
-function GuideFigure({ figure, compact = false }: { figure: NonNullable<GuideSection['figure']>; compact?: boolean }) {
+function GuideFigure({ figure, compact = false, preload = false }: { figure: NonNullable<GuideSection['figure']>; compact?: boolean; preload?: boolean }) {
     return <figure className={compact ? 'mb-6 max-w-xs' : 'mt-7'}>
         <Image
             src={figure.src}
@@ -12,6 +12,7 @@ function GuideFigure({ figure, compact = false }: { figure: NonNullable<GuideSec
             width={figure.width}
             height={figure.height}
             unoptimized
+            preload={preload}
             className="h-auto w-full rounded-lg border border-[#d9ded5]"
         />
         <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
@@ -21,14 +22,19 @@ function GuideFigure({ figure, compact = false }: { figure: NonNullable<GuideSec
 }
 
 export default function GuideSections({ sections, locale = 'en', id }: { sections: GuideSection[]; locale?: SiteLocale; id?: string }) {
+    const firstImageSectionIndex = sections.findIndex(
+        (section) => Boolean(section.figure || (section.comparison && section.comparison.length > 0))
+    );
     return (
         <div id={id} className="mt-10 scroll-mt-6 space-y-10 sm:mt-14 sm:space-y-14">
-            {sections.map((section) => (
+            {sections.map((section, sectionIndex) => {
+                const isFirstImageSection = sectionIndex === firstImageSectionIndex;
+                return (
                 <section key={section.heading}>
                     <h2 className="section-heading mb-4">
                         {section.heading}
                     </h2>
-                    {section.figure && section.figureFirst ? <GuideFigure figure={section.figure} compact /> : null}
+                    {section.figure && section.figureFirst ? <GuideFigure figure={section.figure} compact preload={isFirstImageSection} /> : null}
                     <div className="max-w-[70ch] space-y-5 text-base leading-8 text-[#43564d] sm:text-lg sm:leading-8">
                         {section.body.map((paragraph) => (
                             <p key={paragraph}>{paragraph}</p>
@@ -76,7 +82,7 @@ export default function GuideSections({ sections, locale = 'en', id }: { section
                     ) : null}
                     {section.comparison ? (
                         <div className={`mt-7 grid gap-6 ${section.comparison.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
-                            {section.comparison.map((figure) => (
+                            {section.comparison.map((figure, figIndex) => (
                                 <figure key={figure.src}>
                                     <Image
                                         src={figure.src}
@@ -84,6 +90,7 @@ export default function GuideSections({ sections, locale = 'en', id }: { section
                                         width={figure.width}
                                         height={figure.height}
                                         unoptimized
+                                        preload={isFirstImageSection && !(section.figure && section.figureFirst) && figIndex === 0}
                                         className="aspect-square h-auto w-full rounded-lg border border-[#d9ded5] object-contain"
                                     />
                                     <figcaption className="mt-3 text-sm leading-6 text-[#59685d]">
@@ -120,9 +127,10 @@ export default function GuideSections({ sections, locale = 'en', id }: { section
                             ))}
                         </ul>
                     ) : null}
-                    {section.figure && !section.figureFirst ? <GuideFigure figure={section.figure} /> : null}
+                    {section.figure && !section.figureFirst ? <GuideFigure figure={section.figure} preload={isFirstImageSection && !section.comparison?.length} /> : null}
                 </section>
-            ))}
+                );
+            })}
         </div>
     );
 }

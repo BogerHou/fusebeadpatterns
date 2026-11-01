@@ -33,6 +33,20 @@ export function chromeExtensionMetadata(locale: SiteLocale): Metadata {
 export default function ChromeExtensionPage({ locale }: { locale: SiteLocale }) {
     const copy = extensionCopy[locale];
     const routes = localeRoutes[locale];
+    const pageUrl = chromeExtensionPaths[locale].startsWith('http')
+        ? chromeExtensionPaths[locale]
+        : `https://fusebeadpatterns.art${chromeExtensionPaths[locale]}`;
+    const applicationSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: copy.heading,
+        description: copy.description,
+        url: pageUrl,
+        inLanguage: locale,
+        applicationCategory: 'BrowserApplication',
+        operatingSystem: 'Chrome',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    };
     const navigation = {
         en: { home: 'Home', breadcrumb: 'Breadcrumb' },
         de: { home: 'Startseite', breadcrumb: 'Brotkrumennavigation' },
@@ -41,6 +55,7 @@ export default function ChromeExtensionPage({ locale }: { locale: SiteLocale }) 
     }[locale];
     return (
         <div className="min-h-screen flex flex-col">
+            <script id="webapp-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
             <SiteHeader locale={locale} active="chrome-extension" />
             <main id="main-content" tabIndex={-1} className={`page-shell flex-1 ${styles.main}`}>
                 <Breadcrumbs label={navigation.breadcrumb} items={[

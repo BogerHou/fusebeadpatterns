@@ -1,11 +1,12 @@
 import LocalizedPatternCatalog from './LocalizedPatternCatalog';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getPatternById, type Pattern } from '@/lib/patterns/catalog';
 import japanesePatterns from '@/lib/patterns/japanese.json';
-import { patternLibraryCount } from '@/lib/patterns/library-overview';
+import { localizedLibraryMetadata, patternLibraryCount } from '@/lib/patterns/library-overview';
 import PatternQuickDownloads from './PatternQuickDownloads';
 import PatternLibraryHelp from '@/components/patterns/PatternLibraryHelp';
 import { getLocalizedPatternGrid } from '@/lib/patterns/localized-download';
@@ -100,18 +101,21 @@ function DownloadCard({ id, name }: { id: string; name: string }) {
 }
 
 export default function JapanesePatternLibrary() {
+    const structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: '無料のアイロンビーズ図案',
+        description: localizedLibraryMetadata.ja.description,
+        url: 'https://fusebeadpatterns.art/ja/patterns',
+        inLanguage: 'ja',
+    };
     return (
         <div lang="ja" className="flex min-h-screen flex-col">
             <SiteHeader locale="ja" active="patterns" />
 
             <main id="main-content" tabIndex={-1} className="page-shell pattern-index flex-1">
-                <nav aria-label="パンくずリスト" className="mb-6 text-xs font-medium text-muted">
-                    <ol className="flex flex-wrap items-center gap-x-2">
-                        <li><Link href="/ja" className="inline-flex min-h-10 items-center hover:underline">ホーム</Link></li>
-                        <li aria-hidden="true">/</li>
-                        <li aria-current="page">すべての図案</li>
-                    </ol>
-                </nav>
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c') }} />
+                <Breadcrumbs label="パンくずリスト" items={[{ label: 'ホーム', href: '/ja' }, { label: 'すべての図案', href: '/ja/patterns' }]} />
                 <h1 className="page-heading leading-snug">無料のアイロンビーズ図案</h1>
                 <p className="mt-4 max-w-3xl text-base leading-8 text-muted sm:text-lg">
                     {patternLibraryCount}点の無料図案から選べます。キャラクター名で検索するか、テーマで絞り込んでください。画像を選ぶと、日本語PDF・色表・日本語エディターを開けます。登録は不要です。

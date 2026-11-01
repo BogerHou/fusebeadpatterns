@@ -3,6 +3,8 @@ import { exportMessages, type PrinterOptions } from './messages';
 
 type RasterMimeType = 'image/png' | 'image/jpeg';
 
+export const MAX_RASTER_CANVAS_PIXELS = 16_777_216;
+
 export async function downloadRasterSvg(
     svg: SVGElement,
     mimeType: RasterMimeType,
@@ -10,9 +12,19 @@ export async function downloadRasterSvg(
     { locale = 'en' }: PrinterOptions = {}
 ): Promise<void> {
     const copy = exportMessages(locale);
+    const width = Number(svg.getAttribute('width') ?? 0);
+    const height = Number(svg.getAttribute('height') ?? 0);
+    const exceedsMaxPixels =
+        width > 0 && height > 0 && width * height > MAX_RASTER_CANVAS_PIXELS;
     const canvas = document.createElement('canvas');
-    canvas.width = Number(svg.getAttribute('width') ?? 0);
-    canvas.height = Number(svg.getAttribute('height') ?? 0);
+    if (exceedsMaxPixels) {
+        const scale = Math.sqrt(MAX_RASTER_CANVAS_PIXELS / (width * height));
+        canvas.width = Math.max(1, Math.floor(width * scale));
+        canvas.height = Math.max(1, Math.floor(height * scale));
+    } else {
+        canvas.width = width;
+        canvas.height = height;
+    }
     const context = canvas.getContext('2d');
 
     if (!context) {
@@ -53,7 +65,11 @@ export async function downloadRasterSvg(
 
         image.onload = () => {
             try {
-                context.drawImage(image, 0, 0);
+                if (exceedsMaxPixels) {
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                } else {
+                    context.drawImage(image, 0, 0);
+                }
                 canvas.toBlob((result) => {
                     if (!result) {
                         fail(new Error(copy.imageEncodingFailed));

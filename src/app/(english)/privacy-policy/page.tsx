@@ -3,12 +3,30 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 import { sitePageLanguageAlternates } from '@/lib/site-pages/routes';
 
+const title = 'Privacy Policy | Fuse Bead Patterns';
+const description = 'Privacy Policy for Fuse Bead Patterns. Learn how we protect your data while image processing runs locally in your browser.';
+
 export const metadata = {
-    title: 'Privacy Policy | Fuse Bead Patterns',
-    description: 'Privacy Policy for Fuse Bead Patterns. Learn how we protect your data while image processing runs locally in your browser.',
+    title,
+    description,
     alternates: {
         canonical: '/privacy-policy',
         languages: sitePageLanguageAlternates('privacy-policy'),
+    },
+    openGraph: {
+        title,
+        description,
+        url: 'https://fusebeadpatterns.art/privacy-policy',
+        siteName: 'Fuse Bead Patterns',
+        locale: 'en_US',
+        type: 'website',
+        images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: ['/opengraph-image.png'],
     },
 };
 

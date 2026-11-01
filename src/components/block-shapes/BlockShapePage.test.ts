@@ -99,22 +99,35 @@ describe('block shape server pages and equivalent language routes', () => {
         const Route = routeModules[item.locale].default as ComponentType;
         const html = renderToStaticMarkup(createElement(Route));
         const copy = copyModule.blockShapeCopy[item.locale];
-        const schemas = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
-        expect(schemas).toEqual([{
-            '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-            itemListElement: [
-                { '@type': 'ListItem', position: 1, name: copy.home, item: siteUrl + item.home },
-                { '@type': 'ListItem', position: 2, name: item.heading, item: siteUrl + item.path },
-            ],
-        }]);
+        const schemas = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+        expect(schemas).toEqual([
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebApplication',
+                name: item.heading,
+                description: copy.description,
+                url: siteUrl + item.path,
+                inLanguage: item.locale,
+                applicationCategory: 'DesignApplication',
+                operatingSystem: 'All',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            },
+            {
+                '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: copy.home, item: siteUrl + item.home },
+                    { '@type': 'ListItem', position: 2, name: item.heading, item: siteUrl + item.path },
+                ],
+            },
+        ]);
         expect(html).toContain('href="' + item.home + '"');
         expect(html).toContain('data-prefetch="false"');
         const meta = routeModules[item.locale].metadata as Metadata;
         expect(meta).toMatchObject({
             title: copy.title, description: copy.description,
             alternates: { canonical: item.path, languages: expectedLanguages },
-            openGraph: { title: copy.title, description: copy.description, url: siteUrl + item.path, type: 'website', images: [] },
-            twitter: { card: 'summary', title: copy.title, description: copy.description, images: [] },
+            openGraph: { title: copy.title, description: copy.description, url: siteUrl + item.path, type: 'website', images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: copy.title }] },
+            twitter: { card: 'summary_large_image', title: copy.title, description: copy.description, images: ['/opengraph-image.png'] },
         });
         expect(meta).not.toHaveProperty('keywords');
         expect(copy.description.length).toBeLessThanOrEqual(160);

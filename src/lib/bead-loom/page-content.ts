@@ -67,13 +67,27 @@ export const loomPageContent: Record<LocalizedLoomLocale, LoomPageContent> = {
     },
 };
 
+const openGraphLocales: Record<LocalizedLoomLocale, string> = {
+    de: 'de_DE',
+    fr: 'fr_FR',
+    ja: 'ja_JP',
+};
+
 export function localizedLoomMetadata(locale: LocalizedLoomLocale): Metadata {
     const copy = loomPageContent[locale];
     const url = `https://fusebeadpatterns.art${localeRoutes[locale].beadLoom}`;
     return {
         title: copy.title, description: copy.description,
         alternates: { canonical: url, languages: loomLanguageAlternates },
-        openGraph: { title: copy.title, description: copy.description, url, siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
-        twitter: { card: 'summary', title: copy.title, description: copy.description, images: [] },
+        openGraph: {
+            title: copy.title,
+            description: copy.description,
+            url,
+            siteName: 'Fuse Bead Patterns',
+            locale: openGraphLocales[locale],
+            type: 'website',
+            images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: copy.title }],
+        },
+        twitter: { card: 'summary_large_image', title: copy.title, description: copy.description, images: ['/opengraph-image.png'] },
     };
 }

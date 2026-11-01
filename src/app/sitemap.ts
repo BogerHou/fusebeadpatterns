@@ -110,7 +110,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         }))),
         ...sitePageRouteGroups.flatMap(group => (['de', 'fr', 'ja'] as const).map(locale => ({
             url: `https://fusebeadpatterns.art${group[locale]}`,
-            lastModified: new Date('2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(group.en === '/privacy-policy' ? '2026-10-20T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
         }))),
         ...guidePages.map((guide) => ({
             url: `https://fusebeadpatterns.art/guides/${guide.slug}`,
@@ -120,7 +120,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         })),
         {
             url: 'https://fusebeadpatterns.art/privacy-policy',
-            lastModified: lastContentUpdate,
+            lastModified: new Date('2026-10-20T00:00:00.000Z'),
             changeFrequency: 'yearly',
             priority: 0.5,
         },
@@ -200,7 +200,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
         }))),
         ...['de', 'fr', 'ja'].flatMap(locale => patterns.map(pattern => ({
             url: `https://fusebeadpatterns.art/${locale}/patterns/${pattern.slug}`,
-            lastModified: new Date(pattern.id === 'original-celestial-stained-glass-window' ? '2026-10-16T00:00:00.000Z' : pattern.id === 'original-strawberry' ? '2026-10-14T00:00:00.000Z' : ['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id) ? '2026-10-11T00:00:00.000Z' : '2026-10-09T00:00:00.000Z'),
+            lastModified: new Date(Math.max(
+                pattern.id === 'original-celestial-stained-glass-window'
+                    ? Date.parse('2026-10-16T00:00:00.000Z')
+                    : pattern.id === 'original-strawberry'
+                        ? Date.parse('2026-10-14T00:00:00.000Z')
+                        : ['original-black-cat', 'original-latin-cross', 'original-rave-alien-head', 'original-rave-rainbow-smiley', 'original-rave-moon-mushroom', 'original-sunset-mountain-lake'].includes(pattern.id)
+                            ? Date.parse('2026-10-11T00:00:00.000Z')
+                            : translationBaseline,
+                Date.parse(pattern.updatedAt),
+            )),
             images: [`https://fusebeadpatterns.art${pattern.assets.preview}`],
         }))),
         ...patterns.map((pattern) => ({

@@ -175,7 +175,7 @@ describe('real brick workspace import, recovery and history handlers', () => {
         expect(app.measured.exported).toHaveBeenCalledExactlyOnceWith({ name: 'tool_export', tool: 'brick_mosaic', format: 'project' });
     });
     it('loads an image onto a blank workspace without leaving the busy lock, then converts and exports the current model', async () => {
-        const app = harness(); app.settle();
+        const app = harness(); expect(app.status()).not.toContain(labels.loading); app.settle();
         const png = await pixelCore.encodePng(pixelCore.createGrid(1, 1, [255, 0, 0, 255]));
         await app.load({ size: png.length, type: 'image/png', arrayBuffer: async () => png.buffer }, true);
         expect(app.locked()).toBe(false); expect(app.source()).toMatchObject({ width: 1, height: 1 }); expect(app.io.closedBitmaps).toBe(1);

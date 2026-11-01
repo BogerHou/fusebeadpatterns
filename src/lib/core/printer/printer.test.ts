@@ -7,6 +7,7 @@ import { PngPrinter } from './png/png.printer';
 import { SvgPrinter } from './svg/svg.printer';
 import { XlsxPrinter } from './xlsx/xlsx.printer';
 import { EXPORT_MESSAGES } from './messages';
+import { MAX_RASTER_CANVAS_PIXELS } from './raster';
 
 const { writeBuffer, outputPdf } = vi.hoisted(() => ({
     writeBuffer: vi.fn<() => Promise<Uint8Array>>(),
@@ -152,6 +153,22 @@ describe.each([
         await vi.advanceTimersByTimeAsync(1_000);
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:export-2');
         expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('scales oversized SVGs down within the safe canvas pixel area', async () => {
+        vi.spyOn(SvgPrinter.prototype, 'drawSVG').mockReturnValue({
+            getAttribute: (name: string) => name === 'width' ? '8192' : '4096',
+        } as SVGElement);
+        const result = new Printer().print(pixels, usage, project, 'pattern');
+        images[0].onload?.();
+        encoded[0](new Blob(['image'], { type: mimeType }));
+        await result;
+
+        const scale = Math.sqrt(MAX_RASTER_CANVAS_PIXELS / (8192 * 4096));
+        const expectedWidth = Math.max(1, Math.floor(8192 * scale));
+        const expectedHeight = Math.max(1, Math.floor(4096 * scale));
+        expect(expectedWidth * expectedHeight).toBeLessThanOrEqual(MAX_RASTER_CANVAS_PIXELS);
+        expect(drawImage).toHaveBeenCalledWith(images[0], 0, 0, expectedWidth, expectedHeight);
     });
 
     it('rejects a failed image load and releases its URL', async () => {

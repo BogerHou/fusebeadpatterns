@@ -78,6 +78,7 @@ function PatternDetail({ pattern }: { pattern: Pattern }) {
     const structuredData = {
         '@context': 'https://schema.org', '@type': 'WebPage',
         name: patternPageTitle(pattern), description: pattern.description, url: `${siteUrl}${href}`,
+        inLanguage: 'en', dateModified: pattern.updatedAt,
         primaryImageOfPage: { '@type': 'ImageObject', contentUrl: `${siteUrl}${pattern.assets.preview}`, caption: `${getPatternDisplayName(pattern)} Perler bead pattern`, width: 580, height: 580 },
     };
     return (
@@ -162,10 +163,26 @@ export default async function PatternRoute({ params }: Props) {
     if (!collection && !pattern && !topic) notFound();
     const collectionPatterns = collection ? getPatternsForCollection(collection.id) : [];
     const fewestColors = getFewestColorsPattern(collectionPatterns);
+    const collectionStructuredData = topic ? {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: topic.title,
+        description: topic.description,
+        url: `${siteUrl}/patterns/${topic.slug}`,
+        inLanguage: 'en',
+    } : collection ? {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: `${collection.title} Perler Bead Patterns`,
+        description: patternCollectionMetadataDescription(collection),
+        url: `${siteUrl}/patterns/${collection.slug}`,
+        inLanguage: 'en',
+    } : null;
     return (
         <>
             <SiteHeader active="patterns" />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16 sm:pb-24">
+                {collectionStructuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionStructuredData).replace(/</g, '\\u003c') }} />}
                 {topic ? <PatternTopicPage topic={topic} /> : pattern ? <PatternDetail pattern={pattern} /> : <>
                     <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Patterns', href: '/patterns' }, { label: collection!.title, href: `/patterns/${collection!.slug}` }]} />
                     <h1 className="page-heading pt-4 sm:pt-8">{collection!.title} Perler Bead Patterns</h1>

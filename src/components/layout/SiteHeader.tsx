@@ -43,7 +43,7 @@ export default function SiteHeader({ active, locale = 'en' }: SiteHeaderProps) {
             <a href="#main-content" className="skip-link">{copy.skip}</a>
             <div className={`site-header-inner ${styles.headerInner}`}>
                 <Link href={routes.home} prefetch={false} className={`site-brand ${styles.brand}`}>
-                    <Image src={brandAssets.headerLogo} alt="Fuse Bead Patterns Logo" width={36} height={36} unoptimized preload />
+                    <Image src={brandAssets.headerLogo} alt="" width={36} height={36} unoptimized />
                     <span className="site-brand-name">Fuse Bead Patterns</span>
                 </Link>
                 <nav className={`site-nav ${styles.navigation}`} aria-label={copy.main}>

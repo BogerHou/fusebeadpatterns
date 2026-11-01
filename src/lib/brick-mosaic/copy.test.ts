@@ -69,8 +69,11 @@ describe('one brick mosaic tool with four complete language experiences', () => 
         expect(metadata.description).toBe(copy.description);
         expect(metadata).not.toHaveProperty('keywords');
         expect(metadata.alternates).toEqual({ canonical: brickPaths[locale], languages: brickAlternates });
-        expect(metadata.openGraph).toMatchObject({ url: `https://fusebeadpatterns.art${brickPaths[locale]}`, images: [] });
-        expect(metadata.twitter).toMatchObject({ card: 'summary', images: [] });
+        expect(metadata.openGraph).toMatchObject({
+            url: `https://fusebeadpatterns.art${brickPaths[locale]}`,
+            images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: copy.title }],
+        });
+        expect(metadata.twitter).toMatchObject({ card: 'summary_large_image', images: ['/opengraph-image.png'] });
     });
 
     it('uses one English entry, four language URLs and an English x-default', () => {

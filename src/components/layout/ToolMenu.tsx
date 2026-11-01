@@ -13,6 +13,13 @@ import { beadLetterLabels } from '../../lib/bead-letters/routes';
 import { blockShapeLabels } from '../../lib/block-shapes/routes';
 import styles from './LanguageSwitcher.module.css';
 
+const beadLoomPatternLabels: Record<SiteLocale, string> = {
+    en: 'Free Bead Loom Patterns',
+    de: 'Perlenwebmuster-Vorlagen',
+    fr: 'Modèles de métier à perles',
+    ja: 'ビーズ織り図案集',
+};
+
 export default function ToolMenu({ locale }: { locale: SiteLocale }) {
     const copy = siteNavigation[locale];
     const routes = localeRoutes[locale];
@@ -24,6 +31,7 @@ export default function ToolMenu({ locale }: { locale: SiteLocale }) {
         { href: routes.hamaMaker, label: copy.hamaMaker },
         { href: routes.pixelGrid!, label: copy.pixelGrid },
         { href: routes.beadLoom, label: copy.beadLoom },
+        { href: routes.beadLoomPatterns, label: beadLoomPatternLabels[locale] },
         { href: routes.beadLetters, label: beadLetterLabels[locale] },
         { href: routes.blockShapes, label: blockShapeLabels[locale] },
         { href: routes.qrBeads, label: qrBeadLabels[locale] },

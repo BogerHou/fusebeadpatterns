@@ -4,12 +4,30 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 import { sitePageLanguageAlternates } from '@/lib/site-pages/routes';
 
+const title = 'About Fuse Bead Patterns';
+const description = 'Learn about Fuse Bead Patterns, a free browser-based Perler bead pattern generator for turning photos into printable fuse bead patterns.';
+
 export const metadata = {
-    title: 'About Fuse Bead Patterns',
-    description: 'Learn about Fuse Bead Patterns, a free browser-based Perler bead pattern generator for turning photos into printable fuse bead patterns.',
+    title,
+    description,
     alternates: {
         canonical: '/about',
         languages: sitePageLanguageAlternates('about'),
+    },
+    openGraph: {
+        title,
+        description,
+        url: 'https://fusebeadpatterns.art/about',
+        siteName: 'Fuse Bead Patterns',
+        locale: 'en_US',
+        type: 'website',
+        images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: ['/opengraph-image.png'],
     },
 };
 

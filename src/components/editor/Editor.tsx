@@ -461,9 +461,14 @@ function LibraryPatternEntry({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const requestRef = useRef<AbortController | null>(null);
+    const autoOpenedRef = useRef<string | null>(null);
 
     useEffect(() => () => {
-        requestRef.current?.abort();
+        if (requestRef.current) {
+            requestRef.current.abort();
+            requestRef.current = null;
+            autoOpenedRef.current = null;
+        }
         onLoadingChange(false);
     }, [onLoadingChange]);
 
@@ -476,12 +481,13 @@ function LibraryPatternEntry({
 
     const dismiss = () => {
         requestRef.current?.abort();
+        requestRef.current = null;
         onLoadingChange(false);
         clearLibraryRequest();
     };
 
-    const openPattern = async () => {
-        if (!project || loading || busy) return;
+    const openPattern = useCallback(async () => {
+        if (!project || loading || busy || requestRef.current) return;
         const controller = new AbortController();
         requestRef.current = controller;
         setLoading(true);
@@ -498,12 +504,22 @@ function LibraryPatternEntry({
                 setError(error instanceof Error ? error.message : 'The pattern could not be loaded. Please try again.');
             }
         } finally {
+            if (requestRef.current === controller) {
+                requestRef.current = null;
+            }
             if (!controller.signal.aborted) {
                 setLoading(false);
                 onLoadingChange(false);
             }
         }
-    };
+    }, [busy, loading, onLoadingChange, onOpen, project]);
+
+    useEffect(() => {
+        if (project && !hasCurrentPattern && !busy && !loading && !error && autoOpenedRef.current !== patternId) {
+            autoOpenedRef.current = patternId;
+            void openPattern();
+        }
+    }, [busy, error, hasCurrentPattern, loading, openPattern, patternId, project]);
 
     return (
         <section
@@ -3114,7 +3130,23 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
             return;
         }
 
-        finishActiveStroke();
+        const activeStroke = activeStrokeRef.current;
+        activeStrokeRef.current = null;
+        if (activeStroke && activeStroke.data === reducedColorRef.current) {
+            const patch = activeStroke.stroke.finish();
+            if (patch) {
+                const rollbackHistory = new PatternHistory();
+                rollbackHistory.push(patch);
+                rollbackHistory.undo(activeStroke.data);
+                const points = patch.indices.length <= 512
+                    ? Array.from(patch.indices, (index) => ({
+                        x: (index / 4) % previewSize.width,
+                        y: Math.floor(index / 4 / previewSize.width),
+                    }))
+                    : [];
+                syncEditedPattern(activeStroke.data, points);
+            }
+        }
         pinchZoomStateRef.current = {
             distance,
             zoom: previewZoom,
@@ -6871,7 +6903,10 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                                     </div>
                                     <div className="grid max-h-48 grid-cols-1 gap-2 overflow-auto p-3 sm:grid-cols-2">
                                         {palette.entries.map(
-                                            (entry) => (
+                                            (entry) => {
+                                                const usageCount = beadsUsage.get(entry.ref) ?? 0;
+
+                                                return (
                                                 <button
                                                     key={`${palette.name}-${entry.ref}`}
                                                     type="button"
@@ -6902,7 +6937,7 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                                                             backgroundColor: `rgb(${entry.color.r} ${entry.color.g} ${entry.color.b})`,
                                                         }}
                                                     />
-                                                    <span className="min-w-0">
+                                                    <span className="min-w-0 flex-1">
                                                         <span className="block font-sans text-sm leading-none">
                                                             {entry.ref}
                                                         </span>
@@ -6912,8 +6947,14 @@ export default function Editor({ mode = 'home', locale = 'en', initialPaletteId,
                                                             }
                                                         </span>
                                                     </span>
+                                                    {usageCount > 0 && (
+                                                        <span className="ml-auto shrink-0 rounded-full border border-[#d9ded5] bg-brutal-bg px-2 py-0.5 text-[11px] font-semibold text-brutal-black">
+                                                            {number(usageCount)}
+                                                        </span>
+                                                    )}
                                                 </button>
-                                            )
+                                                );
+                                            }
                                         )}
                                     </div>
                                 </div>

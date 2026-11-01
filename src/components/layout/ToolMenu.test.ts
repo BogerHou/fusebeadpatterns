@@ -15,8 +15,8 @@ describe('tool navigation', () => {
             const routes = localeRoutes[locale];
             pathname = routes.pixelGrid!;
             const html = renderToStaticMarkup(createElement(ToolMenu, { locale }));
-            for (const href of [routes.home, routes.hamaMaker, routes.pixelGrid, routes.beadLoom, routes.beadLetters, routes.blockShapes, routes.qrBeads, routes.sprites, brickPaths[locale], routes.bannerMaker]) expect(html).toContain(`href="${href}"`);
-            expect(html.match(/<a\b/g)).toHaveLength(10);
+            for (const href of [routes.home, routes.hamaMaker, routes.pixelGrid, routes.beadLoom, routes.beadLoomPatterns, routes.beadLetters, routes.blockShapes, routes.qrBeads, routes.sprites, brickPaths[locale], routes.bannerMaker]) expect(html).toContain(`href="${href}"`);
+            expect(html.match(/<a\b/g)).toHaveLength(11);
             expect(html).toContain(`aria-label="${siteNavigation[locale].tools}"`);
             expect(html.match(/aria-current="page"/g)).toHaveLength(1);
             expect(html).not.toContain('data-locale-navigation');

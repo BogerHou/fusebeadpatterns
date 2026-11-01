@@ -28,12 +28,14 @@ import HamaOriginalDownloads from './HamaOriginalDownloads';
 
 const siteUrl = 'https://fusebeadpatterns.art';
 export function localizedPatternMetadata(pattern: Pattern, locale: PatternLocale): Metadata {
-    const title = `${getLocalizedPatternTitle(pattern, locale)} | Fuse Bead Patterns`;
+    const baseTitle = getLocalizedPatternTitle(pattern, locale);
+    const fullTitle = `${baseTitle} | Fuse Bead Patterns`;
+    const title = fullTitle.length > 65 ? baseTitle : fullTitle;
     const description = localizedPatternMetadataDescription(pattern, locale);
     const href = `/${locale}/patterns/${pattern.slug}`;
     return {
         title, description, alternates: { canonical: href, languages: patternLanguageAlternates(pattern.slug) },
-        openGraph: { title, description, locale: { de: 'de_DE', fr: 'fr_FR', ja: 'ja_JP' }[locale], type: 'website', url: `${siteUrl}${href}`, images: [{ url: pattern.assets.preview, width: 580, height: 580, alt: getLocalizedPatternTitle(pattern, locale) }] },
+        openGraph: { title, description, locale: { de: 'de_DE', fr: 'fr_FR', ja: 'ja_JP' }[locale], type: 'website', url: `${siteUrl}${href}`, images: [{ url: pattern.assets.preview, width: 580, height: 580, alt: baseTitle }] },
         twitter: { card: 'summary_large_image', title, description, images: [pattern.assets.preview] },
     };
 }
@@ -56,7 +58,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
         : pattern.collectionId ? { label: sectionLabels[locale][pattern.collectionId as PatternSectionSlug], href: getPatternSectionHref(pattern.collectionId, locale) } : null;
     const topics = patternTopics.filter(topic => topic.patternIds.includes(pattern.id) || topic.additionalPatternIds?.includes(pattern.id));
     const tracking = { 'data-pattern-event': 'pattern_download', 'data-pattern-id': pattern.id, 'data-pattern-palette': 'perler', 'data-pattern-entry': 'pattern_detail' };
-    const structuredData = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description: getLocalizedPatternIntro(pattern, locale), url: `${siteUrl}${href}`, inLanguage: locale, primaryImageOfPage: `${siteUrl}${pattern.assets.preview}` };
+    const structuredData = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description: getLocalizedPatternIntro(pattern, locale), url: `${siteUrl}${href}`, inLanguage: locale, dateModified: pattern.updatedAt, primaryImageOfPage: { '@type': 'ImageObject', contentUrl: `${siteUrl}${pattern.assets.preview}`, caption: title, width: 580, height: 580 } };
     return <>
         <SiteHeader locale={locale} active="patterns" />
         <main id="main-content" tabIndex={-1} className="page-shell flex-1 pb-16 sm:pb-24">
@@ -64,7 +66,7 @@ export default function LocalizedPatternDetail({ pattern, locale }: { pattern: P
             <Breadcrumbs label={{ de: 'Brotkrümelnavigation', fr: 'Fil d’Ariane', ja: 'パンくずリスト' }[locale]} items={[{ label: copy.home, href: `/${locale}` }, { label: copy.library, href: `/${locale}/patterns` }, ...(collection ? [collection] : []), { label: name, href }]} />
             <article>
                 <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-12">
-                    <div className="pattern-art rounded-xl border border-line"><Image src={pattern.assets.preview} alt={title} width={580} height={580} unoptimized priority className="pattern-image" /></div>
+                    <div className="pattern-art rounded-xl border border-line"><Image src={pattern.assets.preview} alt={title} width={580} height={580} unoptimized preload className="pattern-image" /></div>
                     <div>
                         <h1 className="page-heading leading-snug">{title}</h1>
                         <p className="mt-4 max-w-3xl leading-7 text-muted">{getLocalizedPatternIntro(pattern, locale)}</p>

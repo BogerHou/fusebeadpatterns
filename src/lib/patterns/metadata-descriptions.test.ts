@@ -14,7 +14,11 @@ it('keeps complete subject identities in short search summaries without changing
     for (const pattern of patterns) {
         const english = patternMetadataDescription(pattern);
         expect(Array.from(english).length).toBeLessThanOrEqual(160);
-        if (Array.from(pattern.description).length <= 160) expect(english).toBe(pattern.description);
+        expect(english).toMatch(/bead|pattern/i);
+        expect(english).toMatch(/\.$/);
+        if (Array.from(pattern.description).length <= 160 && /bead|pattern/i.test(pattern.description)) {
+            expect(english).toBe(pattern.description);
+        }
         for (const locale of locales) {
             const summary = localizedPatternMetadataDescription(pattern, locale);
             expect(Array.from(summary).length).toBeLessThanOrEqual(160);
@@ -24,6 +28,7 @@ it('keeps complete subject identities in short search summaries without changing
             if (locale === 'ja') expect(summary).toBe(getLocalizedPatternIntro(pattern, locale));
             else {
                 expect(summary).toContain(`${pattern.motifWidth} × ${pattern.motifHeight}`);
+                expect(summary).toContain(locale === 'de' ? `${pattern.beads} Perlen` : `${pattern.beads} perles`);
                 expect(summary).toContain('PDF');
                 expect(summary).toContain('PNG');
             }

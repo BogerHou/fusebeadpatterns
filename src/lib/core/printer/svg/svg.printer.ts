@@ -364,22 +364,6 @@ export class SvgPrinter implements Printer {
                             txtContainer.centerX(),
                             txtContainer.centerY()
                         );
-
-                        let referenceText = paletteEntry.ref;
-                        if (project.exportConfiguration.useSymbols) {
-                            referenceText = paletteEntry.symbol;
-                            if (
-                                project.paletteConfiguration.palettes.length > 1
-                            ) {
-                                referenceText =
-                                    paletteEntry.prefix + referenceText;
-                            }
-                        }
-                        ctx.fillText(
-                            referenceText,
-                            beadX + beadSize / 2,
-                            beadY + beadSize / 2
-                        );
                     }
                 } else {
                     ctx.fillStyle = 'rgb(0,0,0)';

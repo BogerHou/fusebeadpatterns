@@ -16,14 +16,15 @@ const pageUrl = 'https://fusebeadpatterns.art/de/pixel-art-generator';
 export const metadata: Metadata = {
     title, description: metadataDescription,
     alternates: { canonical: pageUrl, languages: pixelLanguageAlternates },
-    openGraph: { title, description: metadataDescription, url: pageUrl, siteName: 'Fuse Bead Patterns', type: 'website', images: [] },
-    twitter: { card: 'summary', title, description: metadataDescription, images: [] },
+    openGraph: { title, description: metadataDescription, url: pageUrl, locale: 'de_DE', siteName: 'Fuse Bead Patterns', type: 'website', images: ['/opengraph-image.png'] },
+    twitter: { card: 'summary_large_image', title, description: metadataDescription, images: ['/opengraph-image.png'] },
 };
 
 const applicationSchema = {
     '@context': 'https://schema.org', '@type': 'WebApplication',
     name: 'Pixel-Art-Generator', description, url: pageUrl,
     inLanguage: 'de', applicationCategory: 'DesignApplication', operatingSystem: 'Web',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
 
 export default function GermanPixelArtPage() {

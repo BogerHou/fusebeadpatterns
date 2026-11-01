@@ -3,12 +3,30 @@ import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 import { sitePageLanguageAlternates } from '@/lib/site-pages/routes';
 
+const title = 'Terms of Service | Fuse Bead Patterns';
+const description = 'Terms of Service and terms of use for Fuse Bead Patterns.';
+
 export const metadata = {
-    title: 'Terms of Service | Fuse Bead Patterns',
-    description: 'Terms of Service and terms of use for Fuse Bead Patterns.',
+    title,
+    description,
     alternates: {
         canonical: '/terms-of-service',
         languages: sitePageLanguageAlternates('terms-of-service'),
+    },
+    openGraph: {
+        title,
+        description,
+        url: 'https://fusebeadpatterns.art/terms-of-service',
+        siteName: 'Fuse Bead Patterns',
+        locale: 'en_US',
+        type: 'website',
+        images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: ['/opengraph-image.png'],
     },
 };
 

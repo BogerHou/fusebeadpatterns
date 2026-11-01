@@ -8,8 +8,9 @@ import PixelGridWorkspace from '@/components/pixel-grid/PixelGridWorkspace';
 import PixelConversionExamples from '@/components/pixel-grid/PixelConversionExamples';
 import PixelPracticeProvider from '@/components/pixel-grid/PixelPracticeProvider';
 
-const title = 'Pixel Art Grid Maker — Draw & Export PNG | Fuse Bead Patterns';
-const description = 'Draw pixel art or import an image on a free grid up to 128 × 128. Edit individual pixels and download a transparent PNG or editable project.';
+const title = 'Pixel Art Grid Maker & Image to Pixel Art Converter | Fuse Bead Patterns';
+const description = 'Draw on a pixel art grid or use our image to pixel art converter online. Compare 32x32 and 64x64 sizes, edit pixels, and export PNG or bead patterns.';
+const pageUrl = 'https://fusebeadpatterns.art/pixel-art-grid';
 
 export const metadata: Metadata = {
     title,
@@ -18,17 +19,31 @@ export const metadata: Metadata = {
     openGraph: {
         title,
         description,
-        url: 'https://fusebeadpatterns.art/pixel-art-grid',
+        url: pageUrl,
         siteName: 'Fuse Bead Patterns',
+        locale: 'en_US',
         type: 'website',
-        images: [],
+        images: ['/opengraph-image.png'],
     },
-    twitter: { card: 'summary', title, description, images: [] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/opengraph-image.png'] },
+};
+
+const applicationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Pixel Art Grid Maker & Image to Pixel Art Converter',
+    description,
+    url: pageUrl,
+    inLanguage: 'en',
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'All',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
 
 export default function PixelArtGridPage() {
     return (
         <>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(applicationSchema).replace(/</g, '\\u003c') }} />
             <SiteHeader />
             <main id="main-content" tabIndex={-1} className="page-shell flex-1">
                 <Breadcrumbs items={[

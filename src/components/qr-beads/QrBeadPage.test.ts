@@ -60,14 +60,28 @@ describe('complete localized QR entry pages', () => {
         expect(html).toContain('data-palettes="3"');
         expect(html).toContain('data-active="qr-beads"');
         for (const text of [...copy.steps, ...copy.notes]) expect(html).toContain(escape(text));
-        const schemas = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
-        expect(schemas).toEqual([{
-            '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-            itemListElement: [
-                { '@type': 'ListItem', position: 1, name: copy.home, item: 'https://fusebeadpatterns.art' + siteRoutes.localeRoutes[locale].home },
-                { '@type': 'ListItem', position: 2, name: copy.heading, item: 'https://fusebeadpatterns.art' + qrRoutes.qrBeadPaths[locale] },
-            ],
-        }]);
+        const schemas = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]));
+        expect(schemas).toEqual([
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebApplication',
+                name: copy.heading,
+                description: copy.description,
+                url: 'https://fusebeadpatterns.art' + qrRoutes.qrBeadPaths[locale],
+                inLanguage: locale,
+                applicationCategory: 'DesignApplication',
+                operatingSystem: 'All',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            },
+            {
+                '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+                itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: copy.home, item: 'https://fusebeadpatterns.art' + siteRoutes.localeRoutes[locale].home },
+                    { '@type': 'ListItem', position: 2, name: copy.heading, item: 'https://fusebeadpatterns.art' + qrRoutes.qrBeadPaths[locale] },
+                ],
+            },
+        ]);
+        expect(html).toContain('href="' + siteRoutes.localeRoutes[locale].home + '#generator"');
         if (locale !== 'en') {
             expect(copy.heading).not.toBe(copyModule.qrBeadCopy.en.heading);
             expect(copy.steps).not.toEqual(copyModule.qrBeadCopy.en.steps);
