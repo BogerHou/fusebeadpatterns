@@ -58,7 +58,9 @@ export default function ChromeExtensionPage({ locale }: { locale: SiteLocale }) 
                         {chromeExtensionStoreUrl
                             ? <a className="button-primary" href={chromeExtensionStoreUrl} rel="noopener noreferrer">{copy.install}<ArrowRight size={18} aria-hidden="true" /></a>
                             : <Link className="button-primary" href={`${routes.home}#generator`} prefetch={false}>{copy.online}<ArrowRight size={18} aria-hidden="true" /></Link>}
-                        <a className="text-link" href="#how-it-works">{copy.how}<ArrowRight size={16} aria-hidden="true" /></a>
+                        {chromeExtensionStoreUrl
+                            ? <Link className="button-secondary" href={`${routes.home}#generator`} prefetch={false}>{copy.online}</Link>
+                            : <a className="text-link" href="#how-it-works">{copy.how}<ArrowRight size={16} aria-hidden="true" /></a>}
                     </div>
                 </section>
                 {!chromeExtensionStoreUrl && (

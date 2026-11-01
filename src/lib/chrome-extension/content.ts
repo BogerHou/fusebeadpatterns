@@ -12,7 +12,7 @@ type ExtensionCopy = {
 export const extensionCopy: Record<SiteLocale, ExtensionCopy> = {
     en: {
         title: 'Perler Bead Pattern Maker for Chrome | Bead Capture',
-        description: 'Turn web images into bead patterns with Bead Capture for Chrome. Adjust colors, export a PDF, and continue in the editor. Store release pending.',
+        description: 'Turn web images into bead patterns with Bead Capture for Chrome. Adjust colors, export a PDF, and keep editing online. Free in the Chrome Web Store.',
         label: 'Chrome extension',
         heading: 'See an image. Make a bead pattern.',
         intro: 'Right-click an image, choose your bead colors, and turn it into a pattern in your browser.',
@@ -40,7 +40,7 @@ export const extensionCopy: Record<SiteLocale, ExtensionCopy> = {
     },
     de: {
         title: 'Bügelperlen-Vorlagen in Chrome erstellen | Bead Capture',
-        description: 'Mit Bead Capture Webbilder in Bügelperlen-Vorlagen umwandeln, Farben anpassen und PDFs speichern. Die Chrome-Erweiterung wird noch geprüft.',
+        description: 'Mit Bead Capture Webbilder in Bügelperlen-Vorlagen umwandeln, Farben anpassen und PDFs speichern. Kostenlos im Chrome Web Store installieren.',
         label: 'Chrome-Erweiterung',
         heading: 'Bild entdeckt. Bügelperlen-Vorlage gemacht.',
         intro: 'Bild rechts anklicken, Perlenfarben auswählen und direkt im Browser eine Vorlage erstellen.',
@@ -68,7 +68,7 @@ export const extensionCopy: Record<SiteLocale, ExtensionCopy> = {
     },
     fr: {
         title: 'Modèles de perles dans Chrome | Bead Capture',
-        description: 'Transformez des images du Web en modèles de perles avec Bead Capture. Ajustez les couleurs et exportez en PDF. Extension Chrome en cours de validation.',
+        description: 'Transformez des images du Web en modèles de perles avec Bead Capture. Ajustez les couleurs et exportez en PDF. Extension gratuite pour Chrome.',
         label: 'Extension Chrome',
         heading: 'Une image repérée. Un modèle de perles à créer.',
         intro: 'Un clic droit sur une image, vos couleurs de perles, et un modèle à créer dans votre navigateur.',
@@ -96,7 +96,7 @@ export const extensionCopy: Record<SiteLocale, ExtensionCopy> = {
     },
     ja: {
         title: '画像をアイロンビーズ図案にするChrome拡張機能 | Bead Capture',
-        description: 'Bead Captureは、Webの画像を右クリックしてビーズ図案に変換するChrome拡張機能です。配色の調整、PDF保存、サイトのエディターでの編集に対応。現在ストア審査中です。',
+        description: 'Bead Captureは、Webの画像を右クリックしてビーズ図案に変換する無料のChrome拡張機能です。配色の調整、PDF保存、サイトのエディターでの編集に対応。Chromeウェブストアからインストールできます。',
         label: 'Chrome拡張機能',
         heading: '見つけた画像を、ビーズの図案に。',
         intro: '画像を右クリックして配色を選ぶだけ。ブラウザでアイロンビーズの図案を作れます。',
